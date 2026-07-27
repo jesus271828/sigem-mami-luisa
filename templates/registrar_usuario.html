@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Registrar Nuevo Maestro | SIGEM</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+    <div class="container mt-4 mb-5">
+        
+        <!-- Mensajes Flash -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- Formulario de Registro / Edición -->
+        <div class="card shadow p-4 mx-auto" style="max-width: 600px;">
+            <h3 class="mb-3 text-center">
+                {% if maestro_a_editar %} Editar Maestro {% else %} Registrar Nuevo Maestro {% endif %}
+            </h3>
+            
+            <form action="{{ url_for('registrar_usuario') }}" method="POST">
+                <!-- Campo oculto para llevar el ID si estamos editando -->
+                {% if maestro_a_editar %}
+                    <input type="hidden" name="id_usuario" value="{{ maestro_a_editar['id'] }}">
+                {% endif %}
+
+                <div class="mb-3">
+                    <label for="nombre_completo" class="form-label">Nombre Completo</label>
+                    <input type="text" class="form-control" id="nombre_completo" name="nombre_completo" 
+                           value="{{ maestro_a_editar['nombre_completo'] if maestro_a_editar else '' }}" placeholder="Ej. Juan Pérez" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="nombre_usuario" class="form-label">Nombre de Usuario</label>
+                    <input type="text" class="form-control" id="nombre_usuario" name="nombre_usuario" 
+                           value="{{ maestro_a_editar['username'] if maestro_a_editar else '' }}" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="contrasena" class="form-label">Contraseña</label>
+                    <input type="password" class="form-control" id="contrasena" name="contrasena" 
+                           value="{{ maestro_a_editar['password'] if maestro_a_editar else '' }}" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="rol" class="form-label">Rol</label>
+                    <input type="text" class="form-control" id="rol" name="rol" value="maestro" readonly>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="curso_asignado" class="form-label">Curso Asignado</label>
+                    <select class="form-control" id="curso_asignado" name="curso_asignado" required>
+                        <option value="" disabled {% if not maestro_a_editar %}selected{% endif %}>Selecciona un curso...</option>
+                        <option value="1ro A" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '1ro A' %}selected{% endif %}>1ro A</option>
+                        <option value="1ro B" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '1ro B' %}selected{% endif %}>1ro B</option>
+                        <option value="2do A" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '2do A' %}selected{% endif %}>2do A</option>
+                        <option value="2do B" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '2do B' %}selected{% endif %}>2do B</option>
+                        <option value="3ro A" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '3ro A' %}selected{% endif %}>3ro A</option>
+                        <option value="3ro B" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '3ro B' %}selected{% endif %}>3ro B</option>
+                        <option value="4to A" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '4to A' %}selected{% endif %}>4to A</option>
+                        <option value="4to B" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '4to B' %}selected{% endif %}>4to B</option>
+                        <option value="5to A" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '5to A' %}selected{% endif %}>5to A</option>
+                        <option value="5to B" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '5to B' %}selected{% endif %}>5to B</option>
+                        <option value="6to A" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '6to A' %}selected{% endif %}>6to A</option>
+                        <option value="6to B" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '6to B' %}selected{% endif %}>6to B</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn {% if maestro_a_editar %}btn-warning{% else %}btn-primary{% endif %} w-100 mb-2">
+                    {% if maestro_a_editar %} Guardar Cambios {% else %} Registrar {% endif %}
+                </button>
+                
+                {% if maestro_a_editar %}
+                    <a href="{{ url_for('registrar_usuario') }}" class="btn btn-secondary w-100 mb-2">Cancelar Edición</a>
+                {% endif %}
+                
+                <a href="{{ url_for('menu') }}" class="btn btn-light w-100">← Volver al Menú</a>
+            </form>
+        </div>
+
+        <!-- Tabla de Maestros Registrados -->
+        <div class="card shadow p-4 mt-5">
+            <h4 class="mb-3">Maestros Registrados</h4>
+            <div class="table-responsive">
+                <table class="table table-striped table-bordered align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre Completo</th>
+                            <th>Usuario</th>
+                            <th>Contraseña</th>
+                            <th>Rol</th>
+                            <th>Curso Asignado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for maestro in maestros %}
+                        <tr>
+                            <td>{{ maestro['id'] }}</td>
+                            <td>{{ maestro['nombre_completo'] }}</td>
+                            <td>{{ maestro['username'] }}</td>
+                            <td>{{ maestro['password'] }}</td>
+                            <td>{{ maestro['rol'] }}</td>
+                            <td>{{ maestro['curso_asignado'] }}</td>
+                            <td>
+                                <!-- Botón Editar con enlace para subir los datos arriba -->
+                                <a href="{{ url_for('registrar_usuario', edit_id=maestro['id']) }}" class="btn btn-sm btn-warning">Editar</a>
+                                
+                                <!-- Botón Eliminar con cuadro de diálogo de pregunta -->
+                                <a href="{{ url_for('eliminar_usuario', id=maestro['id']) }}" class="btn btn-sm btn-danger" onclick="return confirm('¿Estás seguro de que deseas eliminar a este maestro?');">Eliminar</a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">No hay maestros registrados todavía.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

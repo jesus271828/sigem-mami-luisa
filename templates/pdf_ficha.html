@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Buscar Autorizado | SIGEM Mami Luisa</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --primary-color: #1A237E; }
+        body { background-color: #f0f2f5; font-family: 'Segoe UI', sans-serif; }
+        .sidebar { background: var(--primary-color); color: white; min-height: 100vh; padding: 20px; }
+        .menu-card { background: white; border-radius: 20px; border: none; padding: 30px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+    </style>
+</head>
+<body>
+
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 sidebar">
+            <h4 class="mb-4">SIGEM Mami Luisa</h4>
+            <p><i class="fas fa-user-circle"></i> {{ session.get('nombre_completo', 'Usuario') }} ({{ session.get('rol', 'admin') }})</p>
+            <hr>
+            
+            <!-- CONTADORES GENERALES -->
+            <div class="mb-4 p-3 bg-dark rounded text-white shadow-sm">
+                <h6 class="text-uppercase text-warning fs-7 mb-3"><i class="fas fa-chart-pie me-2"></i>Registros Generales</h6>
+                <p class="mb-2 d-flex justify-content-between">
+                    <span><i class="fas fa-user-graduate me-2"></i>Estudiantes:</span> 
+                    <strong class="badge bg-primary fs-6">{{ total_estudiantes }}</strong>
+                </p>
+                <p class="mb-2 d-flex justify-content-between">
+                    <span><i class="fas fa-archive me-2"></i>Expedientes Viejos:</span> 
+                    <strong class="badge bg-secondary fs-6">{{ total_expedientes }}</strong>
+                </p>
+                <p class="mb-0 d-flex justify-content-between">
+                    <span><i class="fas fa-users me-2"></i>Usuarios:</span> 
+                    <strong class="badge bg-success fs-6">{{ total_usuarios }}</strong>
+                </p>
+            </div>
+
+            <a href="/menu_buscar" class="btn btn-outline-light w-100 mb-2"><i class="fas fa-arrow-left"></i> Volver a Búsqueda</a>
+            <a href="{{ url_for('logout') }}" class="btn btn-danger w-100">Cerrar Sesión</a>
+        </div>
+
+        <!-- Contenido -->
+        <div class="col-md-9 p-5">
+            <div class="menu-card">
+                <h2 class="mb-4">Buscar Autorizado</h2>
+                <form method="POST" class="row g-3">
+                    <div class="col-md-8">
+                        <input type="text" name="criterio" class="form-control" placeholder="Nombre o Cédula del autorizado..." required>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="submit" class="btn btn-secondary w-100">Buscar</button>
+                    </div>
+                </form>
+
+                <hr class="my-4">
+
+                {% if autorizado %}
+                    <div class="alert alert-success">
+                        <div class="row align-items-center">
+                            
+                            <!-- Columna de las Fotos (Separadas) -->
+                            <div class="col-md-3 text-center mb-3 mb-md-0 border-end pe-3">
+                                <!-- Foto del Autorizado -->
+                                <div class="mb-3">
+                                    <small class="d-block text-muted fw-bold mb-1">Autorizado</small>
+                                    {% if autorizado['foto_autorizado'] %}
+                                        <img src="{{ url_for('static', filename='uploads/' + autorizado['foto_autorizado']) }}" alt="Foto Autorizado" class="img-fluid rounded-circle shadow border border-3 border-white" style="width: 100px; height: 100px; object-fit: cover;">
+                                    {% else %}
+                                        <div class="rounded-circle bg-secondary text-white d-inline-flex align-items-center justify-content-center shadow border border-3 border-white" style="width: 100px; height: 100px;"><i class="fas fa-user fa-2x"></i></div>
+                                    {% endif %}
+                                </div>
+                                
+                                <hr class="my-2 opacity-50">
+
+                                <!-- Foto del Estudiante -->
+                                <div>
+                                    <small class="d-block text-muted fw-bold mb-1">Estudiante</small>
+                                    {% if autorizado['foto_estudiante'] %}
+                                        <img src="{{ url_for('static', filename='uploads/' + autorizado['foto_estudiante']) }}" alt="Foto Estudiante" class="img-fluid rounded-circle shadow border border-3 border-white" style="width: 100px; height: 100px; object-fit: cover;">
+                                    {% else %}
+                                        <div class="rounded-circle bg-secondary text-white d-inline-flex align-items-center justify-content-center shadow border border-3 border-white" style="width: 100px; height: 100px;"><i class="fas fa-user-graduate fa-2x"></i></div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- Columna de los Datos -->
+                            <div class="col-md-9">
+                                <h5>Autorizado Encontrado:</h5>
+                                <p class="mb-1"><strong>Nombre:</strong> {{ autorizado['nombre_completo'] }}</p>
+                                <p class="mb-1"><strong>Cédula:</strong> {{ autorizado['cedula'] }}</p>
+                                <p class="mb-2"><strong>Parentesco:</strong> {{ autorizado['parentesco'] }}</p>
+                                
+                                <hr class="my-2">
+                                
+                                <h6 class="text-primary mb-1">Estudiante Asociado:</h6>
+                                <p class="mb-1"><strong>Nombre:</strong> {{ autorizado['nombres'] }} {{ autorizado['apellidos'] }}</p>
+                                <p class="mb-1"><strong>Curso:</strong> {{ autorizado['grado'] }}</p>
+                                <small class="text-muted">ID: {{ autorizado['id_estudiante'] }}</small>
+                            </div>
+                        </div>
+                    </div>
+                {% elif request.method == 'POST' %}
+                    <div class="alert alert-warning">No se encontró ningún autorizado con ese criterio.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

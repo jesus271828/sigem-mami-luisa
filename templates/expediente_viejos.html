@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Expedientes | SIGEM Mami Luisa</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --primary-color: #1e257a; }
+        body { background-color: #f0f2f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        /* BARRA LATERAL UNIFICADA */
+        .sidebar { 
+            background: var(--primary-color); 
+            color: white; 
+            min-height: 100vh; 
+            padding: 20px 15px; 
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar h4 {
+            font-weight: 700;
+            font-size: 1.25rem;
+            margin-bottom: 20px;
+        }
+        .user-info {
+            font-size: 0.88rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* CUADRO DE REGISTROS GENERALES */
+        .stats-card {
+            background-color: #2b2e38;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .stats-title {
+            color: #ffc107;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 0.85rem;
+        }
+        .stat-item:last-child { margin-bottom: 0; }
+        .badge-count {
+            border-radius: 6px;
+            padding: 2px 10px;
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
+        .badge-blue { background-color: #0d6efd; color: white; }
+        .badge-grey { background-color: #6c757d; color: white; }
+        .badge-green { background-color: #198754; color: white; }
+
+        /* BOTONES DE LA BARRA LATERAL */
+        .btn-sidebar-back {
+            background-color: #0d6efd;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px;
+            font-weight: 600;
+            text-align: center;
+            text-decoration: none;
+            display: block;
+            margin-bottom: 10px;
+        }
+        .btn-sidebar-logout {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px;
+            font-weight: 600;
+            text-align: center;
+            text-decoration: none;
+            display: block;
+            margin-bottom: 15px;
+        }
+        .btn-sidebar-back:hover { background-color: #0b5ed7; color: white; }
+        .btn-sidebar-logout:hover { background-color: #bb2d3b; color: white; }
+
+        /* TARJETA DE CONTENIDO PRINCIPAL */
+        .menu-card { 
+            background: white; 
+            border-radius: 18px; 
+            border: none; 
+            padding: 30px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03); 
+        }
+    </style>
+</head>
+<body>
+
+<div class="container-fluid p-0">
+    <div class="row g-0">
+        <!-- BARRA LATERAL -->
+        <div class="col-md-3 col-lg-2 sidebar">
+            <h4>SIGEM Mami Luisa</h4>
+            
+            <div class="user-info">
+                <i class="fas fa-user-circle"></i> 
+                <span>{{ session.get('username', 'Usuario') }} ({{ session.get('rol', 'admin') }})</span>
+            </div>
+
+            <!-- BOTONES ARRIBA APUNTANDO A MENU_VIEJO -->
+            <a href="/menu_viejo" class="btn-sidebar-back">
+                <i class="fas fa-arrow-left me-1"></i> Volver al Menú
+            </a>
+            <a href="/logout" class="btn-sidebar-logout">
+                Cerrar Sesión
+            </a>
+
+            <!-- REGISTROS GENERALES -->
+            <div class="stats-card mt-2">
+                <div class="stats-title">
+                    <i class="fas fa-chart-pie"></i> REGISTROS GENERALES
+                </div>
+                <div class="stat-item">
+                    <span>Estudiantes:</span>
+                    <span class="badge-count badge-blue">{{ total_estudiantes if total_estudiantes is defined else 3 }}</span>
+                </div>
+                <div class="stat-item">
+                    <span>Expedientes Viejos:</span>
+                    <span class="badge-count badge-grey">{{ total_expedientes if total_expedientes is defined else 873 }}</span>
+                </div>
+                <div class="stat-item">
+                    <span>Usuarios:</span>
+                    <span class="badge-count badge-green">{{ total_usuarios if total_usuarios is defined else 2 }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONTENIDO PRINCIPAL -->
+        <div class="col-md-9 col-lg-10 p-5">
+            <div class="menu-card">
+                <h2 class="mb-4">Expedientes Antiguos</h2>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-12">
+                        <input type="text" id="buscadorExpediente" class="form-control" placeholder="Buscar por ficha, nombre o año...">
+                    </div>
+                </div>
+                <hr class="my-4">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="tablaExpedientes">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Ficha</th>
+                                <th>Nombre</th>
+                                <th>Año Escolar</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for exp in expedientes %}
+                            <tr>
+                                <td>{{ exp['Unnamed: 4'] }}</td>
+                                <td>{{ exp['Unnamed: 3'] }}</td>
+                                <td>{{ exp['Unnamed: 5'] }}</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="3" class="text-center text-muted">No hay expedientes viejos registrados.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById("buscadorExpediente").addEventListener("keyup", function() {
+        var valor = this.value.toLowerCase();
+        var filas = document.querySelectorAll("#tablaExpedientes tbody tr");
+        filas.forEach(function(fila) {
+            var textoFila = fila.textContent.toLowerCase();
+            fila.style.display = textoFila.includes(valor) ? "" : "none";
+        });
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,51 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">Selección de Ciclo Escolar</h2>
+    <hr>
+    
+    <!-- BLOQUE PARA MOSTRAR MENSAJES FLASH -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category if category != 'danger' else 'danger' }}" style="background: #f8d7da; color: #721c24; padding: 10px; margin-bottom: 15px; border: 1px solid #f5c6cb; border-radius: 4px; text-align: center; font-weight: bold;">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="row">
+        <!-- Tarjeta Primer Ciclo (1ro a 3ro) -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow" style="border-radius: 15px; border-top: 5px solid #007bff;">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Primer Ciclo</h5>
+                    <p class="card-text">Gestionar notas de 1ro, 2do y 3ero.</p>
+                    <a href="/notas1" class="btn btn-primary" style="width: 100%; border-radius: 10px;">
+                        Entrar a Primer Ciclo
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tarjeta Segundo Ciclo (4to a 6to) -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow" style="border-radius: 15px; border-top: 5px solid #28a745;">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Segundo Ciclo</h5>
+                    <p class="card-text">Gestionar notas de 4to, 5to y 6to.</p>
+                    <a href="/notas2" class="btn btn-success" style="width: 100%; border-radius: 10px;">
+                        Entrar a Segundo Ciclo
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="/menu" class="btn btn-secondary">Regresar al Panel Principal</a>
+    </div>
+</div>
+{% endblock %}

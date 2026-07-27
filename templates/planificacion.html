@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Esquema de Planificación - SIGEM Mami Luisa</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 6mm;
+        }
+        *, *::before, *::after { box-sizing: border-box; }
+        html, body { 
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        body { 
+            font-family: 'Arial', sans-serif; 
+            font-size: 10px; 
+            color: #000; 
+            background-color: #f8f9fa;
+        }
+        
+        /* BARRA DE ACCIONES / BOTONES (No se imprime) */
+        .action-bar {
+            background: #2c3e50;
+            padding: 8px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .action-bar .left-group, .action-bar .right-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .btn-custom {
+            padding: 6px 12px;
+            font-size: 11px;
+            font-weight: bold;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            color: #fff;
+            transition: background 0.2s;
+        }
+        .btn-pdf { background-color: #e74c3c; }
+        .btn-pdf:hover { background-color: #c0392b; color: #fff; }
+        .btn-save { background-color: #27ae60; }
+        .btn-save:hover { background-color: #219653; color: #fff; }
+        .btn-view { background-color: #2980b9; }
+        .btn-view:hover { background-color: #2471a3; color: #fff; }
+        .btn-menu { background-color: #34495e; border: 1px solid #7f8c8d; }
+        .btn-menu:hover { background-color: #2c3e50; color: #fff; }
+
+        @media print {
+            .action-bar { display: none !important; }
+            body {
+                background-color: #fff;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .page-sheet {
+                border: none !important;
+                box-shadow: none !important;
+                margin: 0 !important;
+                padding: 4mm !important;
+                height: 100vh !important;
+                page-break-after: always;
+            }
+        }
+
+        /* ESTRUCTURA DE PÁGINAS COMPLETAS */
+        .page-sheet {
+            background: #fff;
+            border: 2px solid #000;
+            padding: 10px;
+            margin: 0 auto 15px auto;
+            max-width: 210mm;
+            min-height: 285mm;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        /* ENCABEZADO INSTITUCIONAL */
+        .header { display: flex; align-items: flex-start; border-bottom: 2px solid #000; margin-bottom: 6px; padding-bottom: 4px; }
+        .logo { width: 65px; margin-right: 10px; }
+        .header-content { flex-grow: 1; }
+        .header-row-1 { display: flex; justify-content: space-between; align-items: baseline; }
+        .title-school { font-size: 14px; font-weight: bold; color: #5b739e; margin: 0; font-family: 'Times New Roman', serif; }
+        .lema { font-size: 10px; font-style: italic; color: #b87a42; font-family: 'Times New Roman', serif; font-weight: normal; }
+        .info-line { font-size: 9px; margin: 1px 0; }
+        .info-row-2 { display: flex; justify-content: space-between; margin-top: 2px; }
+
+        /* TABLAS Y BLOQUES QUE EXPANDEN EL CONTENIDO */
+        table { border-collapse: collapse; width: 100%; border: 2px solid #000; margin-bottom: 6px; }
+        th, td { border: 1px solid #000; padding: 4px; text-align: left; vertical-align: middle; font-size: 9px; }
+        .bg-grey { background-color: #f2f2f2; }
+        .bold { font-weight: bold; }
+        
+        .section-box {
+            border: 1px solid #000;
+            padding: 6px;
+            margin-bottom: 6px;
+            background: #fff;
+            flex-grow: 1;
+        }
+        
+        label { font-weight: bold; color: #003366; font-size: 9px; margin-bottom: 1px; display: block; }
+        .form-control, .form-select { border: 1px solid #000 !important; font-size: 9px; padding: 3px 5px; width: 100%; }
+        textarea.form-control { resize: none; }
+        
+        .flex-grow-wrapper {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- BARRA DE ACCIÓN SUPERIOR -->
+    <div class="action-bar container">
+        <div class="left-group">
+            <a href="/menu" class="btn-custom btn-menu">⬅ Salir al Menú</a>
+            <a href="/mis_planificaciones" class="btn-custom btn-view">📂 Ver Planificaciones</a>
+        </div>
+        <div class="right-group">
+            <button type="submit" form="form-planificacion" class="btn-custom btn-save">💾 Guardar Planificación</button>
+            <button type="button" class="btn-custom btn-pdf" onclick="window.print()">🖨️ Generar PDF (2 Págs)</button>
+        </div>
+    </div>
+
+    <form id="form-planificacion" action="/guardar_planificacion" method="POST">
+        
+        <!-- ========================================== -->
+        <!-- PÁGINA 1: DATOS, ENCABEZADO Y CONFIGURACIÓN -->
+        <!-- ========================================== -->
+        <div class="page-sheet">
+            <div>
+                <div class="header">
+                    <img src="{{ url_for('static', filename='img/logo2.png') }}" class="logo" alt="Logo">
+                    <div class="header-content">
+                        <div class="header-row-1">
+                            <span class="title-school">Centro Educativo Mami Luisa S.R.L</span>
+                            <span class="lema">"Educando con amor para un mundo mejor"</span>
+                        </div>
+                        <div class="info-line">
+                            <b>Dirección:</b> C/Castillo Márquez #53. La Romana. <b>Tel:</b> 809-550-7385
+                        </div>
+                        <div class="info-line">
+                            <b>Regional:</b> 05 San Pedro. <b>Distrito:</b> 05-03 La Romana. <b>Código:</b> 07121
+                        </div>
+                        <div class="info-row-2 info-line" style="font-weight: bold;">
+                            <span>UNIDAD DE APRENDIZAJE - NIVEL PRIMARIO (Pág. 1)</span>
+                            <span>Tanda Matutina</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bloque 1: Identificación -->
+                <table class="mb-2">
+                    <tr>
+                        <td class="bold bg-grey" style="width: 12%;">CENTRO:</td>
+                        <td style="width: 23%;">Mami Luisa</td>
+                        <td class="bold bg-grey" style="width: 12%;">TANDA:</td>
+                        <td style="width: 18%;">Matutina</td>
+                        <td class="bold bg-grey" style="width: 15%;">GRADO:</td>
+                        <td style="width: 20%;">
+                            <input type="text" name="grado" class="form-control form-control-sm border-0 bg-transparent fw-bold text-primary" 
+                                   value="{{ usuario['curso_asignado'] }}" readonly>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="bold bg-grey">DOCENTE:</td>
+                        <td colspan="5">
+                            <input type="text" name="docente" class="form-control form-control-sm border-0 bg-transparent fw-bold" 
+                                   value="{{ usuario['nombre_completo'] }}" readonly>
+                        </td>
+                    </tr>
+                </table>
+
+                <!-- Bloque 2: Áreas y Articulación -->
+                <div class="row g-2 mb-2">
+                    <div class="col-md-7">
+                        <div class="section-box m-0">
+                            <label>Áreas Curriculares:</label>
+                            <div class="d-flex flex-wrap gap-2 mt-1">
+                                {% for area in ['Lengua española', 'Matemáticas', 'Ciencias Sociales', 'Ciencias de la Naturaleza', 'Educación Física', 'Educación Artística', 'Formación Integral', 'Lenguas Extranjeras'] %}
+                                <div class="form-check form-check-inline m-0" style="font-size: 9px; width: 45%;">
+                                    <input class="form-check-input" type="checkbox" name="areas" value="{{ area }}" id="area_{{ loop.index }}">
+                                    <label class="form-check-label fw-normal text-dark" for="area_{{ loop.index }}">{{ area }}</label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-5">
+                        <div class="section-box m-0">
+                            <label>Modalidad de Articulación:</label>
+                            <div class="d-flex flex-column gap-1 mt-1">
+                                {% for mod in ['Intradisciplinar', 'Multidisciplinar', 'Interdisciplinar', 'Transdisciplinar'] %}
+                                <div class="form-check m-0" style="font-size: 9px;">
+                                    <input class="form-check-input" type="radio" name="modalidad" value="{{ mod }}" id="mod_{{ loop.index }}">
+                                    <label class="form-check-label fw-normal text-dark" for="mod_{{ loop.index }}">{{ mod }}</label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bloque 3: Ejes y Áreas -->
+                <div class="section-box mb-2">
+                    <div class="mb-1">
+                        <label>Áreas articuladas:</label>
+                        <input type="text" name="areas_art" class="form-control form-control-sm" placeholder="Especifique...">
+                    </div>
+                    <div>
+                        <label>Ejes transversales:</label>
+                        <textarea name="ejes" class="form-control" rows="2" placeholder="Describa..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Bloque 4: Estrategias, Técnicas y Fechas -->
+                <div class="row g-2 mb-2">
+                    <div class="col-md-6">
+                        <div class="section-box m-0">
+                            <label>Estrategias:</label>
+                            <div class="d-flex flex-column gap-1 mt-1">
+                                {% for est in ['ABP', 'Indagación', 'Resolución de problemas', 'Sociodrama', 'Juego'] %}
+                                <div class="form-check m-0" style="font-size: 9px;">
+                                    <input class="form-check-input" type="checkbox" name="estrategias" value="{{ est }}" id="est_{{ loop.index }}">
+                                    <label class="form-check-label fw-normal text-dark" for="est_{{ loop.index }}">{{ est }}</label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="section-box m-0">
+                            <label>Técnicas:</label>
+                            <div class="d-flex flex-column gap-1 mt-1">
+                                {% for tec in ['Observación', 'Estudio de casos', 'Debate', 'Puesta en común', 'Entrevistas'] %}
+                                <div class="form-check m-0" style="font-size: 9px;">
+                                    <input class="form-check-input" type="checkbox" name="tecnicas" value="{{ tec }}" id="tec_{{ loop.index }}">
+                                    <label class="form-check-label fw-normal text-dark" for="tec_{{ loop.index }}">{{ tec }}</label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-2 mb-2">
+                    <div class="col-md-3">
+                        <div class="section-box m-0">
+                            <label>Duración (días):</label>
+                            <input type="number" name="duracion" class="form-control form-control-sm">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="section-box m-0">
+                            <label>Inicio:</label>
+                            <input type="date" name="f_inicio" class="form-control form-control-sm">
+                        </div>
+                    </div>
+                    <div class="col-md-5">
+                        <div class="section-box m-0">
+                            <label>Cierre:</label>
+                            <input type="date" name="f_cierre" class="form-control form-control-sm">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bloque 5: Situación de Aprendizaje (Llena el espacio final de la Pág 1) -->
+            <div class="section-box mb-0" style="flex-grow: 0;">
+                <label>Situación de aprendizaje:</label>
+                <textarea name="situacion" class="form-control" rows="4" placeholder="Redacte la situación de aprendizaje que orienta la unidad..."></textarea>
+            </div>
+        </div>
+
+
+        <!-- ========================================== -->
+        <!-- PÁGINA 2: TABLAS Y CIERRE                    -->
+        <!-- ========================================== -->
+        <div class="page-sheet">
+            <div class="flex-grow-wrapper">
+                <div class="header">
+                    <img src="{{ url_for('static', filename='img/logo2.png') }}" class="logo" alt="Logo">
+                    <div class="header-content">
+                        <div class="header-row-1">
+                            <span class="title-school">Centro Educativo Mami Luisa S.R.L</span>
+                            <span class="lema">"Educando con amor para un mundo mejor"</span>
+                        </div>
+                        <div class="info-line">
+                            <b>Grado:</b> {{ usuario['curso_asignado'] }} | <b>Docente:</b> {{ usuario['nombre_completo'] }}
+                        </div>
+                        <div class="info-row-2 info-line" style="font-weight: bold;">
+                            <span>CONTINUACIÓN - UNIDAD DE APRENDIZAJE (Pág. 2)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bloque 6: Tablas Pedagógicas Ampliadas -->
+                <div class="mb-2 flex-grow-wrapper">
+                    <label>Desglose Curricular:</label>
+                    <table style="height: 100%; margin-bottom: 0;">
+                        <tr class="bg-grey text-center font-weight-bold" style="height: 25px;">
+                            <th style="width: 33%;">Competencias</th>
+                            <th style="width: 33%;">Contenidos</th>
+                            <th style="width: 34%;">Actividades</th>
+                        </tr>
+                        <tr>
+                            <td style="padding: 0; height: 100%;"><textarea name="competencias" class="form-control border-0" style="height: 100%; min-height: 380px;" placeholder="Escriba las competencias..."></textarea></td>
+                            <td style="padding: 0; height: 100%;"><textarea name="contenidos" class="form-control border-0" style="height: 100%; min-height: 380px;" placeholder="Escriba los contenidos..."></textarea></td>
+                            <td style="padding: 0; height: 100%;"><textarea name="actividades" class="form-control border-0" style="height: 100%; min-height: 380px;" placeholder="Escriba las actividades..."></textarea></td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Bloque 7: Indicadores, Recursos y Evaluación -->
+                <div class="section-box mb-0" style="flex-grow: 0;">
+                    <div class="mb-1">
+                        <label>Indicadores de logro:</label>
+                        <textarea name="indicadores" class="form-control" rows="2" placeholder="Indicadores de logro..."></textarea>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <label>Medios y recursos:</label>
+                            <textarea name="recursos" class="form-control" rows="2" placeholder="Medios y recursos..."></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label>Evaluación:</label>
+                            <textarea name="evaluacion" class="form-control" rows="2" placeholder="Técnicas e instrumentos de evaluación..."></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </form>
+</body>
+</html>
