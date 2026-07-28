@@ -206,6 +206,10 @@ init_db()
 @app.route('/menu')
 def index():
     usuario_actual = session.get('usuario')
+    if not usuario_actual:
+        flash('Por favor inicie sesión.', 'danger')
+        return redirect(url_for('login'))
+        
     conn = get_db_connection()
     try:
         total_inscripciones = conn.execute('SELECT COUNT(*) FROM inscripciones').fetchone()[0]
@@ -215,9 +219,22 @@ def index():
         total_estudiantes = conn.execute('SELECT COUNT(*) FROM estudiantes').fetchone()[0]
     except:
         total_estudiantes = 0
+    try:
+        total_expedientes = conn.execute('SELECT COUNT(*) FROM expedientes_viejos').fetchone()[0]
+    except:
+        total_expedientes = 0
+    try:
+        total_usuarios = conn.execute('SELECT COUNT(*) FROM usuarios').fetchone()[0]
+    except:
+        total_usuarios = 0
     conn.close()
     
-    return render_template('menu.html', total_inscripciones=total_inscripciones, total_estudiantes=total_estudiantes, usuario_actual=usuario_actual)
+    return render_template('menu.html', 
+                           total_inscripciones=total_inscripciones, 
+                           total_estudiantes=total_estudiantes, 
+                           total_expedientes=total_expedientes, 
+                           total_usuarios=total_usuarios, 
+                           usuario_actual=usuario_actual)
 
 
 # --- AUTENTICACIÓN ---
@@ -805,12 +822,13 @@ def eliminar_usuario(id):
     flash('Maestro eliminado.', 'success')
     return redirect(url_for('registrar_usuario'))
 
+@app.route('/menu_viejo')
 @app.route('/acceso_menu_viejo')
-def acceso_menu_viejo():
+def menu_viejo():
     if session.get('rol') not in ['oficina', 'admin']:
         flash('Acceso denegado.', 'danger')
         return redirect(url_for('menu'))
-    
+        
     conn = get_db_connection()
     try:
         total_estudiantes = conn.execute('SELECT COUNT(*) FROM inscripciones').fetchone()[0]
