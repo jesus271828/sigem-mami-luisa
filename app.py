@@ -219,6 +219,7 @@ def index():
     
     return render_template('menu.html', total_inscripciones=total_inscripciones, total_estudiantes=total_estudiantes, usuario_actual=usuario_actual)
 
+
 # --- AUTENTICACIÓN ---
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -227,35 +228,40 @@ def login():
         password = request.form.get('password') or request.form.get('contrasena')
         
         conn = get_db_connection()
+        user_dict = None
         try:
-            # Verificamos si estamos usando psycopg2 (PostgreSQL) o sqlite3 local
-            # Usamos un cursor de diccionario si es psycopg2, o ejecutamos directo
-            if hasattr(conn, 'cursor'): # Es PostgreSQL / psycopg2
-                cursor = conn.cursor()
-                cursor.execute('SELECT username, rol, nombre_completo, curso_asignado FROM usuarios WHERE username = %s AND password = %s', (usuario_ingresado, password))
-                row = cursor.fetchone()
-                user = None
-                if row:
-                    # Mapeamos la tupla a un diccionario seguro
-                    user = {
-                        'username': row[0],
-                        'rol': row[1],
-                        'nombre_completo': row[2],
-                        'curso_asignado': row[3]
-                    }
-                cursor.close()
-            else: # Es SQLite local
-                user = conn.execute('SELECT * FROM usuarios WHERE username = ? AND password = ?', (usuario_ingresado, password)).fetchone()
+            # Ejecutamos la consulta usando psycopg2 o sqlite de forma compatible
+            cursor = conn.cursor()
+            cursor.execute('SELECT username, rol, nombre_completo, curso_asignado FROM usuarios WHERE username = %s AND password = %s', (usuario_ingresado, password))
+            row = cursor.fetchone()
+            
+            if row:
+                user_dict = {
+                    'username': row[0],
+                    'rol': row[1],
+                    'nombre_completo': row[2],
+                    'curso_asignado': row[3] if row[3] else ''
+                }
+            cursor.close()
         except Exception as e:
-            print("Error en login:", e)
-            user = None
+            # Fallback por si la conexión es local con sqlite estándar
+            try:
+                conn.row_factory = lambda cursor, row: {col[0]: row[idx] for idx, col in enumerate(cursor.description)}
+                cursor = conn.cursor()
+                cursor.execute('SELECT * FROM usuarios WHERE username = ? AND password = ?', (usuario_ingresado, password))
+                user_dict = cursor.fetchone()
+                cursor.close()
+            except Exception as err:
+                print("Error general en login:", err)
+                user_dict = None
+        
         conn.close()
         
-        if user:
-            session['usuario'] = user.get('username', '')
-            session['rol'] = user.get('rol', '')
-            session['nombre_completo'] = user.get('nombre_completo', '')
-            session['curso_asignado'] = user.get('curso_asignado', '') if user.get('curso_asignado') else ''
+        if user_dict:
+            session['usuario'] = user_dict.get('username', '')
+            session['rol'] = user_dict.get('rol', '')
+            session['nombre_completo'] = user_dict.get('nombre_completo', '')
+            session['curso_asignado'] = user_dict.get('curso_asignado', '')
             return redirect(url_for('index'))
         else:
             return "Usuario o contraseña incorrectos"
