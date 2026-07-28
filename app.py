@@ -633,6 +633,30 @@ def buscar_autorizado():
                            total_expedientes=total_expedientes,
                            total_usuarios=total_usuarios)
 
+
+@app.route('/listado-estudiantes')
+def listado_estudiantes():
+    if 'usuario' not in session:
+        flash('Acceso denegado.', 'danger')
+        return redirect(url_for('login'))
+        
+    usuario_actual = session.get('usuario')
+    rol_actual = session.get('rol')
+    
+    conn = get_db_connection()
+    
+    # Si es oficina o admin, ve todo. Si es maestro, filtra por su nombre o usuario asociado.
+    if rol_actual in ['oficina', 'admin']:
+        estudiantes = conn.execute('SELECT * FROM inscripciones').fetchall()
+    else:
+        # Ajusta 'maestro' o la columna correspondiente si en tu tabla se llama distinto (ej. profesor, usuario_id, etc.)
+        estudiantes = conn.execute('SELECT * FROM inscripciones WHERE maestro = ?', (usuario_actual,)).fetchall()
+        
+    conn.close()
+    
+    return render_template('listado_estudiantes.html', estudiantes=estudiantes)
+
+
 @app.route('/buscar_estudiante', methods=['GET', 'POST'])
 def buscar_estudiante():
     if 'usuario' not in session:
@@ -915,26 +939,8 @@ def guardar_expediente_viejo():
     flash('¡Expediente registrado!', 'success')
     return redirect(url_for('registrar_expediente_viejo'))
 
-@app.route('/menu_viejo')
-def menu_viejo():
-    if session.get('rol') not in ['oficina', 'admin']:
-        flash('Acceso denegado.', 'danger')
-        return redirect(url_for('menu'))
-    
-    conexion = get_db_connection()
-    total_estudiantes = conexion.execute("SELECT COUNT(*) FROM estudiantes").fetchone()[0]
-    total_expedientes = conexion.execute("SELECT COUNT(*) FROM expedientes_viejos").fetchone()[0]
-    total_usuarios = conexion.execute("SELECT COUNT(*) FROM usuarios").fetchone()[0]
-    conexion.close()
-    
-    return render_template('menu_viejo.html', total_incripciones=total_estudiantes, total_expedientes=total_expedientes, total_usuarios=total_usuarios)
 
-@app.route('/descargar_base_de_datos')
-def descargar_base_de_datos():
-    if session.get('rol') not in ['oficina', 'admin']:
-        flash('Acceso denegado.', 'danger')
-        return redirect(url_for('menu'))
-    return send_file('sigem_ml.db', as_attachment=True)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
