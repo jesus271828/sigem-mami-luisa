@@ -18,15 +18,14 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
 def get_db_connection():
-    if DATABASE_URL:
-        # Conexión para la nube en Render
-        conn = psycopg2.connect(DATABASE_URL, sslmode='require')
-        return conn
-    else:
-        # Conexión local en tu computadora
-        conn = sqlite3.connect('sigem_ml.db')
-        conn.row_factory = sqlite3.Row
-        return conn
+  if DATABASE_URL:
+    conn = psycopg2.connect(DATABASE_URL, sslmode='require')
+    # Esto hace que psycopg2 se comporte como sqlite3 con diccionariorows
+    return conn
+  else:
+    conn = sqlite3.connect('sigem_ml.db')
+    conn.row_factory = sqlite3.Row
+    return conn
 
 def init_db():
     # Las tablas locales de SQLite para tus pruebas en la PC
