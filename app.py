@@ -838,7 +838,6 @@ def expediente_viejo():
         return redirect(url_for('menu'))
         
     conexion = get_db_connection()
-    # Cambia 'nombre' por el nombre exacto de la columna de tu CSV limpio
     expedientes = conexion.execute('SELECT * FROM expedientes_viejos').fetchall()
     
     total_estudiantes = conexion.execute("SELECT COUNT(*) FROM inscripciones").fetchone()[0]
