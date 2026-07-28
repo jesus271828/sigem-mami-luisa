@@ -228,16 +228,34 @@ def login():
         
         conn = get_db_connection()
         try:
-            user = conn.execute('SELECT * FROM usuarios WHERE username = ? AND password = ?', (usuario_ingresado, password)).fetchone()
-        except Exception:
+            # Verificamos si estamos usando psycopg2 (PostgreSQL) o sqlite3 local
+            # Usamos un cursor de diccionario si es psycopg2, o ejecutamos directo
+            if hasattr(conn, 'cursor'): # Es PostgreSQL / psycopg2
+                cursor = conn.cursor()
+                cursor.execute('SELECT username, rol, nombre_completo, curso_asignado FROM usuarios WHERE username = %s AND password = %s', (usuario_ingresado, password))
+                row = cursor.fetchone()
+                user = None
+                if row:
+                    # Mapeamos la tupla a un diccionario seguro
+                    user = {
+                        'username': row[0],
+                        'rol': row[1],
+                        'nombre_completo': row[2],
+                        'curso_asignado': row[3]
+                    }
+                cursor.close()
+            else: # Es SQLite local
+                user = conn.execute('SELECT * FROM usuarios WHERE username = ? AND password = ?', (usuario_ingresado, password)).fetchone()
+        except Exception as e:
+            print("Error en login:", e)
             user = None
         conn.close()
         
         if user:
-            session['usuario'] = user['username'] if 'username' in user.keys() else ''
-            session['rol'] = user['rol'] if 'rol' in user.keys() else ''
-            session['nombre_completo'] = user['nombre_completo'] if 'nombre_completo' in user.keys() else ''
-            session['curso_asignado'] = user['curso_asignado'] if 'curso_asignado' in user.keys() and user['curso_asignado'] else ''
+            session['usuario'] = user.get('username', '')
+            session['rol'] = user.get('rol', '')
+            session['nombre_completo'] = user.get('nombre_completo', '')
+            session['curso_asignado'] = user.get('curso_asignado', '') if user.get('curso_asignado') else ''
             return redirect(url_for('index'))
         else:
             return "Usuario o contraseña incorrectos"
