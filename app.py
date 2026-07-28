@@ -683,6 +683,7 @@ def buscar_estudiante():
     except:
         grados_disponibles = []
 
+    # Si se envia el formulario de filtro o busqueda
     if request.method == 'POST':
         criterio = request.form.get('criterio', '').strip()
         grado_filtro = request.form.get('grado_filtro', '').strip()
@@ -691,7 +692,6 @@ def buscar_estudiante():
         params = []
         
         if criterio:
-            # Ajusta 'id' si en tu tabla el campo se llama distinto (ej. id_estudiante)
             query += " AND (id LIKE ? OR nombres LIKE ? OR apellidos LIKE ?)"
             busqueda = f"%{criterio}%"
             params.extend([busqueda, busqueda, busqueda])
@@ -702,12 +702,41 @@ def buscar_estudiante():
             
         query += " ORDER BY id"
         estudiantes = conn.execute(query, params).fetchall()
-    else:
-        estudiantes = conn.execute("SELECT * FROM inscripciones ORDER BY id").fetchall()
+        conn.close()
         
+        # Retorna la plantilla donde se despliega la tabla de resultados
+        return render_template('buscar_estudiante.html',
+                               estudiantes=estudiantes,
+                               grados_disponibles=grados_disponibles,
+                               total_estudiantes=total_estudiantes,
+                               total_expedientes=total_expedientes,
+                               total_usuarios=total_usuarios)
+    
     conn.close()
-
+    # Si es GET puro, muestra la vista con los botones de seleccion
     return render_template('menu_buscar.html',
+                           total_estudiantes=total_estudiantes,
+                           total_expedientes=total_expedientes,
+                           total_usuarios=total_usuarios)
+
+@app.route('/resultado_buscar')
+def resultado_buscar():
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+        
+    conn = get_db_connection()
+    estudiantes = conn.execute("SELECT * FROM inscripciones ORDER BY id").fetchall()
+    
+    total_estudiantes = conn.execute("SELECT COUNT(*) FROM inscripciones").fetchone()[0]
+    total_expedientes = conn.execute("SELECT COUNT(*) FROM expedientes_viejos").fetchone()[0]
+    total_usuarios = conn.execute("SELECT COUNT(*) FROM usuarios").fetchone()[0]
+    
+    grados_rows = conn.execute("SELECT DISTINCT grado FROM inscripciones WHERE grado IS NOT NULL AND grado != '' ORDER BY grado").fetchall()
+    grados_disponibles = [row['grado'] if isinstance(row, sqlite3.Row) or hasattr(row, 'keys') else row[0] for row in grados_rows]
+    
+    conn.close()
+    
+    return render_template('buscar_estudiante.html',
                            estudiantes=estudiantes,
                            grados_disponibles=grados_disponibles,
                            total_estudiantes=total_estudiantes,
