@@ -858,11 +858,6 @@ def menu_viejo():
     
     return render_template('menu_viejo.html', total_incripciones=total_estudiantes, total_expedientes=total_expedientes, total_usuarios=total_usuarios)
 
-# --- ÚNICO PUNTO DE ENTRADA AL FINAL ---
-if __name__ == '__main__':
-    init_db()
-    app.run(debug=True)
-
 from flask import send_file
 
 @app.route('/descargar_base_de_datos')
@@ -871,3 +866,9 @@ def descargar_base_de_datos():
         flash('Acceso denegado.', 'danger')
         return redirect(url_for('menu'))
     return send_file('sigem_ml.db', as_attachment=True)
+
+
+# --- ÚNICO PUNTO DE ENTRADA AL FINAL ---
+if __name__ == '__main__':
+    init_db()
+    app.run(debug=True)
