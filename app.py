@@ -1,7 +1,7 @@
 import os
 import base64
 import sqlite3
-from flask import Flask, render_template, make_response, request, redirect, url_for, session, flash
+from flask import Flask, render_template, make_response, request, redirect, url_for, session, flash, send_file
 from xhtml2pdf import pisa
 from werkzeug.utils import secure_filename
 
@@ -51,11 +51,9 @@ def get_db_connection():
         return conn
 
 def init_db():
-  conn = get_db_connection()
-
-  if DATABASE_URL:
-    # Creación de tablas para PostgreSQL en Render
-    conn.execute('''
+    conn = get_db_connection()
+    if DATABASE_URL:
+        conn.execute('''
             CREATE TABLE IF NOT EXISTS estudiantes (
                 id SERIAL PRIMARY KEY,
                 id_estudiante TEXT,
@@ -66,122 +64,160 @@ def init_db():
                 numero_orden INTEGER
             )
         ''')
-
-    conn.execute('''
+        conn.execute('''
             CREATE TABLE IF NOT EXISTS inscripciones (
                 id SERIAL PRIMARY KEY,
-                anio_escolar TEXT, fecha_inscripcion TEXT, nombres TEXT, apellidos TEXT,
-                grado TEXT, fecha_nac TEXT, edad TEXT, sexo TEXT, nacionalidad TEXT,
+                anio_escolar TEXT, fecha_inscripcion TEXT, id_estudiante TEXT, nombres TEXT, apellidos TEXT,
+                grado TEXT, fecha_nacimiento TEXT, edad TEXT, sexo TEXT, nacionalidad TEXT,
                 lugar_nac TEXT, direccion TEXT, cant_hermanos TEXT, edades_hermanos TEXT,
-                lugar_ocupa TEXT, tipo_sangre TEXT, seguro_medico TEXT, alergias TEXT,
-                medicamentos TEXT, medico_pediatra TEXT, centro_medico TEXT,
-                emergencia_nombre TEXT, emergencia_parentesco TEXT, emergencia_tel TEXT,
+                lugar_ocupa TEXT, tipo_sangre TEXT, seguro_medico TEXT, foto_estudiante_cedula TEXT,
+                alergias TEXT, medicamentos TEXT, medico_pediatra TEXT, centro_medico TEXT,
+                emergencia_tel TEXT, emergencia_nombre TEXT, emergencia_parentesco TEXT,
                 padre_nombre TEXT, padre_sector TEXT, padre_direccion TEXT, padre_profesion TEXT,
-                padre_cedula TEXT, padre_nivel TEXT, padre_religion TEXT, padre_tel_personal TEXT,
-                padre_tel_trabajo TEXT, padre_correo TEXT,
+                padre_cedula TEXT, foto_padre_cedula TEXT, padre_nivel TEXT, padre_religion TEXT, 
+                padre_tel_personal TEXT, padre_tel_trabajo TEXT, padre_correo TEXT,
                 madre_nombre TEXT, madre_sector TEXT, madre_direccion TEXT, madre_profesion TEXT,
-                madre_cedula TEXT, madre_nivel TEXT, madre_religion TEXT, madre_tel_personal TEXT,
-                madre_tel_trabajo TEXT, madre_correo TEXT,
+                madre_cedula TEXT, foto_madre_cedula TEXT, madre_nivel TEXT, madre_religion TEXT, 
+                madre_tel_personal TEXT, madre_tel_trabajo TEXT, madre_correo TEXT,
                 tutor_nombre TEXT, tutor_sector TEXT, tutor_direccion TEXT, tutor_profesion TEXT,
-                tutor_cedula TEXT, tutor_nivel TEXT, tutor_religion TEXT, tutor_tel_personal TEXT,
-                tutor_tel_trabajo TEXT, tutor_correo TEXT,
-                aut_nombre_1 TEXT, aut_cedula_1 TEXT, aut_tel_1 TEXT,
-                aut_nombre_2 TEXT, aut_cedula_2 TEXT, aut_tel_2 TEXT,
-                aut_nombre_3 TEXT, aut_cedula_3 TEXT, aut_tel_3 TEXT,
-                aut_nombre_4 TEXT, aut_cedula_4 TEXT, aut_tel_4 TEXT,
-                aut_nombre_5 TEXT, aut_cedula_5 TEXT, aut_tel_5 TEXT,
-                vive_nombres TEXT, vive_parentesco TEXT, vive_cedula TEXT, vive_direccion TEXT,
-                vive_sector TEXT, vive_profesion TEXT, vive_religion TEXT, vive_nivel TEXT,
-                vive_tel_personal TEXT, vive_tel_trabajo TEXT, vive_correo TEXT,
-                econ_nombres TEXT, econ_parentesco TEXT, econ_direccion TEXT, econ_sector TEXT,
-                econ_cedula TEXT, econ_lugar_trabajo TEXT, econ_tel_trabajo TEXT,
-                econ_tel_personal TEXT, econ_correo TEXT,
-                autoriza_medicamentos TEXT
+                tutor_cedula TEXT, foto_tutor_cedula TEXT, tutor_nivel TEXT, tutor_religion TEXT, 
+                tutor_tel_personal TEXT, tutor_tel_trabajo TEXT, tutor_correo TEXT,
+                vive_nombres TEXT, vive_parentesco TEXT, vive_cedula TEXT, foto_vive_cedula TEXT, 
+                vive_direccion TEXT, vive_sector TEXT, vive_profesion TEXT, vive_nivel TEXT, 
+                vive_religion TEXT, vive_tel_personal TEXT, vive_tel_trabajo TEXT, vive_correo TEXT,
+                econ_nombres TEXT, econ_parentesco TEXT, econ_cedula TEXT, foto_econ_cedula TEXT, 
+                econ_direccion TEXT, econ_sector TEXT, econ_profesion TEXT, econ_lugar_trabajo TEXT, 
+                econ_tel_personal TEXT, econ_tel_trabajo TEXT, econ_correo TEXT,
+                aut_nombre_1 TEXT, aut_cedula_1 TEXT, aut_parentesco_1 TEXT, aut_tel_1 TEXT, foto_aut_cedula_1 TEXT,
+                aut_nombre_2 TEXT, aut_cedula_2 TEXT, aut_parentesco_2 TEXT, aut_tel_2 TEXT, foto_aut_cedula_2 TEXT,
+                aut_nombre_3 TEXT, aut_cedula_3 TEXT, aut_parentesco_3 TEXT, aut_tel_3 TEXT, foto_aut_cedula_3 TEXT,
+                aut_nombre_4 TEXT, aut_cedula_4 TEXT, aut_parentesco_4 TEXT, aut_tel_4 TEXT, foto_aut_cedula_4 TEXT,
+                aut_nombre_5 TEXT, aut_cedula_5 TEXT, aut_parentesco_5 TEXT, aut_tel_5 TEXT, foto_aut_cedula_5 TEXT,
+                autoriza_medicamentos TEXT, autoriza_redes TEXT, firma_redes TEXT
             )
         ''')
-  else:
-    # Creación de tablas para SQLite en tu PC (con AUTOINCREMENT)
-    cursor = conn.conn.cursor() if hasattr(conn, 'conn') else conn.cursor()
-    cursor.execute('''
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS autorizados (
+                id SERIAL PRIMARY KEY,
+                id_estudiante TEXT, nombres TEXT, apellidos TEXT, grado TEXT, foto_estudiante_cedula TEXT,
+                padre_nombre TEXT, padre_cedula TEXT, foto_padre_cedula TEXT, padre_tel_personal TEXT, padre_tel_trabajo TEXT,
+                madre_nombre TEXT, madre_cedula TEXT, foto_madre_cedula TEXT, madre_tel_personal TEXT, madre_tel_trabajo TEXT,
+                tutor_nombre TEXT, tutor_cedula TEXT, foto_tutor_cedula TEXT, tutor_tel_personal TEXT, tutor_tel_trabajo TEXT,
+                aut_nombre_1 TEXT, aut_cedula_1 TEXT, aut_parentesco_1 TEXT, aut_tel_1 TEXT, foto_aut_cedula_1 TEXT,
+                aut_nombre_2 TEXT, aut_cedula_2 TEXT, aut_parentesco_2 TEXT, aut_tel_2 TEXT, foto_aut_cedula_2 TEXT,
+                aut_nombre_3 TEXT, aut_cedula_3 TEXT, aut_parentesco_3 TEXT, aut_tel_3 TEXT, foto_aut_cedula_3 TEXT,
+                aut_nombre_4 TEXT, aut_cedula_4 TEXT, aut_parentesco_4 TEXT, aut_tel_4 TEXT, foto_aut_cedula_4 TEXT,
+                aut_nombre_5 TEXT, aut_cedula_5 TEXT, aut_parentesco_5 TEXT, aut_tel_5 TEXT, foto_aut_cedula_5 TEXT
+            )
+        ''')
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS usuarios (
+                id SERIAL PRIMARY KEY,
+                nombre_completo TEXT,
+                username TEXT,
+                password TEXT,
+                rol TEXT,
+                curso_asignado TEXT
+            )
+        ''')
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS expedientes_viejos (
+                id SERIAL PRIMARY KEY,
+                "Unnamed: 3" TEXT,
+                "Unnamed: 4" TEXT,
+                "Unnamed: 5" TEXT
+            )
+        ''')
+    else:
+        cursor = conn.cursor()
+        cursor.execute('''
             CREATE TABLE IF NOT EXISTS estudiantes (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                id_estudiante TEXT,
-                nombres TEXT,
-                apellidos TEXT,
-                grado TEXT,
-                foto_estudiante_cedula TEXT,
-                numero_orden INTEGER
+                id_estudiante TEXT, nombres TEXT, apellidos TEXT, grado TEXT,
+                foto_estudiante_cedula TEXT, numero_orden INTEGER
             )
         ''')
-    cursor.execute('''
+        cursor.execute('''
             CREATE TABLE IF NOT EXISTS inscripciones (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                anio_escolar TEXT, fecha_inscripcion TEXT, nombres TEXT, apellidos TEXT,
-                grado TEXT, fecha_nac TEXT, edad TEXT, sexo TEXT, nacionalidad TEXT,
+                anio_escolar TEXT, fecha_inscripcion TEXT, id_estudiante TEXT, nombres TEXT, apellidos TEXT,
+                grado TEXT, fecha_nacimiento TEXT, edad TEXT, sexo TEXT, nacionalidad TEXT,
                 lugar_nac TEXT, direccion TEXT, cant_hermanos TEXT, edades_hermanos TEXT,
-                lugar_ocupa TEXT, tipo_sangre TEXT, seguro_medico TEXT, alergias TEXT,
-                medicamentos TEXT, medico_pediatra TEXT, centro_medico TEXT,
-                emergencia_nombre TEXT, emergencia_parentesco TEXT, emergencia_tel TEXT,
+                lugar_ocupa TEXT, tipo_sangre TEXT, seguro_medico TEXT, foto_estudiante_cedula TEXT,
+                alergias TEXT, medicamentos TEXT, medico_pediatra TEXT, centro_medico TEXT,
+                emergencia_tel TEXT, emergencia_nombre TEXT, emergencia_parentesco TEXT,
                 padre_nombre TEXT, padre_sector TEXT, padre_direccion TEXT, padre_profesion TEXT,
-                padre_cedula TEXT, padre_nivel TEXT, padre_religion TEXT, padre_tel_personal TEXT,
-                padre_tel_trabajo TEXT, padre_correo TEXT,
+                padre_cedula TEXT, foto_padre_cedula TEXT, padre_nivel TEXT, padre_religion TEXT, 
+                padre_tel_personal TEXT, padre_tel_trabajo TEXT, padre_correo TEXT,
                 madre_nombre TEXT, madre_sector TEXT, madre_direccion TEXT, madre_profesion TEXT,
-                madre_cedula TEXT, madre_nivel TEXT, madre_religion TEXT, madre_tel_personal TEXT,
-                madre_tel_trabajo TEXT, madre_correo TEXT,
+                madre_cedula TEXT, foto_madre_cedula TEXT, madre_nivel TEXT, madre_religion TEXT, 
+                madre_tel_personal TEXT, madre_tel_trabajo TEXT, madre_correo TEXT,
                 tutor_nombre TEXT, tutor_sector TEXT, tutor_direccion TEXT, tutor_profesion TEXT,
-                tutor_cedula TEXT, tutor_nivel TEXT, tutor_religion TEXT, tutor_tel_personal TEXT,
-                tutor_tel_trabajo TEXT, tutor_correo TEXT,
-                aut_nombre_1 TEXT, aut_cedula_1 TEXT, aut_tel_1 TEXT,
-                aut_nombre_2 TEXT, aut_cedula_2 TEXT, aut_tel_2 TEXT,
-                aut_nombre_3 TEXT, aut_cedula_3 TEXT, aut_tel_3 TEXT,
-                aut_nombre_4 TEXT, aut_cedula_4 TEXT, aut_tel_4 TEXT,
-                aut_nombre_5 TEXT, aut_cedula_5 TEXT, aut_tel_5 TEXT,
-                vive_nombres TEXT, vive_parentesco TEXT, vive_cedula TEXT, vive_direccion TEXT,
-                vive_sector TEXT, vive_profesion TEXT, vive_religion TEXT, vive_nivel TEXT,
-                vive_tel_personal TEXT, vive_tel_trabajo TEXT, vive_correo TEXT,
-                econ_nombres TEXT, econ_parentesco TEXT, econ_direccion TEXT, econ_sector TEXT,
-                econ_cedula TEXT, econ_lugar_trabajo TEXT, econ_tel_trabajo TEXT,
-                econ_tel_personal TEXT, econ_correo TEXT,
-                autoriza_medicamentos TEXT
+                tutor_cedula TEXT, foto_tutor_cedula TEXT, tutor_nivel TEXT, tutor_religion TEXT, 
+                tutor_tel_personal TEXT, tutor_tel_trabajo TEXT, tutor_correo TEXT,
+                vive_nombres TEXT, vive_parentesco TEXT, vive_cedula TEXT, foto_vive_cedula TEXT, 
+                vive_direccion TEXT, vive_sector TEXT, vive_profesion TEXT, vive_nivel TEXT, 
+                vive_religion TEXT, vive_tel_personal TEXT, vive_tel_trabajo TEXT, vive_correo TEXT,
+                econ_nombres TEXT, econ_parentesco TEXT, econ_cedula TEXT, foto_econ_cedula TEXT, 
+                econ_direccion TEXT, econ_sector TEXT, econ_profesion TEXT, econ_lugar_trabajo TEXT, 
+                econ_tel_personal TEXT, econ_tel_trabajo TEXT, econ_correo TEXT,
+                aut_nombre_1 TEXT, aut_cedula_1 TEXT, aut_parentesco_1 TEXT, aut_tel_1 TEXT, foto_aut_cedula_1 TEXT,
+                aut_nombre_2 TEXT, aut_cedula_2 TEXT, aut_parentesco_2 TEXT, aut_tel_2 TEXT, foto_aut_cedula_2 TEXT,
+                aut_nombre_3 TEXT, aut_cedula_3 TEXT, aut_parentesco_3 TEXT, aut_tel_3 TEXT, foto_aut_cedula_3 TEXT,
+                aut_nombre_4 TEXT, aut_cedula_4 TEXT, aut_parentesco_4 TEXT, aut_tel_4 TEXT, foto_aut_cedula_4 TEXT,
+                aut_nombre_5 TEXT, aut_cedula_5 TEXT, aut_parentesco_5 TEXT, aut_tel_5 TEXT, foto_aut_cedula_5 TEXT,
+                autoriza_medicamentos TEXT, autoriza_redes TEXT, firma_redes TEXT
+            )
+        ''')
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS autorizados (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id_estudiante TEXT, nombres TEXT, apellidos TEXT, grado TEXT, foto_estudiante_cedula TEXT,
+                padre_nombre TEXT, padre_cedula TEXT, foto_padre_cedula TEXT, padre_tel_personal TEXT, padre_tel_trabajo TEXT,
+                madre_nombre TEXT, madre_cedula TEXT, foto_madre_cedula TEXT, madre_tel_personal TEXT, madre_tel_trabajo TEXT,
+                tutor_nombre TEXT, tutor_cedula TEXT, foto_tutor_cedula TEXT, tutor_tel_personal TEXT, tutor_tel_trabajo TEXT,
+                aut_nombre_1 TEXT, aut_cedula_1 TEXT, aut_parentesco_1 TEXT, aut_tel_1 TEXT, foto_aut_cedula_1 TEXT,
+                aut_nombre_2 TEXT, aut_cedula_2 TEXT, aut_parentesco_2 TEXT, aut_tel_2 TEXT, foto_aut_cedula_2 TEXT,
+                aut_nombre_3 TEXT, aut_cedula_3 TEXT, aut_parentesco_3 TEXT, aut_tel_3 TEXT, foto_aut_cedula_3 TEXT,
+                aut_nombre_4 TEXT, aut_cedula_4 TEXT, aut_parentesco_4 TEXT, aut_tel_4 TEXT, foto_aut_cedula_4 TEXT,
+                aut_nombre_5 TEXT, aut_cedula_5 TEXT, aut_parentesco_5 TEXT, aut_tel_5 TEXT, foto_aut_cedula_5 TEXT
+            )
+        ''')
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS usuarios (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nombre_completo TEXT, username TEXT, password TEXT, rol TEXT, curso_asignado TEXT
+            )
+        ''')
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS expedientes_viejos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                "Unnamed: 3" TEXT, "Unnamed: 4" TEXT, "Unnamed: 5" TEXT
             )
         ''')
     conn.commit()
+    conn.close()
 
-  conn.commit()
-  conn.close()
+# Forzar la creación de tablas al iniciar (tanto en local como en Gunicorn/Render)
+init_db()
 
 # --- RUTA PRINCIPAL (INDEX Y MENU) ---
 @app.route('/')
 @app.route('/menu')
 def index():
     usuario_actual = session.get('usuario')
-    rol_actual = session.get('rol')
-    nombre_completo = session.get('nombre_completo')
-    
     conn = get_db_connection()
     try:
         total_inscripciones = conn.execute('SELECT COUNT(*) FROM inscripciones').fetchone()[0]
-    except sqlite3.OperationalError:
+    except:
         total_inscripciones = 0
-        
     try:
-        total_expedientes = conn.execute('SELECT COUNT(*) FROM expedientes_viejos').fetchone()[0]
-    except sqlite3.OperationalError:
-        total_expedientes = 0
-        
-    try:
-        total_usuarios = conn.execute('SELECT COUNT(*) FROM usuarios').fetchone()[0]
-    except sqlite3.OperationalError:
-        total_usuarios = 0
+        total_estudiantes = conn.execute('SELECT COUNT(*) FROM estudiantes').fetchone()[0]
+    except:
+        total_estudiantes = 0
     conn.close()
     
-    return render_template('menu.html', 
-                           usuario=usuario_actual, 
-                           rol=rol_actual, 
-                           nombre_completo=nombre_completo,
-                           total_estudiantes=total_inscripciones,
-                           total_expedientes=total_expedientes,
-                           total_usuarios=total_usuarios)
+    return render_template('menu.html', total_inscripciones=total_inscripciones, total_estudiantes=total_estudiantes, usuario_actual=usuario_actual)
 
 # --- AUTENTICACIÓN ---
 @app.route('/login', methods=['GET', 'POST'])
@@ -193,7 +229,7 @@ def login():
         conn = get_db_connection()
         try:
             user = conn.execute('SELECT * FROM usuarios WHERE username = ? AND password = ?', (usuario_ingresado, password)).fetchone()
-        except sqlite3.OperationalError:
+        except Exception:
             user = None
         conn.close()
         
@@ -213,17 +249,10 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
-# --- INSCRIPCIÓN (Guardado seguro en las tres tablas) ---
-import sqlite3
-
-def conectar_db():
-    conexion = sqlite3.connect('sigem_ml.db') # O la ruta de tu base de datos
-    conexion.row_factory = sqlite3.Row
-    return conexion
+# --- INSCRIPCIÓN ---
 @app.route('/inscripcion', methods=['GET', 'POST'])
 def inscripcion():
     if request.method == 'POST':
-        # Función auxiliar para guardar archivos de forma segura
         def guardar_archivo(input_name):
             file = request.files.get(input_name)
             if file and file.filename != '':
@@ -233,7 +262,6 @@ def inscripcion():
                 return filepath
             return None
 
-        # 1. Recoger datos generales y del estudiante
         anio_escolar = request.form.get('anio_escolar')
         fecha_inscripcion = request.form.get('fecha_inscripcion')
         id_estudiante = request.form.get('id_estudiante')
@@ -260,7 +288,6 @@ def inscripcion():
         emergencia_nombre = request.form.get('emergencia_nombre')
         emergencia_parentesco = request.form.get('emergencia_parentesco')
 
-        # 2. Datos del Padre
         padre_nombre = request.form.get('padre_nombre')
         padre_sector = request.form.get('padre_sector')
         padre_direccion = request.form.get('padre_direccion')
@@ -273,7 +300,6 @@ def inscripcion():
         padre_tel_trabajo = request.form.get('padre_tel_trabajo')
         padre_correo = request.form.get('padre_correo')
 
-        # 2. Datos de la Madre
         madre_nombre = request.form.get('madre_nombre')
         madre_sector = request.form.get('madre_sector')
         madre_direccion = request.form.get('madre_direccion')
@@ -286,7 +312,6 @@ def inscripcion():
         madre_tel_trabajo = request.form.get('madre_tel_trabajo')
         madre_correo = request.form.get('madre_correo')
 
-        # 2. Datos del Tutor
         tutor_nombre = request.form.get('tutor_nombre')
         tutor_sector = request.form.get('tutor_sector')
         tutor_direccion = request.form.get('tutor_direccion')
@@ -299,7 +324,6 @@ def inscripcion():
         tutor_tel_trabajo = request.form.get('tutor_tel_trabajo')
         tutor_correo = request.form.get('tutor_correo')
 
-        # 3. Persona con la que vive
         vive_nombres = request.form.get('vive_nombres')
         vive_parentesco = request.form.get('vive_parentesco')
         vive_cedula = request.form.get('vive_cedula')
@@ -313,7 +337,6 @@ def inscripcion():
         vive_tel_trabajo = request.form.get('vive_tel_trabajo')
         vive_correo = request.form.get('vive_correo')
 
-        # 4. Principal Responsable Económico
         econ_nombres = request.form.get('econ_nombres')
         econ_parentesco = request.form.get('econ_parentesco')
         econ_cedula = request.form.get('econ_cedula')
@@ -326,7 +349,6 @@ def inscripcion():
         econ_tel_trabajo = request.form.get('econ_tel_trabajo')
         econ_correo = request.form.get('econ_correo')
 
-        # 5. Autorizados a Retirar (Del 1 al 5)
         aut_data = {}
         for i in range(1, 6):
             aut_data[f'aut_nombre_{i}'] = request.form.get(f'aut_nombre_{i}')
@@ -335,30 +357,25 @@ def inscripcion():
             aut_data[f'aut_tel_{i}'] = request.form.get(f'aut_tel_{i}')
             aut_data[f'foto_aut_cedula_{i}'] = guardar_archivo(f'foto_aut_cedula_{i}')
 
-        # 6 y 7. Autorizaciones especiales
         autoriza_medicamentos = request.form.get('autoriza_medicamentos', 'NO')
         autoriza_redes = request.form.get('autoriza_redes', 'NO')
         firma_redes = request.form.get('firma_redes')
 
-        # Inserción en la Base de Datos SQLite (Tablas: estudiantes, autorizados, inscripciones)
         try:
-            conexion = conectar_db()
-            cursor = conexion.cursor()
+            conexion = get_db_connection()
             
-            # --- 1. GUARDAR EN TABLA ESTUDIANTES (Incluyendo el Grado y número de orden alfabético) ---
-            cursor.execute('''
+            conexion.execute('''
                 INSERT INTO estudiantes (nombres, apellidos, id_estudiante, grado, foto_estudiante_cedula)
                 VALUES (?, ?, ?, ?, ?)
             ''', (nombres, apellidos, id_estudiante, grado, foto_estudiante_cedula))
             
-            # Recalcular y actualizar los números de orden de todos los estudiantes alfabéticamente
-            cursor.execute("SELECT id FROM estudiantes ORDER BY nombres ASC, apellidos ASC")
-            registros_estudiantes = cursor.fetchall()
+            conexion.execute("SELECT id FROM estudiantes ORDER BY nombres ASC, apellidos ASC")
+            registros_estudiantes = conexion.fetchall()
             for indice, reg in enumerate(registros_estudiantes, start=1):
-                cursor.execute("UPDATE estudiantes SET numero_orden = ? WHERE id = ?", (indice, reg[0]))
+                reg_id = reg['id'] if isinstance(reg, sqlite3.Row) or hasattr(reg, 'keys') else reg[0]
+                conexion.execute("UPDATE estudiantes SET numero_orden = ? WHERE id = ?", (indice, reg_id))
 
-            # --- 2. GUARDAR EN TABLA AUTORIZADOS ---
-            cursor.execute('''
+            conexion.execute('''
                 INSERT INTO autorizados (
                     id_estudiante, nombres, apellidos, grado, foto_estudiante_cedula,
                     padre_nombre, padre_cedula, foto_padre_cedula, padre_tel_personal, padre_tel_trabajo,
@@ -392,36 +409,28 @@ def inscripcion():
                 aut_data['aut_nombre_5'], aut_data['aut_cedula_5'], aut_data['aut_parentesco_5'], aut_data['aut_tel_5'], aut_data['foto_aut_cedula_5']
             ))
 
-            # --- 3. GUARDAR EN TABLA INSCRIPCIONES (Registro completo histórico) ---
-            cursor.execute('''
+            conexion.execute('''
                 INSERT INTO inscripciones (
                     anio_escolar, fecha_inscripcion, id_estudiante, nombres, apellidos, grado, 
                     fecha_nacimiento, edad, sexo, nacionalidad, lugar_nac, direccion, cant_hermanos, 
                     edades_hermanos, lugar_ocupa, tipo_sangre, seguro_medico, foto_estudiante_cedula, 
                     alergias, medicamentos, medico_pediatra, centro_medico, emergencia_tel, 
                     emergencia_nombre, emergencia_parentesco,
-                    
                     padre_nombre, padre_sector, padre_direccion, padre_profesion, padre_cedula, 
                     foto_padre_cedula, padre_nivel, padre_religion, padre_tel_personal, padre_tel_trabajo, padre_correo,
-                    
                     madre_nombre, madre_sector, madre_direccion, madre_profesion, madre_cedula, 
                     foto_madre_cedula, madre_nivel, madre_religion, madre_tel_personal, madre_tel_trabajo, madre_correo,
-                    
                     tutor_nombre, tutor_sector, tutor_direccion, tutor_profesion, tutor_cedula, 
                     foto_tutor_cedula, tutor_nivel, tutor_religion, tutor_tel_personal, tutor_tel_trabajo, tutor_correo,
-                    
                     vive_nombres, vive_parentesco, vive_cedula, foto_vive_cedula, vive_direccion, 
                     vive_sector, vive_profesion, vive_nivel, vive_religion, vive_tel_personal, vive_tel_trabajo, vive_correo,
-                    
                     econ_nombres, econ_parentesco, econ_cedula, foto_econ_cedula, econ_direccion, 
                     econ_sector, econ_profesion, econ_lugar_trabajo, econ_tel_personal, econ_tel_trabajo, econ_correo,
-                    
                     aut_nombre_1, aut_cedula_1, aut_parentesco_1, aut_tel_1, foto_aut_cedula_1,
                     aut_nombre_2, aut_cedula_2, aut_parentesco_2, aut_tel_2, foto_aut_cedula_2,
                     aut_nombre_3, aut_cedula_3, aut_parentesco_3, aut_tel_3, foto_aut_cedula_3,
                     aut_nombre_4, aut_cedula_4, aut_parentesco_4, aut_tel_4, foto_aut_cedula_4,
                     aut_nombre_5, aut_cedula_5, aut_parentesco_5, aut_tel_5, foto_aut_cedula_5,
-                    
                     autoriza_medicamentos, autoriza_redes, firma_redes
                 ) VALUES (
                     ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
@@ -439,28 +448,21 @@ def inscripcion():
                 edades_hermanos, lugar_ocupa, tipo_sangre, seguro_medico, foto_estudiante_cedula, 
                 alergias, medicamentos, medico_pediatra, centro_medico, emergencia_tel, 
                 emergencia_nombre, emergencia_parentesco,
-                
                 padre_nombre, padre_sector, padre_direccion, padre_profesion, padre_cedula, 
                 foto_padre_cedula, padre_nivel, padre_religion, padre_tel_personal, padre_tel_trabajo, padre_correo,
-                
                 madre_nombre, madre_sector, madre_direccion, madre_profesion, madre_cedula, 
                 foto_madre_cedula, madre_nivel, madre_religion, madre_tel_personal, madre_tel_trabajo, madre_correo,
-                
                 tutor_nombre, tutor_sector, tutor_direccion, tutor_profesion, tutor_cedula, 
                 foto_tutor_cedula, tutor_nivel, tutor_religion, tutor_tel_personal, tutor_tel_trabajo, tutor_correo,
-                
                 vive_nombres, vive_parentesco, vive_cedula, foto_vive_cedula, vive_direccion, 
                 vive_sector, vive_profesion, vive_nivel, vive_religion, vive_tel_personal, vive_tel_trabajo, vive_correo,
-                
                 econ_nombres, econ_parentesco, econ_cedula, foto_econ_cedula, econ_direccion, 
                 econ_sector, econ_profesion, econ_lugar_trabajo, econ_tel_personal, econ_tel_trabajo, econ_correo,
-                
                 aut_data['aut_nombre_1'], aut_data['aut_cedula_1'], aut_data['aut_parentesco_1'], aut_data['aut_tel_1'], aut_data['foto_aut_cedula_1'],
                 aut_data['aut_nombre_2'], aut_data['aut_cedula_2'], aut_data['aut_parentesco_2'], aut_data['aut_tel_2'], aut_data['foto_aut_cedula_2'],
                 aut_data['aut_nombre_3'], aut_data['aut_cedula_3'], aut_data['aut_parentesco_3'], aut_data['aut_tel_3'], aut_data['foto_aut_cedula_3'],
                 aut_data['aut_nombre_4'], aut_data['aut_cedula_4'], aut_data['aut_parentesco_4'], aut_data['aut_tel_4'], aut_data['foto_aut_cedula_4'],
                 aut_data['aut_nombre_5'], aut_data['aut_cedula_5'], aut_data['aut_parentesco_5'], aut_data['aut_tel_5'], aut_data['foto_aut_cedula_5'],
-                
                 autoriza_medicamentos, autoriza_redes, firma_redes
             ))
             
@@ -484,18 +486,16 @@ def menu_buscar():
     
     conn = get_db_connection()
     try:
-        total_estudiantes = conn.execute('SELECT COUNT(*) FROM inscripciones').fetchone()[0] # Cambia 'inscripciones' por 'estudiantes' si tu tabla se llama así
-    except sqlite3.OperationalError:
+        total_estudiantes = conn.execute('SELECT COUNT(*) FROM inscripciones').fetchone()[0]
+    except:
         total_estudiantes = 0
-        
     try:
         total_expedientes = conn.execute('SELECT COUNT(*) FROM expedientes_viejos').fetchone()[0]
-    except sqlite3.OperationalError:
+    except:
         total_expedientes = 0
-        
     try:
         total_usuarios = conn.execute('SELECT COUNT(*) FROM usuarios').fetchone()[0]
-    except sqlite3.OperationalError:
+    except:
         total_usuarios = 0
     conn.close()
     
@@ -509,24 +509,18 @@ def buscar_autorizado():
     if 'usuario' not in session:
         return redirect(url_for('login'))
         
-    conn = conectar_db()
-    cursor = conn.cursor()
+    conn = get_db_connection()
     
     try:
-        cursor.execute("SELECT COUNT(*) FROM estudiantes")
-        total_estudiantes = cursor.fetchone()[0]
+        total_estudiantes = conn.execute("SELECT COUNT(*) FROM estudiantes").fetchone()[0]
     except:
         total_estudiantes = 0
-        
     try:
-        cursor.execute("SELECT COUNT(*) FROM expedientes_viejos")
-        total_expedientes = cursor.fetchone()[0]
+        total_expedientes = conn.execute("SELECT COUNT(*) FROM expedientes_viejos").fetchone()[0]
     except:
         total_expedientes = 0
-        
     try:
-        cursor.execute("SELECT COUNT(*) FROM usuarios")
-        total_usuarios = cursor.fetchone()[0]
+        total_usuarios = conn.execute("SELECT COUNT(*) FROM usuarios").fetchone()[0]
     except:
         total_usuarios = 0
 
@@ -536,7 +530,6 @@ def buscar_autorizado():
         criterio = request.form.get('criterio', '').strip()
         busqueda = f"%{criterio}%"
         
-        # Consulta para buscar en cualquiera de los campos de autorizados
         query = """
             SELECT a.*, e.nombres as est_nombres, e.apellidos as est_apellidos, e.grado, e.foto_estudiante_cedula
             FROM autorizados a
@@ -547,16 +540,13 @@ def buscar_autorizado():
                OR a.aut_nombre_4 LIKE ? OR a.aut_cedula_4 LIKE ?
                OR a.aut_nombre_5 LIKE ? OR a.aut_cedula_5 LIKE ?
         """
-        cursor.execute(query, (busqueda, busqueda, busqueda, busqueda, busqueda, busqueda, busqueda, busqueda, busqueda, busqueda))
-        rows = cursor.fetchall()
+        rows = conn.execute(query, (busqueda, busqueda, busqueda, busqueda, busqueda, busqueda, busqueda, busqueda, busqueda, busqueda)).fetchall()
         
         uploads_dir = os.path.join(app.root_path, 'static', 'uploads')
 
         for row in rows:
             base_dict = dict(row)
-            keys = base_dict.keys()
             
-            # Revisar los 5 slots posibles de autorizados para identificar cuál coincide con la búsqueda
             for i in range(1, 6):
                 nom_campo = f'aut_nombre_{i}'
                 ced_campo = f'aut_cedula_{i}'
@@ -565,15 +555,11 @@ def buscar_autorizado():
                 val_nom = str(base_dict.get(nom_campo, '')).lower()
                 val_ced = str(base_dict.get(ced_campo, ''))
                 
-                # Si el criterio coincide con este slot específico (por nombre o cédula)
                 if criterio.lower() in val_nom or (criterio != '' and criterio in val_ced):
                     autorizado = base_dict.copy()
-                    
-                    # Asignar los datos exactos de este slot
                     autorizado['nombre_completo'] = base_dict.get(nom_campo, '')
                     autorizado['cedula'] = base_dict.get(ced_campo, '')
                     
-                    # --- FOTO DE ESTE AUTORIZADO ---
                     ruta_aut = str(base_dict.get(foto_campo, '')).strip()
                     nombre_aut = ""
                     if ruta_aut:
@@ -586,7 +572,6 @@ def buscar_autorizado():
                     else:
                         autorizado['foto_autorizado'] = ''
 
-                    # --- FOTO DEL ESTUDIANTE ---
                     ruta_est = str(base_dict.get('foto_estudiante_cedula', '')).strip()
                     nombre_est = ""
                     if ruta_est:
@@ -602,7 +587,6 @@ def buscar_autorizado():
                     autorizado['nombres'] = base_dict.get('est_nombres', '')
                     autorizado['apellidos'] = base_dict.get('est_apellidos', '')
 
-                    # Evitar duplicados si un mismo registro matchea por varias vías
                     if autorizado not in lista_autorizados:
                         lista_autorizados.append(autorizado)
 
@@ -619,36 +603,27 @@ def buscar_estudiante():
     if 'usuario' not in session:
         return redirect(url_for('login'))
         
-    conn = conectar_db()
-    cursor = conn.cursor()
+    conn = get_db_connection()
     
-    # Contadores generales para la barra lateral
     try:
-        cursor.execute("SELECT COUNT(*) FROM estudiantes")
-        total_estudiantes = cursor.fetchone()[0]
+        total_estudiantes = conn.execute("SELECT COUNT(*) FROM estudiantes").fetchone()[0]
     except:
         total_estudiantes = 0
-        
     try:
-        cursor.execute("SELECT COUNT(*) FROM expedientes_viejos")
-        total_expedientes = cursor.fetchone()[0]
+        total_expedientes = conn.execute("SELECT COUNT(*) FROM expedientes_viejos").fetchone()[0]
     except:
         total_expedientes = 0
-        
     try:
-        cursor.execute("SELECT COUNT(*) FROM usuarios")
-        total_usuarios = cursor.fetchone()[0]
+        total_usuarios = conn.execute("SELECT COUNT(*) FROM usuarios").fetchone()[0]
     except:
         total_usuarios = 0
 
-    # Obtener lista única de grados/cursos para llenar el selector desplegable
     try:
-        cursor.execute("SELECT DISTINCT grado FROM estudiantes WHERE grado IS NOT NULL AND grado != '' ORDER BY grado")
-        grados_disponibles = [row['grado'] for row in cursor.fetchall()]
+        grados_rows = conn.execute("SELECT DISTINCT grado FROM estudiantes WHERE grado IS NOT NULL AND grado != '' ORDER BY grado").fetchall()
+        grados_disponibles = [row['grado'] if isinstance(row, sqlite3.Row) or hasattr(row, 'keys') else row[0] for row in grados_rows]
     except:
         grados_disponibles = []
 
-    # Lógica de búsqueda y filtrado
     if request.method == 'POST':
         criterio = request.form.get('criterio', '').strip()
         grado_filtro = request.form.get('grado_filtro', '').strip()
@@ -666,12 +641,10 @@ def buscar_estudiante():
             params.append(grado_filtro)
             
         query += " ORDER BY id_estudiante"
-        cursor.execute(query, params)
+        estudiantes = conn.execute(query, params).fetchall()
     else:
-        # Por defecto al entrar (GET), cargamos TODOS los estudiantes registrados
-        cursor.execute("SELECT * FROM estudiantes ORDER BY id_estudiante")
+        estudiantes = conn.execute("SELECT * FROM estudiantes ORDER BY id_estudiante").fetchall()
         
-    estudiantes = cursor.fetchall()
     conn.close()
 
     return render_template('buscar_estudiante.html',
@@ -683,29 +656,19 @@ def buscar_estudiante():
 
 @app.route('/generar_pdf/<id_estudiante>')
 def generar_pdf(id_estudiante):
-    conexion = conectar_db()
-    cursor = conexion.cursor()
+    conexion = get_db_connection()
     
-    # 1. Buscar en la tabla 'inscripciones'
-    cursor.execute("SELECT * FROM inscripciones WHERE id_estudiante = ?", (id_estudiante,))
-    estudiante = cursor.fetchone()
+    estudiante = conexion.execute("SELECT * FROM inscripciones WHERE id_estudiante = ?", (id_estudiante,)).fetchone()
     
     if not estudiante:
-        cursor.execute("SELECT * FROM inscripciones WHERE id = ?", (id_estudiante,))
-        estudiante = cursor.fetchone()
+        estudiante = conexion.execute("SELECT * FROM inscripciones WHERE id = ?", (id_estudiante,)).fetchone()
 
-    cursor.execute("SELECT * FROM autorizados WHERE id_estudiante = ?", (id_estudiante,))
-    autorizados = cursor.fetchone()
+    autorizados = conexion.execute("SELECT * FROM autorizados WHERE id_estudiante = ?", (id_estudiante,)).fetchone()
     
     conexion.close()
     
     if not estudiante:
         return f"No se encontró ninguna inscripción para el estudiante con ID: {id_estudiante}", 404
-
-    # --- LÍNEA DE DEPURACIÓN (MIRA TU TERMINAL DE VS CODE) ---
-    print("--- DATOS ENCONTRADOS EN INSCRIPCIONES ---")
-    for key in estudiante.keys():
-        print(f"{key}: {estudiante[key]}")
 
     logo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'img', 'logo2.png')
     logo_src = ""
@@ -738,7 +701,6 @@ def asistencia():
 def menu_notas():
     return render_template('menu_notas.html')
 
-
 @app.route('/notas1')
 def notas1():
     rol = str(session.get('rol', '')).strip().lower()
@@ -769,11 +731,9 @@ def listado_estudiantes():
     
     conexion = get_db_connection()
     
-    # Si es oficina o admin, ve todos los estudiantes
     if rol in ['admin', 'oficina']:
         estudiantes = conexion.execute("SELECT * FROM estudiantes").fetchall()
     else:
-        # Si es maestro, filtramos por su curso asignado
         if curso_asignado:
             estudiantes = conexion.execute("SELECT * FROM estudiantes WHERE LOWER(grado) = ?", (curso_asignado,)).fetchall()
         else:
@@ -836,17 +796,15 @@ def acceso_menu_viejo():
     conn = get_db_connection()
     try:
         total_estudiantes = conn.execute('SELECT COUNT(*) FROM inscripciones').fetchone()[0]
-    except sqlite3.OperationalError:
+    except:
         total_estudiantes = 0
-        
     try:
         total_expedientes = conn.execute('SELECT COUNT(*) FROM expedientes_viejos').fetchone()[0]
-    except sqlite3.OperationalError:
+    except:
         total_expedientes = 0
-        
     try:
         total_usuarios = conn.execute('SELECT COUNT(*) FROM usuarios').fetchone()[0]
-    except sqlite3.OperationalError:
+    except:
         total_usuarios = 0
     conn.close()
     
@@ -864,7 +822,6 @@ def expediente_viejo():
     conexion = get_db_connection()
     expedientes = conexion.execute('SELECT * FROM expedientes_viejos ORDER BY "Unnamed: 5" ASC').fetchall()
     
-    # Cambia 'estudiantes' por 'inscripciones' si esa es tu tabla principal de estudiantes
     total_estudiantes = conexion.execute("SELECT COUNT(*) FROM inscripciones").fetchone()[0]
     total_expedientes = conexion.execute("SELECT COUNT(*) FROM expedientes_viejos").fetchone()[0]
     total_usuarios = conexion.execute("SELECT COUNT(*) FROM usuarios").fetchone()[0]
@@ -936,8 +893,6 @@ def menu_viejo():
     
     return render_template('menu_viejo.html', total_incripciones=total_estudiantes, total_expedientes=total_expedientes, total_usuarios=total_usuarios)
 
-from flask import send_file
-
 @app.route('/descargar_base_de_datos')
 def descargar_base_de_datos():
     if session.get('rol') not in ['oficina', 'admin']:
@@ -945,8 +900,5 @@ def descargar_base_de_datos():
         return redirect(url_for('menu'))
     return send_file('sigem_ml.db', as_attachment=True)
 
-
-# --- ÚNICO PUNTO DE ENTRADA AL FINAL ---
 if __name__ == '__main__':
-  init_db()
-  app.run(debug=True)
+    app.run(debug=True)
