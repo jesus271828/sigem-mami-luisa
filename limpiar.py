@@ -1,28 +1,26 @@
 import sqlite3
 
-def limpiar_base_datos():
-    # Conectamos a tu base de datos
-    conn = sqlite3.connect('sigem_ml.db')
-    cursor = conn.cursor()
-    
-    # Lista de tablas que queremos vaciar (dejando intacta la de expedientes)
-    tablas_a_limpiar = ['asistencia', 'autorizados', 'estudiantes']
+def limpiar_tablas():
+    # Conecta a tu base de datos real 'sigem_ml.db'
+    conexion = sqlite3.connect('sigem_ml.db')
+    cursor = conexion.cursor()
     
     try:
-        for tabla in tablas_a_limpiar:
-            cursor.execute(f"DELETE FROM {tabla}")
-            print(f"Tabla '{tabla}' limpiada exitosamente.")
+        # Vaciar las tablas solicitadas
+        cursor.execute("DELETE FROM autorizados;")
+        cursor.execute("DELETE FROM estudiantes;")
+        cursor.execute("DELETE FROM inscripciones;")
         
-        conn.commit()
-        print("\nLimpieza completada. Los expedientes viejos siguen intactos.")
+        # Reiniciar los contadores autoincrementables (sqlite_sequence)
+        cursor.execute("DELETE FROM sqlite_sequence WHERE name IN ('autorizados', 'estudiantes', 'inscripciones');")
+        
+        conexion.commit()
+        print("¡Las tablas autorizados, estudiantes e inscripciones han sido limpiadas exitosamente!")
     except Exception as e:
-        print(f"Error al limpiar: {e}")
+        conexion.rollback()
+        print(f"Ocurrió un error al limpiar las tablas: {e}")
     finally:
-        conn.close()
+        conexion.close()
 
-if __name__ == "__main__":
-    confirmar = input("¿Estás seguro de que quieres borrar todos los estudiantes, autorizados y asistencias? (s/n): ")
-    if confirmar.lower() == 's':
-        limpiar_base_datos()
-    else:
-        print("Operación cancelada.")
+if __name__ == '__main__':
+    limpiar_tablas()

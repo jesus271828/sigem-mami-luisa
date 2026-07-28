@@ -101,7 +101,7 @@ def index():
                            usuario=usuario_actual, 
                            rol=rol_actual, 
                            nombre_completo=nombre_completo,
-                           total_inscripciones=total_inscripciones,
+                           total_estudiantes=total_inscripciones,
                            total_expedientes=total_expedientes,
                            total_usuarios=total_usuarios)
 
@@ -405,12 +405,26 @@ def menu_buscar():
         return redirect(url_for('index'))
     
     conn = get_db_connection()
-    total_estudiantes = conn.execute('SELECT COUNT(*) FROM estudiantes').fetchone()[0]
-    total_expedientes = conn.execute('SELECT COUNT(*) FROM expedientes_viejos').fetchone()[0]
-    total_usuarios = conn.execute('SELECT COUNT(*) FROM usuarios').fetchone()[0]
+    try:
+        total_estudiantes = conn.execute('SELECT COUNT(*) FROM inscripciones').fetchone()[0] # Cambia 'inscripciones' por 'estudiantes' si tu tabla se llama así
+    except sqlite3.OperationalError:
+        total_estudiantes = 0
+        
+    try:
+        total_expedientes = conn.execute('SELECT COUNT(*) FROM expedientes_viejos').fetchone()[0]
+    except sqlite3.OperationalError:
+        total_expedientes = 0
+        
+    try:
+        total_usuarios = conn.execute('SELECT COUNT(*) FROM usuarios').fetchone()[0]
+    except sqlite3.OperationalError:
+        total_usuarios = 0
     conn.close()
     
-    return render_template('menu_buscar.html', total_incripciones=total_estudiantes, total_expedientes=total_expedientes, total_usuarios=total_usuarios)
+    return render_template('menu_buscar.html', 
+                           total_estudiantes=total_estudiantes, 
+                           total_expedientes=total_expedientes, 
+                           total_usuarios=total_usuarios)
 
 @app.route('/buscar_autorizado', methods=['GET', 'POST'])
 def buscar_autorizado():
@@ -591,67 +605,30 @@ def buscar_estudiante():
 
 @app.route('/generar_pdf/<id_estudiante>')
 def generar_pdf(id_estudiante):
-    if 'usuario' not in session:
-        return redirect(url_for('login'))
-        
-    conn = conectar_db()
-    conn.row_factory = sqlite3.Row
-    cursor = conn.cursor()
+    conexion = conectar_db()
+    cursor = conexion.cursor()
     
-    # Consulta robusta trayendo explícitamente los datos de inscripción y estudiante
-    query_inscripcion = """
-        SELECT i.*, e.* 
-        FROM inscripciones i
-        INNER JOIN estudiantes e ON i.id_estudiante = e.id_estudiante
-        WHERE i.id_estudiante = ?
-    """
-    cursor.execute(query_inscripcion, (id_estudiante,))
-    estudiante_row = cursor.fetchone()
-
-    # Si no se encuentra con INNER JOIN, intentamos un LEFT JOIN por si la inscripción está incompleta
-    if not estudiante_row:
-        query_left = """
-            SELECT i.*, e.* 
-            FROM estudiantes e
-            LEFT JOIN inscripciones i ON e.id_estudiante = i.id_estudiante
-            WHERE e.id_estudiante = ?
-        """
-        cursor.execute(query_left, (id_estudiante,))
-        estudiante_row = cursor.fetchone()
-
-    # Consultar los datos en la tabla 'autorizados'
-    query_autorizados = """
-        SELECT * FROM autorizados 
-        WHERE id_estudiante = ?
-    """
-    cursor.execute(query_autorizados, (id_estudiante,))
-    aut_row = cursor.fetchone()
+    # 1. Buscar en la tabla 'inscripciones'
+    cursor.execute("SELECT * FROM inscripciones WHERE id_estudiante = ?", (id_estudiante,))
+    estudiante = cursor.fetchone()
     
-    conn.close()
+    if not estudiante:
+        cursor.execute("SELECT * FROM inscripciones WHERE id = ?", (id_estudiante,))
+        estudiante = cursor.fetchone()
 
-    if not estudiante_row:
-        return "Estudiante no encontrado en inscripciones ni registros", 404
-
-    # Convertir a diccionario para facilitar la lectura en la plantilla HTML
-    estudiante = dict(estudiante_row)
+    cursor.execute("SELECT * FROM autorizados WHERE id_estudiante = ?", (id_estudiante,))
+    autorizados = cursor.fetchone()
     
-    # Procesar la lista de autorizados del 1 al 5
-    autorizados = []
-    if aut_row:
-        aut_dict = dict(aut_row)
-        for i in range(1, 6):
-            nombre = aut_dict.get(f'aut_nombre_{i}')
-            cedula = aut_dict.get(f'aut_cedula_{i}')
-            telefono = aut_dict.get(f'aut_tel_{i}')
-            
-            if nombre and str(nombre).strip():
-                autorizados.append({
-                    'nombre': nombre,
-                    'cedula': cedula or '',
-                    'telefono': telefono or ''
-                })
+    conexion.close()
+    
+    if not estudiante:
+        return f"No se encontró ninguna inscripción para el estudiante con ID: {id_estudiante}", 404
 
-    # Convertir el logo a Base64
+    # --- LÍNEA DE DEPURACIÓN (MIRA TU TERMINAL DE VS CODE) ---
+    print("--- DATOS ENCONTRADOS EN INSCRIPCIONES ---")
+    for key in estudiante.keys():
+        print(f"{key}: {estudiante[key]}")
+
     logo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'img', 'logo2.png')
     logo_src = ""
     if os.path.exists(logo_path):
@@ -659,7 +636,6 @@ def generar_pdf(id_estudiante):
             logo_base64 = base64.b64encode(image_file.read()).decode('utf-8')
         logo_src = f"data:image/png;base64,{logo_base64}"
     
-    # Renderizar la plantilla con todos los datos combinados de la inscripción
     html = render_template('pdf_ficha.html', estudiante=estudiante, autorizados=autorizados, logo_src=logo_src)
     
     response = make_response()
@@ -778,7 +754,28 @@ def acceso_menu_viejo():
     if session.get('rol') not in ['oficina', 'admin']:
         flash('Acceso denegado.', 'danger')
         return redirect(url_for('menu'))
-    return render_template('menu_viejo.html')
+    
+    conn = get_db_connection()
+    try:
+        total_estudiantes = conn.execute('SELECT COUNT(*) FROM inscripciones').fetchone()[0]
+    except sqlite3.OperationalError:
+        total_estudiantes = 0
+        
+    try:
+        total_expedientes = conn.execute('SELECT COUNT(*) FROM expedientes_viejos').fetchone()[0]
+    except sqlite3.OperationalError:
+        total_expedientes = 0
+        
+    try:
+        total_usuarios = conn.execute('SELECT COUNT(*) FROM usuarios').fetchone()[0]
+    except sqlite3.OperationalError:
+        total_usuarios = 0
+    conn.close()
+    
+    return render_template('menu_viejo.html', 
+                           total_estudiantes=total_estudiantes, 
+                           total_expedientes=total_expedientes, 
+                           total_usuarios=total_usuarios)
 
 @app.route('/expediente-viejo')
 def expediente_viejo():
@@ -788,12 +785,18 @@ def expediente_viejo():
         
     conexion = get_db_connection()
     expedientes = conexion.execute('SELECT * FROM expedientes_viejos ORDER BY "Unnamed: 5" ASC').fetchall()
-    total_estudiantes = conexion.execute("SELECT COUNT(*) FROM estudiantes").fetchone()[0]
+    
+    # Cambia 'estudiantes' por 'inscripciones' si esa es tu tabla principal de estudiantes
+    total_estudiantes = conexion.execute("SELECT COUNT(*) FROM inscripciones").fetchone()[0]
     total_expedientes = conexion.execute("SELECT COUNT(*) FROM expedientes_viejos").fetchone()[0]
     total_usuarios = conexion.execute("SELECT COUNT(*) FROM usuarios").fetchone()[0]
     conexion.close()
     
-    return render_template('expediente_viejos.html', expedientes=expedientes, total_incripciones=total_estudiantes, total_expedientes=total_expedientes, total_usuarios=total_usuarios)
+    return render_template('expediente_viejos.html', 
+                           expedientes=expedientes, 
+                           total_estudiantes=total_estudiantes, 
+                           total_expedientes=total_expedientes, 
+                           total_usuarios=total_usuarios)
 
 @app.route('/registrar_expediente_viejo')
 def registrar_expediente_viejo():
@@ -812,12 +815,16 @@ def registrar_expediente_viejo():
         except ValueError:
             siguiente_ficha = "F-001"
 
-    total_estudiantes = conexion.execute("SELECT COUNT(*) FROM estudiantes").fetchone()[0]
+    total_estudiantes = conexion.execute("SELECT COUNT(*) FROM inscripciones").fetchone()[0]
     total_expedientes = conexion.execute("SELECT COUNT(*) FROM expedientes_viejos").fetchone()[0]
     total_usuarios = conexion.execute("SELECT COUNT(*) FROM usuarios").fetchone()[0]
     conexion.close()
     
-    return render_template('registrar_expediente_viejo.html', ficha=siguiente_ficha, total_incripciones=total_estudiantes, total_expedientes=total_expedientes, total_usuarios=total_usuarios)
+    return render_template('registrar_expediente_viejo.html', 
+                           ficha=siguiente_ficha, 
+                           total_estudiantes=total_estudiantes, 
+                           total_expedientes=total_expedientes, 
+                           total_usuarios=total_usuarios)
 
 @app.route('/guardar_expediente_viejo', methods=['POST'])
 def guardar_expediente_viejo():

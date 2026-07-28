@@ -83,7 +83,8 @@
                     <a href="{{ url_for('registrar_usuario') }}" class="btn btn-secondary w-100 mb-2">Cancelar Edición</a>
                 {% endif %}
                 
-                <a href="{{ url_for('menu') }}" class="btn btn-light w-100">← Volver al Menú</a>
+                <!-- Corregido a 'index' para que coincida con app.py -->
+                <a href="{{ url_for('index') }}" class="btn btn-light w-100">← Volver al Menú</a>
             </form>
         </div>
 
@@ -113,10 +114,10 @@
                             <td>{{ maestro['rol'] }}</td>
                             <td>{{ maestro['curso_asignado'] }}</td>
                             <td>
-                                <!-- Botón Editar con enlace para subir los datos arriba -->
+                                <!-- Botón Editar -->
                                 <a href="{{ url_for('registrar_usuario', edit_id=maestro['id']) }}" class="btn btn-sm btn-warning">Editar</a>
                                 
-                                <!-- Botón Eliminar con cuadro de diálogo de pregunta -->
+                                <!-- Botón Eliminar -->
                                 <a href="{{ url_for('eliminar_usuario', id=maestro['id']) }}" class="btn btn-sm btn-danger" onclick="return confirm('¿Estás seguro de que deseas eliminar a este maestro?');">Eliminar</a>
                             </td>
                         </tr>

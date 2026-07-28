@@ -1,22 +1,29 @@
 import sqlite3
 
-conexion = sqlite3.connect('sigem_ml.db')
-cursor = conexion.cursor()
+# Conectar a la base de datos
+conn = sqlite3.connect("sigem_ml.db")
+cursor = conn.cursor()
 
-# 1. Eliminamos la tabla vieja por completo
-cursor.execute('DROP TABLE IF EXISTS expedientes_viejos')
+try:
+  # 1. Eliminar la tabla 'usuario' (la redundante)
+  cursor.execute("DROP TABLE IF EXISTS usuario;")
+  print("Tabla 'usuario' eliminada exitosamente.")
 
-# 2. La creamos de nuevo con las columnas ordenadas correctamente:
-# Unnamed: 3 (Nombre), Unnamed: 4 (Año Escolar), Unnamed: 5 (Ficha)
-cursor.execute('''
-    CREATE TABLE expedientes_viejos (
-        "Unnamed: 3" TEXT,
-        "Unnamed: 4" TEXT,
-        "Unnamed: 5" TEXT
-    )
-''')
+  # 2. Actualizar el rol 'oficina' a 'admin' en la tabla 'usuarios'
+  cursor.execute(
+      "UPDATE usuarios SET rol = 'admin' WHERE rol = 'oficina';"
+  )
+  print(
+      "Se actualizó el rol de 'oficina' a 'admin' en la tabla 'usuarios'."
+  )
 
-conexion.commit()
-conexion.close()
+  # Guardar los cambios
+  conn.commit()
+  print("¡Cambios aplicados correctamente!")
 
-print("¡La tabla 'expedientes_viejos' ha sido eliminada y recreada exitosamente!")
+except Exception as e:
+  print(f"Ocurrió un error: {e}")
+  conn.rollback()
+
+finally:
+  conn.close()
