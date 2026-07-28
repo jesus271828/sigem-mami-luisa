@@ -783,24 +783,7 @@ def planificacion():
     usuario_actual = {'nombre': session.get('usuario_nombre', 'Jesus Maria Alfonseca Duverge'), 'rol': session.get('rol', 'maestro')}
     return render_template('planificacion.html', usuario=usuario_actual)
 
-@app.route('/listado_estudiantes')
-def listado_estudiantes():
-    rol = str(session.get('rol', '')).strip().lower()
-    curso_asignado = str(session.get('curso_asignado', '')).strip().lower()
-    
-    conexion = get_db_connection()
-    
-    if rol in ['admin', 'oficina']:
-        estudiantes = conexion.execute("SELECT * FROM estudiantes").fetchall()
-    else:
-        if curso_asignado:
-            estudiantes = conexion.execute("SELECT * FROM estudiantes WHERE LOWER(grado) = ?", (curso_asignado,)).fetchall()
-        else:
-            estudiantes = []
-            
-    conexion.close()
-    
-    return render_template('notas1.html', estudiantes=estudiantes, estudiante=estudiantes)
+
 
 @app.route('/registrar_usuario', methods=['GET', 'POST'])
 def registrar_usuario():
