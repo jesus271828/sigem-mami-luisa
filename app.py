@@ -230,7 +230,7 @@ def login():
         conn = get_db_connection()
         user_dict = None
         try:
-            # Ejecutamos la consulta usando psycopg2 o sqlite de forma compatible
+            # Ejecutamos la consulta buscando en la tabla 'usuarios' para PostgreSQL (Render)
             cursor = conn.cursor()
             cursor.execute('SELECT username, rol, nombre_completo, curso_asignado FROM usuarios WHERE username = %s AND password = %s', (usuario_ingresado, password))
             row = cursor.fetchone()
@@ -244,7 +244,7 @@ def login():
                 }
             cursor.close()
         except Exception as e:
-            # Fallback por si la conexión es local con sqlite estándar
+            # Fallback por si la conexión es local con SQLite estándar
             try:
                 conn.row_factory = lambda cursor, row: {col[0]: row[idx] for idx, col in enumerate(cursor.description)}
                 cursor = conn.cursor()
