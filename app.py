@@ -51,11 +51,58 @@ def get_db_connection():
         return conn
 
 def init_db():
-    if not DATABASE_URL:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        
-        cursor.execute('''
+  conn = get_db_connection()
+
+  if DATABASE_URL:
+    # Creación de tablas para PostgreSQL en Render
+    conn.execute('''
+            CREATE TABLE IF NOT EXISTS estudiantes (
+                id SERIAL PRIMARY KEY,
+                id_estudiante TEXT,
+                nombres TEXT,
+                apellidos TEXT,
+                grado TEXT,
+                foto_estudiante_cedula TEXT,
+                numero_orden INTEGER
+            )
+        ''')
+
+    conn.execute('''
+            CREATE TABLE IF NOT EXISTS inscripciones (
+                id SERIAL PRIMARY KEY,
+                anio_escolar TEXT, fecha_inscripcion TEXT, nombres TEXT, apellidos TEXT,
+                grado TEXT, fecha_nac TEXT, edad TEXT, sexo TEXT, nacionalidad TEXT,
+                lugar_nac TEXT, direccion TEXT, cant_hermanos TEXT, edades_hermanos TEXT,
+                lugar_ocupa TEXT, tipo_sangre TEXT, seguro_medico TEXT, alergias TEXT,
+                medicamentos TEXT, medico_pediatra TEXT, centro_medico TEXT,
+                emergencia_nombre TEXT, emergencia_parentesco TEXT, emergencia_tel TEXT,
+                padre_nombre TEXT, padre_sector TEXT, padre_direccion TEXT, padre_profesion TEXT,
+                padre_cedula TEXT, padre_nivel TEXT, padre_religion TEXT, padre_tel_personal TEXT,
+                padre_tel_trabajo TEXT, padre_correo TEXT,
+                madre_nombre TEXT, madre_sector TEXT, madre_direccion TEXT, madre_profesion TEXT,
+                madre_cedula TEXT, madre_nivel TEXT, madre_religion TEXT, madre_tel_personal TEXT,
+                madre_tel_trabajo TEXT, madre_correo TEXT,
+                tutor_nombre TEXT, tutor_sector TEXT, tutor_direccion TEXT, tutor_profesion TEXT,
+                tutor_cedula TEXT, tutor_nivel TEXT, tutor_religion TEXT, tutor_tel_personal TEXT,
+                tutor_tel_trabajo TEXT, tutor_correo TEXT,
+                aut_nombre_1 TEXT, aut_cedula_1 TEXT, aut_tel_1 TEXT,
+                aut_nombre_2 TEXT, aut_cedula_2 TEXT, aut_tel_2 TEXT,
+                aut_nombre_3 TEXT, aut_cedula_3 TEXT, aut_tel_3 TEXT,
+                aut_nombre_4 TEXT, aut_cedula_4 TEXT, aut_tel_4 TEXT,
+                aut_nombre_5 TEXT, aut_cedula_5 TEXT, aut_tel_5 TEXT,
+                vive_nombres TEXT, vive_parentesco TEXT, vive_cedula TEXT, vive_direccion TEXT,
+                vive_sector TEXT, vive_profesion TEXT, vive_religion TEXT, vive_nivel TEXT,
+                vive_tel_personal TEXT, vive_tel_trabajo TEXT, vive_correo TEXT,
+                econ_nombres TEXT, econ_parentesco TEXT, econ_direccion TEXT, econ_sector TEXT,
+                econ_cedula TEXT, econ_lugar_trabajo TEXT, econ_tel_trabajo TEXT,
+                econ_tel_personal TEXT, econ_correo TEXT,
+                autoriza_medicamentos TEXT
+            )
+        ''')
+  else:
+    # Creación de tablas para SQLite en tu PC (con AUTOINCREMENT)
+    cursor = conn.conn.cursor() if hasattr(conn, 'conn') else conn.cursor()
+    cursor.execute('''
             CREATE TABLE IF NOT EXISTS estudiantes (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 id_estudiante TEXT,
@@ -66,8 +113,7 @@ def init_db():
                 numero_orden INTEGER
             )
         ''')
-
-        cursor.execute('''
+    cursor.execute('''
             CREATE TABLE IF NOT EXISTS inscripciones (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 anio_escolar TEXT, fecha_inscripcion TEXT, nombres TEXT, apellidos TEXT,
@@ -99,8 +145,10 @@ def init_db():
                 autoriza_medicamentos TEXT
             )
         ''')
-        conn.commit()
-        conn.close()
+    conn.commit()
+
+  conn.commit()
+  conn.close()
 
 # --- RUTA PRINCIPAL (INDEX Y MENU) ---
 @app.route('/')
@@ -900,5 +948,5 @@ def descargar_base_de_datos():
 
 # --- ÚNICO PUNTO DE ENTRADA AL FINAL ---
 if __name__ == '__main__':
-    init_db()
-    app.run(debug=True)
+  init_db()
+  app.run(debug=True)
