@@ -665,7 +665,7 @@ def buscar_estudiante():
     conn = get_db_connection()
     
     try:
-        total_estudiantes = conn.execute("SELECT COUNT(*) FROM estudiantes").fetchone()[0]
+        total_estudiantes = conn.execute("SELECT COUNT(*) FROM inscripciones").fetchone()[0]
     except:
         total_estudiantes = 0
     try:
@@ -678,7 +678,7 @@ def buscar_estudiante():
         total_usuarios = 0
 
     try:
-        grados_rows = conn.execute("SELECT DISTINCT grado FROM estudiantes WHERE grado IS NOT NULL AND grado != '' ORDER BY grado").fetchall()
+        grados_rows = conn.execute("SELECT DISTINCT grado FROM inscripciones WHERE grado IS NOT NULL AND grado != '' ORDER BY grado").fetchall()
         grados_disponibles = [row['grado'] if isinstance(row, sqlite3.Row) or hasattr(row, 'keys') else row[0] for row in grados_rows]
     except:
         grados_disponibles = []
@@ -687,11 +687,12 @@ def buscar_estudiante():
         criterio = request.form.get('criterio', '').strip()
         grado_filtro = request.form.get('grado_filtro', '').strip()
         
-        query = "SELECT * FROM estudiantes WHERE 1=1"
+        query = "SELECT * FROM inscripciones WHERE 1=1"
         params = []
         
         if criterio:
-            query += " AND (id_estudiante LIKE ? OR nombres LIKE ? OR apellidos LIKE ?)"
+            # Ajusta 'id' si en tu tabla el campo se llama distinto (ej. id_estudiante)
+            query += " AND (id LIKE ? OR nombres LIKE ? OR apellidos LIKE ?)"
             busqueda = f"%{criterio}%"
             params.extend([busqueda, busqueda, busqueda])
             
@@ -699,14 +700,14 @@ def buscar_estudiante():
             query += " AND grado = ?"
             params.append(grado_filtro)
             
-        query += " ORDER BY id_estudiante"
+        query += " ORDER BY id"
         estudiantes = conn.execute(query, params).fetchall()
     else:
-        estudiantes = conn.execute("SELECT * FROM estudiantes ORDER BY id_estudiante").fetchall()
+        estudiantes = conn.execute("SELECT * FROM inscripciones ORDER BY id").fetchall()
         
     conn.close()
 
-    return render_template('buscar_estudiante.html',
+    return render_template('menu_buscar.html',
                            estudiantes=estudiantes,
                            grados_disponibles=grados_disponibles,
                            total_estudiantes=total_estudiantes,
