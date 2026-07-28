@@ -228,40 +228,34 @@ def login():
         password = request.form.get('password') or request.form.get('contrasena')
         
         conn = get_db_connection()
-        user_dict = None
+        user = None
         try:
-            # Ejecutamos la consulta buscando en la tabla 'usuarios' para PostgreSQL (Render)
-            cursor = conn.cursor()
-            cursor.execute('SELECT username, rol, nombre_completo, curso_asignado FROM usuarios WHERE username = %s AND password = %s', (usuario_ingresado, password))
+            # Como tu PostgresCursorWrapper acepta '?' y los convierte, puedes usar la misma sintaxis para ambos
+            cursor = conn
+            cursor.execute('SELECT username, rol, nombre_completo, curso_asignado FROM usuarios WHERE username = ? AND password = ?', (usuario_ingresado, password))
             row = cursor.fetchone()
             
             if row:
-                user_dict = {
-                    'username': row[0],
-                    'rol': row[1],
-                    'nombre_completo': row[2],
-                    'curso_asignado': row[3] if row[3] else ''
-                }
+                # Dependiendo de si devolvió tupla o diccionario, lo adaptamos de forma segura:
+                if isinstance(row, dict):
+                    user = row
+                else:
+                    user = {
+                        'username': row[0],
+                        'rol': row[1],
+                        'nombre_completo': row[2],
+                        'curso_asignado': row[3] if row[3] else ''
+                    }
             cursor.close()
         except Exception as e:
-            # Fallback por si la conexión es local con SQLite estándar
-            try:
-                conn.row_factory = lambda cursor, row: {col[0]: row[idx] for idx, col in enumerate(cursor.description)}
-                cursor = conn.cursor()
-                cursor.execute('SELECT * FROM usuarios WHERE username = ? AND password = ?', (usuario_ingresado, password))
-                user_dict = cursor.fetchone()
-                cursor.close()
-            except Exception as err:
-                print("Error general en login:", err)
-                user_dict = None
+            print("Error general en login:", e)
+            user = None
         
-        conn.close()
-        
-        if user_dict:
-            session['usuario'] = user_dict.get('username', '')
-            session['rol'] = user_dict.get('rol', '')
-            session['nombre_completo'] = user_dict.get('nombre_completo', '')
-            session['curso_asignado'] = user_dict.get('curso_asignado', '')
+        if user:
+            session['usuario'] = user.get('username', '')
+            session['rol'] = user.get('rol', '')
+            session['nombre_completo'] = user.get('nombre_completo', '')
+            session['curso_asignado'] = user.get('curso_asignado', '')
             return redirect(url_for('index'))
         else:
             return "Usuario o contraseña incorrectos"
