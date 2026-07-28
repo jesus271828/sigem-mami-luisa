@@ -862,3 +862,12 @@ def menu_viejo():
 if __name__ == '__main__':
     init_db()
     app.run(debug=True)
+
+from flask import send_file
+
+@app.route('/descargar_base_de_datos')
+def descargar_base_de_datos():
+    if session.get('rol') not in ['oficina', 'admin']:
+        flash('Acceso denegado.', 'danger')
+        return redirect(url_for('menu'))
+    return send_file('sigem_ml.db', as_attachment=True)
