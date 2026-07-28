@@ -1,8 +1,6 @@
 import os
 import base64
 import sqlite3
-import psycopg2
-import psycopg2.extras
 from flask import Flask, render_template, make_response, request, redirect, url_for, session, flash
 from xhtml2pdf import pisa
 from werkzeug.utils import secure_filename
@@ -14,21 +12,45 @@ UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Detectar si estamos en Render (PostgreSQL) o en tu PC (SQLite)
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
+class PostgresCursorWrapper:
+    def __init__(self, conn):
+        self.conn = conn
+        self.cur = conn.cursor()
+
+    def execute(self, query, params=None):
+        if params:
+            query = query.replace('?', '%s')
+            self.cur.execute(query, params)
+        else:
+            self.cur.execute(query)
+        return self
+
+    def fetchone(self):
+        return self.cur.fetchone()
+
+    def fetchall(self):
+        return self.cur.fetchall()
+
+    def commit(self):
+        return self.conn.commit()
+
+    def close(self):
+        self.cur.close()
+        self.conn.close()
+
 def get_db_connection():
-  if DATABASE_URL:
-    conn = psycopg2.connect(DATABASE_URL, sslmode='require')
-    # Esto hace que psycopg2 se comporte como sqlite3 con diccionariorows
-    return conn
-  else:
-    conn = sqlite3.connect('sigem_ml.db')
-    conn.row_factory = sqlite3.Row
-    return conn
+    if DATABASE_URL:
+        import psycopg2
+        conn = psycopg2.connect(DATABASE_URL, sslmode='require')
+        return PostgresCursorWrapper(conn)
+    else:
+        conn = sqlite3.connect('sigem_ml.db')
+        conn.row_factory = sqlite3.Row
+        return conn
 
 def init_db():
-    # Las tablas locales de SQLite para tus pruebas en la PC
     if not DATABASE_URL:
         conn = get_db_connection()
         cursor = conn.cursor()
