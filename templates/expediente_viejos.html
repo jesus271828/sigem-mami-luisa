@@ -114,10 +114,10 @@
             
             <div class="user-info">
                 <i class="fas fa-user-circle"></i> 
-                <span>{{ session.get('username', 'Usuario') }} ({{ session.get('rol', 'admin') }})</span>
+                <span>{{ session.get('usuario', 'Usuario') }} ({{ session.get('rol', 'admin') }})</span>
             </div>
 
-            <!-- BOTONES ARRIBA APUNTANDO A MENU_VIEJO -->
+            <!-- BOTONES ARRIBA -->
             <a href="/menu_viejo" class="btn-sidebar-back">
                 <i class="fas fa-arrow-left me-1"></i> Volver al Menú
             </a>
@@ -132,15 +132,15 @@
                 </div>
                 <div class="stat-item">
                     <span>Estudiantes:</span>
-                    <span class="badge-count badge-blue">{{ total_estudiantes if total_estudiantes is defined else 3 }}</span>
+                    <span class="badge-count badge-blue">{{ total_estudiantes if total_estudiantes is defined else 0 }}</span>
                 </div>
                 <div class="stat-item">
                     <span>Expedientes Viejos:</span>
-                    <span class="badge-count badge-grey">{{ total_expedientes if total_expedientes is defined else 873 }}</span>
+                    <span class="badge-count badge-grey">{{ total_expedientes if total_expedientes is defined else 0 }}</span>
                 </div>
                 <div class="stat-item">
                     <span>Usuarios:</span>
-                    <span class="badge-count badge-green">{{ total_usuarios if total_usuarios is defined else 2 }}</span>
+                    <span class="badge-count badge-green">{{ total_usuarios if total_usuarios is defined else 0 }}</span>
                 </div>
             </div>
         </div>
@@ -166,11 +166,13 @@
                         </thead>
                         <tbody>
                             {% for exp in expedientes %}
+                            {% if exp.get('Unnamed: 3') != 'NOMBRE' and exp.get('Unnamed: 3') is not none %}
                             <tr>
-                                <td>{{ exp['Unnamed: 4'] }}</td>
-                                <td>{{ exp['Unnamed: 3'] }}</td>
-                                <td>{{ exp['Unnamed: 5'] }}</td>
+                                <td>{{ exp.get('Unnamed: 5', '') }}</td>
+                                <td>{{ exp.get('Unnamed: 3', '') }}</td>
+                                <td>{{ exp.get('Unnamed: 4', '') }}</td>
                             </tr>
+                            {% endif %}
                             {% else %}
                             <tr>
                                 <td colspan="3" class="text-center text-muted">No hay expedientes viejos registrados.</td>
