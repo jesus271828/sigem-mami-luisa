@@ -868,14 +868,15 @@ def guardar_expediente_viejo():
 @app.route('/debug_columnas')
 def debug_columnas():
     conexion = get_db_connection()
-    cursor = conexion.cursor()
     try:
+        cursor = conexion.cursor()
         cursor.execute("SELECT * FROM inscripciones LIMIT 1;")
         fila = cursor.fetchone()
         nombres_columnas = [desc[0] for desc in cursor.description]
         return f"Columnas: {nombres_columnas} <br><br> Primer registro: {fila}"
     except Exception as e:
-        return f"Error: {e}"
+        # Esto te mostrará el error exacto en la página web
+        return f"<h1>Error de Base de Datos:</h1><p>{str(e)}</p>"
     finally:
         conexion.close()
 
