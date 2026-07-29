@@ -678,40 +678,38 @@ def buscar_estudiante():
     except:
         total_usuarios = 0
 
-    # Obtener grados disponibles
+    # Obtener grados disponibles para el select
     grados_disponibles = []
     try:
         grados_rows = conn.execute("SELECT DISTINCT grado FROM inscripciones WHERE grado IS NOT NULL AND grado != ''").fetchall()
         grados_disponibles = [row[0] for row in grados_rows if row[0]]
     except:
-        try:
-            grados_rows = conn.execute("SELECT DISTINCT curso FROM inscripciones WHERE curso IS NOT NULL AND curso != ''").fetchall()
-            grados_disponibles = [row[0] for row in grados_rows if row[0]]
-        except:
-            pass
+        pass
 
-    # Búsqueda y filtrado
+    estudiantes = []
     try:
         if request.method == 'POST':
             criterio = request.form.get('criterio', '').strip()
             grado_filtro = request.form.get('grado_filtro', '').strip()
             
-            query = "SELECT * FROM inscripciones WHERE 1=1"
+            # Consultamos trayendo explícitamente el ID, nombres, apellidos y grado en orden (índices 0, 1, 2, 3)
+            query = "SELECT id_estudiante, nombres, apellidos, grado FROM inscripciones WHERE 1=1"
             params = []
             
             if criterio:
-                # Comprobamos campos comunes de texto
-                query += " AND (nombres LIKE ? OR apellidos LIKE ?)"
-                params.extend([f"%{criterio}%", f"%{criterio}%"])
+                query += " AND (nombres LIKE ? OR apellidos LIKE ? OR CAST(id_estudiante AS TEXT) LIKE ?)"
+                params.extend([f"%{criterio}%", f"%{criterio}%", f"%{criterio}%"])
                 
             if grado_filtro:
-                query += " AND (grado = ? OR curso = ?)"
-                params.extend([grado_filtro, grado_filtro])
+                query += " AND grado = ?"
+                params.append(grado_filtro)
                 
             estudiantes = conn.execute(query, params).fetchall()
         else:
-            estudiantes = conn.execute("SELECT * FROM inscripciones").fetchall()
+            # Consulta general ordenada para que est[0] sea ID, est[1] Nombres, est[2] Apellidos, est[3] Grado
+            estudiantes = conn.execute("SELECT id_estudiante, nombres, apellidos, grado FROM inscripciones").fetchall()
     except Exception as e:
+        print("Error en búsqueda:", e)
         estudiantes = []
         
     conn.close()
@@ -724,31 +722,22 @@ def buscar_estudiante():
                            total_usuarios=total_usuarios)
 
 
-@app.route('/generar_pdf/<id_estudiante>')
+@app.route('/generar_pdf/<int:id_estudiante>')
 def generar_pdf(id_estudiante):
     if 'usuario' not in session:
         return redirect(url_for('login'))
         
     conexion = get_db_connection()
     
-    estudiante = None
-    # Intentar buscar por diferentes nombres de columna de ID posibles
-    for columna_id in ['id', 'id_estudiante']:
-        try:
-            estudiante = conexion.execute(f"SELECT * FROM inscripciones WHERE {columna_id} = ?", (id_estudiante,)).fetchone()
-            if estudiante:
-                break
-        except:
-            continue
-
-    autorizados = None
-    for columna_id in ['id_estudiante', 'id']:
-        try:
-            autorizados = conexion.execute(f"SELECT * FROM autorizados WHERE {columna_id} = ?", (id_estudiante,)).fetchone()
-            if autorizados:
-                break
-        except:
-            continue
+    try:
+        estudiante = conexion.execute("SELECT * FROM inscripciones WHERE id_estudiante = ?", (id_estudiante,)).fetchone()
+    except:
+        estudiante = None
+        
+    try:
+        autorizados = conexion.execute("SELECT * FROM autorizados WHERE id_estudiante = ?", (id_estudiante,)).fetchone()
+    except:
+        autorizados = None
         
     conexion.close()
     
@@ -774,6 +763,7 @@ def generar_pdf(id_estudiante):
         return 'Hubo un error al generar el PDF', 500
         
     return response
+
 
 @app.route('/asistencia')
 def asistencia():
