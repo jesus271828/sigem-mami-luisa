@@ -689,67 +689,7 @@ def buscar_estudiante():
                            total_usuarios=total_usuarios)
 
 
-@app.route('/generar_pdf/<path:id_estudiante>')
-def generar_pdf(id_estudiante):
-    if 'usuario' not in session:
-        return redirect(url_for('login'))
-        
-    conexion = get_db_connection()
-    estudiante = None
-    autorizados = []
 
-    try:
-        # Usamos RealDictCursor para que cada registro sea un diccionario con nombre de columnas
-        cursor = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        
-        # Obtenemos todos los registros de inscripciones
-        cursor.execute("SELECT * FROM inscripciones")
-        filas = cursor.fetchall()
-        
-        # Buscamos el estudiante comparando la 4ta columna (que en RealDictCursor se puede acceder por índice o buscando la clave correcta)
-        for fila in filas:
-            # Obtenemos los valores de las columnas en forma de lista para asegurar la posición 3 (cuarta columna)
-            valores = list(fila.values())
-            if len(valores) >= 4 and str(valores[3]).strip() == str(id_estudiante).strip():
-                estudiante = fila
-                break
-
-        if estudiante:
-            # Obtenemos el ID de esa cuarta columna para buscar los autorizados
-            id_real_estudiante = list(estudiante.values())[3]
-            
-            query_aut = "SELECT * FROM autorizados WHERE id_estudiante = %s"
-            cursor.execute(query_aut, (id_real_estudiante,))
-            autorizados = cursor.fetchall()
-
-    except Exception as e:
-        print("--- ERROR CRÍTICO EN PDF:", e)
-        estudiante = None
-    finally:
-        conexion.close()
-    
-    if not estudiante:
-        return f"No se encontró ninguna inscripción para el ID: {id_estudiante}", 404
-
-    logo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'img', 'logo2.png')
-    logo_src = ""
-    if os.path.exists(logo_path):
-        with open(logo_path, "rb") as image_file:
-            logo_base64 = base64.b64encode(image_file.read()).decode('utf-8')
-        logo_src = f"data:image/png;base64,{logo_base64}"
-    
-    html = render_template('pdf_ficha.html', estudiante=estudiante, autorizados=autorizados, logo_src=logo_src)
-    
-    response = make_response()
-    response.headers['Content-Type'] = 'application/pdf'
-    response.headers['Content-Disposition'] = f'inline; filename=ficha_inscripcion_{id_estudiante}.pdf'
-    
-    pisa_status = pisa.CreatePDF(html, dest=response.stream)
-    
-    if pisa_status.err:
-        return 'Hubo un error al generar el PDF', 500
-        
-    return response
 
 @app.route('/asistencia')
 def asistencia():
@@ -924,7 +864,80 @@ def guardar_expediente_viejo():
     flash('¡Expediente registrado!', 'success')
     return redirect(url_for('registrar_expediente_viejo'))
 
+# RUTA DE DIAGNÓSTICO: Para ver las columnas reales en Render
+@app.route('/debug_columnas')
+def debug_columnas():
+    conexion = get_db_connection()
+    cursor = conexion.cursor()
+    try:
+        cursor.execute("SELECT * FROM inscripciones LIMIT 1;")
+        fila = cursor.fetchone()
+        nombres_columnas = [desc[0] for desc in cursor.description]
+        return f"Columnas: {nombres_columnas} <br><br> Primer registro: {fila}"
+    except Exception as e:
+        return f"Error: {e}"
+    finally:
+        conexion.close()
 
+@app.route('/generar_pdf/<path:id_estudiante>')
+def generar_pdf(id_estudiante):
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+        
+    conexion = get_db_connection()
+    estudiante = None
+    autorizados = []
+
+    try:
+        # Usamos RealDictCursor para acceder por nombre o clave de columna de forma limpia
+        cursor = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        
+        # Obtenemos las columnas de la tabla dinámicamente para identificar la 4ta columna (índice 3)
+        cursor.execute("SELECT * FROM inscripciones")
+        filas = cursor.fetchall()
+        
+        for fila in filas:
+            valores = list(fila.values())
+            if len(valores) >= 4 and str(valores[3]).strip() == str(id_estudiante).strip():
+                estudiante = fila
+                break
+
+        if estudiante:
+            # Obtenemos el valor de la 4ta columna para buscar en autorizados
+            id_real_estudiante = list(estudiante.values())[3]
+            
+            query_aut = "SELECT * FROM autorizados WHERE id_estudiante = %s"
+            cursor.execute(query_aut, (id_real_estudiante,))
+            autorizados = cursor.fetchall()
+
+    except Exception as e:
+        print("--- ERROR CRÍTICO EN PDF:", e)
+        estudiante = None
+    finally:
+        conexion.close()
+    
+    if not estudiante:
+        return f"No se encontró ninguna inscripción para el ID: {id_estudiante}", 404
+
+    logo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'img', 'logo2.png')
+    logo_src = ""
+    if os.path.exists(logo_path):
+        with open(logo_path, "rb") as image_file:
+            logo_base64 = base64.b64encode(image_file.read()).decode('utf-8')
+        logo_src = f"data:image/png;base64,{logo_base64}"
+    
+    html = render_template('pdf_ficha.html', estudiante=estudiante, autorizados=autorizados, logo_src=logo_src)
+    
+    response = make_response()
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = f'inline; filename=ficha_inscripcion_{id_estudiante}.pdf'
+    
+    pisa_status = pisa.CreatePDF(html, dest=response.stream)
+    
+    if pisa_status.err:
+        return 'Hubo un error al generar el PDF', 500
+        
+    return response
 
 
 if __name__ == '__main__':
