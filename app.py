@@ -539,100 +539,63 @@ def menu_buscar():
                            total_expedientes=total_expedientes, 
                            total_usuarios=total_usuarios)
 
+import psycopg2.extras # Asegúrate de tener esta importación arriba en tu app.py si no la tienes
+
 @app.route('/buscar_autorizado', methods=['GET', 'POST'])
 def buscar_autorizado():
     if 'usuario' not in session:
         return redirect(url_for('login'))
         
-    conn = get_db_connection()
+    autorizados = []
+    conexion = get_db_connection()
+    
+    # Obtenemos los contadores para la barra lateral (si los usa tu plantilla)
+    total_estudiantes = 0
+    total_expedientes = 0
+    total_usuarios = 0
     
     try:
-        total_estudiantes = conn.execute("SELECT COUNT(*) FROM estudiantes").fetchone()[0]
+        cursor_count = conexion.cursor()
+        cursor_count.execute("SELECT COUNT(*) FROM inscripciones")
+        total_estudiantes = cursor_count.fetchone()[0]
+        
+        cursor_count.execute("SELECT COUNT(*) FROM autorizados") # O la tabla que corresponda a expedientes/autorizados
+        total_autorizados = cursor_count.fetchone()[0]
+        
+        cursor_count.execute("SELECT COUNT(*) FROM usuarios")
+        total_usuarios = cursor_count.fetchone()[0]
     except:
-        total_estudiantes = 0
-    try:
-        total_expedientes = conn.execute("SELECT COUNT(*) FROM expedientes_viejos").fetchone()[0]
-    except:
-        total_expedientes = 0
-    try:
-        total_usuarios = conn.execute("SELECT COUNT(*) FROM usuarios").fetchone()[0]
-    except:
-        total_usuarios = 0
-
-    lista_autorizados = []
+        pass
 
     if request.method == 'POST':
         criterio = request.form.get('criterio', '').strip()
-        busqueda = f"%{criterio}%"
-        
-        query = """
-            SELECT a.*, e.nombres as est_nombres, e.apellidos as est_apellidos, e.grado, e.foto_estudiante_cedula
-            FROM autorizados a
-            LEFT JOIN estudiantes e ON a.id_estudiante = e.id_estudiante
-            WHERE a.aut_nombre_1 LIKE ? OR a.aut_cedula_1 LIKE ? 
-               OR a.aut_nombre_2 LIKE ? OR a.aut_cedula_2 LIKE ?
-               OR a.aut_nombre_3 LIKE ? OR a.aut_cedula_3 LIKE ?
-               OR a.aut_nombre_4 LIKE ? OR a.aut_cedula_4 LIKE ?
-               OR a.aut_nombre_5 LIKE ? OR a.aut_cedula_5 LIKE ?
-        """
-        rows = conn.execute(query, (busqueda, busqueda, busqueda, busqueda, busqueda, busqueda, busqueda, busqueda, busqueda, busqueda)).fetchall()
-        
-        uploads_dir = os.path.join(app.root_path, 'static', 'uploads')
-
-        for row in rows:
-            base_dict = dict(row)
+        try:
+            # Usamos RealDictCursor para que los resultados funcionen como diccionarios en el HTML
+            cursor = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             
-            for i in range(1, 6):
-                nom_campo = f'aut_nombre_{i}'
-                ced_campo = f'aut_cedula_{i}'
-                foto_campo = f'foto_aut_cedula_{i}'
-                
-                val_nom = str(base_dict.get(nom_campo, '')).lower()
-                val_ced = str(base_dict.get(ced_campo, ''))
-                
-                if criterio.lower() in val_nom or (criterio != '' and criterio in val_ced):
-                    autorizado = base_dict.copy()
-                    autorizado['nombre_completo'] = base_dict.get(nom_campo, '')
-                    autorizado['cedula'] = base_dict.get(ced_campo, '')
-                    
-                    ruta_aut = str(base_dict.get(foto_campo, '')).strip()
-                    nombre_aut = ""
-                    if ruta_aut:
-                        nombre_aut = ruta_aut.replace('\\', '/').split('/')[-1].strip()
-                        if 'uploads' in nombre_aut.lower():
-                            nombre_aut = nombre_aut.split('uploads')[-1].lstrip('/\\')
-                    
-                    if nombre_aut and os.path.exists(os.path.join(uploads_dir, nombre_aut)):
-                        autorizado['foto_autorizado'] = nombre_aut
-                    else:
-                        autorizado['foto_autorizado'] = ''
-
-                    ruta_est = str(base_dict.get('foto_estudiante_cedula', '')).strip()
-                    nombre_est = ""
-                    if ruta_est:
-                        nombre_est = ruta_est.replace('\\', '/').split('/')[-1].strip()
-                        if 'uploads' in nombre_est.lower():
-                            nombre_est = nombre_est.split('uploads')[-1].lstrip('/\\')
-                        
-                    if nombre_est and os.path.exists(os.path.join(uploads_dir, nombre_est)):
-                        autorizado['foto_estudiante'] = nombre_est
-                    else:
-                        autorizado['foto_estudiante'] = ''
-
-                    autorizado['nombres'] = base_dict.get('est_nombres', '')
-                    autorizado['apellidos'] = base_dict.get('est_apellidos', '')
-
-                    if autorizado not in lista_autorizados:
-                        lista_autorizados.append(autorizado)
-
-    conn.close()
-
-    return render_template('buscar_autorizado.html',
-                           autorizados=lista_autorizados,
-                           total_estudiantes=total_estudiantes,
-                           total_expedientes=total_expedientes,
-                           total_usuarios=total_usuarios)
-
+            # Consulta uniendo la tabla autorizados con inscripciones para traer los datos y fotos de ambos
+            # (Ajusta los nombres de las columnas o de la tabla si difieren en tu base de datos)
+            query = """
+                SELECT a.*, i.nombres, i.apellidos, i.grado, i.foto_estudiante 
+                FROM autorizados a
+                LEFT JOIN inscripciones i ON a.id_estudiante = i.id
+                WHERE a.nombre_completo ILIKE %s OR a.cedula ILIKE %s
+            """
+            cursor.execute(query, (f"%{criterio}%", f"%{criterio}%"))
+            autorizados = cursor.fetchall()
+        except Exception as e:
+            print("Error buscando autorizado:", e)
+            autorizados = []
+            
+    conexion.close()
+    
+    return render_template(
+        'buscar_autorizado.html', 
+        autorizados=autorizados,
+        total_estudiantes=total_estudiantes,
+        total_expedientes=total_expedientes,
+        total_usuarios=total_usuarios
+    )
 
 @app.route('/listado-estudiantes')
 def listado_estudiantes():
