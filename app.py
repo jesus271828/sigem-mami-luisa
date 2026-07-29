@@ -23,6 +23,7 @@ class PostgresCursorWrapper:
 
     def execute(self, query, params=None):
         if params:
+            # Reemplazo seguro de '?' por '%s' para compatibilidad PostgreSQL
             query = query.replace('?', '%s')
             self.cur.execute(query, params)
         else:
@@ -199,7 +200,6 @@ def init_db():
     conn.commit()
     conn.close()
 
-# Forzar la creación de tablas al iniciar (tanto en local como en Gunicorn/Render)
 init_db()
 
 # --- RUTA PRINCIPAL (INDEX Y MENU) ---
@@ -213,19 +213,23 @@ def index():
         
     conn = get_db_connection()
     try:
-        total_inscripciones = conn.execute('SELECT COUNT(*) FROM inscripciones').fetchone()[0]
+        total_inscripciones = conn.execute('SELECT COUNT(*) FROM inscripciones').fetchone()
+        total_inscripciones = total_inscripciones['total'] if isinstance(total_inscripciones, dict) else total_inscripciones[0]
     except:
         total_inscripciones = 0
     try:
-        total_estudiantes = conn.execute('SELECT COUNT(*) FROM estudiantes').fetchone()[0]
+        total_estudiantes = conn.execute('SELECT COUNT(*) FROM estudiantes').fetchone()
+        total_estudiantes = total_estudiantes['total'] if isinstance(total_estudiantes, dict) else total_estudiantes[0]
     except:
         total_estudiantes = 0
     try:
-        total_expedientes = conn.execute('SELECT COUNT(*) FROM expedientes_viejos').fetchone()[0]
+        total_expedientes = conn.execute('SELECT COUNT(*) FROM expedientes_viejos').fetchone()
+        total_expedientes = total_expedientes['total'] if isinstance(total_expedientes, dict) else total_expedientes[0]
     except:
         total_expedientes = 0
     try:
-        total_usuarios = conn.execute('SELECT COUNT(*) FROM usuarios').fetchone()[0]
+        total_usuarios = conn.execute('SELECT COUNT(*) FROM usuarios').fetchone()
+        total_usuarios = total_usuarios['total'] if isinstance(total_usuarios, dict) else total_usuarios[0]
     except:
         total_usuarios = 0
     conn.close()
@@ -248,13 +252,11 @@ def login():
         conn = get_db_connection()
         user = None
         try:
-            # Como tu PostgresCursorWrapper acepta '?' y los convierte, puedes usar la misma sintaxis para ambos
             cursor = conn
             cursor.execute('SELECT username, rol, nombre_completo, curso_asignado FROM usuarios WHERE username = ? AND password = ?', (usuario_ingresado, password))
             row = cursor.fetchone()
             
             if row:
-                # Dependiendo de si devolvió tupla o diccionario, lo adaptamos de forma segura:
                 if isinstance(row, dict):
                     user = row
                 else:
@@ -288,6 +290,9 @@ def logout():
 # --- INSCRIPCIÓN ---
 @app.route('/inscripcion', methods=['GET', 'POST'])
 def inscripcion():
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+
     if request.method == 'POST':
         def guardar_archivo(input_name):
             file = request.files.get(input_name)
@@ -408,7 +413,7 @@ def inscripcion():
             conexion.execute("SELECT id FROM estudiantes ORDER BY nombres ASC, apellidos ASC")
             registros_estudiantes = conexion.fetchall()
             for indice, reg in enumerate(registros_estudiantes, start=1):
-                reg_id = reg['id'] if isinstance(reg, sqlite3.Row) or hasattr(reg, 'keys') else reg[0]
+                reg_id = reg['id'] if isinstance(reg, dict) or hasattr(reg, 'keys') else reg[0]
                 conexion.execute("UPDATE estudiantes SET numero_orden = ? WHERE id = ?", (indice, reg_id))
 
             conexion.execute('''
@@ -506,7 +511,7 @@ def inscripcion():
             conexion.close()
             flash('¡Estudiante inscrito y guardado correctamente en todas las tablas!', 'success')
         except Exception as e:
-            print(f"Error al guardar en la base de datos: {e}")
+            print(f"--- ERROR CRÍTICO EN INSCRIPCIÓN: {e}")
             flash('Hubo un error al guardar los datos.', 'danger')
 
         return redirect(url_for('inscripcion'))
@@ -516,21 +521,29 @@ def inscripcion():
 # --- BÚSQUEDA Y OTROS MÓDULOS ---
 @app.route('/menu_buscar')
 def menu_buscar():
-    if session.get('rol') != 'admin':
-        flash('Acceso denegado.')
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+    
+    # Permitir acceso tanto a admin como a oficina (o maestros si lo requieres)
+    rol_actual = str(session.get('rol', '')).lower()
+    if rol_actual not in ['admin', 'oficina']:
+        flash('Acceso denegado.', 'danger')
         return redirect(url_for('index'))
     
     conn = get_db_connection()
     try:
-        total_estudiantes = conn.execute('SELECT COUNT(*) FROM inscripciones').fetchone()[0]
+        total_estudiantes = conn.execute('SELECT COUNT(*) FROM inscripciones').fetchone()
+        total_estudiantes = total_estudiantes['total'] if isinstance(total_estudiantes, dict) else total_estudiantes[0]
     except:
         total_estudiantes = 0
     try:
-        total_expedientes = conn.execute('SELECT COUNT(*) FROM expedientes_viejos').fetchone()[0]
+        total_expedientes = conn.execute('SELECT COUNT(*) FROM expedientes_viejos').fetchone()
+        total_expedientes = total_expedientes['total'] if isinstance(total_expedientes, dict) else total_expedientes[0]
     except:
         total_expedientes = 0
     try:
-        total_usuarios = conn.execute('SELECT COUNT(*) FROM usuarios').fetchone()[0]
+        total_usuarios = conn.execute('SELECT COUNT(*) FROM usuarios').fetchone()
+        total_usuarios = total_usuarios['total'] if isinstance(total_usuarios, dict) else total_usuarios[0]
     except:
         total_usuarios = 0
     conn.close()
@@ -539,8 +552,6 @@ def menu_buscar():
                            total_estudiantes=total_estudiantes, 
                            total_expedientes=total_expedientes, 
                            total_usuarios=total_usuarios)
-
-import psycopg2.extras
 
 @app.route('/buscar_autorizado', methods=['GET', 'POST'])
 def buscar_autorizado():
@@ -593,7 +604,6 @@ def buscar_autorizado():
                     
                     if nombre_aut and cedula_aut:
                         if criterio.lower() in str(nombre_aut).lower() or criterio in str(cedula_aut):
-                            # Intentamos obtener la foto del autorizado, y si no existe, revisamos campos alternos según el índice
                             f_aut = f_dict.get(f'foto_aut_cedula_{i}')
                             if not f_aut and i == 1:
                                 f_aut = f_dict.get('foto_padre_cedula') or f_dict.get('foto_madre_cedula')
@@ -638,14 +648,10 @@ def listado_estudiantes():
     rol_actual = session.get('rol')
     
     conn = get_db_connection()
-    
-    # Si es oficina o admin, ve todo. Si es maestro, filtra por su nombre o usuario asociado.
     if rol_actual in ['oficina', 'admin']:
         estudiantes = conn.execute('SELECT * FROM inscripciones').fetchall()
     else:
-        # Ajusta 'maestro' o la columna correspondiente si en tu tabla se llama distinto (ej. profesor, usuario_id, etc.)
         estudiantes = conn.execute('SELECT * FROM inscripciones WHERE maestro = ?', (usuario_actual,)).fetchall()
-        
     conn.close()
     
     return render_template('listado_estudiantes.html', estudiantes=estudiantes)
@@ -662,7 +668,6 @@ def buscar_estudiante():
     is_postgres = DATABASE_URL is not None
 
     try:
-        # Obtener grados
         if is_postgres:
             cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             cur.execute("SELECT DISTINCT grado FROM inscripciones WHERE grado IS NOT NULL AND grado != ''")
@@ -722,7 +727,6 @@ def buscar_estudiante():
 
     return render_template('buscar_estudiante.html', estudiantes=estudiantes, grados_disponibles=grados_disponibles)
 
-# RUTA PARA GENERAR EL PDF BUSCANDO EN LA CUARTA COLUMNA (id_estudiante)
 @app.route('/generar_pdf/<path:id_estudiante>')
 def generar_pdf(id_estudiante):
     if 'usuario' not in session:
@@ -812,8 +816,6 @@ def planificacion():
     usuario_actual = {'nombre': session.get('usuario_nombre', 'Jesus Maria Alfonseca Duverge'), 'rol': session.get('rol', 'maestro')}
     return render_template('planificacion.html', usuario=usuario_actual)
 
-
-
 @app.route('/registrar_usuario', methods=['GET', 'POST'])
 def registrar_usuario():
     if session.get('rol') not in ['oficina', 'admin']:
@@ -863,7 +865,6 @@ def menu_viejo():
     if 'usuario' not in session:
         return redirect(url_for('login'))
     
-    # Restricción: Los maestros no pueden acceder
     rol_actual = session.get('rol', '').lower()
     if 'maestro' in rol_actual or rol_actual == 'profesor':
         flash('Acceso denegado. Los maestros no tienen permiso para entrar aquí.', 'danger')
@@ -911,8 +912,6 @@ def menu_viejo():
                            total_expedientes=total_expedientes,
                            total_usuarios=total_usuarios)
 
-import traceback
-
 @app.route('/expediente-viejo', methods=['GET', 'POST'])
 def expediente_viejo():
     if 'usuario' not in session:
@@ -931,18 +930,13 @@ def expediente_viejo():
 
         if is_postgres:
             cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-            
-            # Contadores generales
             cur.execute("SELECT COUNT(*) as total FROM estudiantes")
             total_estudiantes = cur.fetchone()['total']
-            
             cur.execute("SELECT COUNT(*) as total FROM usuarios")
             total_usuarios = cur.fetchone()['total']
-            
             cur.execute("SELECT COUNT(*) as total FROM expedientes_viejos")
             total_expedientes = cur.fetchone()['total']
             
-            # Búsqueda o listado
             if criterio:
                 cur.execute("""
                     SELECT * FROM expedientes_viejos 
@@ -955,10 +949,8 @@ def expediente_viejo():
         else:
             conexion.execute("SELECT COUNT(*) FROM estudiantes")
             total_estudiantes = conexion.fetchone()[0]
-            
             conexion.execute("SELECT COUNT(*) FROM usuarios")
             total_usuarios = conexion.fetchone()[0]
-            
             conexion.execute("SELECT COUNT(*) FROM expedientes_viejos")
             total_expedientes = conexion.fetchone()[0]
             
@@ -973,7 +965,6 @@ def expediente_viejo():
                 
     except Exception as e:
         print("--- ERROR DETALLADO EN EXPEDIENTE VIEJO ---")
-        traceback.print_exc()
         resultados = []
     finally:
         conexion.close()
@@ -1006,7 +997,6 @@ def registrar_expediente_viejo():
             cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             cur.execute("SELECT COUNT(*) as total FROM estudiantes")
             total_estudiantes = cur.fetchone()['total']
-            
             cur.execute("SELECT COUNT(*) as total FROM usuarios")
             total_usuarios = cur.fetchone()['total']
             
@@ -1015,12 +1005,10 @@ def registrar_expediente_viejo():
                 cur.execute("SELECT COUNT(*) as total FROM expedientes_viejos")
                 total_expedientes = cur.fetchone()['total']
                 
-                # Leer la última ficha desde Unnamed: 5
-                cur.execute('SELECT "Unnamed: 5" FROM expedientes_viejos ORDER BY ctid DESC LIMIT 1')
+                cur.execute('SELECT "Unnamed: 5" FROM expedientes_viejos ORDER BY id DESC LIMIT 1')
                 ultimo = cur.fetchone()
                 if ultimo and ultimo['Unnamed: 5']:
                     val = str(ultimo['Unnamed: 5']).strip()
-                    # Extraer solo los números de la ficha (ej: F-576 -> 576)
                     import re
                     numeros = re.findall(r'\d+', val)
                     if numeros:
@@ -1030,7 +1018,6 @@ def registrar_expediente_viejo():
         else:
             conexion.execute("SELECT COUNT(*) FROM estudiantes")
             total_estudiantes = conexion.fetchone()[0]
-            
             conexion.execute("SELECT COUNT(*) FROM usuarios")
             total_usuarios = conexion.fetchone()[0]
             
@@ -1039,7 +1026,7 @@ def registrar_expediente_viejo():
                 conexion.execute("SELECT COUNT(*) FROM expedientes_viejos")
                 total_expedientes = conexion.fetchone()[0]
                 
-                cursor_f = conexion.execute('SELECT "Unnamed: 5" FROM expedientes_viejos ORDER BY rowid DESC LIMIT 1').fetchone()
+                cursor_f = conexion.execute('SELECT "Unnamed: 5" FROM expedientes_viejos ORDER BY id DESC LIMIT 1').fetchone()
                 if cursor_f and cursor_f[0]:
                     val = str(cursor_f[0]).strip()
                     import re
@@ -1048,7 +1035,7 @@ def registrar_expediente_viejo():
                         num_siguiente = int(numeros[-1]) + 1
                         siguiente_ficha = f"F-{num_siguiente}"
     except Exception as e:
-        print(f"Error cargando ficha desde Unnamed: 5: {e}")
+        print(f"Error cargando ficha: {e}")
     finally:
         conexion.close()
 
@@ -1074,7 +1061,6 @@ def guardar_expediente_viejo():
     try:
         if is_postgres:
             cur = conexion.conn.cursor()
-            # Guardamos ordenado: Unnamed: 3 = Nombre, Unnamed: 4 = Año, Unnamed: 5 = Ficha
             cur.execute('INSERT INTO expedientes_viejos ("Unnamed: 3", "Unnamed: 4", "Unnamed: 5") VALUES (%s, %s, %s)', 
                         (nombre, ano_escolar, ficha))
             conexion.conn.commit()
@@ -1092,7 +1078,6 @@ def guardar_expediente_viejo():
         
     return redirect(url_for('registrar_expediente_viejo'))
 
-# RUTA DE DIAGNÓSTICO: Para ver las columnas reales en Render
 @app.route('/ver_estructura_db')
 def ver_estructura_db():
     conexion = get_db_connection()
@@ -1106,59 +1091,5 @@ def ver_estructura_db():
     finally:
         conexion.close()
 
-@app.route('/menu', methods=['GET'])
-def menu():
-    if 'usuario' not in session:
-        return redirect(url_for('login'))
-        
-    conexion = get_db_connection()
-    is_postgres = DATABASE_URL is not None
-    
-    total_estudiantes = 0
-    total_expedientes = 0
-    total_usuarios = 0
-
-    try:
-        if is_postgres:
-            cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-            
-            cur.execute("SELECT COUNT(*) as total FROM estudiantes")
-            res_est = cur.fetchone()
-            total_estudiantes = res_est['total'] if res_est else 0
-            
-            cur.execute("SELECT COUNT(*) as total FROM usuarios")
-            res_usu = cur.fetchone()
-            total_usuarios = res_usu['total'] if res_usu else 0
-            
-            cur.execute("SELECT COUNT(*) as total FROM expedientes_viejos")
-            res_exp = cur.fetchone()
-            total_expedientes = res_exp['total'] if res_exp else 0
-            
-            cur.close()
-        else:
-            conexion.execute("SELECT COUNT(*) FROM estudiantes")
-            row_est = conexion.fetchone()
-            total_estudiantes = row_est[0] if row_est else 0
-            
-            conexion.execute("SELECT COUNT(*) FROM usuarios")
-            row_usu = conexion.fetchone()
-            total_usuarios = row_usu[0] if row_usu else 0
-            
-            conexion.execute("SELECT COUNT(*) FROM expedientes_viejos")
-            row_exp = conexion.fetchone()
-            total_expedientes = row_exp[0] if row_exp else 0
-            
-    except Exception as e:
-        print(f"--- ERROR CARGANDO CONTADORES DEL MENU: {e}")
-    finally:
-        conexion.close()
-
-    return render_template('menu.html', 
-                           total_estudiantes=total_estudiantes,
-                           total_expedientes=total_expedientes,
-                           total_usuarios=total_usuarios)
-
-
 if __name__ == '__main__':
-
     app.run(debug=True)
