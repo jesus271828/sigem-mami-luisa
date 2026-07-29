@@ -732,19 +732,24 @@ def generar_pdf(id_estudiante):
     
     try:
         cursor = conexion.cursor()
-        # Buscamos por el ID exacto o convertido a texto
+        # Buscamos el registro del estudiante usando el ID
         cursor.execute(
-            "SELECT * FROM inscripciones WHERE id = %s OR CAST(id AS TEXT) = %s OR id_estudiante = %s", 
-            (id_estudiante, id_estudiante, id_estudiante)
+            """
+            SELECT * FROM inscripciones 
+            WHERE CAST(id AS TEXT) = %s 
+               OR id_estudiante = %s 
+               OR CAST(id_estudiante AS TEXT) = %s
+            """, 
+            (id_estudiante, id_estudiante, id_estudiante.lstrip('0'))
         )
         estudiante = cursor.fetchone()
     except Exception as e:
-        print("Error al buscar PDF:", e)
+        print("Error al buscar estudiante para PDF:", e)
         estudiante = None
 
     autorizados = None
     try:
-        cursor.execute("SELECT * FROM autorizados WHERE id_estudiante = %s", (id_estudiante,))
+        cursor.execute("SELECT * FROM autorizados WHERE id_estudiante = %s OR CAST(id_estudiante AS TEXT) = %s", (id_estudiante, id_estudiante.lstrip('0')))
         autorizados = cursor.fetchone()
     except:
         pass
@@ -761,6 +766,7 @@ def generar_pdf(id_estudiante):
             logo_base64 = base64.b64encode(image_file.read()).decode('utf-8')
         logo_src = f"data:image/png;base64,{logo_base64}"
     
+    # AQUÍ SE CARGA TU PLANTILLA pdf_ficha.html
     html = render_template('pdf_ficha.html', estudiante=estudiante, autorizados=autorizados, logo_src=logo_src)
     
     response = make_response()
