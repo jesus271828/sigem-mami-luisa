@@ -858,11 +858,17 @@ def eliminar_usuario(id):
     flash('Maestro eliminado.', 'success')
     return redirect(url_for('registrar_usuario'))
 
-@app.route('/menu_viejo') # O la ruta exacta que uses para este panel
+@app.route('/menu_viejo')
 def menu_viejo():
     if 'usuario' not in session:
         return redirect(url_for('login'))
     
+    # Restricción: Los maestros no pueden acceder
+    rol_actual = session.get('rol', '').lower()
+    if 'maestro' in rol_actual or rol_actual == 'profesor':
+        flash('Acceso denegado. Los maestros no tienen permiso para entrar aquí.', 'danger')
+        return redirect(url_for('menu'))
+
     conexion = get_db_connection()
     is_postgres = DATABASE_URL is not None
     
