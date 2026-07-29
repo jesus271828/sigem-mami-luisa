@@ -948,18 +948,16 @@ def guardar_expediente_viejo():
     return redirect(url_for('registrar_expediente_viejo'))
 
 # RUTA DE DIAGNÓSTICO: Para ver las columnas reales en Render
-@app.route('/debug_columnas')
-def debug_columnas():
+@app.route('/ver_estructura_db')
+def ver_estructura_db():
     conexion = get_db_connection()
     try:
-        cursor = conexion.cursor()
-        cursor.execute("SELECT * FROM inscripciones LIMIT 1;")
-        fila = cursor.fetchone()
-        nombres_columnas = [desc[0] for desc in cursor.description]
-        return f"Columnas: {nombres_columnas} <br><br> Primer registro: {fila}"
-    except Exception as e:
-        # Esto te mostrará el error exacto en la página web
-        return f"<h1>Error de Base de Datos:</h1><p>{str(e)}</p>"
+        conexion.execute("SELECT * FROM inscripciones LIMIT 1")
+        fila = conexion.fetchone()
+        if fila:
+            f_dict = dict(fila) if isinstance(fila, dict) else dict(zip([column[0] for column in conexion.description], fila))
+            return f_dict
+        return "No hay registros en inscripciones"
     finally:
         conexion.close()
 
