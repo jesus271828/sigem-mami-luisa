@@ -664,12 +664,24 @@ def buscar_estudiante():
         
     conn = get_db_connection()
     
-    total_estudiantes = conn.execute("SELECT COUNT(*) FROM inscripciones").fetchone()[0]
-    total_expedientes = conn.execute("SELECT COUNT(*) FROM expedientes_viejos").fetchone()[0]
-    total_usuarios = conn.execute("SELECT COUNT(*) FROM usuarios").fetchone()[0]
-    
-    grados_rows = conn.execute("SELECT DISTINCT grado FROM inscripciones WHERE grado IS NOT NULL AND grado != ''").fetchall()
-    grados_disponibles = [row[0] for row in grados_rows if row[0]]
+    try:
+        total_estudiantes = conn.execute("SELECT COUNT(*) FROM inscripciones").fetchone()[0]
+    except:
+        total_estudiantes = 0
+    try:
+        total_expedientes = conn.execute("SELECT COUNT(*) FROM expedientes_viejos").fetchone()[0]
+    except:
+        total_expedientes = 0
+    try:
+        total_usuarios = conn.execute("SELECT COUNT(*) FROM usuarios").fetchone()[0]
+    except:
+        total_usuarios = 0
+
+    try:
+        grados_rows = conn.execute("SELECT DISTINCT grado FROM inscripciones WHERE grado IS NOT NULL AND grado != ''").fetchall()
+        grados_disponibles = [row[0] for row in grados_rows if row[0]]
+    except:
+        grados_disponibles = []
 
     if request.method == 'POST':
         criterio = request.form.get('criterio', '').strip()
@@ -699,20 +711,55 @@ def buscar_estudiante():
                            total_expedientes=total_expedientes,
                            total_usuarios=total_usuarios)
 
+
 @app.route('/generar_pdf/<int:id_estudiante>')
 def generar_pdf(id_estudiante):
     if 'usuario' not in session:
         return redirect(url_for('login'))
         
-    conn = get_db_connection()
-    estudiante = conn.execute("SELECT * FROM inscripciones WHERE id = ?", (id_estudiante,)).fetchone()
-    conn.close()
+    conexion = get_db_connection()
+    
+    # Buscar en la tabla 'inscripciones' probando las columnas comunes de ID
+    try:
+        estudiante = conexion.execute("SELECT * FROM inscripciones WHERE id_estudiante = ?", (id_estudiante,)).fetchone()
+    except:
+        estudiante = None
+        
+    if not estudiante:
+        try:
+            estudiante = conexion.execute("SELECT * FROM inscripciones WHERE id = ?", (id_estudiante,)).fetchone()
+        except:
+            estudiante = None
+
+    try:
+        autorizados = conexion.execute("SELECT * FROM autorizados WHERE id_estudiante = ?", (id_estudiante,)).fetchone()
+    except:
+        autorizados = None
+        
+    conexion.close()
     
     if not estudiante:
-        flash('Estudiante no encontrado.', 'danger')
-        return redirect(url_for('buscar_estudiante'))
+        return f"No se encontró ninguna inscripción para el estudiante con ID: {id_estudiante}", 404
+
+    logo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'img', 'logo2.png')
+    logo_src = ""
+    if os.path.exists(logo_path):
+        with open(logo_path, "rb") as image_file:
+            logo_base64 = base64.b64encode(image_file.read()).decode('utf-8')
+        logo_src = f"data:image/png;base64,{logo_base64}"
+    
+    html = render_template('pdf_ficha.html', estudiante=estudiante, autorizados=autorizados, logo_src=logo_src)
+    
+    response = make_response()
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = f'inline; filename=ficha_inscripcion_{id_estudiante}.pdf'
+    
+    pisa_status = pisa.CreatePDF(html, dest=response.stream)
+    
+    if pisa_status.err:
+        return 'Hubo un error al generar el PDF', 500
         
-    return render_template('pdf_ficha.html', estudiante=estudiante)
+    return response
 
 @app.route('/asistencia')
 def asistencia():
