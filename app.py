@@ -729,18 +729,30 @@ def generar_pdf(id_estudiante):
         
     conexion = get_db_connection()
     
+    # Limpiamos el ID eliminando ceros a la izquierda o espacios (ej. "001" pasa a "1")
+    id_limpio = id_estudiante.strip().lstrip('0')
+    if not id_limpio:
+        id_limpio = '0' # por si acaso era exactamente '0' o '000'
+
+    estudiante = None
     try:
-        # Consulta directa usando el campo exacto id_estudiante
         cursor = conexion.cursor()
-        cursor.execute("SELECT * FROM inscripciones WHERE id_estudiante = %s", (id_estudiante,))
+        # Buscamos intentando comparar tanto el valor original como el valor limpio sin ceros a la izquierda
+        cursor.execute(
+            "SELECT * FROM inscripciones WHERE id_estudiante = %s OR CAST(id_estudiante AS TEXT) = %s OR CAST(id_estudiante AS TEXT) = %s", 
+            (id_estudiante, id_limpio, id_estudiante.lstrip('0'))
+        )
         estudiante = cursor.fetchone()
     except Exception as e:
-        print("Error consultando estudiante:", e)
+        print("Error en búsqueda de PDF:", e)
         estudiante = None
 
     autorizados = None
     try:
-        cursor.execute("SELECT * FROM autorizados WHERE id_estudiante = %s", (id_estudiante,))
+        cursor.execute(
+            "SELECT * FROM autorizados WHERE id_estudiante = %s OR CAST(id_estudiante AS TEXT) = %s", 
+            (id_estudiante, id_limpio)
+        )
         autorizados = cursor.fetchone()
     except:
         pass
@@ -748,7 +760,7 @@ def generar_pdf(id_estudiante):
     conexion.close()
     
     if not estudiante:
-        return f"No se encontró ninguna inscripción para el estudiante con ID: {id_estudiante}", 404
+        return f"No se encontró ninguna inscripción para el estudiante con ID: {id_estudiante} (Buscado como: {id_limpio})", 404
 
     logo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'img', 'logo2.png')
     logo_src = ""
