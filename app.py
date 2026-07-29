@@ -663,27 +663,35 @@ def buscar_estudiante():
         return redirect(url_for('login'))
         
     conn = get_db_connection()
+    cursor = conn.cursor()
     
+    # Contadores generales para la barra lateral
     try:
-        total_estudiantes = conn.execute("SELECT COUNT(*) FROM inscripciones").fetchone()[0]
+        cursor.execute("SELECT COUNT(*) FROM inscripciones")
+        total_estudiantes = cursor.fetchone()[0]
     except:
         total_estudiantes = 0
+        
     try:
-        total_expedientes = conn.execute("SELECT COUNT(*) FROM expedientes_viejos").fetchone()[0]
+        cursor.execute("SELECT COUNT(*) FROM expedientes_viejos")
+        total_expedientes = cursor.fetchone()[0]
     except:
         total_expedientes = 0
+        
     try:
-        total_usuarios = conn.execute("SELECT COUNT(*) FROM usuarios").fetchone()[0]
+        cursor.execute("SELECT COUNT(*) FROM usuarios")
+        total_usuarios = cursor.fetchone()[0]
     except:
         total_usuarios = 0
 
+    # Obtener lista única de grados/cursos para llenar el selector desplegable
     try:
-        grados_rows = conn.execute("SELECT DISTINCT grado FROM inscripciones WHERE grado IS NOT NULL AND grado != '' ORDER BY grado").fetchall()
-        grados_disponibles = [row['grado'] if isinstance(row, sqlite3.Row) or hasattr(row, 'keys') else row[0] for row in grados_rows]
+        cursor.execute("SELECT DISTINCT grado FROM inscripciones WHERE grado IS NOT NULL AND grado != '' ORDER BY grado")
+        grados_disponibles = [row['grado'] if isinstance(row, sqlite3.Row) or hasattr(row, 'keys') else row[0] for row in cursor.fetchall()]
     except:
         grados_disponibles = []
 
-    # Si se envia el formulario de filtro o busqueda
+    # Lógica de búsqueda y filtrado
     if request.method == 'POST':
         criterio = request.form.get('criterio', '').strip()
         grado_filtro = request.form.get('grado_filtro', '').strip()
@@ -701,41 +709,14 @@ def buscar_estudiante():
             params.append(grado_filtro)
             
         query += " ORDER BY id"
-        estudiantes = conn.execute(query, params).fetchall()
-        conn.close()
+        cursor.execute(query, params)
+    else:
+        # Por defecto al entrar (GET), cargamos TODOS los estudiantes registrados
+        cursor.execute("SELECT * FROM inscripciones ORDER BY id")
         
-        # Retorna la plantilla donde se despliega la tabla de resultados
-        return render_template('buscar_estudiante.html',
-                               estudiantes=estudiantes,
-                               grados_disponibles=grados_disponibles,
-                               total_estudiantes=total_estudiantes,
-                               total_expedientes=total_expedientes,
-                               total_usuarios=total_usuarios)
-    
+    estudiantes = cursor.fetchall()
     conn.close()
-    # Si es GET puro, muestra la vista con los botones de seleccion
-    return render_template('menu_buscar.html',
-                           total_estudiantes=total_estudiantes,
-                           total_expedientes=total_expedientes,
-                           total_usuarios=total_usuarios)
 
-@app.route('/resultado_buscar')
-def resultado_buscar():
-    if 'usuario' not in session:
-        return redirect(url_for('login'))
-        
-    conn = get_db_connection()
-    estudiantes = conn.execute("SELECT * FROM inscripciones ORDER BY id").fetchall()
-    
-    total_estudiantes = conn.execute("SELECT COUNT(*) FROM inscripciones").fetchone()[0]
-    total_expedientes = conn.execute("SELECT COUNT(*) FROM expedientes_viejos").fetchone()[0]
-    total_usuarios = conn.execute("SELECT COUNT(*) FROM usuarios").fetchone()[0]
-    
-    grados_rows = conn.execute("SELECT DISTINCT grado FROM inscripciones WHERE grado IS NOT NULL AND grado != '' ORDER BY grado").fetchall()
-    grados_disponibles = [row['grado'] if isinstance(row, sqlite3.Row) or hasattr(row, 'keys') else row[0] for row in grados_rows]
-    
-    conn.close()
-    
     return render_template('buscar_estudiante.html',
                            estudiantes=estudiantes,
                            grados_disponibles=grados_disponibles,
