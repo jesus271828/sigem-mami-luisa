@@ -1152,5 +1152,6 @@ def menu():
                            total_expedientes=total_expedientes,
                            total_usuarios=total_usuarios)
 
+
 if __name__ == '__main__':
     app.run(debug=True)
