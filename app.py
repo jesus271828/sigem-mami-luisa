@@ -631,64 +631,44 @@ def buscar_estudiante():
     if 'usuario' not in session:
         return redirect(url_for('login'))
         
-    conn = get_db_connection()
-    
-    # Contadores seguros
-    try:
-        total_estudiantes = conn.execute("SELECT COUNT(*) FROM inscripciones").fetchone()[0]
-    except:
-        total_estudiantes = 0
-    try:
-        total_expedientes = conn.execute("SELECT COUNT(*) FROM expedientes_viejos").fetchone()[0]
-    except:
-        total_expedientes = 0
-    try:
-        total_usuarios = conn.execute("SELECT COUNT(*) FROM usuarios").fetchone()[0]
-    except:
-        total_usuarios = 0
-
-    # Obtener grados disponibles para el select
-    grados_disponibles = []
-    try:
-        grados_rows = conn.execute("SELECT DISTINCT grado FROM inscripciones WHERE grado IS NOT NULL AND grado != ''").fetchall()
-        grados_disponibles = [row[0] for row in grados_rows if row[0]]
-    except:
-        pass
-
+    conexion = get_db_connection()
     estudiantes = []
+    grados_disponibles = []
+
     try:
+        # Obtener lista de grados para el selector
+        conexion.execute("SELECT DISTINCT grado FROM inscripciones WHERE grado IS NOT NULL AND grado != ''")
+        grados_res = conexion.fetchall()
+        grados_disponibles = [g['grado'] if isinstance(g, dict) else g[0] for g in grados_res]
+
         if request.method == 'POST':
             criterio = request.form.get('criterio', '').strip()
             grado_filtro = request.form.get('grado_filtro', '').strip()
             
-            # Consultamos trayendo explícitamente el ID, nombres, apellidos y grado en orden (índices 0, 1, 2, 3)
             query = "SELECT id_estudiante, nombres, apellidos, grado FROM inscripciones WHERE 1=1"
             params = []
-            
+
             if criterio:
-                query += " AND (nombres LIKE ? OR apellidos LIKE ? OR CAST(id_estudiante AS TEXT) LIKE ?)"
-                params.extend([f"%{criterio}%", f"%{criterio}%", f"%{criterio}%"])
-                
+                query += " AND (id_estudiante ILIKE ? OR nombres ILIKE ? OR apellidos ILIKE ?)"
+                like_criterio = f"%{criterio}%"
+                params.extend([like_criterio, like_criterio, like_criterio])
+            
             if grado_filtro:
                 query += " AND grado = ?"
                 params.append(grado_filtro)
-                
-            estudiantes = conn.execute(query, params).fetchall()
-        else:
-            # Consulta general ordenada para que est[0] sea ID, est[1] Nombres, est[2] Apellidos, est[3] Grado
-            estudiantes = conn.execute("SELECT id_estudiante, nombres, apellidos, grado FROM inscripciones").fetchall()
-    except Exception as e:
-        print("Error en búsqueda:", e)
-        estudiantes = []
-        
-    conn.close()
 
-    return render_template('buscar_estudiante.html',
-                           estudiantes=estudiantes,
-                           grados_disponibles=grados_disponibles,
-                           total_estudiantes=total_estudiantes,
-                           total_expedientes=total_expedientes,
-                           total_usuarios=total_usuarios)
+            conexion.execute(query, params)
+            estudiantes = conexion.fetchall()
+        else:
+            conexion.execute("SELECT id_estudiante, nombres, apellidos, grado FROM inscripciones")
+            estudiantes = conexion.fetchall()
+
+    except Exception as e:
+        print("--- ERROR EN BUSCAR ESTUDIANTE:", e)
+    finally:
+        conexion.close()
+
+    return render_template('buscar_estudiante.html', estudiantes=estudiantes, grados_disponibles=grados_disponibles)
 
 
 # RUTA PARA GENERAR EL PDF BUSCANDO EN LA CUARTA COLUMNA (id_estudiante)
