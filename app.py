@@ -593,7 +593,11 @@ def buscar_autorizado():
                     
                     if nombre_aut and cedula_aut:
                         if criterio.lower() in str(nombre_aut).lower() or criterio in str(cedula_aut):
+                            # Intentamos obtener la foto del autorizado, y si no existe, revisamos campos alternos según el índice
                             f_aut = f_dict.get(f'foto_aut_cedula_{i}')
+                            if not f_aut and i == 1:
+                                f_aut = f_dict.get('foto_padre_cedula') or f_dict.get('foto_madre_cedula')
+
                             if f_aut:
                                 f_aut = os.path.basename(str(f_aut))
 
