@@ -699,24 +699,25 @@ def generar_pdf(id_estudiante):
     autorizados = []
 
     try:
-        # Quitamos el diccionario para trabajar con tuplas y asegurar acceso por índice exacto
-        cursor = conexion.cursor()
+        # Usamos RealDictCursor para que cada registro sea un diccionario con nombre de columnas
+        cursor = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         
-        # Buscamos todas las inscripciones para filtrar en Python la de la 4ta columna (índice 3)
+        # Obtenemos todos los registros de inscripciones
         cursor.execute("SELECT * FROM inscripciones")
         filas = cursor.fetchall()
         
+        # Buscamos el estudiante comparando la 4ta columna (que en RealDictCursor se puede acceder por índice o buscando la clave correcta)
         for fila in filas:
-            # fila[3] es la cuarta columna (id_estudiante)
-            if str(fila[3]).strip() == str(id_estudiante).strip():
+            # Obtenemos los valores de las columnas en forma de lista para asegurar la posición 3 (cuarta columna)
+            valores = list(fila.values())
+            if len(valores) >= 4 and str(valores[3]).strip() == str(id_estudiante).strip():
                 estudiante = fila
                 break
 
         if estudiante:
-            # Si usa un ID interno numérico (ej. la primera columna id en fila[0]) o el id_estudiante
-            id_real_estudiante = estudiante[3]
+            # Obtenemos el ID de esa cuarta columna para buscar los autorizados
+            id_real_estudiante = list(estudiante.values())[3]
             
-            # Buscamos los autorizados usando esa misma columna
             query_aut = "SELECT * FROM autorizados WHERE id_estudiante = %s"
             cursor.execute(query_aut, (id_real_estudiante,))
             autorizados = cursor.fetchall()
@@ -730,7 +731,6 @@ def generar_pdf(id_estudiante):
     if not estudiante:
         return f"No se encontró ninguna inscripción para el ID: {id_estudiante}", 404
 
-    # Carga de logo en base64
     logo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'img', 'logo2.png')
     logo_src = ""
     if os.path.exists(logo_path):
@@ -738,7 +738,6 @@ def generar_pdf(id_estudiante):
             logo_base64 = base64.b64encode(image_file.read()).decode('utf-8')
         logo_src = f"data:image/png;base64,{logo_base64}"
     
-    # Renderizamos pasando el estudiante encontrado
     html = render_template('pdf_ficha.html', estudiante=estudiante, autorizados=autorizados, logo_src=logo_src)
     
     response = make_response()
