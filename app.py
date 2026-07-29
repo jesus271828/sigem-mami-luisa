@@ -1123,27 +1123,33 @@ def menu():
             cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             
             cur.execute("SELECT COUNT(*) as total FROM estudiantes")
-            total_estudiantes = cur.fetchone()['total']
+            res_est = cur.fetchone()
+            total_estudiantes = res_est['total'] if res_est else 0
             
             cur.execute("SELECT COUNT(*) as total FROM usuarios")
-            total_usuarios = cur.fetchone()['total']
+            res_usu = cur.fetchone()
+            total_usuarios = res_usu['total'] if res_usu else 0
             
             cur.execute("SELECT COUNT(*) as total FROM expedientes_viejos")
-            total_expedientes = cur.fetchone()['total']
+            res_exp = cur.fetchone()
+            total_expedientes = res_exp['total'] if res_exp else 0
             
             cur.close()
         else:
             conexion.execute("SELECT COUNT(*) FROM estudiantes")
-            total_estudiantes = conexion.fetchone()[0]
+            row_est = conexion.fetchone()
+            total_estudiantes = row_est[0] if row_est else 0
             
             conexion.execute("SELECT COUNT(*) FROM usuarios")
-            total_usuarios = conexion.fetchone()[0]
+            row_usu = conexion.fetchone()
+            total_usuarios = row_usu[0] if row_usu else 0
             
             conexion.execute("SELECT COUNT(*) FROM expedientes_viejos")
-            total_expedientes = conexion.fetchone()[0]
+            row_exp = conexion.fetchone()
+            total_expedientes = row_exp[0] if row_exp else 0
             
     except Exception as e:
-        print(f"Error cargando contadores del menú: {e}")
+        print(f"--- ERROR CARGANDO CONTADORES DEL MENU: {e}")
     finally:
         conexion.close()
 
