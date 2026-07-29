@@ -885,24 +885,65 @@ def menu_viejo():
                            total_expedientes=total_expedientes, 
                            total_usuarios=total_usuarios)
 
-@app.route('/expediente-viejo')
+@app.route('/expediente-viejo', methods=['GET', 'POST'])
 def expediente_viejo():
-    if session.get('rol') not in ['oficina', 'admin']:
-        flash('Acceso denegado.', 'danger')
-        return redirect(url_for('menu'))
-        
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+    
+    resultados = []
     conexion = get_db_connection()
-    expedientes = conexion.execute('SELECT * FROM expedientes_viejos').fetchall()
+    is_postgres = DATABASE_URL is not None
     
-    total_estudiantes = conexion.execute("SELECT COUNT(*) FROM inscripciones").fetchone()[0]
-    total_expedientes = conexion.execute("SELECT COUNT(*) FROM expedientes_viejos").fetchone()[0]
-    total_usuarios = conexion.execute("SELECT COUNT(*) FROM usuarios").fetchone()[0]
-    conexion.close()
-    
-    return render_template('expediente_viejos.html', 
-                           expedientes=expedientes, 
-                           total_estudiantes=total_estudiantes, 
-                           total_expedientes=total_expedientes, 
+    total_estudiantes = 0
+    total_expedientes = 0
+    total_usuarios = 0
+
+    try:
+        if is_postgres:
+            cur_c = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur_c.execute("SELECT COUNT(*) as total FROM estudiantes")
+            total_estudiantes = cur_c.fetchone()['total']
+            cur_c.execute("SELECT COUNT(*) as total FROM expedientes_viejos")
+            total_expedientes = cur_c.fetchone()['total']
+            cur_c.execute("SELECT COUNT(*) as total FROM usuarios")
+            total_usuarios = cur_c.fetchone()['total']
+            cur_c.close()
+        else:
+            conexion.execute("SELECT COUNT(*) FROM estudiantes")
+            total_estudiantes = conexion.fetchone()[0]
+            conexion.execute("SELECT COUNT(*) FROM expedientes_viejos")
+            total_expedientes = conexion.fetchone()[0]
+            conexion.execute("SELECT COUNT(*) FROM usuarios")
+            total_usuarios = conexion.fetchone()[0]
+
+        if request.method == 'POST':
+            criterio = request.form.get('criterio', '').strip()
+            
+            if is_postgres:
+                cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+                cur.execute("""
+                    SELECT * FROM expedientes_viejos 
+                    WHERE "Unnamed: 3" ILIKE %s OR "Unnamed: 4" ILIKE %s OR "Unnamed: 5" ILIKE %s
+                """, (f'%{criterio}%', f'%{criterio}%', f'%{criterio}%'))
+                resultados = cur.fetchall()
+                cur.close()
+            else:
+                conexion.execute("""
+                    SELECT * FROM expedientes_viejos 
+                    WHERE "Unnamed: 3" LIKE ? OR "Unnamed: 4" LIKE ? OR "Unnamed: 5" LIKE ?
+                """, (f'%{criterio}%', f'%{criterio}%', f'%{criterio}%'))
+                resultados = conexion.fetchall()
+                
+    except Exception as e:
+        print(f"--- Error en consulta de expedientes viejos: {e}")
+        resultados = []
+    finally:
+        conexion.close()
+
+    return render_template('expediente_viejo.html', 
+                           resultados=resultados,
+                           total_estudiantes=total_estudiantes,
+                           total_expedientes=total_expedientes,
                            total_usuarios=total_usuarios)
 
 @app.route('/registrar_expediente_viejo')
