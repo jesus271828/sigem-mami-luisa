@@ -985,7 +985,7 @@ def expediente_viejo():
                            total_usuarios=total_usuarios)
 
 
-@app.route('/registrar_expediente_viejo', methods=['GET', 'POST'])
+@app.route('/registrar_expediente_viejo', methods=['GET'])
 def registrar_expediente_viejo():
     if 'usuario' not in session:
         return redirect(url_for('login'))
@@ -1000,7 +1000,7 @@ def registrar_expediente_viejo():
     total_estudiantes = 0
     total_expedientes = 0
     total_usuarios = 0
-    siguiente_ficha = 1
+    siguiente_ficha = "F-1"
 
     try:
         if is_postgres:
@@ -1016,14 +1016,17 @@ def registrar_expediente_viejo():
                 cur.execute("SELECT COUNT(*) as total FROM expedientes_viejos")
                 total_expedientes = cur.fetchone()['total']
                 
-                # Obtener el último valor para autogenerar la ficha
-                cur.execute('SELECT "Unnamed: 3" FROM expedientes_viejos ORDER BY ctid DESC LIMIT 1')
+                # Leer la última ficha desde Unnamed: 5
+                cur.execute('SELECT "Unnamed: 5" FROM expedientes_viejos ORDER BY ctid DESC LIMIT 1')
                 ultimo = cur.fetchone()
-                if ultimo and ultimo['Unnamed: 3']:
-                    try:
-                        siguiente_ficha = int(str(ultimo['Unnamed: 3']).strip()) + 1
-                    except ValueError:
-                        siguiente_ficha = total_expedientes + 1
+                if ultimo and ultimo['Unnamed: 5']:
+                    val = str(ultimo['Unnamed: 5']).strip()
+                    # Extraer solo los números de la ficha (ej: F-576 -> 576)
+                    import re
+                    numeros = re.findall(r'\d+', val)
+                    if numeros:
+                        num_siguiente = int(numeros[-1]) + 1
+                        siguiente_ficha = f"F-{num_siguiente}"
             cur.close()
         else:
             conexion.execute("SELECT COUNT(*) FROM estudiantes")
@@ -1037,33 +1040,16 @@ def registrar_expediente_viejo():
                 conexion.execute("SELECT COUNT(*) FROM expedientes_viejos")
                 total_expedientes = conexion.fetchone()[0]
                 
-                cursor_f = conexion.execute('SELECT "Unnamed: 3" FROM expedientes_viejos ORDER BY rowid DESC LIMIT 1').fetchone()
+                cursor_f = conexion.execute('SELECT "Unnamed: 5" FROM expedientes_viejos ORDER BY rowid DESC LIMIT 1').fetchone()
                 if cursor_f and cursor_f[0]:
-                    try:
-                        siguiente_ficha = int(str(cursor_f[0]).strip()) + 1
-                    except ValueError:
-                        siguiente_ficha = total_expedientes + 1
-
-        if request.method == 'POST':
-            nombre = request.form.get('nombre', '')
-            ano_escolar = request.form.get('ano_escolar', '')
-            
-            if is_postgres:
-                cur = conexion.conn.cursor()
-                cur.execute('INSERT INTO expedientes_viejos ("Unnamed: 3", "Unnamed: 4", "Unnamed: 5") VALUES (%s, %s, %s)', 
-                            (str(siguiente_ficha), nombre, ano_escolar))
-                conexion.conn.commit()
-                cur.close()
-            else:
-                conexion.execute('INSERT INTO expedientes_viejos ("Unnamed: 3", "Unnamed: 4", "Unnamed: 5") VALUES (?, ?, ?)', 
-                                 (str(siguiente_ficha), nombre, ano_escolar))
-                conexion.commit()
-                
-            flash('Expediente registrado correctamente.', 'success')
-            return redirect(url_for('menu_viejo'))
-            
+                    val = str(cursor_f[0]).strip()
+                    import re
+                    numeros = re.findall(r'\d+', val)
+                    if numeros:
+                        num_siguiente = int(numeros[-1]) + 1
+                        siguiente_ficha = f"F-{num_siguiente}"
     except Exception as e:
-        print(f"Error en registrar_expediente_viejo: {e}")
+        print(f"Error cargando ficha desde Unnamed: 5: {e}")
     finally:
         conexion.close()
 
@@ -1073,22 +1059,38 @@ def registrar_expediente_viejo():
                            total_usuarios=total_usuarios,
                            siguiente_ficha=siguiente_ficha)
 
+
 @app.route('/guardar_expediente_viejo', methods=['POST'])
 def guardar_expediente_viejo():
-    if session.get('rol') not in ['oficina', 'admin']:
-        flash('Acceso denegado.', 'danger')
-        return redirect(url_for('menu'))
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
         
-    ficha = request.form.get('ficha')
-    nombre = request.form.get('nombre')
-    anio_escolar = request.form.get('anio_escolar')
+    ficha = request.form.get('ficha', '')
+    nombre = request.form.get('nombre', '')
+    ano_escolar = request.form.get('anio_escolar', '')
     
     conexion = get_db_connection()
-    conexion.execute('INSERT INTO expedientes_viejos ("Unnamed: 3", "Unnamed: 4", "Unnamed: 5") VALUES (?, ?, ?)', (nombre, anio_escolar, ficha))
-    conexion.commit()
-    conexion.close()
+    is_postgres = DATABASE_URL is not None
     
-    flash('¡Expediente registrado!', 'success')
+    try:
+        if is_postgres:
+            cur = conexion.conn.cursor()
+            # Guardamos ordenado: Unnamed: 3 = Nombre, Unnamed: 4 = Año, Unnamed: 5 = Ficha
+            cur.execute('INSERT INTO expedientes_viejos ("Unnamed: 3", "Unnamed: 4", "Unnamed: 5") VALUES (%s, %s, %s)', 
+                        (nombre, ano_escolar, ficha))
+            conexion.conn.commit()
+            cur.close()
+        else:
+            conexion.execute('INSERT INTO expedientes_viejos ("Unnamed: 3", "Unnamed: 4", "Unnamed: 5") VALUES (?, ?, ?)', 
+                             (nombre, ano_escolar, ficha))
+            conexion.commit()
+            
+        flash('¡Expediente registrado correctamente!', 'success')
+    except Exception as e:
+        flash(f'Error al guardar el expediente: {e}', 'danger')
+    finally:
+        conexion.close()
+        
     return redirect(url_for('registrar_expediente_viejo'))
 
 # RUTA DE DIAGNÓSTICO: Para ver las columnas reales en Render
