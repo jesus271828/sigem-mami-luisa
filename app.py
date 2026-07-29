@@ -547,60 +547,76 @@ def buscar_autorizado():
     if 'usuario' not in session:
         return redirect(url_for('login'))
         
-    autorizados = []
     conexion = get_db_connection()
-    
-    total_estudiantes = 0
-    total_expedientes = 0
-    total_usuarios = 0
-    
-    try:
-        cursor_count = conexion.cursor()
-        cursor_count.execute("SELECT COUNT(*) FROM inscripciones")
-        total_estudiantes = cursor_count.fetchone()[0]
-        cursor_count.execute("SELECT COUNT(*) FROM autorizados")
-        total_expedientes = cursor_count.fetchone()[0]
-        cursor_count.execute("SELECT COUNT(*) FROM usuarios")
-        total_usuarios = cursor_count.fetchone()[0]
-    except:
-        pass
+    autorizados = []
+    is_postgres = DATABASE_URL is not None
 
-    if request.method == 'POST':
-        criterio = request.form.get('criterio', '').strip()
-        try:
-            cursor = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-            
-            # Buscamos por nombre o por cualquiera de las 5 cédulas de autorizados
-            query = """
-                SELECT a.*, 
-                       COALESCE(i.nombres, '') AS nombres, 
-                       COALESCE(i.apellidos, '') AS apellidos, 
-                       COALESCE(i.grado, '') AS grado, 
-                       COALESCE(i.foto_estudiante, '') AS foto_estudiante 
-                FROM autorizados a
-                LEFT JOIN inscripciones i ON CAST(a.id_estudiante AS TEXT) = CAST(i.id AS TEXT)
-                WHERE a.nombre_completo ILIKE %s 
-                   OR a.aut_cedula_1 ILIKE %s 
-                   OR a.aut_cedula_2 ILIKE %s 
-                   OR a.aut_cedula_3 ILIKE %s 
-                   OR a.aut_cedula_4 ILIKE %s 
-                   OR a.aut_cedula_5 ILIKE %s
-            """
-            cursor.execute(query, (f"%{criterio}%", f"%{criterio}%", f"%{criterio}%", f"%{criterio}%", f"%{criterio}%", f"%{criterio}%"))
-            autorizados = cursor.fetchall()
-        except Exception as e:
-            print("Error buscando autorizado:", e)
-            autorizados = []
-            
-    conexion.close()
-    
-    return render_template(
-        'buscar_autorizado.html', 
-        autorizados=autorizados,
-        total_estudiantes=total_estudiantes,
-        total_expedientes=total_expedientes,
-        total_usuarios=total_usuarios
-    )
+    # Contadores para el sidebar
+    try:
+        if is_postgres:
+            cur_c = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur_c.execute("SELECT COUNT(*) as total FROM inscripciones")
+            total_estudiantes = cur_c.fetchone()['total']
+            cur_c.execute("SELECT COUNT(*) as total FROM expedientes_viejos")
+            total_expedientes = cur_c.fetchone()['total']
+            cur_c.execute("SELECT COUNT(*) as total FROM usuarios")
+            total_usuarios = cur_c.fetchone()['total']
+            cur_c.close()
+        else:
+            conexion.execute("SELECT COUNT(*) FROM inscripciones")
+            total_estudiantes = conexion.fetchone()[0]
+            conexion.execute("SELECT COUNT(*) FROM expedientes_viejos")
+            total_expedientes = conexion.fetchone()[0]
+            conexion.execute("SELECT COUNT(*) FROM usuarios")
+            total_usuarios = conexion.fetchone()[0]
+
+        if request.method == 'POST':
+            criterio = request.form.get('criterio', '').strip()
+            like_criterio = f"%{criterio}%"
+
+            # Consultamos todas las inscripciones para buscar en los 5 campos de autorizados
+            if is_postgres:
+                cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+                cur.execute("SELECT * FROM inscripciones")
+                filas = cur.fetchall()
+                cur.close()
+            else:
+                conexion.execute("SELECT * FROM inscripciones")
+                filas = conexion.fetchall()
+
+            for fila in filas:
+                f_dict = dict(fila) if isinstance(fila, dict) else dict(zip([column[0] for column in conexion.description], fila))
+                
+                # Revisar del 1 al 5 los autorizados guardados en la inscripción
+                for i in range(1, 6):
+                    nombre_aut = f_dict.get(f'aut_nombre_{i}')
+                    cedula_aut = f_dict.get(f'aut_cedula_{i}')
+                    
+                    if nombre_aut and cedula_aut:
+                        # Verificamos si coincide con el criterio de búsqueda (nombre o cédula)
+                        if criterio.lower() in str(nombre_aut).lower() or criterio in str(cedula_aut):
+                            autorizados.append({
+                                'nombre_completo': nombre_aut,
+                                'cedula': cedula_aut,
+                                'parentesco': f_dict.get(f'aut_parentesco_{i}', 'No especificado'),
+                                'foto_autorizado': f_dict.get(f'foto_aut_cedula_{i}'),
+                                'foto_estudiante': f_dict.get('foto_estudiante_cedula'),
+                                'nombres': f_dict.get('nombres'),
+                                'apellidos': f_dict.get('apellidos'),
+                                'grado': f_dict.get('grado'),
+                                'id_estudiante': f_dict.get('id_estudiante')
+                            })
+
+    except Exception as e:
+        print("--- ERROR EN BUSCAR AUTORIZADO:", e)
+    finally:
+        conexion.close()
+
+    return render_template('buscar_autorizado.html', 
+                           autorizados=autorizados, 
+                           total_estudiantes=total_estudiantes, 
+                           total_expedientes=total_expedientes, 
+                           total_usuarios=total_usuarios)
 
 @app.route('/listado-estudiantes')
 def listado_estudiantes():
