@@ -641,28 +641,51 @@ def buscar_estudiante():
         grados_res = conexion.fetchall()
         grados_disponibles = [g['grado'] if isinstance(g, dict) else g[0] for g in grados_res]
 
-        # SOLO BUSCAR SI EL USUARIO ENVÍA EL FORMULARIO
+        # Determinamos si estamos usando PostgreSQL o SQLite por el tipo de conexión
+        is_postgres = DATABASE_URL is not None
+
         if request.method == 'POST':
             criterio = request.form.get('criterio', '').strip()
             grado_filtro = request.form.get('grado_filtro', '').strip()
             
-            query = "SELECT id_estudiante, nombres, apellidos, grado FROM inscripciones WHERE 1=1"
-            params = []
-
-            if criterio:
-                query += " AND (id_estudiante ILIKE ? OR nombres ILIKE ? OR apellidos ILIKE ?)"
-                like_criterio = f"%{criterio}%"
-                params.extend([like_criterio, like_criterio, like_criterio])
-            
-            if grado_filtro:
-                query += " AND grado = ?"
-                params.append(grado_filtro)
-
-            conexion.execute(query, params)
-            estudiantes = conexion.fetchall()
+            if is_postgres:
+                query = "SELECT id_estudiante, nombres, apellidos, grado FROM inscripciones WHERE 1=1"
+                params = []
+                if criterio:
+                    query += " AND (id_estudiante ILIKE %s OR nombres ILIKE %s OR apellidos ILIKE %s)"
+                    like_c = f"%{criterio}%"
+                    params.extend([like_c, like_c, like_c])
+                if grado_filtro:
+                    query += " AND grado = %s"
+                    params.append(grado_filtro)
+                
+                # Ejecución directa para evitar conflictos con el wrapper en POST
+                cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+                cur.execute(query, params)
+                estudiantes = cur.fetchall()
+                cur.close()
+            else:
+                query = "SELECT id_estudiante, nombres, apellidos, grado FROM inscripciones WHERE 1=1"
+                params = []
+                if criterio:
+                    query += " AND (id_estudiante LIKE ? OR nombres LIKE ? OR apellidos LIKE ?)"
+                    like_c = f"%{criterio}%"
+                    params.extend([like_c, like_c, like_c])
+                if grado_filtro:
+                    query += " AND grado = ?"
+                    params.append(grado_filtro)
+                conexion.execute(query, params)
+                estudiantes = conexion.fetchall()
         else:
-            # Al entrar por GET la tabla se queda vacía a propósito
-            estudiantes = []
+            # TRAER TODOS LOS ESTUDIANTES POR DEFECTO PARA QUE SE VEAN AL ENTRAR
+            if is_postgres:
+                cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+                cur.execute("SELECT id_estudiante, nombres, apellidos, grado FROM inscripciones")
+                estudiantes = cur.fetchall()
+                cur.close()
+            else:
+                conexion.execute("SELECT id_estudiante, nombres, apellidos, grado FROM inscripciones")
+                estudiantes = conexion.fetchall()
 
     except Exception as e:
         print("--- ERROR EN BUSCAR ESTUDIANTE:", e)
@@ -670,7 +693,6 @@ def buscar_estudiante():
         conexion.close()
 
     return render_template('buscar_estudiante.html', estudiantes=estudiantes, grados_disponibles=grados_disponibles)
-
 
 # RUTA PARA GENERAR EL PDF BUSCANDO EN LA CUARTA COLUMNA (id_estudiante)
 @app.route('/generar_pdf/<path:id_estudiante>')
