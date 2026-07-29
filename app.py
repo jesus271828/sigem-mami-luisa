@@ -911,6 +911,8 @@ def menu_viejo():
                            total_expedientes=total_expedientes,
                            total_usuarios=total_usuarios)
 
+import traceback
+
 @app.route('/expediente-viejo', methods=['GET', 'POST'])
 def expediente_viejo():
     if 'usuario' not in session:
@@ -930,31 +932,25 @@ def expediente_viejo():
         if is_postgres:
             cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             
-            # Contadores generales seguros
+            # Contadores generales
             cur.execute("SELECT COUNT(*) as total FROM estudiantes")
             total_estudiantes = cur.fetchone()['total']
             
             cur.execute("SELECT COUNT(*) as total FROM usuarios")
             total_usuarios = cur.fetchone()['total']
             
-            try:
-                cur.execute("SELECT COUNT(*) as total FROM expedientes_viejos")
-                total_expedientes = cur.fetchone()['total']
-                
-                if criterio:
-                    cur.execute("""
-                        SELECT * FROM expedientes_viejos 
-                        WHERE CAST("Unnamed: 3" AS TEXT) ILIKE %s 
-                           OR CAST("Unnamed: 4" AS TEXT) ILIKE %s 
-                           OR CAST("Unnamed: 5" AS TEXT) ILIKE %s
-                    """, (f'%{criterio}%', f'%{criterio}%', f'%{criterio}%'))
-                else:
-                    cur.execute("SELECT * FROM expedientes_viejos LIMIT 100")
-                resultados = cur.fetchall()
-            except Exception:
-                total_expedientes = 0
-                resultados = []
-                
+            cur.execute("SELECT COUNT(*) as total FROM expedientes_viejos")
+            total_expedientes = cur.fetchone()['total']
+            
+            # Búsqueda o listado
+            if criterio:
+                cur.execute("""
+                    SELECT * FROM expedientes_viejos 
+                    WHERE "Unnamed: 3" ILIKE %s OR "Unnamed: 4" ILIKE %s OR "Unnamed: 5" ILIKE %s
+                """, (f'%{criterio}%', f'%{criterio}%', f'%{criterio}%'))
+            else:
+                cur.execute("SELECT * FROM expedientes_viejos LIMIT 100")
+            resultados = cur.fetchall()
             cur.close()
         else:
             conexion.execute("SELECT COUNT(*) FROM estudiantes")
@@ -963,29 +959,26 @@ def expediente_viejo():
             conexion.execute("SELECT COUNT(*) FROM usuarios")
             total_usuarios = conexion.fetchone()[0]
             
-            try:
-                conexion.execute("SELECT COUNT(*) FROM expedientes_viejos")
-                total_expedientes = conexion.fetchone()[0]
-                
-                if criterio:
-                    conexion.execute("""
-                        SELECT * FROM expedientes_viejos 
-                        WHERE "Unnamed: 3" LIKE ? OR "Unnamed: 4" LIKE ? OR "Unnamed: 5" LIKE ?
-                    """, (f'%{criterio}%', f'%{criterio}%', f'%{criterio}%'))
-                else:
-                    conexion.execute("SELECT * FROM expedientes_viejos LIMIT 100")
-                resultados = conexion.fetchall()
-            except Exception:
-                total_expedientes = 0
-                resultados = []
+            conexion.execute("SELECT COUNT(*) FROM expedientes_viejos")
+            total_expedientes = conexion.fetchone()[0]
+            
+            if criterio:
+                conexion.execute("""
+                    SELECT * FROM expedientes_viejos 
+                    WHERE "Unnamed: 3" LIKE ? OR "Unnamed: 4" LIKE ? OR "Unnamed: 5" LIKE ?
+                """, (f'%{criterio}%', f'%{criterio}%', f'%{criterio}%'))
+            else:
+                conexion.execute("SELECT * FROM expedientes_viejos LIMIT 100")
+            resultados = conexion.fetchall()
                 
     except Exception as e:
-        print(f"--- Error en expediente_viejo: {e}")
+        print("--- ERROR DETALLADO EN EXPEDIENTE VIEJO ---")
+        traceback.print_exc()
         resultados = []
     finally:
         conexion.close()
 
-    return render_template('expediente_viejo.html', 
+    return render_template('expediente_viejos.html', 
                            expedientes=resultados,
                            total_estudiantes=total_estudiantes,
                            total_expedientes=total_expedientes,
