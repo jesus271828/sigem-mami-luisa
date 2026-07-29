@@ -641,6 +641,7 @@ def buscar_estudiante():
         grados_res = conexion.fetchall()
         grados_disponibles = [g['grado'] if isinstance(g, dict) else g[0] for g in grados_res]
 
+        # SOLO BUSCAR SI EL USUARIO ENVÍA EL FORMULARIO
         if request.method == 'POST':
             criterio = request.form.get('criterio', '').strip()
             grado_filtro = request.form.get('grado_filtro', '').strip()
@@ -660,8 +661,8 @@ def buscar_estudiante():
             conexion.execute(query, params)
             estudiantes = conexion.fetchall()
         else:
-            conexion.execute("SELECT id_estudiante, nombres, apellidos, grado FROM inscripciones")
-            estudiantes = conexion.fetchall()
+            # Al entrar por GET la tabla se queda vacía a propósito
+            estudiantes = []
 
     except Exception as e:
         print("--- ERROR EN BUSCAR ESTUDIANTE:", e)
