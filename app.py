@@ -696,22 +696,16 @@ def generar_pdf(id_estudiante):
         
     conexion = get_db_connection()
     estudiante = None
-    
-    id_limpio = id_estudiante.lstrip('0')
-    if not id_limpio:
-        id_limpio = '0'
 
     try:
         cursor = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        # Consultamos directamente de la tabla inscripciones donde están todos los datos
-        query = """
-            SELECT * FROM inscripciones 
-            WHERE CAST(id AS TEXT) = %s 
-               OR id_estudiante = %s 
-               OR id_estudiante = %s
-               OR CAST(id AS TEXT) = %s
-        """
-        cursor.execute(query, (id_estudiante, id_estudiante, id_limpio, id_limpio))
+        # Forzamos una búsqueda directa y exacta por el id_estudiante en texto y también por id numérico
+        query = "SELECT * FROM inscripciones WHERE id_estudiante = %s OR id = %s"
+        
+        # Probamos tanto el valor original (ej. '001') como convertido a entero (ej. 1) si es número
+        id_int = int(id_estudiante) if id_estudiante.isdigit() else 0
+        
+        cursor.execute(query, (id_estudiante, id_int))
         estudiante = cursor.fetchone()
     except Exception as e:
         print("Error al buscar estudiante para PDF:", e)
@@ -719,15 +713,7 @@ def generar_pdf(id_estudiante):
 
     autorizados = None
     try:
-        cursor.execute(
-            """
-            SELECT * FROM autorizados 
-            WHERE CAST(id_estudiante AS TEXT) = %s 
-               OR id_estudiante = %s 
-               OR id_estudiante = %s
-            """, 
-            (id_estudiante, id_limpio, f"00{id_limpio}"[-3:])
-        )
+        cursor.execute("SELECT * FROM autorizados WHERE id_estudiante = %s", (id_estudiante,))
         autorizados = cursor.fetchone()
     except:
         pass
