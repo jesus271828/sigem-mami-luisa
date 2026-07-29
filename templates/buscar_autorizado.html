@@ -50,7 +50,11 @@
         <!-- Contenido principal -->
         <div class="col-md-9 p-5">
             <div class="menu-card">
-                <h2 class="mb-4">Buscar Autorizado</h2>
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="mb-0">Buscar Autorizado</h2>
+                    <a href="/buscar_estudiante" class="btn btn-primary"><i class="fas fa-search me-2"></i>Ir al Menú de Búsqueda</a>
+                </div>
+
                 <form method="POST" class="row g-3">
                     <div class="col-md-8">
                         <input type="text" name="criterio" class="form-control" placeholder="Nombre o Cédula del autorizado..." value="{{ request.form.get('criterio', '') }}" required>
