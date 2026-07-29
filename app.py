@@ -665,7 +665,7 @@ def buscar_estudiante():
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # Contadores generales para la barra lateral
+    # Contadores seguros
     try:
         cursor.execute("SELECT COUNT(*) FROM inscripciones")
         total_estudiantes = cursor.fetchone()[0]
@@ -684,37 +684,44 @@ def buscar_estudiante():
     except:
         total_usuarios = 0
 
-    # Obtener lista única de grados/cursos para llenar el selector desplegable
+    # Obtener grados de forma segura por si la columna se llama distinto
+    grados_disponibles = []
     try:
         cursor.execute("SELECT DISTINCT grado FROM inscripciones WHERE grado IS NOT NULL AND grado != '' ORDER BY grado")
-        grados_disponibles = [row['grado'] if isinstance(row, sqlite3.Row) or hasattr(row, 'keys') else row[0] for row in cursor.fetchall()]
+        grados_disponibles = [row[0] for row in cursor.fetchall() if row[0]]
     except:
-        grados_disponibles = []
+        try:
+            cursor.execute("SELECT DISTINCT curso FROM inscripciones WHERE curso IS NOT NULL AND curso != '' ORDER BY curso")
+            grados_disponibles = [row[0] for row in cursor.fetchall() if row[0]]
+        except:
+            pass
 
-    # Lógica de búsqueda y filtrado
-    if request.method == 'POST':
-        criterio = request.form.get('criterio', '').strip()
-        grado_filtro = request.form.get('grado_filtro', '').strip()
-        
-        query = "SELECT * FROM inscripciones WHERE 1=1"
-        params = []
-        
-        if criterio:
-            query += " AND (id LIKE ? OR nombres LIKE ? OR apellidos LIKE ?)"
-            busqueda = f"%{criterio}%"
-            params.extend([busqueda, busqueda, busqueda])
+    # Lógica de búsqueda flexible
+    try:
+        if request.method == 'POST':
+            criterio = request.form.get('criterio', '').strip()
+            grado_filtro = request.form.get('grado_filtro', '').strip()
             
-        if grado_filtro:
-            query += " AND grado = ?"
-            params.append(grado_filtro)
+            query = "SELECT * FROM inscripciones WHERE 1=1"
+            params = []
             
-        query += " ORDER BY id"
-        cursor.execute(query, params)
-    else:
-        # Por defecto al entrar (GET), cargamos TODOS los estudiantes registrados
-        cursor.execute("SELECT * FROM inscripciones ORDER BY id")
+            if criterio:
+                query += " AND (id LIKE ? OR nombres LIKE ? OR apellidos LIKE ?)"
+                busqueda = f"%{criterio}%"
+                params.extend([busqueda, busqueda, busqueda])
+                
+            if grado_filtro:
+                query += " AND (grado = ? OR curso = ?)"
+                params.extend([grado_filtro, grado_filtro])
+                
+            cursor.execute(query, params)
+        else:
+            cursor.execute("SELECT * FROM inscripciones")
+            
+        estudiantes = cursor.fetchall()
+    except Exception as e:
+        estudiantes = []
         
-    estudiantes = cursor.fetchall()
     conn.close()
 
     return render_template('buscar_estudiante.html',
