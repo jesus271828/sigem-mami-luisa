@@ -728,28 +728,20 @@ def generar_pdf(id_estudiante):
         return redirect(url_for('login'))
         
     conexion = get_db_connection()
-    estudiante = None
     
-    # Intentamos buscar exactamente con el nombre de la columna en mayúsculas y otras variantes
-    for query_str in [
-        'SELECT * FROM inscripciones WHERE "id_ESTUDIANTE" = ?',
-        'SELECT * FROM inscripciones WHERE id_estudiante = ?',
-        'SELECT * FROM inscripciones WHERE id = ?',
-        'SELECT * FROM inscripciones WHERE CAST("id_ESTUDIANTE" AS TEXT) = ?',
-        'SELECT * FROM inscripciones WHERE CAST(id_estudiante AS TEXT) = ?'
-    ]:
-        try:
-            # Si usas PostgreSQL y falla el signo '?', se puede ajustar, pero probemos con este formato seguro:
-            estudiante = conexion.execute(query_str.replace('?', '%s'), (str(id_estudiante).strip(),)).fetchone()
-            if estudiante:
-                break
-        except Exception as e:
-            # Si la consulta falla por sintaxis de columna, probamos la siguiente
-            continue
+    try:
+        # Consulta directa usando el campo exacto id_estudiante
+        cursor = conexion.cursor()
+        cursor.execute("SELECT * FROM inscripciones WHERE id_estudiante = %s", (id_estudiante,))
+        estudiante = cursor.fetchone()
+    except Exception as e:
+        print("Error consultando estudiante:", e)
+        estudiante = None
 
     autorizados = None
     try:
-        autorizados = conexion.execute('SELECT * FROM autorizados WHERE "id_ESTUDIANTE" = %s OR id_estudiante = %s', (str(id_estudiante).strip(), str(id_estudiante).strip())).fetchone()
+        cursor.execute("SELECT * FROM autorizados WHERE id_estudiante = %s", (id_estudiante,))
+        autorizados = cursor.fetchone()
     except:
         pass
         
@@ -777,7 +769,6 @@ def generar_pdf(id_estudiante):
         return 'Hubo un error al generar el PDF', 500
         
     return response
-
 
 @app.route('/asistencia')
 def asistencia():
