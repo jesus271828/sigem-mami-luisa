@@ -728,31 +728,28 @@ def generar_pdf(id_estudiante):
         return redirect(url_for('login'))
         
     conexion = get_db_connection()
-    
-    # Limpiamos el ID eliminando ceros a la izquierda o espacios (ej. "001" pasa a "1")
-    id_limpio = id_estudiante.strip().lstrip('0')
-    if not id_limpio:
-        id_limpio = '0' # por si acaso era exactamente '0' o '000'
-
     estudiante = None
+    
     try:
         cursor = conexion.cursor()
-        # Buscamos intentando comparar tanto el valor original como el valor limpio sin ceros a la izquierda
+        # Buscamos si coincide con id_estudiante (como texto o número) o con la columna id numérical
         cursor.execute(
-            "SELECT * FROM inscripciones WHERE id_estudiante = %s OR CAST(id_estudiante AS TEXT) = %s OR CAST(id_estudiante AS TEXT) = %s", 
-            (id_estudiante, id_limpio, id_estudiante.lstrip('0'))
+            """
+            SELECT * FROM inscripciones 
+            WHERE CAST(id_estudiante AS TEXT) = %s 
+               OR CAST(id AS TEXT) = %s 
+               OR id_estudiante = %s
+            """, 
+            (id_estudiante, id_estudiante, id_estudiante.lstrip('0'))
         )
         estudiante = cursor.fetchone()
     except Exception as e:
-        print("Error en búsqueda de PDF:", e)
+        print("Error en PDF:", e)
         estudiante = None
 
     autorizados = None
     try:
-        cursor.execute(
-            "SELECT * FROM autorizados WHERE id_estudiante = %s OR CAST(id_estudiante AS TEXT) = %s", 
-            (id_estudiante, id_limpio)
-        )
+        cursor.execute("SELECT * FROM autorizados WHERE CAST(id_estudiante AS TEXT) = %s", (id_estudiante,))
         autorizados = cursor.fetchone()
     except:
         pass
@@ -760,7 +757,7 @@ def generar_pdf(id_estudiante):
     conexion.close()
     
     if not estudiante:
-        return f"No se encontró ninguna inscripción para el estudiante con ID: {id_estudiante} (Buscado como: {id_limpio})", 404
+        return f"No se encontró ninguna inscripción para el estudiante con ID: {id_estudiante}", 404
 
     logo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'img', 'logo2.png')
     logo_src = ""
