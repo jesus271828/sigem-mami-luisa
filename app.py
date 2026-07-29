@@ -696,29 +696,31 @@ def generar_pdf(id_estudiante):
         
     conexion = get_db_connection()
     estudiante = None
+    autorizados = []
 
     try:
         cursor = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        # Forzamos una búsqueda directa y exacta por el id_estudiante en texto y también por id numérico
+        
+        # 1. Buscar al estudiante por ID numérico o texto
         query = "SELECT * FROM inscripciones WHERE id_estudiante = %s OR id = %s"
-        
-        # Probamos tanto el valor original (ej. '001') como convertido a entero (ej. 1) si es número
         id_int = int(id_estudiante) if id_estudiante.isdigit() else 0
-        
         cursor.execute(query, (id_estudiante, id_int))
         estudiante = cursor.fetchone()
-    except Exception as e:
-        print("Error al buscar estudiante para PDF:", e)
-        estudiante = None
 
-    autorizados = None
-    try:
-        cursor.execute("SELECT * FROM autorizados WHERE id_estudiante = %s", (id_estudiante,))
-        autorizados = cursor.fetchone()
-    except:
-        pass
-        
-    conexion.close()
+        # 2. Si lo encontramos, buscamos sus autorizados asociados
+        if estudiante:
+            # Usamos el id real de la inscripción o el id_estudiante según tu BD
+            query_aut = "SELECT * FROM autorizados WHERE id_estudiante = %s OR id_inscripcion = %s"
+            # Intentamos buscar por ambas referencias por seguridad
+            cursor.execute(query_aut, (str(estudiante.get('id_estudiante')), estudiante.get('id')))
+            # Como pueden ser varios autorizados, usamos fetchall() en lugar de fetchone()
+            autorizados = cursor.fetchall()
+
+    except Exception as e:
+        print("Error al generar PDF:", e)
+        estudiante = None
+    finally:
+        conexion.close()
     
     if not estudiante:
         return f"No se encontró ninguna inscripción para el ID: {id_estudiante}", 404
