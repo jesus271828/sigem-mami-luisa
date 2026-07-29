@@ -663,40 +663,36 @@ def buscar_estudiante():
         return redirect(url_for('login'))
         
     conn = get_db_connection()
-    cursor = conn.cursor()
     
     # Contadores seguros
     try:
-        cursor.execute("SELECT COUNT(*) FROM inscripciones")
-        total_estudiantes = cursor.fetchone()[0]
+        total_estudiantes = conn.execute("SELECT COUNT(*) FROM inscripciones").fetchone()[0]
     except:
         total_estudiantes = 0
         
     try:
-        cursor.execute("SELECT COUNT(*) FROM expedientes_viejos")
-        total_expedientes = cursor.fetchone()[0]
+        total_expedientes = conn.execute("SELECT COUNT(*) FROM expedientes_viejos").fetchone()[0]
     except:
         total_expedientes = 0
         
     try:
-        cursor.execute("SELECT COUNT(*) FROM usuarios")
-        total_usuarios = cursor.fetchone()[0]
+        total_usuarios = conn.execute("SELECT COUNT(*) FROM usuarios").fetchone()[0]
     except:
         total_usuarios = 0
 
-    # Obtener grados de forma segura por si la columna se llama distinto
+    # Obtener grados disponibles de forma segura
     grados_disponibles = []
     try:
-        cursor.execute("SELECT DISTINCT grado FROM inscripciones WHERE grado IS NOT NULL AND grado != '' ORDER BY grado")
-        grados_disponibles = [row[0] for row in cursor.fetchall() if row[0]]
+        grados_rows = conn.execute("SELECT DISTINCT grado FROM inscripciones WHERE grado IS NOT NULL AND grado != '' ORDER BY grado").fetchall()
+        grados_disponibles = [row[0] for row in grados_rows if row[0]]
     except:
         try:
-            cursor.execute("SELECT DISTINCT curso FROM inscripciones WHERE curso IS NOT NULL AND curso != '' ORDER BY curso")
-            grados_disponibles = [row[0] for row in cursor.fetchall() if row[0]]
+            grados_rows = conn.execute("SELECT DISTINCT curso FROM inscripciones WHERE curso IS NOT NULL AND curso != '' ORDER BY curso").fetchall()
+            grados_disponibles = [row[0] for row in grados_rows if row[0]]
         except:
             pass
 
-    # Lógica de búsqueda flexible
+    # Lógica de búsqueda y filtrado directa con conn.execute
     try:
         if request.method == 'POST':
             criterio = request.form.get('criterio', '').strip()
@@ -714,11 +710,9 @@ def buscar_estudiante():
                 query += " AND (grado = ? OR curso = ?)"
                 params.extend([grado_filtro, grado_filtro])
                 
-            cursor.execute(query, params)
+            estudiantes = conn.execute(query, params).fetchall()
         else:
-            cursor.execute("SELECT * FROM inscripciones")
-            
-        estudiantes = cursor.fetchall()
+            estudiantes = conn.execute("SELECT * FROM inscripciones").fetchall()
     except Exception as e:
         estudiantes = []
         
