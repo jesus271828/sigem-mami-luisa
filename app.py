@@ -694,39 +694,32 @@ def generar_pdf(id_estudiante):
     if 'usuario' not in session:
         return redirect(url_for('login'))
         
-    print(f"--- DEBUG: ID recibido en la URL: {id_estudiante} (Tipo: {type(id_estudiante)})")
-    
     conexion = get_db_connection()
     estudiante = None
     autorizados = []
 
     try:
-        cursor = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        # Quitamos el diccionario para trabajar con tuplas y asegurar acceso por índice exacto
+        cursor = conexion.cursor()
         
-        # Limpiamos el ID por si viene con ceros a la izquierda y preparamos entero
-        id_limpio = id_estudiante.lstrip('0') if id_estudiante.lstrip('0') else '0'
-        id_int = int(id_limpio) if id_limpio.isdigit() else 0
-
-        # Consulta flexible adaptada a posibles nombres de columnas en inscripciones
-        query = """
-            SELECT * FROM inscripciones 
-            WHERE id_estudiante = %s 
-               OR id_estudiante = %s 
-               OR id = %s 
-               OR codigo = %s
-        """
-        cursor.execute(query, (id_estudiante, id_limpio, id_int, id_estudiante))
-        estudiante = cursor.fetchone()
+        # Buscamos todas las inscripciones para filtrar en Python la de la 4ta columna (índice 3)
+        cursor.execute("SELECT * FROM inscripciones")
+        filas = cursor.fetchall()
         
-        print(f"--- DEBUG: Estudiante encontrado: {estudiante}")
+        for fila in filas:
+            # fila[3] es la cuarta columna (id_estudiante)
+            if str(fila[3]).strip() == str(id_estudiante).strip():
+                estudiante = fila
+                break
 
         if estudiante:
-            # Buscamos los autorizados relacionados
-            query_aut = "SELECT * FROM autorizados WHERE id_estudiante = %s OR id_inscripcion = %s"
-            # Intentamos cruzar por id_estudiante o por el id interno de la inscripción
-            cursor.execute(query_aut, (str(estudiante.get('id_estudiante')), estudiante.get('id')))
+            # Si usa un ID interno numérico (ej. la primera columna id en fila[0]) o el id_estudiante
+            id_real_estudiante = estudiante[3]
+            
+            # Buscamos los autorizados usando esa misma columna
+            query_aut = "SELECT * FROM autorizados WHERE id_estudiante = %s"
+            cursor.execute(query_aut, (id_real_estudiante,))
             autorizados = cursor.fetchall()
-            print(f"--- DEBUG: Autorizados encontrados: {autorizados}")
 
     except Exception as e:
         print("--- ERROR CRÍTICO EN PDF:", e)
@@ -737,7 +730,7 @@ def generar_pdf(id_estudiante):
     if not estudiante:
         return f"No se encontró ninguna inscripción para el ID: {id_estudiante}", 404
 
-    # Carga de logo en base64 para el PDF
+    # Carga de logo en base64
     logo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'img', 'logo2.png')
     logo_src = ""
     if os.path.exists(logo_path):
@@ -745,6 +738,7 @@ def generar_pdf(id_estudiante):
             logo_base64 = base64.b64encode(image_file.read()).decode('utf-8')
         logo_src = f"data:image/png;base64,{logo_base64}"
     
+    # Renderizamos pasando el estudiante encontrado
     html = render_template('pdf_ficha.html', estudiante=estudiante, autorizados=autorizados, logo_src=logo_src)
     
     response = make_response()
