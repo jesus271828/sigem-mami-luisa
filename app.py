@@ -926,18 +926,29 @@ def expediente_viejo():
 
     try:
         if is_postgres:
-            cur_c = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-            cur_c.execute("SELECT COUNT(*) as total FROM estudiantes")
-            total_estudiantes = cur_c.fetchone()['total']
+            cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute("SELECT COUNT(*) as total FROM estudiantes")
+            total_estudiantes = cur.fetchone()['total']
             
-            cur_c.execute("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'expedientes_viejos')")
-            if cur_c.fetchone()['exists']:
-                cur_c.execute("SELECT COUNT(*) as total FROM expedientes_viejos")
-                total_expedientes = cur_c.fetchone()['total']
+            cur.execute("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'expedientes_viejos')")
+            if cur.fetchone()['exists']:
+                cur.execute("SELECT COUNT(*) as total FROM expedientes_viejos")
+                total_expedientes = cur.fetchone()['total']
             
-            cur_c.execute("SELECT COUNT(*) as total FROM usuarios")
-            total_usuarios = cur_c.fetchone()['total']
-            cur_c.close()
+            cur.execute("SELECT COUNT(*) as total FROM usuarios")
+            total_usuarios = cur.fetchone()['total']
+
+            criterio = request.form.get('criterio', '').strip() if request.method == 'POST' else ''
+            if cur.execute("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'expedientes_viejos')") or True:
+                if criterio:
+                    cur.execute("""
+                        SELECT * FROM expedientes_viejos 
+                        WHERE "Unnamed: 3" ILIKE %s OR "Unnamed: 4" ILIKE %s OR "Unnamed: 5" ILIKE %s
+                    """, (f'%{criterio}%', f'%{criterio}%', f'%{criterio}%'))
+                else:
+                    cur.execute("SELECT * FROM expedientes_viejos LIMIT 100")
+                resultados = cur.fetchall()
+            cur.close()
         else:
             conexion.execute("SELECT COUNT(*) FROM estudiantes")
             total_estudiantes = conexion.fetchone()[0]
@@ -950,30 +961,19 @@ def expediente_viejo():
             conexion.execute("SELECT COUNT(*) FROM usuarios")
             total_usuarios = conexion.fetchone()[0]
 
-        if request.method == 'POST':
-            criterio = request.form.get('criterio', '').strip()
-            
-            if is_postgres:
-                cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-                cur.execute("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'expedientes_viejos')")
-                if cur.fetchone()['exists']:
-                    cur.execute("""
-                        SELECT * FROM expedientes_viejos 
-                        WHERE "Unnamed: 3" ILIKE %s OR "Unnamed: 4" ILIKE %s OR "Unnamed: 5" ILIKE %s
-                    """, (f'%{criterio}%', f'%{criterio}%', f'%{criterio}%'))
-                    resultados = cur.fetchall()
-                cur.close()
-            else:
-                cursor_chk = conexion.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='expedientes_viejos'").fetchone()
-                if cursor_chk:
+            criterio = request.form.get('criterio', '').strip() if request.method == 'POST' else ''
+            if cursor_chk:
+                if criterio:
                     conexion.execute("""
                         SELECT * FROM expedientes_viejos 
                         WHERE "Unnamed: 3" LIKE ? OR "Unnamed: 4" LIKE ? OR "Unnamed: 5" LIKE ?
                     """, (f'%{criterio}%', f'%{criterio}%', f'%{criterio}%'))
-                    resultados = conexion.fetchall()
+                else:
+                    conexion.execute("SELECT * FROM expedientes_viejos LIMIT 100")
+                resultados = conexion.fetchall()
                 
     except Exception as e:
-        print(f"--- Error en consulta de expedientes viejos: {e}")
+        print(f"--- Error en expediente_viejo: {e}")
         resultados = []
     finally:
         conexion.close()
@@ -984,33 +984,21 @@ def expediente_viejo():
                            total_expedientes=total_expedientes,
                            total_usuarios=total_usuarios)
 
-@app.route('/registrar_expediente_viejo')
+
+@app.route('/registrar_expediente_viejo', methods=['GET', 'POST'])
 def registrar_expediente_viejo():
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+        
     if session.get('rol') not in ['oficina', 'admin']:
         flash('Acceso denegado.', 'danger')
-        return redirect(url_for('menu'))
+        return redirect(url_for('menu_viejo'))
         
-    conexion = get_db_connection()
-    ultimo = conexion.execute('SELECT "Unnamed: 5" FROM expedientes_viejos WHERE "Unnamed: 5" LIKE \'F-%\' ORDER BY CAST(SUBSTR("Unnamed: 5", 3) AS INTEGER) DESC LIMIT 1').fetchone()
-    
-    siguiente_ficha = "F-001"
-    if ultimo and ultimo[0]:
-        try:
-            prefix, num_str = str(ultimo[0]).strip().split('-', 1)
-            siguiente_ficha = f"{prefix}-{int(num_str) + 1:03d}"
-        except ValueError:
-            siguiente_ficha = "F-001"
-
-    total_estudiantes = conexion.execute("SELECT COUNT(*) FROM inscripciones").fetchone()[0]
-    total_expedientes = conexion.execute("SELECT COUNT(*) FROM expedientes_viejos").fetchone()[0]
-    total_usuarios = conexion.execute("SELECT COUNT(*) FROM usuarios").fetchone()[0]
-    conexion.close()
-    
-    return render_template('registrar_expediente_viejo.html', 
-                           ficha=siguiente_ficha, 
-                           total_estudiantes=total_estudiantes, 
-                           total_expedientes=total_expedientes, 
-                           total_usuarios=total_usuarios)
+    if request.method == 'POST':
+        # Lógica para registrar si la usas, o simplemente renderizar la plantilla
+        pass
+        
+    return render_template('registrar_expediente_viejo.html')
 
 @app.route('/guardar_expediente_viejo', methods=['POST'])
 def guardar_expediente_viejo():
