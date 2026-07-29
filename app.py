@@ -722,34 +722,25 @@ def buscar_estudiante():
                            total_usuarios=total_usuarios)
 
 
-@app.route('/generar_pdf/<path:id_estudiante>')
+@app.route('/generar_pdf/<int:id_estudiante>')
 def generar_pdf(id_estudiante):
     if 'usuario' not in session:
         return redirect(url_for('login'))
         
     conexion = get_db_connection()
-    estudiante = None
     
+    # Buscamos directamente por el id numérico real de la tabla inscripciones
     try:
         cursor = conexion.cursor()
-        # Buscamos si coincide con id_estudiante (como texto o número) o con la columna id numérical
-        cursor.execute(
-            """
-            SELECT * FROM inscripciones 
-            WHERE CAST(id_estudiante AS TEXT) = %s 
-               OR CAST(id AS TEXT) = %s 
-               OR id_estudiante = %s
-            """, 
-            (id_estudiante, id_estudiante, id_estudiante.lstrip('0'))
-        )
+        cursor.execute("SELECT * FROM inscripciones WHERE id = %s", (id_estudiante,))
         estudiante = cursor.fetchone()
     except Exception as e:
-        print("Error en PDF:", e)
+        print("Error consultando estudiante:", e)
         estudiante = None
 
     autorizados = None
     try:
-        cursor.execute("SELECT * FROM autorizados WHERE CAST(id_estudiante AS TEXT) = %s", (id_estudiante,))
+        cursor.execute("SELECT * FROM autorizados WHERE id_estudiante = %s", (str(id_estudiante),))
         autorizados = cursor.fetchone()
     except:
         pass
@@ -757,7 +748,7 @@ def generar_pdf(id_estudiante):
     conexion.close()
     
     if not estudiante:
-        return f"No se encontró ninguna inscripción para el estudiante con ID: {id_estudiante}", 404
+        return f"No se encontró ninguna inscripción con el ID: {id_estudiante}", 404
 
     logo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'img', 'logo2.png')
     logo_src = ""

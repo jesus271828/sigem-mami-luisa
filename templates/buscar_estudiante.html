@@ -2,108 +2,91 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Buscar Estudiante | SIGEM Mami Luisa</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buscar Estudiante - SIGEM Mami Luisa</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        :root { --primary-color: #1A237E; }
-        body { background-color: #f0f2f5; font-family: 'Segoe UI', sans-serif; }
-        .sidebar { background: var(--primary-color); color: white; min-height: 100vh; padding: 20px; }
-        .menu-card { background: white; border-radius: 20px; border: none; padding: 30px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
-    </style>
 </head>
-<body>
-<div class="container-fluid">
-    <div class="row">
-        <!-- Sidebar -->
-        <div class="col-md-3 sidebar">
-            <h4 class="mb-4">SIGEM Mami Luisa</h4>
-            <p><i class="fas fa-user-circle"></i> {{ session.get('nombre_completo') }} ({{ session.get('rol') }})</p>
-            <hr>
-            
-            <!-- CONTADORES GENERALES -->
-            <div class="mb-4 p-3 bg-dark rounded text-white shadow-sm">
-                <h6 class="text-uppercase text-warning fs-7 mb-3"><i class="fas fa-chart-pie me-2"></i>Registros Generales</h6>
-                <p class="mb-2 d-flex justify-content-between">
-                    <span><i class="fas fa-user-graduate me-2"></i>Estudiantes:</span> 
-                    <strong class="badge bg-primary fs-6">{{ total_estudiantes }}</strong>
-                </p>
-                <p class="mb-2 d-flex justify-content-between">
-                    <span><i class="fas fa-archive me-2"></i>Expedientes Viejos:</span> 
-                    <strong class="badge bg-secondary fs-6">{{ total_expedientes }}</strong>
-                </p>
-                <p class="mb-0 d-flex justify-content-between">
-                    <span><i class="fas fa-users me-2"></i>Usuarios:</span> 
-                    <strong class="badge bg-success fs-6">{{ total_usuarios }}</strong>
-                </p>
-            </div>
-
-            <a href="/menu_buscar" class="btn btn-outline-light w-100 mb-2"><i class="fas fa-arrow-left"></i> Volver</a>
-            <a href="{{ url_for('logout') }}" class="btn btn-danger w-100">Cerrar Sesión</a>
+<body class="bg-light">
+    
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-search"></i> Buscar Estudiante</h2>
+            <a href="/menu" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Volver al Menú
+            </a>
         </div>
 
-        <!-- Contenido -->
-        <div class="col-md-9 p-5">
-            <div class="menu-card">
-                <h2 class="mb-4">Buscar y Filtrar Estudiantes</h2>
-                
-                <!-- Formulario de Búsqueda y Filtro por Curso -->
-                <form method="POST" class="row g-3">
-                    <div class="col-md-5">
-                        <input type="text" name="criterio" class="form-control" placeholder="ID, Nombres o Apellidos...">
+        <!-- Formulario de Búsqueda -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <form method="POST" action="/buscar_estudiante" class="row g-3">
+                    <div class="col-md-6">
+                        <label for="criterio" class="form-label">Nombre, Apellido o ID</label>
+                        <input type="text" class="form-control" id="criterio" name="criterio" placeholder="Escribe para buscar...">
                     </div>
                     <div class="col-md-4">
-                        <select name="grado_filtro" class="form-select">
-                            <option value="">-- Todos los Grados/Cursos --</option>
-                            {% for g in grados_disponibles %}
-                                <option value="{{ g }}">{{ g }}</option>
+                        <label for="grado_filtro" class="form-label">Filtrar por Grado</label>
+                        <select class="form-select" id="grado_filtro" name="grado_filtro">
+                            <option value="">Todos los grados</option>
+                            {% for grado in grados_disponibles %}
+                                <option value="{{ grado }}">{{ grado }}</option>
                             {% endfor %}
                         </select>
                     </div>
-                    <div class="col-md-3">
-                        <button type="submit" class="btn btn-primary w-100"><i class="fas fa-search me-1"></i> Filtrar</button>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-search"></i> Buscar
+                        </button>
                     </div>
                 </form>
-                
-                <hr class="my-4">
-                
-                {% if estudiantes %}
+            </div>
+        </div>
+
+        <!-- Resultados de la Tabla -->
+        <div class="card shadow-sm">
+            <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table table-bordered table-striped align-middle">
+                    <table class="table table-striped table-hover align-middle">
                         <thead class="table-dark">
                             <tr>
                                 <th>ID</th>
                                 <th>Nombres</th>
                                 <th>Apellidos</th>
                                 <th>Grado</th>
-                                <th>Acción</th>
+                                <th class="text-center">Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for est in estudiantes %}
-                            <tr>
-                                <td>{{ est[0] }}</td>
-                                <td>{{ est[1] }}</td>
-                                <td>{{ est[2] }}</td>
-                                <td>{{ est[3] }}</td>
-                                <td>
-                                    <a href="/generar_pdf/{{ est[0] }}" class="btn btn-danger btn-sm">
-                                        <i class="fas fa-file-pdf"></i> PDF
-                                    </a>
-                                </td>
-                            </tr>
-                            {% endfor %}
+                            {% if estudiantes %}
+                                {% for est in estudiantes %}
+                                <tr>
+                                    <!-- est[0] es el ID único y real -->
+                                    <td>{{ est[0] }}</td>
+                                    <td>{{ est[1] }}</td>
+                                    <td>{{ est[2] }}</td>
+                                    <td>{{ est[3] }}</td>
+                                    <td class="text-center">
+                                        <a href="/generar_pdf/{{ est[0] }}" class="btn btn-danger btn-sm" target="_blank" title="Generar PDF">
+                                            <i class="fas fa-file-pdf"></i> PDF
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-4">
+                                        No se encontraron estudiantes registrados o que coincidan con la búsqueda.
+                                    </td>
+                                </tr>
+                            {% endif %}
                         </tbody>
                     </table>
                 </div>
-                {% else %}
-                <div class="alert alert-warning" role="alert">
-                    No se encontró ningún estudiante con esos criterios de búsqueda.
-                </div>
-                {% endif %}
             </div>
         </div>
     </div>
-</div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
