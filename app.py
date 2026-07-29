@@ -722,22 +722,36 @@ def buscar_estudiante():
                            total_usuarios=total_usuarios)
 
 
-@app.route('/generar_pdf/<int:id_estudiante>')
+@app.route('/generar_pdf/<path:id_estudiante>')
 def generar_pdf(id_estudiante):
     if 'usuario' not in session:
         return redirect(url_for('login'))
         
     conexion = get_db_connection()
+    estudiante = None
     
+    # Intentamos buscar exactamente con el nombre de la columna en mayúsculas y otras variantes
+    for query_str in [
+        'SELECT * FROM inscripciones WHERE "id_ESTUDIANTE" = ?',
+        'SELECT * FROM inscripciones WHERE id_estudiante = ?',
+        'SELECT * FROM inscripciones WHERE id = ?',
+        'SELECT * FROM inscripciones WHERE CAST("id_ESTUDIANTE" AS TEXT) = ?',
+        'SELECT * FROM inscripciones WHERE CAST(id_estudiante AS TEXT) = ?'
+    ]:
+        try:
+            # Si usas PostgreSQL y falla el signo '?', se puede ajustar, pero probemos con este formato seguro:
+            estudiante = conexion.execute(query_str.replace('?', '%s'), (str(id_estudiante).strip(),)).fetchone()
+            if estudiante:
+                break
+        except Exception as e:
+            # Si la consulta falla por sintaxis de columna, probamos la siguiente
+            continue
+
+    autorizados = None
     try:
-        estudiante = conexion.execute("SELECT * FROM inscripciones WHERE id_estudiante = ?", (id_estudiante,)).fetchone()
+        autorizados = conexion.execute('SELECT * FROM autorizados WHERE "id_ESTUDIANTE" = %s OR id_estudiante = %s', (str(id_estudiante).strip(), str(id_estudiante).strip())).fetchone()
     except:
-        estudiante = None
-        
-    try:
-        autorizados = conexion.execute("SELECT * FROM autorizados WHERE id_estudiante = ?", (id_estudiante,)).fetchone()
-    except:
-        autorizados = None
+        pass
         
     conexion.close()
     
