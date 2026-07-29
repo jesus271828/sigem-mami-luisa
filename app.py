@@ -703,18 +703,27 @@ def generar_pdf(id_estudiante):
     try:
         cursor = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         
-        # Probamos buscar primero por id_estudiante (texto) y luego por id numérico
-        query = "SELECT * FROM inscripciones WHERE id_estudiante = %s OR id = %s"
-        id_int = int(id_estudiante) if id_estudiante.isdigit() else 0
-        cursor.execute(query, (id_estudiante, id_int))
+        # Limpiamos el ID por si viene con ceros a la izquierda y preparamos entero
+        id_limpio = id_estudiante.lstrip('0') if id_estudiante.lstrip('0') else '0'
+        id_int = int(id_limpio) if id_limpio.isdigit() else 0
+
+        # Consulta flexible adaptada a posibles nombres de columnas en inscripciones
+        query = """
+            SELECT * FROM inscripciones 
+            WHERE id_estudiante = %s 
+               OR id_estudiante = %s 
+               OR id = %s 
+               OR codigo = %s
+        """
+        cursor.execute(query, (id_estudiante, id_limpio, id_int, id_estudiante))
         estudiante = cursor.fetchone()
         
         print(f"--- DEBUG: Estudiante encontrado: {estudiante}")
 
         if estudiante:
-            # Usamos el id de la inscripción o el codigo de estudiante para los autorizados
+            # Buscamos los autorizados relacionados
             query_aut = "SELECT * FROM autorizados WHERE id_estudiante = %s OR id_inscripcion = %s"
-            # Asegúrate de ajustar 'id_inscripcion' si en tu tabla se llama distinto (ej. inscripcion_id)
+            # Intentamos cruzar por id_estudiante o por el id interno de la inscripción
             cursor.execute(query_aut, (str(estudiante.get('id_estudiante')), estudiante.get('id')))
             autorizados = cursor.fetchall()
             print(f"--- DEBUG: Autorizados encontrados: {autorizados}")
@@ -728,7 +737,7 @@ def generar_pdf(id_estudiante):
     if not estudiante:
         return f"No se encontró ninguna inscripción para el ID: {id_estudiante}", 404
 
-    # Resto del código del PDF...
+    # Carga de logo en base64 para el PDF
     logo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'img', 'logo2.png')
     logo_src = ""
     if os.path.exists(logo_path):
