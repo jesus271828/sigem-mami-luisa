@@ -64,13 +64,12 @@
                             {% if estudiantes %}
                                 {% for est in estudiantes %}
                                 <tr>
-                                    <td>{{ est[0] }}</td>
-                                    <td>{{ est[1] }}</td>
-                                    <td>{{ est[2] }}</td>
-                                    <td>{{ est[3] }}</td>
+                                    <td>{{ est.id_estudiante }}</td>
+                                    <td>{{ est.nombres }}</td>
+                                    <td>{{ est.apellidos }}</td>
+                                    <td>{{ est.grado }}</td>
                                     <td class="text-center">
-                                        <!-- AQUÍ LLAMAMOS AL ID EXACTO (est[0]) QUE CARGARÁ pdf_ficha.html -->
-                                        <a href="/generar_pdf/{{ est[0] }}" class="btn btn-danger btn-sm" target="_blank" title="Generar PDF">
+                                        <a href="/generar_pdf/{{ est.id_estudiante }}" class="btn btn-danger btn-sm" target="_blank" title="Generar PDF">
                                             <i class="fas fa-file-pdf"></i> PDF
                                         </a>
                                     </td>

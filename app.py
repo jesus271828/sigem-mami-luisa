@@ -19,7 +19,6 @@ DATABASE_URL = os.environ.get('DATABASE_URL')
 class PostgresCursorWrapper:
     def __init__(self, conn):
         self.conn = conn
-        # Usamos RealDictCursor para que PostgreSQL devuelva diccionarios con nombres de columnas automáticamente
         self.cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
     def execute(self, query, params=None):
@@ -634,15 +633,20 @@ def buscar_estudiante():
     conexion = get_db_connection()
     estudiantes = []
     grados_disponibles = []
+    is_postgres = DATABASE_URL is not None
 
     try:
-        # Obtener lista de grados para el selector
-        conexion.execute("SELECT DISTINCT grado FROM inscripciones WHERE grado IS NOT NULL AND grado != ''")
-        grados_res = conexion.fetchall()
+        # Obtener grados
+        if is_postgres:
+            cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute("SELECT DISTINCT grado FROM inscripciones WHERE grado IS NOT NULL AND grado != ''")
+            grados_res = cur.fetchall()
+            cur.close()
+        else:
+            conexion.execute("SELECT DISTINCT grado FROM inscripciones WHERE grado IS NOT NULL AND grado != ''")
+            grados_res = conexion.fetchall()
+            
         grados_disponibles = [g['grado'] if isinstance(g, dict) else g[0] for g in grados_res]
-
-        # Determinamos si estamos usando PostgreSQL o SQLite por el tipo de conexión
-        is_postgres = DATABASE_URL is not None
 
         if request.method == 'POST':
             criterio = request.form.get('criterio', '').strip()
@@ -659,7 +663,6 @@ def buscar_estudiante():
                     query += " AND grado = %s"
                     params.append(grado_filtro)
                 
-                # Ejecución directa para evitar conflictos con el wrapper en POST
                 cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
                 cur.execute(query, params)
                 estudiantes = cur.fetchall()
@@ -677,7 +680,6 @@ def buscar_estudiante():
                 conexion.execute(query, params)
                 estudiantes = conexion.fetchall()
         else:
-            # TRAER TODOS LOS ESTUDIANTES POR DEFECTO PARA QUE SE VEAN AL ENTRAR
             if is_postgres:
                 cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
                 cur.execute("SELECT id_estudiante, nombres, apellidos, grado FROM inscripciones")
@@ -708,7 +710,6 @@ def generar_pdf(id_estudiante):
         conexion.execute("SELECT * FROM inscripciones")
         filas = conexion.fetchall()
         
-        # Recorremos para ubicar el estudiante evaluando la 4ta columna (índice 3)
         for fila in filas:
             valores = list(fila.values()) if isinstance(fila, dict) else list(fila)
             if len(valores) >= 4 and str(valores[3]).strip() == str(id_estudiante).strip():
