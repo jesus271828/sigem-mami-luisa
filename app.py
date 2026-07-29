@@ -930,30 +930,31 @@ def expediente_viejo():
         if is_postgres:
             cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             
-            # Contadores generales
+            # Contadores generales seguros
             cur.execute("SELECT COUNT(*) as total FROM estudiantes")
             total_estudiantes = cur.fetchone()['total']
             
             cur.execute("SELECT COUNT(*) as total FROM usuarios")
             total_usuarios = cur.fetchone()['total']
             
-            # Verificar si existe la tabla expedientes_viejos
-            cur.execute("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'expedientes_viejos')")
-            tabla_existe = cur.fetchone()['exists']
-            
-            if tabla_existe:
+            try:
                 cur.execute("SELECT COUNT(*) as total FROM expedientes_viejos")
                 total_expedientes = cur.fetchone()['total']
                 
-                # Búsqueda o listado limitado
                 if criterio:
                     cur.execute("""
                         SELECT * FROM expedientes_viejos 
-                        WHERE "Unnamed: 3" ILIKE %s OR "Unnamed: 4" ILIKE %s OR "Unnamed: 5" ILIKE %s
+                        WHERE CAST("Unnamed: 3" AS TEXT) ILIKE %s 
+                           OR CAST("Unnamed: 4" AS TEXT) ILIKE %s 
+                           OR CAST("Unnamed: 5" AS TEXT) ILIKE %s
                     """, (f'%{criterio}%', f'%{criterio}%', f'%{criterio}%'))
                 else:
                     cur.execute("SELECT * FROM expedientes_viejos LIMIT 100")
                 resultados = cur.fetchall()
+            except Exception:
+                total_expedientes = 0
+                resultados = []
+                
             cur.close()
         else:
             conexion.execute("SELECT COUNT(*) FROM estudiantes")
@@ -962,8 +963,7 @@ def expediente_viejo():
             conexion.execute("SELECT COUNT(*) FROM usuarios")
             total_usuarios = conexion.fetchone()[0]
             
-            cursor_chk = conexion.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='expedientes_viejos'").fetchone()
-            if cursor_chk:
+            try:
                 conexion.execute("SELECT COUNT(*) FROM expedientes_viejos")
                 total_expedientes = conexion.fetchone()[0]
                 
@@ -975,6 +975,9 @@ def expediente_viejo():
                 else:
                     conexion.execute("SELECT * FROM expedientes_viejos LIMIT 100")
                 resultados = conexion.fetchall()
+            except Exception:
+                total_expedientes = 0
+                resultados = []
                 
     except Exception as e:
         print(f"--- Error en expediente_viejo: {e}")
