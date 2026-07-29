@@ -925,21 +925,27 @@ def expediente_viejo():
     total_usuarios = 0
 
     try:
+        criterio = request.form.get('criterio', '').strip() if request.method == 'POST' else ''
+
         if is_postgres:
             cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            
+            # Contadores generales
             cur.execute("SELECT COUNT(*) as total FROM estudiantes")
             total_estudiantes = cur.fetchone()['total']
             
-            cur.execute("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'expedientes_viejos')")
-            if cur.fetchone()['exists']:
-                cur.execute("SELECT COUNT(*) as total FROM expedientes_viejos")
-                total_expedientes = cur.fetchone()['total']
-            
             cur.execute("SELECT COUNT(*) as total FROM usuarios")
             total_usuarios = cur.fetchone()['total']
-
-            criterio = request.form.get('criterio', '').strip() if request.method == 'POST' else ''
-            if cur.execute("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'expedientes_viejos')") or True:
+            
+            # Verificar si existe la tabla expedientes_viejos
+            cur.execute("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'expedientes_viejos')")
+            tabla_existe = cur.fetchone()['exists']
+            
+            if tabla_existe:
+                cur.execute("SELECT COUNT(*) as total FROM expedientes_viejos")
+                total_expedientes = cur.fetchone()['total']
+                
+                # Búsqueda o listado limitado
                 if criterio:
                     cur.execute("""
                         SELECT * FROM expedientes_viejos 
@@ -953,16 +959,14 @@ def expediente_viejo():
             conexion.execute("SELECT COUNT(*) FROM estudiantes")
             total_estudiantes = conexion.fetchone()[0]
             
+            conexion.execute("SELECT COUNT(*) FROM usuarios")
+            total_usuarios = conexion.fetchone()[0]
+            
             cursor_chk = conexion.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='expedientes_viejos'").fetchone()
             if cursor_chk:
                 conexion.execute("SELECT COUNT(*) FROM expedientes_viejos")
                 total_expedientes = conexion.fetchone()[0]
                 
-            conexion.execute("SELECT COUNT(*) FROM usuarios")
-            total_usuarios = conexion.fetchone()[0]
-
-            criterio = request.form.get('criterio', '').strip() if request.method == 'POST' else ''
-            if cursor_chk:
                 if criterio:
                     conexion.execute("""
                         SELECT * FROM expedientes_viejos 
@@ -983,7 +987,6 @@ def expediente_viejo():
                            total_estudiantes=total_estudiantes,
                            total_expedientes=total_expedientes,
                            total_usuarios=total_usuarios)
-
 
 @app.route('/registrar_expediente_viejo', methods=['GET'])
 def registrar_expediente_viejo():
