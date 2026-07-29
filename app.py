@@ -1106,6 +1106,51 @@ def ver_estructura_db():
     finally:
         conexion.close()
 
+@app.route('/menu', methods=['GET'])
+def menu():
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+        
+    conexion = get_db_connection()
+    is_postgres = DATABASE_URL is not None
+    
+    total_estudiantes = 0
+    total_expedientes = 0
+    total_usuarios = 0
+
+    try:
+        if is_postgres:
+            cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            
+            cur.execute("SELECT COUNT(*) as total FROM estudiantes")
+            total_estudiantes = cur.fetchone()['total']
+            
+            cur.execute("SELECT COUNT(*) as total FROM usuarios")
+            total_usuarios = cur.fetchone()['total']
+            
+            cur.execute("SELECT COUNT(*) as total FROM expedientes_viejos")
+            total_expedientes = cur.fetchone()['total']
+            
+            cur.close()
+        else:
+            conexion.execute("SELECT COUNT(*) FROM estudiantes")
+            total_estudiantes = conexion.fetchone()[0]
+            
+            conexion.execute("SELECT COUNT(*) FROM usuarios")
+            total_usuarios = conexion.fetchone()[0]
+            
+            conexion.execute("SELECT COUNT(*) FROM expedientes_viejos")
+            total_expedientes = conexion.fetchone()[0]
+            
+    except Exception as e:
+        print(f"Error cargando contadores del menú: {e}")
+    finally:
+        conexion.close()
+
+    return render_template('menu.html', 
+                           total_estudiantes=total_estudiantes,
+                           total_expedientes=total_expedientes,
+                           total_usuarios=total_usuarios)
 
 if __name__ == '__main__':
     app.run(debug=True)
