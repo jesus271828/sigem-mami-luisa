@@ -990,15 +990,88 @@ def registrar_expediente_viejo():
     if 'usuario' not in session:
         return redirect(url_for('login'))
         
-    if session.get('rol') not in ['oficina', 'admin']:
+    if session.get('rol', '').lower() not in ['oficina', 'admin']:
         flash('Acceso denegado.', 'danger')
         return redirect(url_for('menu_viejo'))
         
-    if request.method == 'POST':
-        # Lógica para registrar si la usas, o simplemente renderizar la plantilla
-        pass
-        
-    return render_template('registrar_expediente_viejo.html')
+    conexion = get_db_connection()
+    is_postgres = DATABASE_URL is not None
+    
+    total_estudiantes = 0
+    total_expedientes = 0
+    total_usuarios = 0
+    siguiente_ficha = 1
+
+    try:
+        if is_postgres:
+            cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute("SELECT COUNT(*) as total FROM estudiantes")
+            total_estudiantes = cur.fetchone()['total']
+            
+            cur.execute("SELECT COUNT(*) as total FROM usuarios")
+            total_usuarios = cur.fetchone()['total']
+            
+            cur.execute("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'expedientes_viejos')")
+            if cur.fetchone()['exists']:
+                cur.execute("SELECT COUNT(*) as total FROM expedientes_viejos")
+                total_expedientes = cur.fetchone()['total']
+                
+                # Obtener el último valor para autogenerar la ficha
+                cur.execute('SELECT "Unnamed: 3" FROM expedientes_viejos ORDER BY ctid DESC LIMIT 1')
+                ultimo = cur.fetchone()
+                if ultimo and ultimo['Unnamed: 3']:
+                    try:
+                        siguiente_ficha = int(str(ultimo['Unnamed: 3']).strip()) + 1
+                    except ValueError:
+                        siguiente_ficha = total_expedientes + 1
+            cur.close()
+        else:
+            conexion.execute("SELECT COUNT(*) FROM estudiantes")
+            total_estudiantes = conexion.fetchone()[0]
+            
+            conexion.execute("SELECT COUNT(*) FROM usuarios")
+            total_usuarios = conexion.fetchone()[0]
+            
+            cursor_chk = conexion.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='expedientes_viejos'").fetchone()
+            if cursor_chk:
+                conexion.execute("SELECT COUNT(*) FROM expedientes_viejos")
+                total_expedientes = conexion.fetchone()[0]
+                
+                cursor_f = conexion.execute('SELECT "Unnamed: 3" FROM expedientes_viejos ORDER BY rowid DESC LIMIT 1').fetchone()
+                if cursor_f and cursor_f[0]:
+                    try:
+                        siguiente_ficha = int(str(cursor_f[0]).strip()) + 1
+                    except ValueError:
+                        siguiente_ficha = total_expedientes + 1
+
+        if request.method == 'POST':
+            nombre = request.form.get('nombre', '')
+            ano_escolar = request.form.get('ano_escolar', '')
+            
+            if is_postgres:
+                cur = conexion.conn.cursor()
+                cur.execute('INSERT INTO expedientes_viejos ("Unnamed: 3", "Unnamed: 4", "Unnamed: 5") VALUES (%s, %s, %s)', 
+                            (str(siguiente_ficha), nombre, ano_escolar))
+                conexion.conn.commit()
+                cur.close()
+            else:
+                conexion.execute('INSERT INTO expedientes_viejos ("Unnamed: 3", "Unnamed: 4", "Unnamed: 5") VALUES (?, ?, ?)', 
+                                 (str(siguiente_ficha), nombre, ano_escolar))
+                conexion.commit()
+                
+            flash('Expediente registrado correctamente.', 'success')
+            return redirect(url_for('menu_viejo'))
+            
+    except Exception as e:
+        print(f"Error en registrar_expediente_viejo: {e}")
+    finally:
+        conexion.close()
+
+    return render_template('registrar_expediente_viejo.html',
+                           total_estudiantes=total_estudiantes,
+                           total_expedientes=total_expedientes,
+                           total_usuarios=total_usuarios,
+                           siguiente_ficha=siguiente_ficha)
 
 @app.route('/guardar_expediente_viejo', methods=['POST'])
 def guardar_expediente_viejo():

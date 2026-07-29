@@ -113,31 +113,30 @@
             
             <div class="user-info">
                 <i class="fas fa-user-circle"></i> 
-                <span>{{ session.get('username', 'Usuario') }} ({{ session.get('rol', 'admin') }})</span>
+                <span>{{ session.get('usuario', 'Usuario') }} ({{ session.get('rol', 'admin') }})</span>
             </div>
 
-            <!-- REGISTROS GENERALES -->
+            <!-- REGISTROS GENERALES (Mismos valores limpios unificados) -->
             <div class="stats-card">
                 <div class="stats-title">
                     <i class="fas fa-chart-pie"></i> REGISTROS GENERALES
                 </div>
                 <div class="stat-item">
                     <span>Estudiantes:</span>
-                    <span class="badge-count badge-blue">{{ total_estudiantes if total_estudiantes is defined else 3 }}</span>
+                    <span class="badge-count badge-blue">{{ total_estudiantes }}</span>
                 </div>
                 <div class="stat-item">
                     <span>Expedientes Viejos:</span>
-                    <span class="badge-count badge-grey">{{ total_expedientes if total_expedientes is defined else 873 }}</span>
+                    <span class="badge-count badge-grey">{{ total_expedientes }}</span>
                 </div>
                 <div class="stat-item">
                     <span>Usuarios:</span>
-                    <span class="badge-count badge-green">{{ total_usuarios if total_usuarios is defined else 2 }}</span>
+                    <span class="badge-count badge-green">{{ total_usuarios }}</span>
                 </div>
             </div>
 
             <div class="mt-auto">
-                <a href="/menu_viejo" class="btn-sidebar-back"> <i class="fas fa-arrow-left me-1"></i>  Volver al Menú
-                </a>
+                <a href="/menu_viejo" class="btn-sidebar-back">
                     <i class="fas fa-arrow-left me-1"></i> Volver al Menú
                 </a>
                 <a href="/logout" class="btn-sidebar-logout">
@@ -150,7 +149,7 @@
         <div class="col-md-9 col-lg-10 p-5">
             <div class="menu-card">
                 
-                <!-- MENSAJE FLASH DE ÉXITO -->
+                <!-- MENSAJE FLASH -->
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
                         {% for category, message in messages %}
@@ -166,10 +165,10 @@
                 
                 <form action="/guardar_expediente_viejo" method="POST">
                     <div class="row">
-                        <!-- Campo Ficha -->
+                        <!-- Campo Ficha (Autogenerado del último registro) -->
                         <div class="col-md-4 mb-3">
                             <label class="form-label">Número de Ficha</label>
-                            <input type="text" name="ficha" class="form-control" value="{{ ficha }}" readonly>
+                            <input type="text" name="ficha" class="form-control" value="{{ siguiente_ficha }}" readonly>
                         </div>
                         
                         <!-- Campo Nombre -->
