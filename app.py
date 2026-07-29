@@ -539,7 +539,7 @@ def menu_buscar():
                            total_expedientes=total_expedientes, 
                            total_usuarios=total_usuarios)
 
-import psycopg2.extras # Asegúrate de tener esta importación arriba en tu app.py si no la tienes
+import psycopg2.extras
 
 @app.route('/buscar_autorizado', methods=['GET', 'POST'])
 def buscar_autorizado():
@@ -549,7 +549,6 @@ def buscar_autorizado():
     autorizados = []
     conexion = get_db_connection()
     
-    # Obtenemos los contadores para la barra lateral (si los usa tu plantilla)
     total_estudiantes = 0
     total_expedientes = 0
     total_usuarios = 0
@@ -558,10 +557,8 @@ def buscar_autorizado():
         cursor_count = conexion.cursor()
         cursor_count.execute("SELECT COUNT(*) FROM inscripciones")
         total_estudiantes = cursor_count.fetchone()[0]
-        
-        cursor_count.execute("SELECT COUNT(*) FROM autorizados") # O la tabla que corresponda a expedientes/autorizados
-        total_autorizados = cursor_count.fetchone()[0]
-        
+        cursor_count.execute("SELECT COUNT(*) FROM autorizados")
+        total_expedientes = cursor_count.fetchone()[0]
         cursor_count.execute("SELECT COUNT(*) FROM usuarios")
         total_usuarios = cursor_count.fetchone()[0]
     except:
@@ -570,18 +567,25 @@ def buscar_autorizado():
     if request.method == 'POST':
         criterio = request.form.get('criterio', '').strip()
         try:
-            # Usamos RealDictCursor para que los resultados funcionen como diccionarios en el HTML
             cursor = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             
-            # Consulta uniendo la tabla autorizados con inscripciones para traer los datos y fotos de ambos
-            # (Ajusta los nombres de las columnas o de la tabla si difieren en tu base de datos)
+            # Buscamos por nombre o por cualquiera de las 5 cédulas de autorizados
             query = """
-                SELECT a.*, i.nombres, i.apellidos, i.grado, i.foto_estudiante 
+                SELECT a.*, 
+                       COALESCE(i.nombres, '') AS nombres, 
+                       COALESCE(i.apellidos, '') AS apellidos, 
+                       COALESCE(i.grado, '') AS grado, 
+                       COALESCE(i.foto_estudiante, '') AS foto_estudiante 
                 FROM autorizados a
-                LEFT JOIN inscripciones i ON a.id_estudiante = i.id
-                WHERE a.nombre_completo ILIKE %s OR a.cedula ILIKE %s
+                LEFT JOIN inscripciones i ON CAST(a.id_estudiante AS TEXT) = CAST(i.id AS TEXT)
+                WHERE a.nombre_completo ILIKE %s 
+                   OR a.aut_cedula_1 ILIKE %s 
+                   OR a.aut_cedula_2 ILIKE %s 
+                   OR a.aut_cedula_3 ILIKE %s 
+                   OR a.aut_cedula_4 ILIKE %s 
+                   OR a.aut_cedula_5 ILIKE %s
             """
-            cursor.execute(query, (f"%{criterio}%", f"%{criterio}%"))
+            cursor.execute(query, (f"%{criterio}%", f"%{criterio}%", f"%{criterio}%", f"%{criterio}%", f"%{criterio}%", f"%{criterio}%"))
             autorizados = cursor.fetchall()
         except Exception as e:
             print("Error buscando autorizado:", e)
@@ -693,18 +697,23 @@ def generar_pdf(id_estudiante):
     conexion = get_db_connection()
     estudiante = None
     
+    id_limpio = id_estudiante.lstrip('0')
+    if not id_limpio:
+        id_limpio = '0'
+
     try:
-        cursor = conexion.cursor()
-        # Buscamos el registro del estudiante usando el ID
-        cursor.execute(
-            """
-            SELECT * FROM inscripciones 
-            WHERE CAST(id AS TEXT) = %s 
-               OR id_estudiante = %s 
-               OR CAST(id_estudiante AS TEXT) = %s
-            """, 
-            (id_estudiante, id_estudiante, id_estudiante.lstrip('0'))
-        )
+        cursor = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        # Hacemos JOIN con la tabla de estudiantes para traer toda la información completa de la ficha
+        query = """
+            SELECT i.*, e.* 
+            FROM inscripciones i
+            LEFT JOIN estudiantes e ON CAST(i.id_estudiante AS TEXT) = CAST(e.id AS TEXT)
+            WHERE CAST(i.id AS TEXT) = %s 
+               OR CAST(i.id AS TEXT) = %s 
+               OR i.id_estudiante = %s 
+               OR CAST(i.id_estudiante AS TEXT) = %s
+        """
+        cursor.execute(query, (id_estudiante, id_limpio, id_estudiante, id_limpio))
         estudiante = cursor.fetchone()
     except Exception as e:
         print("Error al buscar estudiante para PDF:", e)
@@ -712,7 +721,14 @@ def generar_pdf(id_estudiante):
 
     autorizados = None
     try:
-        cursor.execute("SELECT * FROM autorizados WHERE id_estudiante = %s OR CAST(id_estudiante AS TEXT) = %s", (id_estudiante, id_estudiante.lstrip('0')))
+        cursor.execute(
+            """
+            SELECT * FROM autorizados 
+            WHERE CAST(id_estudiante AS TEXT) = %s 
+               OR CAST(id_estudiante AS TEXT) = %s
+            """, 
+            (id_estudiante, id_limpio)
+        )
         autorizados = cursor.fetchone()
     except:
         pass
@@ -729,7 +745,6 @@ def generar_pdf(id_estudiante):
             logo_base64 = base64.b64encode(image_file.read()).decode('utf-8')
         logo_src = f"data:image/png;base64,{logo_base64}"
     
-    # AQUÍ SE CARGA TU PLANTILLA pdf_ficha.html
     html = render_template('pdf_ficha.html', estudiante=estudiante, autorizados=autorizados, logo_src=logo_src)
     
     response = make_response()
