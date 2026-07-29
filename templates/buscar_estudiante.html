@@ -82,12 +82,12 @@
                         <tbody>
                             {% for est in estudiantes %}
                             <tr>
-                                <td>{{ est['id_estudiante'] if est['id_estudiante'] is defined and est['id_estudiante'] else est['id'] }}</td>
-                                <td>{{ est['nombres'] }}</td>
-                                <td>{{ est['apellidos'] }}</td>
-                                <td>{{ est['grado'] }}</td>
+                                <td>{{ est[0] }}</td>
+                                <td>{{ est[1] }}</td>
+                                <td>{{ est[2] }}</td>
+                                <td>{{ est[3] }}</td>
                                 <td>
-                                    <a href="/generar_pdf/{{ est['id_estudiante'] if est['id_estudiante'] is defined and est['id_estudiante'] else est['id'] }}" class="btn btn-danger btn-sm">
+                                    <a href="/generar_pdf/{{ est[0] }}" class="btn btn-danger btn-sm">
                                         <i class="fas fa-file-pdf"></i> PDF
                                     </a>
                                 </td>
