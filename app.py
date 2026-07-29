@@ -550,8 +550,10 @@ def buscar_autorizado():
     conexion = get_db_connection()
     autorizados = []
     is_postgres = DATABASE_URL is not None
+    total_estudiantes = 0
+    total_expedientes = 0
+    total_usuarios = 0
 
-    # Contadores para el sidebar
     try:
         if is_postgres:
             cur_c = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -572,9 +574,7 @@ def buscar_autorizado():
 
         if request.method == 'POST':
             criterio = request.form.get('criterio', '').strip()
-            like_criterio = f"%{criterio}%"
 
-            # Consultamos todas las inscripciones para buscar en los 5 campos de autorizados
             if is_postgres:
                 cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
                 cur.execute("SELECT * FROM inscripciones")
@@ -587,20 +587,26 @@ def buscar_autorizado():
             for fila in filas:
                 f_dict = dict(fila) if isinstance(fila, dict) else dict(zip([column[0] for column in conexion.description], fila))
                 
-                # Revisar del 1 al 5 los autorizados guardados en la inscripción
                 for i in range(1, 6):
                     nombre_aut = f_dict.get(f'aut_nombre_{i}')
                     cedula_aut = f_dict.get(f'aut_cedula_{i}')
                     
                     if nombre_aut and cedula_aut:
-                        # Verificamos si coincide con el criterio de búsqueda (nombre o cédula)
                         if criterio.lower() in str(nombre_aut).lower() or criterio in str(cedula_aut):
+                            f_aut = f_dict.get(f'foto_aut_cedula_{i}')
+                            if f_aut:
+                                f_aut = os.path.basename(str(f_aut))
+
+                            f_est = f_dict.get('foto_estudiante_cedula')
+                            if f_est:
+                                f_est = os.path.basename(str(f_est))
+
                             autorizados.append({
                                 'nombre_completo': nombre_aut,
                                 'cedula': cedula_aut,
                                 'parentesco': f_dict.get(f'aut_parentesco_{i}', 'No especificado'),
-                                'foto_autorizado': f_dict.get(f'foto_aut_cedula_{i}'),
-                                'foto_estudiante': f_dict.get('foto_estudiante_cedula'),
+                                'foto_autorizado': f_aut,
+                                'foto_estudiante': f_est,
                                 'nombres': f_dict.get('nombres'),
                                 'apellidos': f_dict.get('apellidos'),
                                 'grado': f_dict.get('grado'),
