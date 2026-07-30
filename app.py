@@ -928,12 +928,16 @@ def buscar_autorizado():
                             if not f_aut and i == 1:
                                 f_aut = f_dict.get('foto_padre_cedula') or f_dict.get('foto_madre_cedula')
                             if f_aut:
-                                f_aut = os.path.basename(str(f_aut))
+                                f_aut = os.path.basename(str(f_aut).replace('\\', '/'))
 
-                             # Foto del estudiante
-                            f_est = f_dict.get('foto_estudiante_cedula')
-                            if f_est:
-                                f_est = os.path.basename(str(f_est).replace('\\', '/'))
+                            # Búsqueda robusta de la foto del estudiante en cualquier columna posible
+                            raw_est = (
+                                f_dict.get('foto_estudiante_cedula') or 
+                                f_dict.get('foto_estudiante') or 
+                                f_dict.get('foto') or 
+                                f_dict.get('foto_cedula_estudiante')
+                            )
+                            f_est = os.path.basename(str(raw_est).replace('\\', '/')) if raw_est and str(raw_est).lower() != 'none' else ''
 
                             autorizados.append({
                                 'nombre_completo': nombre_aut,
