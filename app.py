@@ -596,6 +596,247 @@ def inscripcion():
         total_usuarios=total_usuarios
     )
 
+@app.route('/inscripcion-publica', methods=['GET', 'POST'])
+def inscripcion_publica():
+    if request.method == 'POST':
+        def guardar_archivo(input_name):
+            file = request.files.get(input_name)
+            if file and file.filename != '':
+                filename = secure_filename(file.filename)
+                filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                file.save(filepath)
+                return filepath
+            return None
+
+        # Captura de datos generales del formulario
+        anio_escolar = request.form.get('anio_escolar')
+        fecha_inscripcion = request.form.get('fecha_inscripcion')
+        id_estudiante = request.form.get('id_estudiante')
+        nombres = request.form.get('nombres')
+        apellidos = request.form.get('apellidos')
+        grado = request.form.get('grado')
+        fecha_nacimiento = request.form.get('fecha_nacimiento')
+        edad = request.form.get('edad')
+        sexo = request.form.get('sexo')
+        nacionalidad = request.form.get('nacionalidad')
+        lugar_nac = request.form.get('lugar_nac')
+        direccion = request.form.get('direccion')
+        cant_hermanos = request.form.get('cant_hermanos')
+        edades_hermanos = request.form.get('edades_hermanos')
+        lugar_ocupa = request.form.get('lugar_ocupa')
+        tipo_sangre = request.form.get('tipo_sangre')
+        seguro_medico = request.form.get('seguro_medico')
+        foto_estudiante_cedula = guardar_archivo('foto_estudiante_cedula')
+        alergias = request.form.get('alergias')
+        medicamentos = request.form.get('medicamentos')
+        medico_pediatra = request.form.get('medico_pediatra')
+        centro_medico = request.form.get('centro_medico')
+        emergencia_tel = request.form.get('emergencia_tel')
+        emergencia_nombre = request.form.get('emergencia_nombre')
+        emergencia_parentesco = request.form.get('emergencia_parentesco')
+
+        # Datos de Padre, Madre y Tutor
+        padre_nombre = request.form.get('padre_nombre')
+        padre_sector = request.form.get('padre_sector')
+        padre_direccion = request.form.get('padre_direccion')
+        padre_profesion = request.form.get('padre_profesion')
+        padre_cedula = request.form.get('padre_cedula')
+        foto_padre_cedula = guardar_archivo('foto_padre_cedula')
+        padre_nivel = request.form.get('padre_nivel')
+        padre_religion = request.form.get('padre_religion')
+        padre_tel_personal = request.form.get('padre_tel_personal')
+        padre_tel_trabajo = request.form.get('padre_tel_trabajo')
+        padre_correo = request.form.get('padre_correo')
+
+        madre_nombre = request.form.get('madre_nombre')
+        madre_sector = request.form.get('madre_sector')
+        madre_direccion = request.form.get('madre_direccion')
+        madre_profesion = request.form.get('madre_profesion')
+        madre_cedula = request.form.get('madre_cedula')
+        foto_madre_cedula = guardar_archivo('foto_madre_cedula')
+        madre_nivel = request.form.get('madre_nivel')
+        madre_religion = request.form.get('madre_religion')
+        madre_tel_personal = request.form.get('madre_tel_personal')
+        madre_tel_trabajo = request.form.get('madre_tel_trabajo')
+        madre_correo = request.form.get('madre_correo')
+
+        tutor_nombre = request.form.get('tutor_nombre')
+        tutor_sector = request.form.get('tutor_sector')
+        tutor_direccion = request.form.get('tutor_direccion')
+        tutor_profesion = request.form.get('tutor_profesion')
+        tutor_cedula = request.form.get('tutor_cedula')
+        foto_tutor_cedula = guardar_archivo('foto_tutor_cedula')
+        tutor_nivel = request.form.get('tutor_nivel')
+        tutor_religion = request.form.get('tutor_religion')
+        tutor_tel_personal = request.form.get('tutor_tel_personal')
+        tutor_tel_trabajo = request.form.get('tutor_tel_trabajo')
+        tutor_correo = request.form.get('tutor_correo')
+
+        # Con quién vive y Responsable Económico
+        vive_nombres = request.form.get('vive_nombres')
+        vive_parentesco = request.form.get('vive_parentesco')
+        vive_cedula = request.form.get('vive_cedula')
+        foto_vive_cedula = guardar_archivo('foto_vive_cedula')
+        vive_direccion = request.form.get('vive_direccion')
+        vive_sector = request.form.get('vive_sector')
+        vive_profesion = request.form.get('vive_profesion')
+        vive_nivel = request.form.get('vive_nivel')
+        vive_religion = request.form.get('vive_religion')
+        vive_tel_personal = request.form.get('vive_tel_personal')
+        vive_tel_trabajo = request.form.get('vive_tel_trabajo')
+        vive_correo = request.form.get('vive_correo')
+
+        econ_nombres = request.form.get('econ_nombres')
+        econ_parentesco = request.form.get('econ_parentesco')
+        econ_cedula = request.form.get('econ_cedula')
+        foto_econ_cedula = guardar_archivo('foto_econ_cedula')
+        econ_direccion = request.form.get('econ_direccion')
+        econ_sector = request.form.get('econ_sector')
+        econ_profesion = request.form.get('econ_profesion')
+        econ_lugar_trabajo = request.form.get('econ_lugar_trabajo')
+        econ_tel_personal = request.form.get('econ_tel_personal')
+        econ_tel_trabajo = request.form.get('econ_tel_trabajo')
+        econ_correo = request.form.get('econ_correo')
+
+        # Bucle dinámico para las 5 personas autorizadas
+        aut_data = {}
+        for i in range(1, 6):
+            aut_data[f'aut_nombre_{i}'] = request.form.get(f'aut_nombre_{i}')
+            aut_data[f'aut_cedula_{i}'] = request.form.get(f'aut_cedula_{i}')
+            aut_data[f'aut_parentesco_{i}'] = request.form.get(f'aut_parentesco_{i}')
+            aut_data[f'aut_tel_{i}'] = request.form.get(f'aut_tel_{i}')
+            aut_data[f'foto_aut_cedula_{i}'] = guardar_archivo(f'foto_aut_cedula_{i}')
+
+        autoriza_medicamentos = request.form.get('autoriza_medicamentos', 'NO')
+        autoriza_redes = request.form.get('autoriza_redes', 'NO')
+        firma_redes = request.form.get('firma_redes')
+
+        conexion = None
+        try:
+            conexion = get_db_connection()
+            
+            # 1. Insertar en tabla estudiantes
+            conexion.execute('''
+                INSERT INTO estudiantes (nombres, apellidos, id_estudiante, grado, foto_estudiante_cedula)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (nombres, apellidos, id_estudiante, grado, foto_estudiante_cedula))
+            
+            # 2. Recalcular número de orden global alfabéticamente
+            conexion.execute("SELECT id FROM estudiantes ORDER BY nombres ASC, apellidos ASC")
+            registros_estudiantes = conexion.fetchall()
+            for indice, reg in enumerate(registros_estudiantes, start=1):
+                reg_id = reg['id'] if isinstance(reg, dict) or hasattr(reg, 'keys') else reg[0]
+                conexion.execute("UPDATE estudiantes SET numero_orden = ? WHERE id = ?", (indice, reg_id))
+
+            # 3. Insertar en tabla autorizados
+            conexion.execute('''
+                INSERT INTO autorizados (
+                    id_estudiante, nombres, apellidos, grado, foto_estudiante_cedula,
+                    padre_nombre, padre_cedula, foto_padre_cedula, padre_tel_personal, padre_tel_trabajo,
+                    madre_nombre, madre_cedula, foto_madre_cedula, madre_tel_personal, madre_tel_trabajo,
+                    tutor_nombre, tutor_cedula, foto_tutor_cedula, tutor_tel_personal, tutor_tel_trabajo,
+                    aut_nombre_1, aut_cedula_1, aut_parentesco_1, aut_tel_1, foto_aut_cedula_1,
+                    aut_nombre_2, aut_cedula_2, aut_parentesco_2, aut_tel_2, foto_aut_cedula_2,
+                    aut_nombre_3, aut_cedula_3, aut_parentesco_3, aut_tel_3, foto_aut_cedula_3,
+                    aut_nombre_4, aut_cedula_4, aut_parentesco_4, aut_tel_4, foto_aut_cedula_4,
+                    aut_nombre_5, aut_cedula_5, aut_parentesco_5, aut_tel_5, foto_aut_cedula_5
+                ) VALUES (
+                    ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?
+                )
+            ''', (
+                id_estudiante, nombres, apellidos, grado, foto_estudiante_cedula,
+                padre_nombre, padre_cedula, foto_padre_cedula, padre_tel_personal, padre_tel_trabajo,
+                madre_nombre, madre_cedula, foto_madre_cedula, madre_tel_personal, madre_tel_trabajo,
+                tutor_nombre, tutor_cedula, foto_tutor_cedula, tutor_tel_personal, tutor_tel_trabajo,
+                aut_data['aut_nombre_1'], aut_data['aut_cedula_1'], aut_data['aut_parentesco_1'], aut_data['aut_tel_1'], aut_data['foto_aut_cedula_1'],
+                aut_data['aut_nombre_2'], aut_data['aut_cedula_2'], aut_data['aut_parentesco_2'], aut_data['aut_tel_2'], aut_data['foto_aut_cedula_2'],
+                aut_data['aut_nombre_3'], aut_data['aut_cedula_3'], aut_data['aut_parentesco_3'], aut_data['aut_tel_3'], aut_data['foto_aut_cedula_3'],
+                aut_data['aut_nombre_4'], aut_data['aut_cedula_4'], aut_data['aut_parentesco_4'], aut_data['aut_tel_4'], aut_data['foto_aut_cedula_4'],
+                aut_data['aut_nombre_5'], aut_data['aut_cedula_5'], aut_data['aut_parentesco_5'], aut_data['aut_tel_5'], aut_data['foto_aut_cedula_5']
+            ))
+
+            # 4. Insertar en tabla inscripciones generales
+            conexion.execute('''
+                INSERT INTO inscripciones (
+                    anio_escolar, fecha_inscripcion, id_estudiante, nombres, apellidos, grado, 
+                    fecha_nacimiento, edad, sexo, nacionalidad, lugar_nac, direccion, cant_hermanos, 
+                    edades_hermanos, lugar_ocupa, tipo_sangre, seguro_medico, foto_estudiante_cedula, 
+                    alergias, medicamentos, medico_pediatra, centro_medico, emergencia_tel, 
+                    emergencia_nombre, emergencia_parentesco,
+                    padre_nombre, padre_sector, padre_direccion, padre_profesion, padre_cedula, 
+                    foto_padre_cedula, padre_nivel, padre_religion, padre_tel_personal, padre_tel_trabajo, padre_correo,
+                    madre_nombre, madre_sector, madre_direccion, madre_profesion, madre_cedula, 
+                    foto_madre_cedula, madre_nivel, madre_religion, madre_tel_personal, madre_tel_trabajo, madre_correo,
+                    tutor_nombre, tutor_sector, tutor_direccion, tutor_profesion, tutor_cedula, 
+                    foto_tutor_cedula, tutor_nivel, tutor_religion, tutor_tel_personal, tutor_tel_trabajo, tutor_correo,
+                    vive_nombres, vive_parentesco, vive_cedula, foto_vive_cedula, vive_direccion, 
+                    vive_sector, vive_profesion, vive_nivel, vive_religion, vive_tel_personal, vive_tel_trabajo, vive_correo,
+                    econ_nombres, econ_parentesco, econ_cedula, foto_econ_cedula, econ_direccion, 
+                    econ_sector, econ_profesion, econ_lugar_trabajo, econ_tel_personal, econ_tel_trabajo, econ_correo,
+                    aut_nombre_1, aut_cedula_1, aut_parentesco_1, aut_tel_1, foto_aut_cedula_1,
+                    aut_nombre_2, aut_cedula_2, aut_parentesco_2, aut_tel_2, foto_aut_cedula_2,
+                    aut_nombre_3, aut_cedula_3, aut_parentesco_3, aut_tel_3, foto_aut_cedula_3,
+                    aut_nombre_4, aut_cedula_4, aut_parentesco_4, aut_tel_4, foto_aut_cedula_4,
+                    aut_nombre_5, aut_cedula_5, aut_parentesco_5, aut_tel_5, foto_aut_cedula_5,
+                    autoriza_medicamentos, autoriza_redes, firma_redes
+                ) VALUES (
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                    ?, ?, ?
+                )
+            ''', (
+                anio_escolar, fecha_inscripcion, id_estudiante, nombres, apellidos, grado, 
+                fecha_nacimiento, edad, sexo, nacionalidad, lugar_nac, direccion, cant_hermanos, 
+                edades_hermanos, lugar_ocupa, tipo_sangre, seguro_medico, foto_estudiante_cedula, 
+                alergias, medicamentos, medico_pediatra, centro_medico, emergencia_tel, 
+                emergencia_nombre, emergencia_parentesco,
+                padre_nombre, padre_sector, padre_direccion, padre_profesion, padre_cedula, 
+                foto_padre_cedula, padre_nivel, padre_religion, padre_tel_personal, padre_tel_trabajo, padre_correo,
+                madre_nombre, madre_sector, madre_direccion, madre_profesion, madre_cedula, 
+                foto_madre_cedula, madre_nivel, madre_religion, madre_tel_personal, madre_tel_trabajo, madre_correo,
+                tutor_nombre, tutor_sector, tutor_direccion, tutor_profesion, tutor_cedula, 
+                foto_tutor_cedula, tutor_nivel, tutor_religion, tutor_tel_personal, tutor_tel_trabajo, tutor_correo,
+                vive_nombres, vive_parentesco, vive_cedula, foto_vive_cedula, vive_direccion, 
+                vive_sector, vive_profesion, vive_nivel, vive_religion, vive_tel_personal, vive_tel_trabajo, vive_correo,
+                econ_nombres, econ_parentesco, econ_cedula, foto_econ_cedula, econ_direccion, 
+                econ_sector, econ_profesion, econ_lugar_trabajo, econ_tel_personal, econ_tel_trabajo, econ_correo,
+                aut_data['aut_nombre_1'], aut_data['aut_cedula_1'], aut_data['aut_parentesco_1'], aut_data['aut_tel_1'], aut_data['foto_aut_cedula_1'],
+                aut_data['aut_nombre_2'], aut_data['aut_cedula_2'], aut_data['aut_parentesco_2'], aut_data['aut_tel_2'], aut_data['foto_aut_cedula_2'],
+                aut_data['aut_nombre_3'], aut_data['aut_cedula_3'], aut_data['aut_parentesco_3'], aut_data['aut_tel_3'], aut_data['foto_aut_cedula_3'],
+                aut_data['aut_nombre_4'], aut_data['aut_cedula_4'], aut_data['aut_parentesco_4'], aut_data['aut_tel_4'], aut_data['foto_aut_cedula_4'],
+                aut_data['aut_nombre_5'], aut_data['aut_cedula_5'], aut_data['aut_parentesco_5'], aut_data['aut_tel_5'], aut_data['foto_aut_cedula_5'],
+                autoriza_medicamentos, autoriza_redes, firma_redes
+            ))
+            
+            conexion.commit()
+            flash('¡Formulario enviado con éxito! Sus datos han sido registrados correctamente en el sistema.', 'success')
+        except Exception as e:
+            if conexion:
+                conexion.rollback()
+            print(f"--- ERROR CRÍTICO EN INSCRIPCIÓN PÚBLICA: {e}")
+            flash('Hubo un error al enviar el formulario. Por favor intente de nuevo.', 'danger')
+        finally:
+            if conexion:
+                conexion.close()
+
+        return redirect(url_for('inscripcion_publica'))
+
+    # Método GET: Renderiza el archivo HTML del formulario público para los padres
+    return render_template('inscripcion_publica.html')
+
 # --- BÚSQUEDA Y OTROS MÓDULOS ---
 @app.route('/menu_buscar')
 def menu_buscar():
