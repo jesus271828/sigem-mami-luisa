@@ -528,18 +528,46 @@ def inscripcion():
 
         return redirect(url_for('inscripcion'))
 
-# Método GET: Consultar los contadores reales en la base de datos
+# Método GET: Consultar los contadores reales en la base de datos de forma segura
+    is_postgres = DATABASE_URL is not None
+    total_estudiantes = 0
+    total_expedientes = 0
+    total_usuarios = 0
+
     conexion = get_db_connection()
     try:
-        total_estudiantes = conexion.execute('SELECT COUNT(*) FROM estudiantes').fetchone()[0]
-        total_expedientes = conexion.execute('SELECT COUNT(*) FROM inscripciones').fetchone()[0]
-        total_usuarios = conexion.execute('SELECT COUNT(*) FROM usuarios').fetchone()[0]
+        if is_postgres:
+            cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute("SELECT COUNT(*) as total FROM estudiantes")
+            total_estudiantes = cur.fetchone()['total']
+            
+            cur.execute("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'expedientes_viejos')")
+            if cur.fetchone()['exists']:
+                cur.execute("SELECT COUNT(*) as total FROM expedientes_viejos")
+                total_expedientes = cur.fetchone()['total']
+            else:
+                cur.execute("SELECT COUNT(*) as total FROM inscripciones")
+                total_expedientes = cur.fetchone()['total']
+            
+            cur.execute("SELECT COUNT(*) as total FROM usuarios")
+            total_usuarios = cur.fetchone()['total']
+            cur.close()
+        else:
+            conexion.execute("SELECT COUNT(*) FROM estudiantes")
+            total_estudiantes = conexion.fetchone()[0]
+            
+            cursor_chk = conexion.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='expedientes_viejos'").fetchone()
+            if cursor_chk:
+                conexion.execute("SELECT COUNT(*) FROM expedientes_viejos")
+                total_expedientes = conexion.fetchone()[0]
+            else:
+                conexion.execute("SELECT COUNT(*) FROM inscripciones")
+                total_expedientes = conexion.fetchone()[0]
+                
+            conexion.execute("SELECT COUNT(*) FROM usuarios")
+            total_usuarios = conexion.fetchone()[0]
     except Exception as e:
-        # CAMBIO AQUÍ: Imprimir el error exacto (por ejemplo, si la tabla usuarios no existe)
-        print(f"--- ERROR EXACTO AL CONTAR: {e}")
-        total_estudiantes = 0
-        total_expedientes = 0
-        total_usuarios = 0
+        print(f"--- ERROR EXACTO AL CONTAR EN INSCRIPCIÓN: {e}")
     finally:
         conexion.close()
 
