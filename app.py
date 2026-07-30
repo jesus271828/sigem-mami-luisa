@@ -905,7 +905,6 @@ def buscar_autorizado():
         if request.method == 'POST':
             criterio = request.form.get('criterio', '').strip()
 
-            # Consultamos la tabla 'autorizados' que es donde están los datos y las fotos de esta sección
             if is_postgres:
                 cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
                 cur.execute("SELECT * FROM autorizados")
@@ -924,14 +923,14 @@ def buscar_autorizado():
                     
                     if nombre_aut and cedula_aut:
                         if criterio.lower() in str(nombre_aut).lower() or criterio in str(cedula_aut):
+                            # Foto del autorizado
                             f_aut = f_dict.get(f'foto_aut_cedula_{i}')
                             if not f_aut and i == 1:
                                 f_aut = f_dict.get('foto_padre_cedula') or f_dict.get('foto_madre_cedula')
-
                             if f_aut:
                                 f_aut = os.path.basename(str(f_aut))
 
-                            # Limpiar correctamente la ruta de la foto del estudiante desde la tabla autorizados
+                            # Foto del estudiante
                             f_est = f_dict.get('foto_estudiante_cedula')
                             if f_est:
                                 f_est = os.path.basename(str(f_est))
@@ -942,8 +941,8 @@ def buscar_autorizado():
                                 'parentesco': f_dict.get(f'aut_parentesco_{i}', 'No especificado'),
                                 'foto_autorizado': f_aut,
                                 'foto_estudiante': f_est,
-                                'nombres': f_dict.get('nombres') or f_dict.get('estudiante_nombres'),
-                                'apellidos': f_dict.get('apellidos') or f_dict.get('estudiante_apellidos'),
+                                'nombres': f_dict.get('estudiante_nombre') or f_dict.get('nombres') or f_dict.get('estudiante_nombres'),
+                                'apellidos': f_dict.get('estudiante_apellido') or f_dict.get('apellidos') or f_dict.get('estudiante_apellidos'),
                                 'grado': f_dict.get('grado') or f_dict.get('curso'),
                                 'id_estudiante': f_dict.get('id_estudiante') or f_dict.get('id')
                             })
