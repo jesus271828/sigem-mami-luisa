@@ -528,17 +528,15 @@ def inscripcion():
 
         return redirect(url_for('inscripcion'))
 
-  # Método GET: Consultar los contadores reales en la base de datos
+# Método GET: Consultar los contadores reales en la base de datos
     conexion = get_db_connection()
     try:
         total_estudiantes = conexion.execute('SELECT COUNT(*) FROM estudiantes').fetchone()[0]
         total_expedientes = conexion.execute('SELECT COUNT(*) FROM inscripciones').fetchone()[0]
         total_usuarios = conexion.execute('SELECT COUNT(*) FROM usuarios').fetchone()[0]
-        
-        # ESTO IMPRIMIRÁ LOS VALORES REALES EN LOS LOGS DE RENDER
-        print(f"VALORES OBTENIDOS -> Estudiantes: {total_estudiantes}, Expedientes: {total_expedientes}, Usuarios: {total_usuarios}")
     except Exception as e:
-        print(f"ERROR AL CONTAR EN LA BD: {e}")
+        # CAMBIO AQUÍ: Imprimir el error exacto (por ejemplo, si la tabla usuarios no existe)
+        print(f"--- ERROR EXACTO AL CONTAR: {e}")
         total_estudiantes = 0
         total_expedientes = 0
         total_usuarios = 0
