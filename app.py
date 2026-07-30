@@ -885,27 +885,40 @@ def buscar_autorizado():
     total_usuarios = 0
 
     try:
+        # 1. Obtener contadores para evitar errores en plantillas compartidas
         if is_postgres:
             cur_c = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-            cur_c.execute("SELECT COUNT(*) as total FROM inscripciones")
-            total_estudiantes = cur_c.fetchone()['total']
-            cur_c.execute("SELECT COUNT(*) as total FROM expedientes_viejos")
-            total_expedientes = cur_c.fetchone()['total']
-            cur_c.execute("SELECT COUNT(*) as total FROM usuarios")
-            total_usuarios = cur_c.fetchone()['total']
+            try:
+                cur_c.execute("SELECT COUNT(*) as total FROM inscripciones")
+                total_estudiantes = cur_c.fetchone()['total']
+            except: pass
+            try:
+                cur_c.execute("SELECT COUNT(*) as total FROM expedientes_viejos")
+                total_expedientes = cur_c.fetchone()['total']
+            except: pass
+            try:
+                cur_c.execute("SELECT COUNT(*) as total FROM usuarios")
+                total_usuarios = cur_c.fetchone()['total']
+            except: pass
             cur_c.close()
         else:
-            conexion.execute("SELECT COUNT(*) FROM inscripciones")
-            total_estudiantes = conexion.fetchone()[0]
-            conexion.execute("SELECT COUNT(*) FROM expedientes_viejos")
-            total_expedientes = conexion.fetchone()[0]
-            conexion.execute("SELECT COUNT(*) FROM usuarios")
-            total_usuarios = conexion.fetchone()[0]
+            try:
+                conexion.execute("SELECT COUNT(*) FROM inscripciones")
+                total_estudiantes = conexion.fetchone()[0]
+            except: pass
+            try:
+                conexion.execute("SELECT COUNT(*) FROM expedientes_viejos")
+                total_expedientes = conexion.fetchone()[0]
+            except: pass
+            try:
+                conexion.execute("SELECT COUNT(*) FROM usuarios")
+                total_usuarios = conexion.fetchone()[0]
+            except: pass
 
+        # 2. Procesar la búsqueda cuando el usuario envía el formulario
         if request.method == 'POST':
             criterio = request.form.get('criterio', '').strip()
 
-            # Consultamos la tabla 'autorizados' que es donde residen los registros y fotos
             if is_postgres:
                 cur = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
                 cur.execute("SELECT * FROM autorizados")
@@ -918,6 +931,7 @@ def buscar_autorizado():
             for fila in filas:
                 f_dict = dict(fila) if isinstance(fila, dict) else dict(zip([column[0] for column in conexion.description], fila))
                 
+                # Revisamos los campos de autorizados del 1 al 5
                 for i in range(1, 6):
                     nombre_aut = f_dict.get(f'aut_nombre_{i}')
                     cedula_aut = f_dict.get(f'aut_cedula_{i}')
@@ -931,7 +945,7 @@ def buscar_autorizado():
                             if f_aut:
                                 f_aut = os.path.basename(str(f_aut).replace('\\', '/'))
 
-                            # Foto del estudiante con búsqueda segura y robusta
+                            # Foto del estudiante con respaldo de nombres de columna comunes
                             raw_est = (
                                 f_dict.get('foto_estudiante_cedula') or 
                                 f_dict.get('foto_estudiante') or 
@@ -954,10 +968,7 @@ def buscar_autorizado():
     except Exception as e:
         print("--- ERROR EN BUSCAR AUTORIZADO:", e)
     finally:
-        if DATABASE_URL:
-            conexion.close()
-        else:
-            conexion.close()
+        conexion.close()
 
     return render_template('buscar_autorizado.html', 
                            autorizados=autorizados, 
