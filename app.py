@@ -931,7 +931,7 @@ def buscar_autorizado():
                             if f_aut:
                                 f_aut = os.path.basename(str(f_aut).replace('\\', '/'))
 
-                            # Obtener foto del estudiante probando múltiples nombres de columna comunes
+                            # Obtener foto del estudiante buscando en las columnas posibles
                             raw_est = (
                                 f_dict.get('foto_estudiante_cedula') or 
                                 f_dict.get('foto_estudiante') or 

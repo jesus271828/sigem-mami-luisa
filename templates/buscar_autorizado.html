@@ -26,6 +26,14 @@
             border: 4px solid #ffffff;
             box-shadow: 0 4px 10px rgba(0,0,0,0.15);
         }
+        .avatar-circle-sm {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 3px solid #ffffff;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        }
     </style>
 </head>
 <body>
@@ -82,13 +90,13 @@
                                 <div class="mt-2">
                                     <h5 class="text-primary fw-bold mb-3">Estudiante Asociado:</h5>
                                     <div class="row align-items-center">
-                                        <!-- FOTO DEL ESTUDIANTE BIEN UBICADA -->
+                                        <!-- FOTO DEL ESTUDIANTE -->
                                         <div class="col-md-4 text-center mb-3 mb-md-0">
                                             {% if aut.foto_estudiante and aut.foto_estudiante != 'None' and aut.foto_estudiante != '' %}
-                                                <img src="{{ url_for('static', filename='uploads/' + aut.foto_estudiante) }}" class="avatar-circle" alt="Foto Estudiante">
+                                                <img src="{{ url_for('static', filename='uploads/' + aut.foto_estudiante) }}" class="avatar-circle-sm" alt="Foto Estudiante">
                                             {% else %}
-                                                <div class="avatar-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto">
-                                                    <i class="fas fa-user-graduate fa-3x"></i>
+                                                <div class="avatar-circle-sm bg-primary text-white d-flex align-items-center justify-content-center mx-auto">
+                                                    <i class="fas fa-user-graduate fa-2x"></i>
                                                 </div>
                                             {% endif %}
                                         </div>
