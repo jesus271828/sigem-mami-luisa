@@ -68,7 +68,7 @@
                                 <h5 class="text-secondary fw-bold mb-3">Autorizado</h5>
                                 <div class="mb-3 d-flex justify-content-center">
                                     {% if aut.foto_autorizado and aut.foto_autorizado != 'None' and aut.foto_autorizado != '' %}
-                                        <img src="{{ url_for('static', filename='uploads/' + aut.foto_autorizado) }}" class="avatar-circle" alt="Foto Autorizado">
+                                       <img src="{{ url_for('static', filename=aut.foto_autorizado) }}" ...>
                                     {% else %}
                                         <div class="avatar-circle bg-secondary text-white d-flex align-items-center justify-content-center">
                                             <i class="fas fa-user fa-4x"></i>
@@ -93,7 +93,7 @@
                                         <!-- FOTO DEL ESTUDIANTE -->
                                         <div class="col-md-4 text-center mb-3 mb-md-0">
                                             {% if aut.foto_estudiante and aut.foto_estudiante != 'None' and aut.foto_estudiante != '' %}
-                                                <img src="{{ url_for('static', filename='uploads/' + aut.foto_estudiante) }}" class="avatar-circle-sm" alt="Foto Estudiante">
+                                               <img src="{{ url_for('static', filename=aut.foto_estudiante) }}" ...>
                                             {% else %}
                                                 <div class="avatar-circle-sm bg-primary text-white d-flex align-items-center justify-content-center mx-auto">
                                                     <i class="fas fa-user-graduate fa-2x"></i>
