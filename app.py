@@ -886,7 +886,7 @@ def buscar_autorizado():
 
     try:
         if is_postgres:
-            cur_c = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur_c = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             cur_c.execute("SELECT COUNT(*) as total FROM inscripciones")
             total_estudiantes = cur_c.fetchone()['total']
             cur_c.execute("SELECT COUNT(*) as total FROM expedientes_viejos")
@@ -905,8 +905,9 @@ def buscar_autorizado():
         if request.method == 'POST':
             criterio = request.form.get('criterio', '').strip()
 
+            # Consultamos la tabla 'autorizados' que es donde residen los registros y fotos
             if is_postgres:
-                cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+                cur = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
                 cur.execute("SELECT * FROM autorizados")
                 filas = cur.fetchall()
                 cur.close()
@@ -930,12 +931,11 @@ def buscar_autorizado():
                             if f_aut:
                                 f_aut = os.path.basename(str(f_aut).replace('\\', '/'))
 
-                            # Búsqueda robusta de la foto del estudiante en cualquier columna posible
+                            # Foto del estudiante con búsqueda segura y robusta
                             raw_est = (
                                 f_dict.get('foto_estudiante_cedula') or 
                                 f_dict.get('foto_estudiante') or 
-                                f_dict.get('foto') or 
-                                f_dict.get('foto_cedula_estudiante')
+                                f_dict.get('foto')
                             )
                             f_est = os.path.basename(str(raw_est).replace('\\', '/')) if raw_est and str(raw_est).lower() != 'none' else ''
 
@@ -954,7 +954,10 @@ def buscar_autorizado():
     except Exception as e:
         print("--- ERROR EN BUSCAR AUTORIZADO:", e)
     finally:
-        conexion.close()
+        if DATABASE_URL:
+            conexion.close()
+        else:
+            conexion.close()
 
     return render_template('buscar_autorizado.html', 
                            autorizados=autorizados, 
