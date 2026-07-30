@@ -885,57 +885,33 @@ def buscar_autorizado():
     total_usuarios = 0
 
     try:
-        # Obtener contadores de forma segura
         if is_postgres:
-            cur_c = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-            try:
-                cur_c.execute("SELECT COUNT(*) as total FROM inscripciones")
-                total_estudiantes = cur_c.fetchone()['total']
-            except: pass
-            try:
-                cur_c.execute("SELECT COUNT(*) as total FROM expedientes_viejos")
-                total_expedientes = cur_c.fetchone()['total']
-            except: pass
-            try:
-                cur_c.execute("SELECT COUNT(*) as total FROM usuarios")
-                total_usuarios = cur_c.fetchone()['total']
-            except: pass
+            cur_c = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur_c.execute("SELECT COUNT(*) as total FROM inscripciones")
+            total_estudiantes = cur_c.fetchone()['total']
+            cur_c.execute("SELECT COUNT(*) as total FROM expedientes_viejos")
+            total_expedientes = cur_c.fetchone()['total']
+            cur_c.execute("SELECT COUNT(*) as total FROM usuarios")
+            total_usuarios = cur_c.fetchone()['total']
             cur_c.close()
         else:
-            try:
-                conexion.execute("SELECT COUNT(*) FROM inscripciones")
-                total_estudiantes = conexion.fetchone()[0]
-            except: pass
-            try:
-                conexion.execute("SELECT COUNT(*) FROM expedientes_viejos")
-                total_expedientes = conexion.fetchone()[0]
-            except: pass
-            try:
-                conexion.execute("SELECT COUNT(*) FROM usuarios")
-                total_usuarios = conexion.fetchone()[0]
-            except: pass
+            conexion.execute("SELECT COUNT(*) FROM inscripciones")
+            total_estudiantes = conexion.fetchone()[0]
+            conexion.execute("SELECT COUNT(*) FROM expedientes_viejos")
+            total_expedientes = conexion.fetchone()[0]
+            conexion.execute("SELECT COUNT(*) FROM usuarios")
+            total_usuarios = conexion.fetchone()[0]
 
         if request.method == 'POST':
             criterio = request.form.get('criterio', '').strip()
-            param_busqueda = f"%{criterio}%"
 
             if is_postgres:
-                cur = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-                query = """
-                    SELECT * FROM autorizados 
-                    WHERE aut_nombre_1 ILIKE %s OR aut_cedula_1 ILIKE %s
-                       OR aut_nombre_2 ILIKE %s OR aut_cedula_2 ILIKE %s
-                       OR aut_nombre_3 ILIKE %s OR aut_cedula_3 ILIKE %s
-                       OR aut_nombre_4 ILIKE %s OR aut_cedula_4 ILIKE %s
-                       OR aut_nombre_5 ILIKE %s OR aut_cedula_5 ILIKE %s
-                """
-                cur.execute(query, (param_busqueda, param_busqueda, param_busqueda, param_busqueda,
-                                    param_busqueda, param_busqueda, param_busqueda, param_busqueda,
-                                    param_busqueda, param_busqueda))
+                cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+                cur.execute("SELECT * FROM inscripciones")
                 filas = cur.fetchall()
                 cur.close()
             else:
-                conexion.execute("SELECT * FROM autorizados")
+                conexion.execute("SELECT * FROM inscripciones")
                 filas = conexion.fetchall()
 
             for fila in filas:
@@ -946,36 +922,19 @@ def buscar_autorizado():
                     cedula_aut = f_dict.get(f'aut_cedula_{i}')
                     
                     if nombre_aut and cedula_aut:
-                        # Si hay criterio escrito, filtramos de manera flexible; si está vacío el input, trae todos
+                        # Si el criterio está vacío o coincide con el nombre o cédula del autorizado
                         if not criterio or (criterio.lower() in str(nombre_aut).lower() or criterio in str(cedula_aut)):
-                            # Foto del autorizado
+                            # Obtener foto del autorizado
                             f_aut = f_dict.get(f'foto_aut_cedula_{i}')
                             if not f_aut and i == 1:
                                 f_aut = f_dict.get('foto_padre_cedula') or f_dict.get('foto_madre_cedula')
+
                             if f_aut:
                                 f_aut = os.path.basename(str(f_aut).replace('\\', '/'))
 
-                            # Foto del estudiante
-                            raw_est = (
-                                f_dict.get('foto_estudiante_cedula') or 
-                                f_dict.get('foto_estudiante') or 
-                                f_dict.get('foto')
-                            )
+                            # Obtener foto del estudiante de forma segura
+                            raw_est = f_dict.get('foto_estudiante_cedula') or f_dict.get('foto_estudiante') or f_dict.get('foto')
                             f_est = os.path.basename(str(raw_est).replace('\\', '/')) if raw_est and str(raw_est).lower() != 'none' else ''
-
-                            # Extracción robusta de nombres y apellidos del estudiante
-                            nombres_est = (
-                                f_dict.get('estudiante_nombre') or 
-                                f_dict.get('nombres') or 
-                                f_dict.get('estudiante_nombres') or 
-                                f_dict.get('nombre') or ''
-                            )
-                            apellidos_est = (
-                                f_dict.get('estudiante_apellido') or 
-                                f_dict.get('apellidos') or 
-                                f_dict.get('estudiante_apellidos') or 
-                                f_dict.get('apellido') or ''
-                            )
 
                             autorizados.append({
                                 'nombre_completo': nombre_aut,
@@ -983,10 +942,10 @@ def buscar_autorizado():
                                 'parentesco': f_dict.get(f'aut_parentesco_{i}', 'No especificado'),
                                 'foto_autorizado': f_aut,
                                 'foto_estudiante': f_est,
-                                'nombres': nombres_est,
-                                'apellidos': apellidos_est,
-                                'grado': f_dict.get('grado') or f_dict.get('curso') or 'No especificado',
-                                'id_estudiante': f_dict.get('id_estudiante') or f_dict.get('id') or ''
+                                'nombres': f_dict.get('nombres') or f_dict.get('estudiante_nombre'),
+                                'apellidos': f_dict.get('apellidos') or f_dict.get('estudiante_apellido'),
+                                'grado': f_dict.get('grado') or f_dict.get('curso'),
+                                'id_estudiante': f_dict.get('id_estudiante') or f_dict.get('id')
                             })
 
     except Exception as e:
