@@ -905,13 +905,14 @@ def buscar_autorizado():
         if request.method == 'POST':
             criterio = request.form.get('criterio', '').strip()
 
+            # Consultamos la tabla 'autorizados' que es donde están los datos y las fotos de esta sección
             if is_postgres:
                 cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-                cur.execute("SELECT * FROM inscripciones")
+                cur.execute("SELECT * FROM autorizados")
                 filas = cur.fetchall()
                 cur.close()
             else:
-                conexion.execute("SELECT * FROM inscripciones")
+                conexion.execute("SELECT * FROM autorizados")
                 filas = conexion.fetchall()
 
             for fila in filas:
@@ -930,6 +931,7 @@ def buscar_autorizado():
                             if f_aut:
                                 f_aut = os.path.basename(str(f_aut))
 
+                            # Limpiar correctamente la ruta de la foto del estudiante desde la tabla autorizados
                             f_est = f_dict.get('foto_estudiante_cedula')
                             if f_est:
                                 f_est = os.path.basename(str(f_est))
@@ -940,10 +942,10 @@ def buscar_autorizado():
                                 'parentesco': f_dict.get(f'aut_parentesco_{i}', 'No especificado'),
                                 'foto_autorizado': f_aut,
                                 'foto_estudiante': f_est,
-                                'nombres': f_dict.get('nombres'),
-                                'apellidos': f_dict.get('apellidos'),
-                                'grado': f_dict.get('grado'),
-                                'id_estudiante': f_dict.get('id_estudiante')
+                                'nombres': f_dict.get('nombres') or f_dict.get('estudiante_nombres'),
+                                'apellidos': f_dict.get('apellidos') or f_dict.get('estudiante_apellidos'),
+                                'grado': f_dict.get('grado') or f_dict.get('curso'),
+                                'id_estudiante': f_dict.get('id_estudiante') or f_dict.get('id')
                             })
 
     except Exception as e:
