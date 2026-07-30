@@ -930,10 +930,10 @@ def buscar_autorizado():
                             if f_aut:
                                 f_aut = os.path.basename(str(f_aut))
 
-                            # Foto del estudiante
+                             # Foto del estudiante
                             f_est = f_dict.get('foto_estudiante_cedula')
                             if f_est:
-                                f_est = os.path.basename(str(f_est))
+                                f_est = os.path.basename(str(f_est).replace('\\', '/'))
 
                             autorizados.append({
                                 'nombre_completo': nombre_aut,
