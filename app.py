@@ -922,7 +922,6 @@ def buscar_autorizado():
                     cedula_aut = f_dict.get(f'aut_cedula_{i}')
                     
                     if nombre_aut and cedula_aut:
-                        # Si el criterio está vacío o coincide con el nombre o cédula del autorizado
                         if not criterio or (criterio.lower() in str(nombre_aut).lower() or criterio in str(cedula_aut)):
                             # Obtener foto del autorizado
                             f_aut = f_dict.get(f'foto_aut_cedula_{i}')
@@ -932,9 +931,17 @@ def buscar_autorizado():
                             if f_aut:
                                 f_aut = os.path.basename(str(f_aut).replace('\\', '/'))
 
-                            # Obtener foto del estudiante de forma segura
-                            raw_est = f_dict.get('foto_estudiante_cedula') or f_dict.get('foto_estudiante') or f_dict.get('foto')
-                            f_est = os.path.basename(str(raw_est).replace('\\', '/')) if raw_est and str(raw_est).lower() != 'none' else ''
+                            # Obtener foto del estudiante probando múltiples nombres de columna comunes
+                            raw_est = (
+                                f_dict.get('foto_estudiante_cedula') or 
+                                f_dict.get('foto_estudiante') or 
+                                f_dict.get('foto') or 
+                                f_dict.get('foto_cedula_estudiante')
+                            )
+                            
+                            f_est = ""
+                            if raw_est and str(raw_est).lower() not in ['none', '']:
+                                f_est = os.path.basename(str(raw_est).replace('\\', '/'))
 
                             autorizados.append({
                                 'nombre_completo': nombre_aut,
@@ -958,7 +965,6 @@ def buscar_autorizado():
                            total_estudiantes=total_estudiantes, 
                            total_expedientes=total_expedientes, 
                            total_usuarios=total_usuarios)
-
 
 @app.route('/listado-estudiantes')
 def listado_estudiantes():
