@@ -921,7 +921,6 @@ def buscar_autorizado():
 
             if is_postgres:
                 cur = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-                # Búsqueda flexible en PostgreSQL para cualquiera de los 5 autorizados
                 query = """
                     SELECT * FROM autorizados 
                     WHERE aut_nombre_1 ILIKE %s OR aut_cedula_1 ILIKE %s
@@ -947,8 +946,8 @@ def buscar_autorizado():
                     cedula_aut = f_dict.get(f'aut_cedula_{i}')
                     
                     if nombre_aut and cedula_aut:
-                        # Validación secundaria en Python por si acaso
-                        if criterio.lower() in str(nombre_aut).lower() or criterio in str(cedula_aut):
+                        # Si hay criterio escrito, filtramos de manera flexible; si está vacío el input, trae todos
+                        if not criterio or (criterio.lower() in str(nombre_aut).lower() or criterio in str(cedula_aut)):
                             # Foto del autorizado
                             f_aut = f_dict.get(f'foto_aut_cedula_{i}')
                             if not f_aut and i == 1:
@@ -964,16 +963,30 @@ def buscar_autorizado():
                             )
                             f_est = os.path.basename(str(raw_est).replace('\\', '/')) if raw_est and str(raw_est).lower() != 'none' else ''
 
+                            # Extracción robusta de nombres y apellidos del estudiante
+                            nombres_est = (
+                                f_dict.get('estudiante_nombre') or 
+                                f_dict.get('nombres') or 
+                                f_dict.get('estudiante_nombres') or 
+                                f_dict.get('nombre') or ''
+                            )
+                            apellidos_est = (
+                                f_dict.get('estudiante_apellido') or 
+                                f_dict.get('apellidos') or 
+                                f_dict.get('estudiante_apellidos') or 
+                                f_dict.get('apellido') or ''
+                            )
+
                             autorizados.append({
                                 'nombre_completo': nombre_aut,
                                 'cedula': cedula_aut,
                                 'parentesco': f_dict.get(f'aut_parentesco_{i}', 'No especificado'),
                                 'foto_autorizado': f_aut,
                                 'foto_estudiante': f_est,
-                                'nombres': f_dict.get('estudiante_nombre') or f_dict.get('nombres') or f_dict.get('estudiante_nombres'),
-                                'apellidos': f_dict.get('estudiante_apellido') or f_dict.get('apellidos') or f_dict.get('estudiante_apellidos'),
-                                'grado': f_dict.get('grado') or f_dict.get('curso'),
-                                'id_estudiante': f_dict.get('id_estudiante') or f_dict.get('id')
+                                'nombres': nombres_est,
+                                'apellidos': apellidos_est,
+                                'grado': f_dict.get('grado') or f_dict.get('curso') or 'No especificado',
+                                'id_estudiante': f_dict.get('id_estudiante') or f_dict.get('id') or ''
                             })
 
     except Exception as e:
@@ -986,6 +999,7 @@ def buscar_autorizado():
                            total_estudiantes=total_estudiantes, 
                            total_expedientes=total_expedientes, 
                            total_usuarios=total_usuarios)
+
 
 @app.route('/listado-estudiantes')
 def listado_estudiantes():
