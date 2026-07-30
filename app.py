@@ -211,31 +211,49 @@ def index():
         flash('Por favor inicie sesión.', 'danger')
         return redirect(url_for('login'))
         
-    conn = get_db_connection()
+    is_postgres = DATABASE_URL is not None
+    total_estudiantes = 0
+    total_expedientes = 0
+    total_usuarios = 0
+
+    conexion = get_db_connection()
     try:
-        total_inscripciones = conn.execute('SELECT COUNT(*) FROM inscripciones').fetchone()
-        total_inscripciones = total_inscripciones['total'] if isinstance(total_inscripciones, dict) else total_inscripciones[0]
-    except:
-        total_inscripciones = 0
-    try:
-        total_estudiantes = conn.execute('SELECT COUNT(*) FROM estudiantes').fetchone()
-        total_estudiantes = total_estudiantes['total'] if isinstance(total_estudiantes, dict) else total_estudiantes[0]
-    except:
-        total_estudiantes = 0
-    try:
-        total_expedientes = conn.execute('SELECT COUNT(*) FROM expedientes_viejos').fetchone()
-        total_expedientes = total_expedientes['total'] if isinstance(total_expedientes, dict) else total_expedientes[0]
-    except:
-        total_expedientes = 0
-    try:
-        total_usuarios = conn.execute('SELECT COUNT(*) FROM usuarios').fetchone()
-        total_usuarios = total_usuarios['total'] if isinstance(total_usuarios, dict) else total_usuarios[0]
-    except:
-        total_usuarios = 0
-    conn.close()
+        if is_postgres:
+            cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute("SELECT COUNT(*) as total FROM estudiantes")
+            total_estudiantes = cur.fetchone()['total']
+            
+            cur.execute("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'expedientes_viejos')")
+            if cur.fetchone()['exists']:
+                cur.execute("SELECT COUNT(*) as total FROM expedientes_viejos")
+                total_expedientes = cur.fetchone()['total']
+            else:
+                cur.execute("SELECT COUNT(*) as total FROM inscripciones")
+                total_expedientes = cur.fetchone()['total']
+            
+            cur.execute("SELECT COUNT(*) as total FROM usuarios")
+            total_usuarios = cur.fetchone()['total']
+            cur.close()
+        else:
+            conexion.execute("SELECT COUNT(*) FROM estudiantes")
+            total_estudiantes = conexion.fetchone()[0]
+            
+            cursor_chk = conexion.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='expedientes_viejos'").fetchone()
+            if cursor_chk:
+                conexion.execute("SELECT COUNT(*) FROM expedientes_viejos")
+                total_expedientes = conexion.fetchone()[0]
+            else:
+                conexion.execute("SELECT COUNT(*) FROM inscripciones")
+                total_expedientes = conexion.fetchone()[0]
+                
+            conexion.execute("SELECT COUNT(*) FROM usuarios")
+            total_usuarios = conexion.fetchone()[0]
+    except Exception as e:
+        print(f"--- ERROR AL CONTAR EN EL MENÚ PRINCIPAL: {e}")
+    finally:
+        conexion.close()
     
     return render_template('menu.html', 
-                           total_inscripciones=total_inscripciones, 
                            total_estudiantes=total_estudiantes, 
                            total_expedientes=total_expedientes, 
                            total_usuarios=total_usuarios, 
