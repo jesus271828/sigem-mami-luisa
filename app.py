@@ -287,7 +287,6 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
-# --- INSCRIPCIÓN ---
 @app.route('/inscripcion', methods=['GET', 'POST'])
 def inscripcion():
     if 'usuario' not in session:
@@ -303,6 +302,7 @@ def inscripcion():
                 return filepath
             return None
 
+        # Captura de datos generales del formulario
         anio_escolar = request.form.get('anio_escolar')
         fecha_inscripcion = request.form.get('fecha_inscripcion')
         id_estudiante = request.form.get('id_estudiante')
@@ -329,6 +329,7 @@ def inscripcion():
         emergencia_nombre = request.form.get('emergencia_nombre')
         emergencia_parentesco = request.form.get('emergencia_parentesco')
 
+        # Datos de Padre, Madre y Tutor
         padre_nombre = request.form.get('padre_nombre')
         padre_sector = request.form.get('padre_sector')
         padre_direccion = request.form.get('padre_direccion')
@@ -365,6 +366,7 @@ def inscripcion():
         tutor_tel_trabajo = request.form.get('tutor_tel_trabajo')
         tutor_correo = request.form.get('tutor_correo')
 
+        # Con quién vive y Responsable Económico
         vive_nombres = request.form.get('vive_nombres')
         vive_parentesco = request.form.get('vive_parentesco')
         vive_cedula = request.form.get('vive_cedula')
@@ -390,6 +392,7 @@ def inscripcion():
         econ_tel_trabajo = request.form.get('econ_tel_trabajo')
         econ_correo = request.form.get('econ_correo')
 
+        # Bucle dinámico para las 5 personas autorizadas
         aut_data = {}
         for i in range(1, 6):
             aut_data[f'aut_nombre_{i}'] = request.form.get(f'aut_nombre_{i}')
@@ -402,20 +405,24 @@ def inscripcion():
         autoriza_redes = request.form.get('autoriza_redes', 'NO')
         firma_redes = request.form.get('firma_redes')
 
+        conexion = None
         try:
             conexion = get_db_connection()
             
+            # 1. Insertar en tabla estudiantes
             conexion.execute('''
                 INSERT INTO estudiantes (nombres, apellidos, id_estudiante, grado, foto_estudiante_cedula)
                 VALUES (?, ?, ?, ?, ?)
             ''', (nombres, apellidos, id_estudiante, grado, foto_estudiante_cedula))
             
+            # 2. Recalcular número de orden global alfabéticamente
             conexion.execute("SELECT id FROM estudiantes ORDER BY nombres ASC, apellidos ASC")
             registros_estudiantes = conexion.fetchall()
             for indice, reg in enumerate(registros_estudiantes, start=1):
                 reg_id = reg['id'] if isinstance(reg, dict) or hasattr(reg, 'keys') else reg[0]
                 conexion.execute("UPDATE estudiantes SET numero_orden = ? WHERE id = ?", (indice, reg_id))
 
+            # 3. Insertar en tabla autorizados
             conexion.execute('''
                 INSERT INTO autorizados (
                     id_estudiante, nombres, apellidos, grado, foto_estudiante_cedula,
@@ -450,6 +457,7 @@ def inscripcion():
                 aut_data['aut_nombre_5'], aut_data['aut_cedula_5'], aut_data['aut_parentesco_5'], aut_data['aut_tel_5'], aut_data['foto_aut_cedula_5']
             ))
 
+            # 4. Insertar en tabla inscripciones generales
             conexion.execute('''
                 INSERT INTO inscripciones (
                     anio_escolar, fecha_inscripcion, id_estudiante, nombres, apellidos, grado, 
@@ -508,15 +516,41 @@ def inscripcion():
             ))
             
             conexion.commit()
-            conexion.close()
             flash('¡Estudiante inscrito y guardado correctamente en todas las tablas!', 'success')
         except Exception as e:
+            if conexion:
+                conexion.rollback()
             print(f"--- ERROR CRÍTICO EN INSCRIPCIÓN: {e}")
             flash('Hubo un error al guardar los datos.', 'danger')
+        finally:
+            if conexion:
+                conexion.close()
 
         return redirect(url_for('inscripcion'))
 
-    return render_template('inscripcion.html', total_estudiantes=0, total_expedientes=0, total_usuarios=0)
+  # Método GET: Consultar los contadores reales en la base de datos
+    conexion = get_db_connection()
+    try:
+        total_estudiantes = conexion.execute('SELECT COUNT(*) FROM estudiantes').fetchone()[0]
+        total_expedientes = conexion.execute('SELECT COUNT(*) FROM inscripciones').fetchone()[0]
+        total_usuarios = conexion.execute('SELECT COUNT(*) FROM usuarios').fetchone()[0]
+        
+        # ESTO IMPRIMIRÁ LOS VALORES REALES EN LOS LOGS DE RENDER
+        print(f"VALORES OBTENIDOS -> Estudiantes: {total_estudiantes}, Expedientes: {total_expedientes}, Usuarios: {total_usuarios}")
+    except Exception as e:
+        print(f"ERROR AL CONTAR EN LA BD: {e}")
+        total_estudiantes = 0
+        total_expedientes = 0
+        total_usuarios = 0
+    finally:
+        conexion.close()
+
+    return render_template(
+        'inscripcion.html', 
+        total_estudiantes=total_estudiantes, 
+        total_expedientes=total_expedientes, 
+        total_usuarios=total_usuarios
+    )
 
 # --- BÚSQUEDA Y OTROS MÓDULOS ---
 @app.route('/menu_buscar')
