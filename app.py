@@ -885,7 +885,7 @@ def buscar_autorizado():
     total_usuarios = 0
 
     try:
-        # 1. Obtener contadores para evitar errores en plantillas compartidas
+        # Obtener contadores de forma segura
         if is_postgres:
             cur_c = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             try:
@@ -915,13 +915,24 @@ def buscar_autorizado():
                 total_usuarios = conexion.fetchone()[0]
             except: pass
 
-        # 2. Procesar la búsqueda cuando el usuario envía el formulario
         if request.method == 'POST':
             criterio = request.form.get('criterio', '').strip()
+            param_busqueda = f"%{criterio}%"
 
             if is_postgres:
                 cur = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-                cur.execute("SELECT * FROM autorizados")
+                # Búsqueda flexible en PostgreSQL para cualquiera de los 5 autorizados
+                query = """
+                    SELECT * FROM autorizados 
+                    WHERE aut_nombre_1 ILIKE %s OR aut_cedula_1 ILIKE %s
+                       OR aut_nombre_2 ILIKE %s OR aut_cedula_2 ILIKE %s
+                       OR aut_nombre_3 ILIKE %s OR aut_cedula_3 ILIKE %s
+                       OR aut_nombre_4 ILIKE %s OR aut_cedula_4 ILIKE %s
+                       OR aut_nombre_5 ILIKE %s OR aut_cedula_5 ILIKE %s
+                """
+                cur.execute(query, (param_busqueda, param_busqueda, param_busqueda, param_busqueda,
+                                    param_busqueda, param_busqueda, param_busqueda, param_busqueda,
+                                    param_busqueda, param_busqueda))
                 filas = cur.fetchall()
                 cur.close()
             else:
@@ -931,12 +942,12 @@ def buscar_autorizado():
             for fila in filas:
                 f_dict = dict(fila) if isinstance(fila, dict) else dict(zip([column[0] for column in conexion.description], fila))
                 
-                # Revisamos los campos de autorizados del 1 al 5
                 for i in range(1, 6):
                     nombre_aut = f_dict.get(f'aut_nombre_{i}')
                     cedula_aut = f_dict.get(f'aut_cedula_{i}')
                     
                     if nombre_aut and cedula_aut:
+                        # Validación secundaria en Python por si acaso
                         if criterio.lower() in str(nombre_aut).lower() or criterio in str(cedula_aut):
                             # Foto del autorizado
                             f_aut = f_dict.get(f'foto_aut_cedula_{i}')
@@ -945,7 +956,7 @@ def buscar_autorizado():
                             if f_aut:
                                 f_aut = os.path.basename(str(f_aut).replace('\\', '/'))
 
-                            # Foto del estudiante con respaldo de nombres de columna comunes
+                            # Foto del estudiante
                             raw_est = (
                                 f_dict.get('foto_estudiante_cedula') or 
                                 f_dict.get('foto_estudiante') or 
