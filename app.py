@@ -1446,9 +1446,6 @@ client = genai.Client()
 
 @app.route('/api/escanear-ficha', methods=['POST'])
 def escanear_ficha():
-    if 'user_id' not in session:
-        return jsonify({'success': False, 'error': 'No autorizado.'}), 401
-
     if 'ficha' not in request.files:
         return jsonify({'success': False, 'error': 'No se encontró el archivo de la ficha.'}), 400
     
