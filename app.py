@@ -5,7 +5,12 @@ from flask import Flask, render_template, make_response, request, redirect, url_
 from xhtml2pdf import pisa
 from werkzeug.utils import secure_filename
 import psycopg2
+import json
 import psycopg2.extras
+from werkzeug.security import generate_password_hash, check_password_hash
+from google import genai
+from google.genai import types
+
 
 app = Flask(__name__)
 app.secret_key = 'tu_clave_secreta_aqui'
@@ -1441,6 +1446,9 @@ client = genai.Client()
 
 @app.route('/api/escanear-ficha', methods=['POST'])
 def escanear_ficha():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'error': 'No autorizado.'}), 401
+
     if 'ficha' not in request.files:
         return jsonify({'success': False, 'error': 'No se encontró el archivo de la ficha.'}), 400
     
@@ -1450,11 +1458,11 @@ def escanear_ficha():
         return jsonify({'success': False, 'error': 'No se seleccionó ninguna imagen.'}), 400
 
     try:
-        # Lee los bytes de la imagen subida
+        # Leer los bytes de la imagen subida
         image_bytes = archivo.read()
         mime_type = archivo.content_type or 'image/jpeg'
 
-        # Prompt estructurado para indicarle a la IA qué campos extraer y cómo devolverlos (en JSON estricto)
+        # Prompt estructurado para extraer la información en JSON estricto
         prompt = """
         Analiza esta imagen de una ficha de inscripción escolar y extrae la información en un formato JSON plano 
         donde las claves coincidan exactamente con los atributos 'name' de los campos del formulario HTML de SIGEM Mami Luisa.
@@ -1488,12 +1496,12 @@ def escanear_ficha():
         - madre_nombre, madre_sector, madre_direccion, madre_profesion, madre_cedula, madre_nivel, madre_religion, madre_tel_personal, madre_tel_trabajo, madre_correo
         - tutor_nombre, tutor_sector, tutor_direccion, tutor_profesion, tutor_cedula, tutor_nivel, tutor_religion, tutor_tel_personal, tutor_tel_trabajo, tutor_correo
         
-        Devuelve ÚNICAMENTE un objeto JSON válido, sin texto adicional ni bloques de código markdown si es posible, asegurando que las llaves correspondan exactamente a los nombres de los inputs.
+        Devuelve ÚNICAMENTE un objeto JSON válido, sin texto adicional ni bloques de código markdown, asegurando que las llaves correspondan exactamente a los nombres de los inputs.
         """
 
-        # Llamada corregida usando el SDK nuevo con el modelo gemini-1.5-flash
+        # Llamada al modelo multimodal con el nombre compatible actualizado
         response = client.models.generate_content(
-            model='gemini-1.5-flash',
+            model='gemini-1.5-flash-latest',
             contents=[
                 types.Part.from_bytes(
                     data=image_bytes,
@@ -1507,7 +1515,6 @@ def escanear_ficha():
             ),
         )
 
-        import json
         # Parsear la respuesta de texto de la IA a diccionario de Python
         datos_extraidos = json.loads(response.text)
 
