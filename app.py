@@ -1496,21 +1496,30 @@ def escanear_ficha():
         Devuelve ÚNICAMENTE un objeto JSON válido, sin texto adicional ni bloques de código markdown, asegurando que las llaves correspondan exactamente a los nombres de los inputs.
         """
 
-        # Llamada con el cliente oficial de google-genai usando gemini-2.0-flash
-        response = client.models.generate_content(
-            model='gemini-2.0-flash',
-            contents=[
-                types.Part.from_bytes(
-                    data=image_bytes,
-                    mime_type=mime_type,
-                ),
-                prompt
-            ],
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-                temperature=0.1
-            ),
-        )
+        # Llamada al modelo gemini-1.5-flash con reintento automático si hay saturación temporal (429)
+        response = None
+        for intento in range(3):
+            try:
+                response = client.models.generate_content(
+                    model='gemini-1.5-flash',
+                    contents=[
+                        types.Part.from_bytes(
+                            data=image_bytes,
+                            mime_type=mime_type,
+                        ),
+                        prompt
+                    ],
+                    config=types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                        temperature=0.1
+                    ),
+                )
+                break
+            except Exception as api_err:
+                if ("429" in str(api_err) or "RESOURCE_EXHAUSTED" in str(api_err)) and intento < 2:
+                    time.sleep(6) # Pausa de 6 segundos para dejar respirar la cuota gratuita
+                    continue
+                raise api_err
 
         # Parsear la respuesta de texto de la IA a diccionario de Python
         datos_extraidos = json.loads(response.text)
@@ -1520,7 +1529,6 @@ def escanear_ficha():
     except Exception as e:
         print(f"Error al escanear la ficha: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
-
 
 if __name__ == '__main__':
     app.run(debug=True)
