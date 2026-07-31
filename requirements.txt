@@ -5,3 +5,5 @@ psycopg2-binary
 google-genai>=0.3.0
 pytesseract
 pillow
+google-generativeai
+google-api-core
