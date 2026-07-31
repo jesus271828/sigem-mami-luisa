@@ -1456,58 +1456,29 @@ def escanear_ficha():
         return jsonify({'success': False, 'error': 'No se seleccionó ninguna imagen.'}), 400
 
     try:
-        # Leer los bytes de la imagen subida
         image_bytes = archivo.read()
         mime_type = archivo.content_type or 'image/jpeg'
 
-        # Prompt estructurado para extraer la información en JSON estricto
         prompt = """
         Analiza esta imagen de una ficha de inscripción escolar y extrae la información en un formato JSON plano 
         donde las claves coincidan exactamente con los atributos 'name' de los campos del formulario HTML de SIGEM Mami Luisa.
         
         Campos a buscar (si están presentes en la imagen):
-        - anio_escolar
-        - fecha_inscripcion
-        - id_estudiante
-        - nombres
-        - apellidos
-        - grado
-        - fecha_nacimiento
-        - edad
-        - sexo
-        - nacionalidad
-        - lugar_nac
-        - direccion
-        - cant_hermanos
-        - edades_hermanos
-        - lugar_ocupa
-        - tipo_sangre
-        - seguro_medico
-        - alergias
-        - medicamentos
-        - medico_pediatra
-        - centro_medico
-        - emergencia_tel
-        - emergencia_nombre
-        - emergencia_parentesco
+        - anio_escolar, fecha_inscripcion, id_estudiante, nombres, apellidos, grado, fecha_nacimiento, edad, sexo, nacionalidad, lugar_nac, direccion, cant_hermanos, edades_hermanos, lugar_ocupa, tipo_sangre, seguro_medico, alergias, medicamentos, medico_pediatra, centro_medico, emergencia_tel, emergencia_nombre, emergencia_parentesco
         - padre_nombre, padre_sector, padre_direccion, padre_profesion, padre_cedula, padre_nivel, padre_religion, padre_tel_personal, padre_tel_trabajo, padre_correo
         - madre_nombre, madre_sector, madre_direccion, madre_profesion, madre_cedula, madre_nivel, madre_religion, madre_tel_personal, madre_tel_trabajo, madre_correo
         - tutor_nombre, tutor_sector, tutor_direccion, tutor_profesion, tutor_cedula, tutor_nivel, tutor_religion, tutor_tel_personal, tutor_tel_trabajo, tutor_correo
         
-        Devuelve ÚNICAMENTE un objeto JSON válido, sin texto adicional ni bloques de código markdown, asegurando que las llaves correspondan exactamente a los nombres de los inputs.
+        Devuelve ÚNICAMENTE un objeto JSON válido, sin texto adicional ni bloques de código markdown.
         """
 
-        # Llamada con reintento rápido para evitar timeout de la web
         response = None
         for intento in range(3):
             try:
                 response = client.models.generate_content(
                     model='gemini-2.0-flash',
                     contents=[
-                        types.Part.from_bytes(
-                            data=image_bytes,
-                            mime_type=mime_type,
-                        ),
+                        types.Part.from_bytes(data=image_bytes, mime_type=mime_type),
                         prompt
                     ],
                     config=types.GenerateContentConfig(
@@ -1519,11 +1490,10 @@ def escanear_ficha():
             except Exception as api_err:
                 error_str = str(api_err)
                 if ("429" in error_str or "RESOURCE_EXHAUSTED" in error_str) and intento < 2:
-                    time.sleep(3)  # Pausa breve de 3 segundos
+                    time.sleep(3)
                     continue
                 raise api_err
 
-        # Limpiar posibles bloques markdown si el modelo los llega a incluir por error
         texto_respuesta = response.text.strip()
         if texto_respuesta.startswith("```json"):
             texto_respuesta = texto_respuesta[7:]
@@ -1531,14 +1501,13 @@ def escanear_ficha():
             texto_respuesta = texto_respuesta[:-3]
 
         datos_extraidos = json.loads(texto_respuesta.strip())
-
         return jsonify({'success': True, 'data': datos_extraidos})
 
     except Exception as e:
         print(f"Error al escanear la ficha: {str(e)}")
         error_msg = str(e)
         if "429" in error_msg or "RESOURCE_EXHAUSTED" in error_msg:
-            error_msg = "Límite de uso gratuito alcanzado temporalmente. Por favor, espera 10 segundos e inténtalo de nuevo."
+            error_msg = "Límite de uso gratuito alcanzado temporalmente. Por favor, espera unos segundos e inténtalo de nuevo."
         return jsonify({'success': False, 'error': error_msg}), 500
     
 
