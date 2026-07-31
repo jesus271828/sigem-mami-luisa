@@ -1497,12 +1497,12 @@ def escanear_ficha():
         Devuelve ÚNICAMENTE un objeto JSON válido, sin texto adicional ni bloques de código markdown, asegurando que las llaves correspondan exactamente a los nombres de los inputs.
         """
 
-        # Llamada al modelo gemini-1.5-flash con reintento automático si hay saturación temporal (429)
+        # Llamada con gemini-2.0-flash y reintento automático por saturación de cuota
         response = None
         for intento in range(3):
             try:
                 response = client.models.generate_content(
-                    model='gemini-1.5-flash',
+                    model='gemini-2.0-flash',
                     contents=[
                         types.Part.from_bytes(
                             data=image_bytes,
@@ -1518,7 +1518,7 @@ def escanear_ficha():
                 break
             except Exception as api_err:
                 if ("429" in str(api_err) or "RESOURCE_EXHAUSTED" in str(api_err)) and intento < 2:
-                    time.sleep(6) # Pausa de 6 segundos para dejar respirar la cuota gratuita
+                    time.sleep(6)
                     continue
                 raise api_err
 
@@ -1530,6 +1530,7 @@ def escanear_ficha():
     except Exception as e:
         print(f"Error al escanear la ficha: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
+    
 
 
 if __name__ == '__main__':
