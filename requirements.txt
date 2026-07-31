@@ -2,4 +2,4 @@ Flask
 gunicorn
 xhtml2pdf
 psycopg2-binary
-psycopg2-binary
+google-genai>=0.3.0
