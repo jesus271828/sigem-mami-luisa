@@ -311,13 +311,15 @@ def inscripcion():
         return redirect(url_for('login'))
 
     if request.method == 'POST':
+        import base64
+
         def guardar_archivo(input_name):
             file = request.files.get(input_name)
             if file and file.filename != '':
-                filename = secure_filename(file.filename)
-                filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                file.save(filepath)
-                return filepath
+                # Lee los bytes de la imagen y los convierte a texto Base64 para guardarlos en la BD
+                file_bytes = file.read()
+                encoded = base64.b64encode(file_bytes).decode('utf-8')
+                return encoded
             return None
 
         # Captura de datos generales del formulario
@@ -546,7 +548,7 @@ def inscripcion():
 
         return redirect(url_for('inscripcion'))
 
-# Método GET: Consultar los contadores reales en la base de datos de forma segura
+    # Método GET: Consultar los contadores reales en la base de datos de forma segura
     is_postgres = DATABASE_URL is not None
     total_estudiantes = 0
     total_expedientes = 0
