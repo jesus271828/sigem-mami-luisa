@@ -6,6 +6,7 @@ from xhtml2pdf import pisa
 from werkzeug.utils import secure_filename
 import psycopg2
 import json
+import time
 import psycopg2.extras
 from werkzeug.security import generate_password_hash, check_password_hash
 from google import genai
@@ -1529,6 +1530,7 @@ def escanear_ficha():
     except Exception as e:
         print(f"Error al escanear la ficha: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
+
 
 if __name__ == '__main__':
     app.run(debug=True)
