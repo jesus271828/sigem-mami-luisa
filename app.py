@@ -1491,9 +1491,9 @@ def escanear_ficha():
         Devuelve ÚNICAMENTE un objeto JSON válido, sin texto adicional ni bloques de código markdown si es posible, asegurando que las llaves correspondan exactamente a los nombres de los inputs.
         """
 
-        # Llamada al modelo multimodal (usando gemini-2.5-flash por defecto para velocidad y visión)
+        # Llamada corregida usando el SDK nuevo con el modelo gemini-1.5-flash
         response = client.models.generate_content(
-            model='gemini-2.5-flash',
+            model='gemini-1.5-flash',
             contents=[
                 types.Part.from_bytes(
                     data=image_bytes,
