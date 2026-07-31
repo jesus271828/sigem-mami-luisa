@@ -1497,9 +1497,9 @@ def escanear_ficha():
         Devuelve ÚNICAMENTE un objeto JSON válido, sin texto adicional ni bloques de código markdown, asegurando que las llaves correspondan exactamente a los nombres de los inputs.
         """
 
-        # Llamada con gemini-2.0-flash y reintento automático por saturación de cuota
+        # Llamada con gemini-2.0-flash y reintento inteligente por saturación de cuota
         response = None
-        for intento in range(3):
+        for intento in range(4):
             try:
                 response = client.models.generate_content(
                     model='gemini-2.0-flash',
@@ -1517,8 +1517,9 @@ def escanear_ficha():
                 )
                 break
             except Exception as api_err:
-                if ("429" in str(api_err) or "RESOURCE_EXHAUSTED" in str(api_err)) and intento < 2:
-                    time.sleep(6)
+                error_str = str(api_err)
+                if ("429" in error_str or "RESOURCE_EXHAUSTED" in error_str) and intento < 3:
+                    time.sleep(15)  # Espera 15 segundos para liberar la cuota por minuto de forma segura
                     continue
                 raise api_err
 
