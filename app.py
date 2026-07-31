@@ -1447,25 +1447,60 @@ client = genai.Client()
 
 import time
 from google.api_core.exceptions import ResourceExhausted
+import google.generativeai as genai
 
 @app.route('/api/escanear-ficha', methods=['POST'])
 def escanear_ficha():
-    # ... código para recibir la imagen ...
+    if 'ficha' not in request.files:
+        return jsonify({"success": False, "error": "No se ha proporcionado ninguna imagen."}), 400
     
+    file = request.files['ficha']
+    if file.filename == '':
+        return jsonify({"success": False, "error": "Archivo sin nombre."}), 400
+
     max_intentos = 3
     for intento in range(max_intentos):
         try:
-            # Aquí llamas a tu modelo de Gemini para procesar la imagen
-            response = modelo.generate_content([imagen, "Extrae los datos..."])
-            return jsonify({"success": True, "data": resultado})
+            # Leer los bytes de la imagen subida
+            image_bytes = file.read()
+            file.seek(0) # Reiniciar puntero por si reintenta
+
+            # Configurar el modelo de Gemini (asegúrate de usar tu cliente/modelo configurado)
+            # Usamos google.generativeai cargando la imagen como parte del contenido
+            image_parts = [{
+                "mime_type": file.content_type or "image/jpeg",
+                "data": image_bytes
+            }]
+            
+            # Reemplaza 'gemini-1.5-flash' por el modelo que estés utilizando en tu proyecto
+            model = genai.GenerativeModel('gemini-1.5-flash')
+            
+            prompt = (
+                "Analiza esta ficha de inscripción escolar y extrae los datos en formato JSON estricto "
+                "que coincidan exactamente con los nombres de los campos 'name' de los inputs del formulario "
+                "(por ejemplo: anio_escolar, fecha_inscripcion, id_estudiante, nombres, apellidos, grado, etc.)."
+            )
+            
+            response = model.generate_content([prompt, image_parts[0]])
+            
+            # Aquí procesas la respuesta de texto de la IA para convertirla a diccionario JSON
+            # (Asegúrate de limpiar etiquetas markdown ```json ... ``` si las devuelve)
+            texto_respuesta = response.text.replace("```json", "").replace("```", "").strip()
+            import json
+            datos_extraidos = json.loads(texto_respuesta)
+
+            return jsonify({"success": True, "data": datos_extraidos})
             
         except ResourceExhausted as e:
             if intento < max_intentos - 1:
-                time.sleep(10) # Espera 10 segundos antes de reintentar en el servidor
+                time.sleep(8) # Espera 8 segundos antes de reintentar
                 continue
             else:
-                return jsonify({"success": False, "error": "Límite de uso gratuito alcanzado temporalmente. Por favor, espera unos segundos."}), 429
+                return jsonify({"success": False, "error": "Límite de uso gratuito alcanzado temporalmente. Por favor, espera unos segundos e inténtalo de nuevo."}), 429
         except Exception as e:
+            if intento < max_intentos - 1:
+                time.sleep(3)
+                continue
             return jsonify({"success": False, "error": str(e)}), 500
     
 
