@@ -1497,9 +1497,9 @@ def escanear_ficha():
         Devuelve ÚNICAMENTE un objeto JSON válido, sin texto adicional ni bloques de código markdown, asegurando que las llaves correspondan exactamente a los nombres de los inputs.
         """
 
-        # Llamada con gemini-2.0-flash y reintento inteligente por saturación de cuota
+        # Llamada con reintento rápido para evitar timeout de la web
         response = None
-        for intento in range(4):
+        for intento in range(3):
             try:
                 response = client.models.generate_content(
                     model='gemini-2.0-flash',
@@ -1518,19 +1518,28 @@ def escanear_ficha():
                 break
             except Exception as api_err:
                 error_str = str(api_err)
-                if ("429" in error_str or "RESOURCE_EXHAUSTED" in error_str) and intento < 3:
-                    time.sleep(15)  # Espera 15 segundos para liberar la cuota por minuto de forma segura
+                if ("429" in error_str or "RESOURCE_EXHAUSTED" in error_str) and intento < 2:
+                    time.sleep(3)  # Pausa breve de 3 segundos
                     continue
                 raise api_err
 
-        # Parsear la respuesta de texto de la IA a diccionario de Python
-        datos_extraidos = json.loads(response.text)
+        # Limpiar posibles bloques markdown si el modelo los llega a incluir por error
+        texto_respuesta = response.text.strip()
+        if texto_respuesta.startswith("```json"):
+            texto_respuesta = texto_respuesta[7:]
+        if texto_respuesta.endswith("```"):
+            texto_respuesta = texto_respuesta[:-3]
+
+        datos_extraidos = json.loads(texto_respuesta.strip())
 
         return jsonify({'success': True, 'data': datos_extraidos})
 
     except Exception as e:
         print(f"Error al escanear la ficha: {str(e)}")
-        return jsonify({'success': False, 'error': str(e)}), 500
+        error_msg = str(e)
+        if "429" in error_msg or "RESOURCE_EXHAUSTED" in error_msg:
+            error_msg = "Límite de uso gratuito alcanzado temporalmente. Por favor, espera 10 segundos e inténtalo de nuevo."
+        return jsonify({'success': False, 'error': error_msg}), 500
     
 
 
