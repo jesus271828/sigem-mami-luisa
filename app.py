@@ -930,7 +930,8 @@ def buscar_autorizado():
                             if not f_aut and i == 1:
                                 f_aut = f_dict.get('foto_padre_cedula') or f_dict.get('foto_madre_cedula')
 
-                            if f_aut:
+                            # Si es un archivo viejo, limpiamos la ruta; si es Base64, lo dejamos intacto
+                            if f_aut and not (str(f_aut).startswith('/9j/') or str(f_aut).startswith('iVBOR') or str(f_aut).startswith('R0lGOD') or str(f_aut).startswith('UklGR')):
                                 f_aut = os.path.basename(str(f_aut).replace('\\', '/'))
 
                             # Obtener foto del estudiante buscando en las columnas posibles
@@ -943,7 +944,10 @@ def buscar_autorizado():
                             
                             f_est = ""
                             if raw_est and str(raw_est).lower() not in ['none', '']:
-                                f_est = os.path.basename(str(raw_est).replace('\\', '/'))
+                                if str(raw_est).startswith('/9j/') or str(raw_est).startswith('iVBOR') or str(raw_est).startswith('R0lGOD') or str(raw_est).startswith('UklGR'):
+                                    f_est = str(raw_est)
+                                else:
+                                    f_est = os.path.basename(str(raw_est).replace('\\', '/'))
 
                             autorizados.append({
                                 'nombre_completo': nombre_aut,
@@ -967,6 +971,7 @@ def buscar_autorizado():
                            total_estudiantes=total_estudiantes, 
                            total_expedientes=total_expedientes, 
                            total_usuarios=total_usuarios)
+
 
 @app.route('/listado-estudiantes')
 def listado_estudiantes():
