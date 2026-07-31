@@ -1431,5 +1431,92 @@ def ver_estructura_db():
     finally:
         conexion.close()
 
+import os
+from flask import Flask, request, jsonify
+from google import genai
+from google.genai import types
+
+# Inicializa el cliente de Google GenAI (tomará automáticamente la variable de entorno GEMINI_API_KEY)
+client = genai.Client()
+
+@app.route('/api/escanear-ficha', methods=['POST'])
+def escanear_ficha():
+    if 'ficha' not in request.files:
+        return jsonify({'success': False, 'error': 'No se encontró el archivo de la ficha.'}), 400
+    
+    archivo = request.files['ficha']
+    
+    if archivo.filename == '':
+        return jsonify({'success': False, 'error': 'No se seleccionó ninguna imagen.'}), 400
+
+    try:
+        # Lee los bytes de la imagen subida
+        image_bytes = archivo.read()
+        mime_type = archivo.content_type or 'image/jpeg'
+
+        # Prompt estructurado para indicarle a la IA qué campos extraer y cómo devolverlos (en JSON estricto)
+        prompt = """
+        Analiza esta imagen de una ficha de inscripción escolar y extrae la información en un formato JSON plano 
+        donde las claves coincidan exactamente con los atributos 'name' de los campos del formulario HTML de SIGEM Mami Luisa.
+        
+        Campos a buscar (si están presentes en la imagen):
+        - anio_escolar
+        - fecha_inscripcion
+        - id_estudiante
+        - nombres
+        - apellidos
+        - grado
+        - fecha_nacimiento
+        - edad
+        - sexo
+        - nacionalidad
+        - lugar_nac
+        - direccion
+        - cant_hermanos
+        - edades_hermanos
+        - lugar_ocupa
+        - tipo_sangre
+        - seguro_medico
+        - alergias
+        - medicamentos
+        - medico_pediatra
+        - centro_medico
+        - emergencia_tel
+        - emergencia_nombre
+        - emergencia_parentesco
+        - padre_nombre, padre_sector, padre_direccion, padre_profesion, padre_cedula, padre_nivel, padre_religion, padre_tel_personal, padre_tel_trabajo, padre_correo
+        - madre_nombre, madre_sector, madre_direccion, madre_profesion, madre_cedula, madre_nivel, madre_religion, madre_tel_personal, madre_tel_trabajo, madre_correo
+        - tutor_nombre, tutor_sector, tutor_direccion, tutor_profesion, tutor_cedula, tutor_nivel, tutor_religion, tutor_tel_personal, tutor_tel_trabajo, tutor_correo
+        
+        Devuelve ÚNICAMENTE un objeto JSON válido, sin texto adicional ni bloques de código markdown si es posible, asegurando que las llaves correspondan exactamente a los nombres de los inputs.
+        """
+
+        # Llamada al modelo multimodal (usando gemini-2.5-flash por defecto para velocidad y visión)
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=[
+                types.Part.from_bytes(
+                    data=image_bytes,
+                    mime_type=mime_type,
+                ),
+                prompt
+            ],
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                temperature=0.1
+            ),
+        )
+
+        import json
+        # Parsear la respuesta de texto de la IA a diccionario de Python
+        datos_extraidos = json.loads(response.text)
+
+        return jsonify({'success': True, 'data': datos_extraidos})
+
+    except Exception as e:
+        print(f"Error al escanear la ficha: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 if __name__ == '__main__':
     app.run(debug=True)
