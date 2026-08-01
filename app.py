@@ -1442,7 +1442,6 @@ import json
 from flask import Flask, request, jsonify
 import google.generativeai as genai
 
-# Configura tu API Key
 genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 
 @app.route('/api/escanear-ficha', methods=['POST'])
@@ -1457,8 +1456,8 @@ def escanear_ficha():
     try:
         image_bytes = file.read()
         
-        # MODELO OFICIAL ESTABLE
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        # Corrección definitiva con la ruta completa del modelo
+        model = genai.GenerativeModel('models/gemini-1.5-flash')
         
         prompt = """
         Analiza esta imagen de una ficha de inscripción escolar y extrae la información en formato JSON estricto. 
@@ -1510,7 +1509,6 @@ def escanear_ficha():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
     
-
 
 if __name__ == '__main__':
     app.run(debug=True)
