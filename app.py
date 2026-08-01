@@ -1437,15 +1437,8 @@ def ver_estructura_db():
     finally:
         conexion.close()
 
-import os
-from flask import Flask, request, jsonify
-from google import genai
-from google.genai import types
-
-# Inicializa el cliente de Google GenAI (tomará automáticamente la variable de entorno GEMINI_API_KEY)
-client = genai.Client()
-
 import time
+import json
 from google.api_core.exceptions import ResourceExhausted
 import google.generativeai as genai
 
@@ -1461,39 +1454,37 @@ def escanear_ficha():
     max_intentos = 3
     for intento in range(max_intentos):
         try:
-            # Leer los bytes de la imagen subida
             image_bytes = file.read()
-            file.seek(0) # Reiniciar puntero por si reintenta
+            file.seek(0)
 
-            # Configurar el modelo de Gemini (asegúrate de usar tu cliente/modelo configurado)
-            # Usamos google.generativeai cargando la imagen como parte del contenido
             image_parts = [{
                 "mime_type": file.content_type or "image/jpeg",
                 "data": image_bytes
             }]
             
-            # Reemplaza 'gemini-1.5-flash' por el modelo que estés utilizando en tu proyecto
-            model = genai.GenerativeModel('gemini-1.5-flash')
+            # Usamos gemini-2.5-flash (o gemini-2.0-flash)
+            model = genai.GenerativeModel('gemini-2.5-flash')
             
             prompt = (
-                "Analiza esta ficha de inscripción escolar y extrae los datos en formato JSON estricto "
-                "que coincidan exactamente con los nombres de los campos 'name' de los inputs del formulario "
-                "(por ejemplo: anio_escolar, fecha_inscripcion, id_estudiante, nombres, apellidos, grado, etc.)."
+                "Analiza esta ficha de inscripción escolar manuscrita y extrae la información en un formato JSON estricto. "
+                "Las claves del JSON deben coincidir exactamente con los atributos 'name' de los campos del formulario HTML. "
+                "Campos a buscar (si están presentes): anio_escolar, fecha_inscripcion, nombres, apellidos, "
+                "fecha_nacimiento, edad, sexo, nacionalidad, lugar_nac, direccion, cant_hermanos, edades_hermanos, "
+                "lugar_ocupa, tipo_sangre, seguro_medico, alergias, medicamentos, medico_pediatra, centro_medico, "
+                "emergencia_tel, emergencia_nombre, emergencia_parentesco, "
+                "padre_nombre, padre_sector, padre_direccion, padre_profesion, padre_cedula, padre_nivel, padre_religion, padre_tel_personal, padre_tel_trabajo, padre_correo, "
+                "madre_nombre, madre_sector, madre_direccion, madre_profesion, madre_cedula, madre_nivel, madre_religion, madre_tel_personal, madre_tel_trabajo, madre_correo."
             )
             
             response = model.generate_content([prompt, image_parts[0]])
-            
-            # Aquí procesas la respuesta de texto de la IA para convertirla a diccionario JSON
-            # (Asegúrate de limpiar etiquetas markdown ```json ... ``` si las devuelve)
             texto_respuesta = response.text.replace("```json", "").replace("```", "").strip()
-            import json
             datos_extraidos = json.loads(texto_respuesta)
 
             return jsonify({"success": True, "data": datos_extraidos})
             
         except ResourceExhausted as e:
             if intento < max_intentos - 1:
-                time.sleep(8) # Espera 8 segundos antes de reintentar
+                time.sleep(8)
                 continue
             else:
                 return jsonify({"success": False, "error": "Límite de uso gratuito alcanzado temporalmente. Por favor, espera unos segundos e inténtalo de nuevo."}), 429
