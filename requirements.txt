@@ -3,6 +3,7 @@ gunicorn
 xhtml2pdf
 psycopg2-binary
 google-genai>=0.3.0
+google-generativeai>=0.8.0
 pytesseract
 pillow
 google-generativeai
