@@ -903,12 +903,14 @@ def buscar_autorizado():
 
             if is_postgres:
                 query = """
-                    SELECT * FROM autorizados 
-                    WHERE REPLACE(cedula, '-', '') ILIKE %s 
-                       OR nombre_completo ILIKE %s 
-                       OR id_estudiante ILIKE %s
-                       OR nombres ILIKE %s 
-                       OR apellidos ILIKE %s
+                    SELECT a.*, i.nombres, i.apellidos, i.grado 
+                    FROM autorizados a
+                    LEFT JOIN inscripciones i ON a.id_estudiante = i.id_estudiante
+                    WHERE REPLACE(a.cedula, '-', '') ILIKE %s 
+                       OR a.nombre_completo ILIKE %s 
+                       OR a.id_estudiante ILIKE %s
+                       OR i.nombres ILIKE %s 
+                       OR i.apellidos ILIKE %s
                 """
                 params = [like_limpio, like_c, like_c, like_c, like_c]
                 cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -917,12 +919,14 @@ def buscar_autorizado():
                 cur.close()
             else:
                 query = """
-                    SELECT * FROM autorizados 
-                    WHERE REPLACE(cedula, '-', '') LIKE ? 
-                       OR nombre_completo LIKE ? 
-                       OR id_estudiante LIKE ?
-                       OR nombres LIKE ? 
-                       OR apellidos LIKE ?
+                    SELECT a.*, i.nombres, i.apellidos, i.grado 
+                    FROM autorizados a
+                    LEFT JOIN inscripciones i ON a.id_estudiante = i.id_estudiante
+                    WHERE REPLACE(a.cedula, '-', '') LIKE ? 
+                       OR a.nombre_completo LIKE ? 
+                       OR a.id_estudiante LIKE ?
+                       OR i.nombres LIKE ? 
+                       OR i.apellidos LIKE ?
                 """
                 params = [like_limpio, like_c, like_c, like_c, like_c]
                 conexion.execute(query, params)
