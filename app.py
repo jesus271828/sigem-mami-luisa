@@ -856,10 +856,10 @@ def menu_buscar():
     if 'usuario' not in session:
         return redirect(url_for('login'))
         
-    # Validar que el rol tenga permiso de ver esta sección (Oficina, Admin o Maestro)
+    # RESTRINGIR: Solo oficina o admin tienen permiso aquí
     rol_actual = session.get('rol', '').lower()
-    if rol_actual not in ['oficina', 'admin', 'maestro']:
-        flash('Acceso denegado. No tienes permisos para entrar aquí.', 'danger')
+    if rol_actual not in ['oficina', 'admin']:
+        flash('Acceso denegado. Los maestros no tienen permiso para entrar aquí.', 'danger')
         return redirect(url_for('menu'))
 
     conexion = get_db_connection()
