@@ -853,7 +853,8 @@ def inscripcion_publica():
 # --- BÚSQUEDA Y OTROS MÓDULOS ---
 @app.route('/menu_buscar', methods=['GET'])
 def menu_buscar():
-    if 'rol' not in session or session['rol'] not in ['admin', 'oficina']:
+    rol = session.get('rol', '').lower().strip()
+    if rol not in ['admin', 'oficina']:
         flash('Acceso denegado. Los maestros no tienen permiso para entrar aquí.', 'danger')
         return redirect(url_for('menu'))
         
