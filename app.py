@@ -858,8 +858,9 @@ def menu_buscar():
             return redirect(url_for('login'))
             
         rol_actual = str(session.get('rol', '')).lower().strip()
-        if rol_actual not in ['admin', 'oficina']:
-            flash('Acceso denegado. Los maestros no tienen permiso para entrar aquí.', 'danger')
+        # Agregamos 'maestro' a los roles permitidos
+        if rol_actual not in ['admin', 'oficina', 'maestro']:
+            flash('Acceso denegado. No tienes permiso para entrar aquí.', 'danger')
             return redirect(url_for('menu'))
 
         conexion = get_db_connection()
@@ -891,10 +892,9 @@ def menu_buscar():
                                total_estudiantes=total_estudiantes, 
                                total_expedientes=total_expedientes, 
                                total_usuarios=total_usuarios)
-
     except Exception as e:
-        print("--- ERROR CRITICO EN MENU_BUSCAR:", e)
-        flash('Acceso denegado o error en el módulo.', 'danger')
+        print(f"Error en menu_buscar: {e}")
+        flash("Ocurrió un error interno en el servidor.", "danger")
         return redirect(url_for('menu'))
 
 @app.route('/buscar_autorizado', methods=['GET', 'POST'])
