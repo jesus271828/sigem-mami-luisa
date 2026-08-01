@@ -892,70 +892,127 @@ def buscar_autorizado():
         
     conexion = get_db_connection()
     autorizados = []
-    criterio = request.form.get('criterio', '') or request.args.get('criterio', '')
     is_postgres = DATABASE_URL is not None
+    total_estudiantes = 0
+    total_expedientes = 0
+    total_usuarios = 0
 
     try:
-        if request.method == 'POST' or criterio:
-            criterio_limpio = criterio.replace('-', '').strip()
-            like_c = f"%{criterio}%"
-            like_limpio = f"%{criterio_limpio}%"
+        if is_postgres:
+            cur_c = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur_c.execute("SELECT COUNT(*) as total FROM inscripciones")
+            total_estudiantes = cur_c.fetchone()['total']
+            cur_c.execute("SELECT COUNT(*) as total FROM expedientes_viejos")
+            total_expedientes = cur_c.fetchone()['total']
+            cur_c.execute("SELECT COUNT(*) as total FROM usuarios")
+            total_usuarios = cur_c.fetchone()['total']
+            cur_c.close()
+        else:
+            conexion.execute("SELECT COUNT(*) FROM inscripciones")
+            total_estudiantes = conexion.fetchone()[0]
+            conexion.execute("SELECT COUNT(*) FROM expedientes_viejos")
+            total_expedientes = conexion.fetchone()[0]
+            conexion.execute("SELECT COUNT(*) FROM usuarios")
+            total_usuarios = conexion.fetchone()[0]
+
+        if request.method == 'POST':
+            criterio_raw = request.form.get('criterio', '').strip()
+            criterio = criterio_raw.lower()
+            criterio_limpio = criterio_raw.replace('-', '').lower()
 
             if is_postgres:
-                query = """
-                    SELECT a.*, i.nombres, i.apellidos, i.grado 
-                    FROM autorizados a
-                    LEFT JOIN inscripciones i ON a.id_estudiante = i.id_estudiante
-                    WHERE REPLACE(COALESCE(a.tutor_cedula, ''), '-', '') ILIKE %s 
-                       OR REPLACE(COALESCE(a.aut_cedula_1, ''), '-', '') ILIKE %s
-                       OR REPLACE(COALESCE(a.aut_cedula_2, ''), '-', '') ILIKE %s
-                       OR REPLACE(COALESCE(a.aut_cedula_3, ''), '-', '') ILIKE %s
-                       OR REPLACE(COALESCE(a.aut_cedula_4, ''), '-', '') ILIKE %s
-                       OR REPLACE(COALESCE(a.aut_cedula_5, ''), '-', '') ILIKE %s
-                       OR REPLACE(COALESCE(a.foto_padre_cedula, ''), '-', '') ILIKE %s
-                       OR REPLACE(COALESCE(a.foto_madre_cedula, ''), '-', '') ILIKE %s
-                       OR REPLACE(COALESCE(a.foto_estudiante_cedula, ''), '-', '') ILIKE %s
-                       OR a.nombre_completo ILIKE %s 
-                       OR a.id_estudiante ILIKE %s
-                       OR i.nombres ILIKE %s 
-                       OR i.apellidos ILIKE %s
-                """
-                params = [like_limpio, like_limpio, like_limpio, like_limpio, like_limpio, like_limpio, like_limpio, like_limpio, like_limpio, like_c, like_c, like_c, like_c]
                 cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-                cur.execute(query, params)
-                autorizados = cur.fetchall()
+                cur.execute("SELECT * FROM inscripciones")
+                filas = cur.fetchall()
                 cur.close()
             else:
-                query = """
-                    SELECT a.*, i.nombres, i.apellidos, i.grado 
-                    FROM autorizados a
-                    LEFT JOIN inscripciones i ON a.id_estudiante = i.id_estudiante
-                    WHERE REPLACE(IFNULL(a.tutor_cedula, ''), '-', '') LIKE ? 
-                       OR REPLACE(IFNULL(a.aut_cedula_1, ''), '-', '') LIKE ?
-                       OR REPLACE(IFNULL(a.aut_cedula_2, ''), '-', '') LIKE ?
-                       OR REPLACE(IFNULL(a.aut_cedula_3, ''), '-', '') LIKE ?
-                       OR REPLACE(IFNULL(a.aut_cedula_4, ''), '-', '') LIKE ?
-                       OR REPLACE(IFNULL(a.aut_cedula_5, ''), '-', '') LIKE ?
-                       OR REPLACE(IFNULL(a.foto_padre_cedula, ''), '-', '') LIKE ?
-                       OR REPLACE(IFNULL(a.foto_madre_cedula, ''), '-', '') LIKE ?
-                       OR REPLACE(IFNULL(a.foto_estudiante_cedula, ''), '-', '') LIKE ?
-                       OR a.nombre_completo LIKE ? 
-                       OR a.id_estudiante LIKE ?
-                       OR i.nombres LIKE ? 
-                       OR i.apellidos LIKE ?
-                """
-                params = [like_limpio, like_limpio, like_limpio, like_limpio, like_limpio, like_limpio, like_limpio, like_limpio, like_limpio, like_c, like_c, like_c, like_c]
-                conexion.execute(query, params)
-                autorizados = conexion.fetchall()
-            
-            print(f"--- DEBUG BUSQUEDA: Criterio='{criterio}', Resultados encontrados={len(autorizados)}")
+                conexion.execute("SELECT * FROM inscripciones")
+                filas = conexion.fetchall()
+
+            for fila in filas:
+                f_dict = dict(fila) if isinstance(fila, dict) else dict(zip([column[0] for column in conexion.description], fila))
+                
+                # Campos generales del estudiante
+                nombres_est = str(f_dict.get('nombres') or f_dict.get('estudiante_nombre') or '').lower()
+                apellidos_est = str(f_dict.get('apellidos') or f_dict.get('estudiante_apellido') or '').lower()
+                id_est = str(f_dict.get('id_estudiante') or f_dict.get('id') or '').lower()
+                
+                # Cédulas de padres o tutores adicionales en la inscripción (si aplican)
+                tutor_ced = str(f_dict.get('tutor_cedula') or '').replace('-', '').lower()
+                padre_ced = str(f_dict.get('foto_padre_cedula') or '').replace('-', '').lower()
+                madre_ced = str(f_dict.get('foto_madre_cedula') or '').replace('-', '').lower()
+                est_ced = str(f_dict.get('foto_estudiante_cedula') or '').replace('-', '').lower()
+
+                # Revisar los 5 autorizados
+                for i in range(1, 6):
+                    nombre_aut = f_dict.get(f'aut_nombre_{i}')
+                    cedula_aut_raw = f_dict.get(f'aut_cedula_{i}')
+                    
+                    if nombre_aut or cedula_aut_raw:
+                        nombre_aut_str = str(nombre_aut or '').lower()
+                        cedula_aut_str = str(cedula_aut_raw or '')
+                        cedula_aut_limpia = cedula_aut_str.replace('-', '').lower()
+
+                        # Validar coincidencia flexible (con o sin guiones, por nombre del niño, del autorizado o cédulas)
+                        coincide = (
+                            not criterio or
+                            criterio in nombre_aut_str or
+                            criterio_limpio in cedula_aut_limpia or
+                            criterio in nombres_est or
+                            criterio in apellidos_est or
+                            criterio in id_est or
+                            criterio_limpio in tutor_ced or
+                            criterio_limpio in padre_ced or
+                            criterio_limpio in madre_ced or
+                            criterio_limpio in est_ced
+                        )
+
+                        if coincide:
+                            # Obtener foto del autorizado
+                            f_aut = f_dict.get(f'foto_aut_cedula_{i}')
+                            if not f_aut and i == 1:
+                                f_aut = f_dict.get('foto_padre_cedula') or f_dict.get('foto_madre_cedula')
+
+                            if f_aut and not (str(f_aut).startswith('/9j/') or str(f_aut).startswith('iVBOR') or str(f_aut).startswith('R0lGOD') or str(f_aut).startswith('UklGR')):
+                                f_aut = os.path.basename(str(f_aut).replace('\\', '/'))
+
+                            # Obtener foto del estudiante
+                            raw_est = (
+                                f_dict.get('foto_estudiante_cedula') or 
+                                f_dict.get('foto_estudiante') or 
+                                f_dict.get('foto') or 
+                                f_dict.get('foto_cedula_estudiante')
+                            )
+                            
+                            f_est = ""
+                            if raw_est and str(raw_est).lower() not in ['none', '']:
+                                if str(raw_est).startswith('/9j/') or str(raw_est).startswith('iVBOR') or str(raw_est).startswith('R0lGOD') or str(raw_est).startswith('UklGR'):
+                                    f_est = str(raw_est)
+                                else:
+                                    f_est = os.path.basename(str(raw_est).replace('\\', '/'))
+
+                            autorizados.append({
+                                'nombre_completo': nombre_aut or 'No registrado',
+                                'cedula': cedula_aut_raw or 'N/A',
+                                'parentesco': f_dict.get(f'aut_parentesco_{i}', 'No especificado'),
+                                'foto_autorizado': f_aut,
+                                'foto_estudiante': f_est,
+                                'nombres': f_dict.get('nombres') or f_dict.get('estudiante_nombre'),
+                                'apellidos': f_dict.get('apellidos') or f_dict.get('estudiante_apellido'),
+                                'grado': f_dict.get('grado') or f_dict.get('curso'),
+                                'id_estudiante': f_dict.get('id_estudiante') or f_dict.get('id')
+                            })
 
     except Exception as e:
         print("--- ERROR EN BUSCAR AUTORIZADO:", e)
     finally:
         conexion.close()
 
-    return render_template('buscar_autorizado.html', autorizados=autorizados, criterio=criterio)
+    return render_template('buscar_autorizado.html', 
+                           autorizados=autorizados, 
+                           total_estudiantes=total_estudiantes, 
+                           total_expedientes=total_expedientes, 
+                           total_usuarios=total_usuarios)
 
 
 
