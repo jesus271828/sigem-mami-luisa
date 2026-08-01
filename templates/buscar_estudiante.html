@@ -12,7 +12,8 @@
     <div class="container mt-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2><i class="fas fa-search text-primary"></i> Buscar Estudiante</h2>
-            <a href="/menu" class="btn btn-secondary">
+            <!-- Cambiado para volver al menú de búsqueda o refrescar la vista -->
+            <a href="/buscar_estudiante" class="btn btn-secondary">
                 <i class="fas fa-arrow-left"></i> Volver al Menú
             </a>
         </div>
@@ -26,14 +27,14 @@
                 <form method="POST" action="/buscar_estudiante" class="row g-3">
                     <div class="col-md-6">
                         <label for="criterio" class="form-label font-weight-bold">Nombre, Apellido o ID</label>
-                        <input type="text" class="form-control" id="criterio" name="criterio" placeholder="Escribe para buscar...">
+                        <input type="text" class="form-control" id="criterio" name="criterio" value="{{ criterio }}" placeholder="Escribe para buscar...">
                     </div>
                     <div class="col-md-4">
                         <label for="grado_filtro" class="form-label">Filtrar por Grado</label>
                         <select class="form-select" id="grado_filtro" name="grado_filtro">
                             <option value="">Todos los grados</option>
                             {% for grado in grados_disponibles %}
-                                <option value="{{ grado }}">{{ grado }}</option>
+                                <option value="{{ grado }}" {% if grado_filtro == grado %}selected{% endif %}>{{ grado }}</option>
                             {% endfor %}
                         </select>
                     </div>
