@@ -856,8 +856,8 @@ def menu_buscar():
     if 'usuario' not in session:
         return redirect(url_for('login'))
         
-    # Validar el rol de forma segura para evitar errores
-    rol_actual = session.get('rol', '').lower()
+    # Blindaje total para el rol
+    rol_actual = str(session.get('rol', '')).lower().strip()
     if rol_actual not in ['oficina', 'admin']:
         flash('Acceso denegado. Los maestros no tienen permiso para entrar aquí.', 'danger')
         return redirect(url_for('menu'))
@@ -895,7 +895,10 @@ def menu_buscar():
     except Exception as e:
         print("--- ERROR AL OBTENER CONTADORES:", e)
     finally:
-        conexion.close()
+        try:
+            conexion.close()
+        except:
+            pass
 
     return render_template('menu_buscar.html', 
                            total_estudiantes=total_estudiantes, 
