@@ -892,96 +892,48 @@ def buscar_autorizado():
         
     conexion = get_db_connection()
     autorizados = []
+    criterio = request.form.get('criterio', '') or request.args.get('criterio', '')
     is_postgres = DATABASE_URL is not None
-    total_estudiantes = 0
-    total_expedientes = 0
-    total_usuarios = 0
 
     try:
-        if is_postgres:
-            cur_c = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-            cur_c.execute("SELECT COUNT(*) as total FROM inscripciones")
-            total_estudiantes = cur_c.fetchone()['total']
-            cur_c.execute("SELECT COUNT(*) as total FROM expedientes_viejos")
-            total_expedientes = cur_c.fetchone()['total']
-            cur_c.execute("SELECT COUNT(*) as total FROM usuarios")
-            total_usuarios = cur_c.fetchone()['total']
-            cur_c.close()
-        else:
-            conexion.execute("SELECT COUNT(*) FROM inscripciones")
-            total_estudiantes = conexion.fetchone()[0]
-            conexion.execute("SELECT COUNT(*) FROM expedientes_viejos")
-            total_expedientes = conexion.fetchone()[0]
-            conexion.execute("SELECT COUNT(*) FROM usuarios")
-            total_usuarios = conexion.fetchone()[0]
-
-        if request.method == 'POST':
-            criterio = request.form.get('criterio', '').strip()
+        if request.method == 'POST' or criterio:
+            criterio_limpio = criterio.replace('-', '').strip()
+            like_c = f"%{criterio}%"
+            like_limpio = f"%{criterio_limpio}%"
 
             if is_postgres:
+                query = """
+                    SELECT * FROM autorizados 
+                    WHERE REPLACE(cedula, '-', '') ILIKE %s 
+                       OR nombre_completo ILIKE %s 
+                       OR id_estudiante ILIKE %s
+                       OR nombres ILIKE %s 
+                       OR apellidos ILIKE %s
+                """
+                params = [like_limpio, like_c, like_c, like_c, like_c]
                 cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-                cur.execute("SELECT * FROM inscripciones")
-                filas = cur.fetchall()
+                cur.execute(query, params)
+                autorizados = cur.fetchall()
                 cur.close()
             else:
-                conexion.execute("SELECT * FROM inscripciones")
-                filas = conexion.fetchall()
-
-            for fila in filas:
-                f_dict = dict(fila) if isinstance(fila, dict) else dict(zip([column[0] for column in conexion.description], fila))
-                
-                for i in range(1, 6):
-                    nombre_aut = f_dict.get(f'aut_nombre_{i}')
-                    cedula_aut = f_dict.get(f'aut_cedula_{i}')
-                    
-                    if nombre_aut and cedula_aut:
-                        if not criterio or (criterio.lower() in str(nombre_aut).lower() or criterio in str(cedula_aut)):
-                            # Obtener foto del autorizado
-                            f_aut = f_dict.get(f'foto_aut_cedula_{i}')
-                            if not f_aut and i == 1:
-                                f_aut = f_dict.get('foto_padre_cedula') or f_dict.get('foto_madre_cedula')
-
-                            # Si es un archivo viejo, limpiamos la ruta; si es Base64, lo dejamos intacto
-                            if f_aut and not (str(f_aut).startswith('/9j/') or str(f_aut).startswith('iVBOR') or str(f_aut).startswith('R0lGOD') or str(f_aut).startswith('UklGR')):
-                                f_aut = os.path.basename(str(f_aut).replace('\\', '/'))
-
-                            # Obtener foto del estudiante buscando en las columnas posibles
-                            raw_est = (
-                                f_dict.get('foto_estudiante_cedula') or 
-                                f_dict.get('foto_estudiante') or 
-                                f_dict.get('foto') or 
-                                f_dict.get('foto_cedula_estudiante')
-                            )
-                            
-                            f_est = ""
-                            if raw_est and str(raw_est).lower() not in ['none', '']:
-                                if str(raw_est).startswith('/9j/') or str(raw_est).startswith('iVBOR') or str(raw_est).startswith('R0lGOD') or str(raw_est).startswith('UklGR'):
-                                    f_est = str(raw_est)
-                                else:
-                                    f_est = os.path.basename(str(raw_est).replace('\\', '/'))
-
-                            autorizados.append({
-                                'nombre_completo': nombre_aut,
-                                'cedula': cedula_aut,
-                                'parentesco': f_dict.get(f'aut_parentesco_{i}', 'No especificado'),
-                                'foto_autorizado': f_aut,
-                                'foto_estudiante': f_est,
-                                'nombres': f_dict.get('nombres') or f_dict.get('estudiante_nombre'),
-                                'apellidos': f_dict.get('apellidos') or f_dict.get('estudiante_apellido'),
-                                'grado': f_dict.get('grado') or f_dict.get('curso'),
-                                'id_estudiante': f_dict.get('id_estudiante') or f_dict.get('id')
-                            })
+                query = """
+                    SELECT * FROM autorizados 
+                    WHERE REPLACE(cedula, '-', '') LIKE ? 
+                       OR nombre_completo LIKE ? 
+                       OR id_estudiante LIKE ?
+                       OR nombres LIKE ? 
+                       OR apellidos LIKE ?
+                """
+                params = [like_limpio, like_c, like_c, like_c, like_c]
+                conexion.execute(query, params)
+                autorizados = conexion.fetchall()
 
     except Exception as e:
         print("--- ERROR EN BUSCAR AUTORIZADO:", e)
     finally:
         conexion.close()
 
-    return render_template('buscar_autorizado.html', 
-                           autorizados=autorizados, 
-                           total_estudiantes=total_estudiantes, 
-                           total_expedientes=total_expedientes, 
-                           total_usuarios=total_usuarios)
+    return render_template('buscar_autorizado.html', autorizados=autorizados, criterio=criterio)
 
 
 @app.route('/listado-estudiantes')
