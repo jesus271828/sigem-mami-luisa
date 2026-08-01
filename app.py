@@ -853,56 +853,49 @@ def inscripcion_publica():
 # --- BÚSQUEDA Y OTROS MÓDULOS ---
 @app.route('/menu_buscar', methods=['GET'])
 def menu_buscar():
-    if 'usuario' not in session:
-        return redirect(url_for('login'))
-        
-    rol_actual = str(session.get('rol', '')).lower().strip()
-    if rol_actual not in ['admin', 'oficina']:
-        flash('Acceso denegado. Los maestros no tienen permiso para entrar aquí.', 'danger')
-        return redirect(url_for('menu'))
-
-    conexion = get_db_connection()
-    is_postgres = DATABASE_URL is not None
-    total_estudiantes = 0
-    total_expedientes = 0
-    total_usuarios = 0
-
     try:
+        if 'usuario' not in session:
+            return redirect(url_for('login'))
+            
+        rol_actual = str(session.get('rol', '')).lower().strip()
+        if rol_actual not in ['admin', 'oficina']:
+            flash('Acceso denegado. Los maestros no tienen permiso para entrar aquí.', 'danger')
+            return redirect(url_for('menu'))
+
+        conexion = get_db_connection()
+        is_postgres = DATABASE_URL is not None
+        total_estudiantes = 0
+        total_expedientes = 0
+        total_usuarios = 0
+
         if is_postgres:
             cur_c = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-            
             cur_c.execute("SELECT COUNT(*) as total FROM inscripciones")
             total_estudiantes = cur_c.fetchone()['total']
-            
             cur_c.execute("SELECT COUNT(*) as total FROM expedientes_viejos")
             total_expedientes = cur_c.fetchone()['total']
-            
             cur_c.execute("SELECT COUNT(*) as total FROM usuarios")
             total_usuarios = cur_c.fetchone()['total']
-            
             cur_c.close()
         else:
             conexion.execute("SELECT COUNT(*) FROM inscripciones")
             total_estudiantes = conexion.fetchone()[0]
-            
             conexion.execute("SELECT COUNT(*) FROM expedientes_viejos")
             total_expedientes = conexion.fetchone()[0]
-            
             conexion.execute("SELECT COUNT(*) FROM usuarios")
             total_usuarios = conexion.fetchone()[0]
 
-    except Exception as e:
-        print("--- ERROR AL OBTENER CONTADORES:", e)
-    finally:
-        try:
-            conexion.close()
-        except:
-            pass
+        conexion.close()
 
-    return render_template('menu_buscar.html', 
-                           total_estudiantes=total_estudiantes, 
-                           total_expedientes=total_expedientes, 
-                           total_usuarios=total_usuarios)
+        return render_template('menu_buscar.html', 
+                               total_estudiantes=total_estudiantes, 
+                               total_expedientes=total_expedientes, 
+                               total_usuarios=total_usuarios)
+
+    except Exception as e:
+        print("--- ERROR CRITICO EN MENU_BUSCAR:", e)
+        flash('Acceso denegado o error en el módulo.', 'danger')
+        return redirect(url_for('menu'))
 
 @app.route('/buscar_autorizado', methods=['GET', 'POST'])
 def buscar_autorizado():
