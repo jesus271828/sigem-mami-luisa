@@ -853,13 +853,15 @@ def inscripcion_publica():
 # --- BÚSQUEDA Y OTROS MÓDULOS ---
 @app.route('/menu_buscar', methods=['GET'])
 def menu_buscar():
-    rol = session.get('rol', '').lower().strip()
-    if rol not in ['admin', 'oficina']:
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+        
+    # Validar el rol: si es maestro u otro no autorizado, lo bota al menú con alerta
+    rol_actual = str(session.get('rol', '')).lower().strip()
+    if rol_actual not in ['admin', 'oficina']:
         flash('Acceso denegado. Los maestros no tienen permiso para entrar aquí.', 'danger')
         return redirect(url_for('menu'))
-        
-    return render_template('menu_buscar.html')
-  
+
     conexion = get_db_connection()
     is_postgres = DATABASE_URL is not None
     total_estudiantes = 0
