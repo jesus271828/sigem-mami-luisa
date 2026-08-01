@@ -1439,10 +1439,9 @@ def ver_estructura_db():
 
 import os
 import json
+import base64
+import requests
 from flask import Flask, request, jsonify
-import google.generativeai as genai
-
-genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 
 @app.route('/api/escanear-ficha', methods=['POST'])
 def escanear_ficha():
@@ -1454,60 +1453,59 @@ def escanear_ficha():
         return jsonify({'success': False, 'error': 'No se seleccionó ningún archivo'}), 400
 
     try:
+        api_key = os.environ.get("GEMINI_API_KEY")
         image_bytes = file.read()
+        image_b64 = base64.b64encode(image_bytes).decode('utf-8')
+        mime_type = file.content_type or "image/jpeg"
+
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
         
-        # Corrección definitiva con la ruta completa del modelo
-        model = genai.GenerativeModel('models/gemini-1.5-flash')
-        
-        prompt = """
-        Analiza esta imagen de una ficha de inscripción escolar y extrae la información en formato JSON estricto. 
-        Las llaves del JSON deben coincidir exactamente con los nombres de los inputs del formulario:
-        {
-            "anio_escolar": "",
-            "fecha_inscripcion": "",
-            "id_estudiante": "",
-            "nombres": "",
-            "apellidos": "",
-            "grado": "",
-            "fecha_nacimiento": "",
-            "edad": "",
-            "sexo": "",
-            "nacionalidad": "",
-            "lugar_nac": "",
-            "direccion": "",
-            "cant_hermanos": "",
-            "edades_hermanos": "",
-            "lugar_ocupa": "",
-            "tipo_sangre": "",
-            "seguro_medico": "",
-            "alergias": "",
-            "medicamentos": "",
-            "medico_pediatra": "",
-            "centro_medico": "",
-            "emergencia_tel": "",
-            "emergencia_nombre": "",
-            "emergencia_parentesco": ""
+        payload = {
+            "contents": [{
+                "parts": [
+                    {
+                        "text": """Analiza esta imagen de una ficha de inscripción escolar y extrae la información en formato JSON estricto. 
+                        Las llaves del JSON deben coincidir exactamente con los nombres de los inputs del formulario:
+                        {
+                            "anio_escolar": "", "fecha_inscripcion": "", "id_estudiante": "", "nombres": "", 
+                            "apellidos": "", "grado": "", "fecha_nacimiento": "", "edad": "", "sexo": "", 
+                            "nacionalidad": "", "lugar_nac": "", "direccion": "", "cant_hermanos": "", 
+                            "edades_hermanos": "", "lugar_ocupa": "", "tipo_sangre": "", "seguro_medico": "", 
+                            "alergias": "", "medicamentos": "", "medico_pediatra": "", "centro_medico": "", 
+                            "emergencia_tel": "", "emergencia_nombre": "", "emergencia_parentesco": ""
+                        }
+                        Si algún dato no está visible o legible, déjalo como un string vacío "". Devuelve únicamente el objeto JSON puro sin markdown."""
+                    },
+                    {
+                        "inline_data": {
+                            "mime_type": mime_type,
+                            "data": image_b64
+                        }
+                    }
+                ]
+            }]
         }
-        Si algún dato no está visible o legible en la imagen, déjalo como un string vacío "". Devuelve únicamente el objeto JSON puro sin bloques de texto adicionales.
-        """
+
+        headers = {'Content-Type': 'application/json'}
+        response = requests.post(url, headers=headers, data=json.dumps(payload))
         
-        response = model.generate_content([
-            prompt,
-            {"mime_type": file.content_type or "image/jpeg", "data": image_bytes}
-        ])
+        if response.status_code != 200:
+            return jsonify({'success': False, 'error': f"API Error: {response.text}"}), 500
+
+        res_json = response.json()
+        texto_respuesta = res_json['candidates'][0]['content']['parts'][0]['text'].strip()
         
-        texto_respuesta = response.text.strip()
         if texto_respuesta.startswith("```json"):
             texto_respuesta = texto_respuesta[7:-3].strip()
         elif texto_respuesta.startswith("```"):
             texto_respuesta = texto_respuesta[3:-3].strip()
             
         datos_extraidos = json.loads(texto_respuesta)
-
         return jsonify({'success': True, 'data': datos_extraidos})
 
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+    
     
 
 if __name__ == '__main__':
