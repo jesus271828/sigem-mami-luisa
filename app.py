@@ -858,9 +858,9 @@ def menu_buscar():
             return redirect(url_for('login'))
             
         rol_actual = str(session.get('rol', '')).lower().strip()
-        # Agregamos 'maestro' a los roles permitidos
-        if rol_actual not in ['admin', 'oficina', 'maestro']:
-            flash('Acceso denegado. No tienes permiso para entrar aquí.', 'danger')
+        # Los maestros quedan excluidos y verán el mensaje de acceso denegado
+        if rol_actual not in ['admin', 'oficina']:
+            flash('Acceso denegado.', 'danger')
             return redirect(url_for('menu'))
 
         conexion = get_db_connection()
