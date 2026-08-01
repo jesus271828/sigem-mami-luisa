@@ -1003,7 +1003,7 @@ def listado_estudiantes():
     return render_template('listado_estudiantes.html', estudiantes=estudiantes)
 
 
-@app.route('/buscar_estudiante', methods=['GET'])
+@app.route('/buscar_estudiante', methods=['GET', 'POST'])
 def buscar_estudiante():
     if 'usuario' not in session:
         return redirect(url_for('login'))
@@ -1013,8 +1013,9 @@ def buscar_estudiante():
     grados_disponibles = []
     is_postgres = DATABASE_URL is not None
 
-    criterio = request.args.get('criterio', '').strip()
-    grado_filtro = request.args.get('grado_filtro', '').strip()
+    # Capturamos tanto si viene por GET (args) como por POST (form)
+    criterio = request.form.get('criterio', '') or request.args.get('criterio', '')
+    grado_filtro = request.form.get('grado_filtro', '') or request.args.get('grado_filtro', '')
 
     try:
         if is_postgres:
