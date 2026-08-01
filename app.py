@@ -860,7 +860,7 @@ def menu_buscar():
     rol_actual = str(session.get('rol', '')).lower().strip()
     if rol_actual not in ['oficina', 'admin']:
         flash('Acceso denegado. Los maestros no tienen permiso para entrar aquí.', 'danger')
-        return redirect(url_for('menu'))
+    return redirect(url_for('menu'))
 
     conexion = get_db_connection()
     is_postgres = DATABASE_URL is not None
