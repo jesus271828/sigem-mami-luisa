@@ -1438,10 +1438,11 @@ def ver_estructura_db():
         conexion.close()
 
 import os
+import json
 from flask import Flask, request, jsonify
 import google.generativeai as genai
 
-# Configura tu API key de Gemini (asegúrate de tenerla en tus variables de entorno en Render)
+# Configura tu API Key
 genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 
 @app.route('/api/escanear-ficha', methods=['POST'])
@@ -1456,8 +1457,8 @@ def escanear_ficha():
     try:
         image_bytes = file.read()
         
-        # Usamos Gemini para analizar la imagen de la ficha de inscripción
-        model = genai.GenerativeModel('gemini-2.5-flash')
+        # MODELO OFICIAL ESTABLE
+        model = genai.GenerativeModel('gemini-1.5-flash')
         
         prompt = """
         Analiza esta imagen de una ficha de inscripción escolar y extrae la información en formato JSON estricto. 
@@ -1488,7 +1489,7 @@ def escanear_ficha():
             "emergencia_nombre": "",
             "emergencia_parentesco": ""
         }
-        Si algún dato no está visible o legible en la imagen, déjalo como un string vacío "". No incluyas markdown extra, solo el objeto JSON puro.
+        Si algún dato no está visible o legible en la imagen, déjalo como un string vacío "". Devuelve únicamente el objeto JSON puro sin bloques de texto adicionales.
         """
         
         response = model.generate_content([
@@ -1496,14 +1497,12 @@ def escanear_ficha():
             {"mime_type": file.content_type or "image/jpeg", "data": image_bytes}
         ])
         
-        # Limpiamos la respuesta para asegurarnos de que sea un JSON válido
         texto_respuesta = response.text.strip()
         if texto_respuesta.startswith("```json"):
             texto_respuesta = texto_respuesta[7:-3].strip()
         elif texto_respuesta.startswith("```"):
             texto_respuesta = texto_respuesta[3:-3].strip()
             
-        import json
         datos_extraidos = json.loads(texto_respuesta)
 
         return jsonify({'success': True, 'data': datos_extraidos})
@@ -1511,6 +1510,7 @@ def escanear_ficha():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
     
+
 
 if __name__ == '__main__':
     app.run(debug=True)
