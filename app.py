@@ -1439,30 +1439,72 @@ def ver_estructura_db():
 
 import os
 from flask import Flask, request, jsonify
+import google.generativeai as genai
 
-# Asegúrate de importar tu cliente o modelo de IA (por ejemplo, google.generativeai)
+# Configura tu API key de Gemini (asegúrate de tenerla en tus variables de entorno en Render)
+genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 
 @app.route('/api/escanear-ficha', methods=['POST'])
 def escanear_ficha():
     if 'ficha' not in request.files:
-        return jsonify({'success': False, 'error': 'No se encontró la imagen en la petición'}), 400
+        return jsonify({'success': False, 'error': 'No se encontró la imagen'}), 400
     
     file = request.files['ficha']
     if file.filename == '':
         return jsonify({'success': False, 'error': 'No se seleccionó ningún archivo'}), 400
 
     try:
-        # 1. Lee la imagen y procésala con tu lógica de IA (Gemini API, etc.)
-        # imagen_bytes = file.read()
+        image_bytes = file.read()
         
-        # 2. Extrae los datos y ordénalos en un diccionario cuyas llaves 
-        # coincidan con los atributos "name" de los inputs del formulario HTML.
-        datos_extraidos = {
-            "anio_escolar": "2026-2027",
-            "nombres": "Ejemplo Nombre",
-            "apellidos": "Ejemplo Apellido",
-            # Agrega los demás campos aquí según lo que lea la IA...
+        # Usamos Gemini para analizar la imagen de la ficha de inscripción
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        
+        prompt = """
+        Analiza esta imagen de una ficha de inscripción escolar y extrae la información en formato JSON estricto. 
+        Las llaves del JSON deben coincidir exactamente con los nombres de los inputs del formulario:
+        {
+            "anio_escolar": "",
+            "fecha_inscripcion": "",
+            "id_estudiante": "",
+            "nombres": "",
+            "apellidos": "",
+            "grado": "",
+            "fecha_nacimiento": "",
+            "edad": "",
+            "sexo": "",
+            "nacionalidad": "",
+            "lugar_nac": "",
+            "direccion": "",
+            "cant_hermanos": "",
+            "edades_hermanos": "",
+            "lugar_ocupa": "",
+            "tipo_sangre": "",
+            "seguro_medico": "",
+            "alergias": "",
+            "medicamentos": "",
+            "medico_pediatra": "",
+            "centro_medico": "",
+            "emergencia_tel": "",
+            "emergencia_nombre": "",
+            "emergencia_parentesco": ""
         }
+        Si algún dato no está visible o legible en la imagen, déjalo como un string vacío "". No incluyas markdown extra, solo el objeto JSON puro.
+        """
+        
+        response = model.generate_content([
+            prompt,
+            {"mime_type": file.content_type or "image/jpeg", "data": image_bytes}
+        ])
+        
+        # Limpiamos la respuesta para asegurarnos de que sea un JSON válido
+        texto_respuesta = response.text.strip()
+        if texto_respuesta.startswith("```json"):
+            texto_respuesta = texto_respuesta[7:-3].strip()
+        elif texto_respuesta.startswith("```"):
+            texto_respuesta = texto_respuesta[3:-3].strip()
+            
+        import json
+        datos_extraidos = json.loads(texto_respuesta)
 
         return jsonify({'success': True, 'data': datos_extraidos})
 
