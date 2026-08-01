@@ -1458,7 +1458,8 @@ def escanear_ficha():
         image_b64 = base64.b64encode(image_bytes).decode('utf-8')
         mime_type = file.content_type or "image/jpeg"
 
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+        # Usamos la versión 'v1' de la API con el modelo estable
+        url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={api_key}"
         
         payload = {
             "contents": [{
@@ -1505,6 +1506,7 @@ def escanear_ficha():
 
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+    
     
     
 
