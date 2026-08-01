@@ -851,35 +851,46 @@ def inscripcion_publica():
     return render_template('inscripcion_publica.html')
 
 # --- BÚSQUEDA Y OTROS MÓDULOS ---
-@app.route('/menu_buscar')
+@app.route('/menu_buscar', methods=['GET'])
 def menu_buscar():
     if 'usuario' not in session:
         return redirect(url_for('login'))
-    
-    # Permitir acceso tanto a admin como a oficina (o maestros si lo requieres)
-    rol_actual = str(session.get('rol', '')).lower()
-    if rol_actual not in ['admin', 'oficina']:
-        flash('Acceso denegado.', 'danger')
-        return redirect(url_for('index'))
-    
-    conn = get_db_connection()
+        
+    conexion = get_db_connection()
+    is_postgres = DATABASE_URL is not None
+    total_estudiantes = 0
+    total_expedientes = 0
+    total_usuarios = 0
+
     try:
-        total_estudiantes = conn.execute('SELECT COUNT(*) FROM inscripciones').fetchone()
-        total_estudiantes = total_estudiantes['total'] if isinstance(total_estudiantes, dict) else total_estudiantes[0]
-    except:
-        total_estudiantes = 0
-    try:
-        total_expedientes = conn.execute('SELECT COUNT(*) FROM expedientes_viejos').fetchone()
-        total_expedientes = total_expedientes['total'] if isinstance(total_expedientes, dict) else total_expedientes[0]
-    except:
-        total_expedientes = 0
-    try:
-        total_usuarios = conn.execute('SELECT COUNT(*) FROM usuarios').fetchone()
-        total_usuarios = total_usuarios['total'] if isinstance(total_usuarios, dict) else total_usuarios[0]
-    except:
-        total_usuarios = 0
-    conn.close()
-    
+        if is_postgres:
+            cur_c = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            
+            cur_c.execute("SELECT COUNT(*) as total FROM inscripciones")
+            total_estudiantes = cur_c.fetchone()['total']
+            
+            cur_c.execute("SELECT COUNT(*) as total FROM expedientes_viejos")
+            total_expedientes = cur_c.fetchone()['total']
+            
+            cur_c.execute("SELECT COUNT(*) as total FROM usuarios")
+            total_usuarios = cur_c.fetchone()['total']
+            
+            cur_c.close()
+        else:
+            conexion.execute("SELECT COUNT(*) FROM inscripciones")
+            total_estudiantes = conexion.fetchone()[0]
+            
+            conexion.execute("SELECT COUNT(*) FROM expedientes_viejos")
+            total_expedientes = conexion.fetchone()[0]
+            
+            conexion.execute("SELECT COUNT(*) FROM usuarios")
+            total_usuarios = conexion.fetchone()[0]
+
+    except Exception as e:
+        print("--- ERROR AL OBTENER CONTADORES:", e)
+    finally:
+        conexion.close()
+
     return render_template('menu_buscar.html', 
                            total_estudiantes=total_estudiantes, 
                            total_expedientes=total_expedientes, 
