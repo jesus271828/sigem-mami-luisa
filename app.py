@@ -931,6 +931,8 @@ def buscar_autorizado():
                 params = [like_limpio, like_c, like_c, like_c, like_c]
                 conexion.execute(query, params)
                 autorizados = conexion.fetchall()
+            
+            print(f"--- DEBUG BUSQUEDA: Criterio='{criterio}', Resultados encontrados={len(autorizados)}")
 
     except Exception as e:
         print("--- ERROR EN BUSCAR AUTORIZADO:", e)
@@ -938,6 +940,7 @@ def buscar_autorizado():
         conexion.close()
 
     return render_template('buscar_autorizado.html', autorizados=autorizados, criterio=criterio)
+
 
 
 @app.route('/listado-estudiantes')
@@ -1462,6 +1465,7 @@ def escanear_ficha():
         return jsonify({'success': False, 'error': str(e)}), 500
     
     
+
     
 if __name__ == '__main__':
     app.run(debug=True)
