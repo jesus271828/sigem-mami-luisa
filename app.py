@@ -1003,7 +1003,7 @@ def listado_estudiantes():
     return render_template('listado_estudiantes.html', estudiantes=estudiantes)
 
 
-@app.route('/buscar_estudiante', methods=['GET', 'POST'])
+@app.route('/buscar_estudiante', methods=['GET'])
 def buscar_estudiante():
     if 'usuario' not in session:
         return redirect(url_for('login'))
@@ -1012,6 +1012,9 @@ def buscar_estudiante():
     estudiantes = []
     grados_disponibles = []
     is_postgres = DATABASE_URL is not None
+
+    criterio = request.args.get('criterio', '').strip()
+    grado_filtro = request.args.get('grado_filtro', '').strip()
 
     try:
         if is_postgres:
@@ -1025,53 +1028,47 @@ def buscar_estudiante():
             
         grados_disponibles = [g['grado'] if isinstance(g, dict) else g[0] for g in grados_res]
 
-        if request.method == 'POST':
-            criterio = request.form.get('criterio', '').strip()
-            grado_filtro = request.form.get('grado_filtro', '').strip()
+        if is_postgres:
+            query = "SELECT id_estudiante, nombres, apellidos, grado FROM inscripciones WHERE 1=1"
+            params = []
+            if criterio:
+                query += " AND (id_estudiante ILIKE %s OR nombres ILIKE %s OR apellidos ILIKE %s)"
+                like_c = f"%{criterio}%"
+                params.extend([like_c, like_c, like_c])
+            if grado_filtro:
+                query += " AND grado = %s"
+                params.append(grado_filtro)
             
-            if is_postgres:
-                query = "SELECT id_estudiante, nombres, apellidos, grado FROM inscripciones WHERE 1=1"
-                params = []
-                if criterio:
-                    query += " AND (id_estudiante ILIKE %s OR nombres ILIKE %s OR apellidos ILIKE %s)"
-                    like_c = f"%{criterio}%"
-                    params.extend([like_c, like_c, like_c])
-                if grado_filtro:
-                    query += " AND grado = %s"
-                    params.append(grado_filtro)
-                
-                cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-                cur.execute(query, params)
-                estudiantes = cur.fetchall()
-                cur.close()
-            else:
-                query = "SELECT id_estudiante, nombres, apellidos, grado FROM inscripciones WHERE 1=1"
-                params = []
-                if criterio:
-                    query += " AND (id_estudiante LIKE ? OR nombres LIKE ? OR apellidos LIKE ?)"
-                    like_c = f"%{criterio}%"
-                    params.extend([like_c, like_c, like_c])
-                if grado_filtro:
-                    query += " AND grado = ?"
-                    params.append(grado_filtro)
-                conexion.execute(query, params)
-                estudiantes = conexion.fetchall()
+            cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute(query, params)
+            estudiantes = cur.fetchall()
+            cur.close()
         else:
-            if is_postgres:
-                cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-                cur.execute("SELECT id_estudiante, nombres, apellidos, grado FROM inscripciones")
-                estudiantes = cur.fetchall()
-                cur.close()
-            else:
-                conexion.execute("SELECT id_estudiante, nombres, apellidos, grado FROM inscripciones")
-                estudiantes = conexion.fetchall()
+            query = "SELECT id_estudiante, nombres, apellidos, grado FROM inscripciones WHERE 1=1"
+            params = []
+            if criterio:
+                query += " AND (id_estudiante LIKE ? OR nombres LIKE ? OR apellidos LIKE ?)"
+                like_c = f"%{criterio}%"
+                params.extend([like_c, like_c, like_c])
+            if grado_filtro:
+                query += " AND grado = ?"
+                params.append(grado_filtro)
+                
+            conexion.execute(query, params)
+            estudiantes = conexion.fetchall()
 
     except Exception as e:
         print("--- ERROR EN BUSCAR ESTUDIANTE:", e)
     finally:
         conexion.close()
 
-    return render_template('buscar_estudiante.html', estudiantes=estudiantes, grados_disponibles=grados_disponibles)
+    return render_template(
+        'buscar_estudiante.html', 
+        estudiantes=estudiantes, 
+        grados_disponibles=grados_disponibles,
+        criterio=criterio,
+        grado_filtro=grado_filtro
+    )
 
 @app.route('/generar_pdf/<path:id_estudiante>')
 def generar_pdf(id_estudiante):
