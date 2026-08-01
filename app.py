@@ -906,13 +906,21 @@ def buscar_autorizado():
                     SELECT a.*, i.nombres, i.apellidos, i.grado 
                     FROM autorizados a
                     LEFT JOIN inscripciones i ON a.id_estudiante = i.id_estudiante
-                    WHERE REPLACE(a.cedula, '-', '') ILIKE %s 
+                    WHERE REPLACE(COALESCE(a.tutor_cedula, ''), '-', '') ILIKE %s 
+                       OR REPLACE(COALESCE(a.aut_cedula_1, ''), '-', '') ILIKE %s
+                       OR REPLACE(COALESCE(a.aut_cedula_2, ''), '-', '') ILIKE %s
+                       OR REPLACE(COALESCE(a.aut_cedula_3, ''), '-', '') ILIKE %s
+                       OR REPLACE(COALESCE(a.aut_cedula_4, ''), '-', '') ILIKE %s
+                       OR REPLACE(COALESCE(a.aut_cedula_5, ''), '-', '') ILIKE %s
+                       OR REPLACE(COALESCE(a.foto_padre_cedula, ''), '-', '') ILIKE %s
+                       OR REPLACE(COALESCE(a.foto_madre_cedula, ''), '-', '') ILIKE %s
+                       OR REPLACE(COALESCE(a.foto_estudiante_cedula, ''), '-', '') ILIKE %s
                        OR a.nombre_completo ILIKE %s 
                        OR a.id_estudiante ILIKE %s
                        OR i.nombres ILIKE %s 
                        OR i.apellidos ILIKE %s
                 """
-                params = [like_limpio, like_c, like_c, like_c, like_c]
+                params = [like_limpio, like_limpio, like_limpio, like_limpio, like_limpio, like_limpio, like_limpio, like_limpio, like_limpio, like_c, like_c, like_c, like_c]
                 cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
                 cur.execute(query, params)
                 autorizados = cur.fetchall()
@@ -922,13 +930,21 @@ def buscar_autorizado():
                     SELECT a.*, i.nombres, i.apellidos, i.grado 
                     FROM autorizados a
                     LEFT JOIN inscripciones i ON a.id_estudiante = i.id_estudiante
-                    WHERE REPLACE(a.cedula, '-', '') LIKE ? 
+                    WHERE REPLACE(IFNULL(a.tutor_cedula, ''), '-', '') LIKE ? 
+                       OR REPLACE(IFNULL(a.aut_cedula_1, ''), '-', '') LIKE ?
+                       OR REPLACE(IFNULL(a.aut_cedula_2, ''), '-', '') LIKE ?
+                       OR REPLACE(IFNULL(a.aut_cedula_3, ''), '-', '') LIKE ?
+                       OR REPLACE(IFNULL(a.aut_cedula_4, ''), '-', '') LIKE ?
+                       OR REPLACE(IFNULL(a.aut_cedula_5, ''), '-', '') LIKE ?
+                       OR REPLACE(IFNULL(a.foto_padre_cedula, ''), '-', '') LIKE ?
+                       OR REPLACE(IFNULL(a.foto_madre_cedula, ''), '-', '') LIKE ?
+                       OR REPLACE(IFNULL(a.foto_estudiante_cedula, ''), '-', '') LIKE ?
                        OR a.nombre_completo LIKE ? 
                        OR a.id_estudiante LIKE ?
                        OR i.nombres LIKE ? 
                        OR i.apellidos LIKE ?
                 """
-                params = [like_limpio, like_c, like_c, like_c, like_c]
+                params = [like_limpio, like_limpio, like_limpio, like_limpio, like_limpio, like_limpio, like_limpio, like_limpio, like_limpio, like_c, like_c, like_c, like_c]
                 conexion.execute(query, params)
                 autorizados = conexion.fetchall()
             
