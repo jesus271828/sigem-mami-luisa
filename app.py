@@ -856,6 +856,12 @@ def menu_buscar():
     if 'usuario' not in session:
         return redirect(url_for('login'))
         
+    # Validar que el rol tenga permiso de ver esta sección (Oficina, Admin o Maestro)
+    rol_actual = session.get('rol', '').lower()
+    if rol_actual not in ['oficina', 'admin', 'maestro']:
+        flash('Acceso denegado. No tienes permisos para entrar aquí.', 'danger')
+        return redirect(url_for('menu'))
+
     conexion = get_db_connection()
     is_postgres = DATABASE_URL is not None
     total_estudiantes = 0
