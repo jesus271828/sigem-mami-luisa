@@ -1437,62 +1437,37 @@ def ver_estructura_db():
     finally:
         conexion.close()
 
-import time
-import json
-from google.api_core.exceptions import ResourceExhausted
-import google.generativeai as genai
+import os
+from flask import Flask, request, jsonify
+
+# Asegúrate de importar tu cliente o modelo de IA (por ejemplo, google.generativeai)
 
 @app.route('/api/escanear-ficha', methods=['POST'])
 def escanear_ficha():
     if 'ficha' not in request.files:
-        return jsonify({"success": False, "error": "No se ha proporcionado ninguna imagen."}), 400
+        return jsonify({'success': False, 'error': 'No se encontró la imagen en la petición'}), 400
     
     file = request.files['ficha']
     if file.filename == '':
-        return jsonify({"success": False, "error": "Archivo sin nombre."}), 400
+        return jsonify({'success': False, 'error': 'No se seleccionó ningún archivo'}), 400
 
-    max_intentos = 3
-    for intento in range(max_intentos):
-        try:
-            image_bytes = file.read()
-            file.seek(0)
+    try:
+        # 1. Lee la imagen y procésala con tu lógica de IA (Gemini API, etc.)
+        # imagen_bytes = file.read()
+        
+        # 2. Extrae los datos y ordénalos en un diccionario cuyas llaves 
+        # coincidan con los atributos "name" de los inputs del formulario HTML.
+        datos_extraidos = {
+            "anio_escolar": "2026-2027",
+            "nombres": "Ejemplo Nombre",
+            "apellidos": "Ejemplo Apellido",
+            # Agrega los demás campos aquí según lo que lea la IA...
+        }
 
-            image_parts = [{
-                "mime_type": file.content_type or "image/jpeg",
-                "data": image_bytes
-            }]
-            
-            # Usamos gemini-2.5-flash (o gemini-2.0-flash)
-            model = genai.GenerativeModel('gemini-2.5-flash')
-            
-            prompt = (
-                "Analiza esta ficha de inscripción escolar manuscrita y extrae la información en un formato JSON estricto. "
-                "Las claves del JSON deben coincidir exactamente con los atributos 'name' de los campos del formulario HTML. "
-                "Campos a buscar (si están presentes): anio_escolar, fecha_inscripcion, nombres, apellidos, "
-                "fecha_nacimiento, edad, sexo, nacionalidad, lugar_nac, direccion, cant_hermanos, edades_hermanos, "
-                "lugar_ocupa, tipo_sangre, seguro_medico, alergias, medicamentos, medico_pediatra, centro_medico, "
-                "emergencia_tel, emergencia_nombre, emergencia_parentesco, "
-                "padre_nombre, padre_sector, padre_direccion, padre_profesion, padre_cedula, padre_nivel, padre_religion, padre_tel_personal, padre_tel_trabajo, padre_correo, "
-                "madre_nombre, madre_sector, madre_direccion, madre_profesion, madre_cedula, madre_nivel, madre_religion, madre_tel_personal, madre_tel_trabajo, madre_correo."
-            )
-            
-            response = model.generate_content([prompt, image_parts[0]])
-            texto_respuesta = response.text.replace("```json", "").replace("```", "").strip()
-            datos_extraidos = json.loads(texto_respuesta)
+        return jsonify({'success': True, 'data': datos_extraidos})
 
-            return jsonify({"success": True, "data": datos_extraidos})
-            
-        except ResourceExhausted as e:
-            if intento < max_intentos - 1:
-                time.sleep(8)
-                continue
-            else:
-                return jsonify({"success": False, "error": "Límite de uso gratuito alcanzado temporalmente. Por favor, espera unos segundos e inténtalo de nuevo."}), 429
-        except Exception as e:
-            if intento < max_intentos - 1:
-                time.sleep(3)
-                continue
-            return jsonify({"success": False, "error": str(e)}), 500
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
     
 
 
