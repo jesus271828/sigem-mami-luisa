@@ -1457,7 +1457,7 @@ def escanear_ficha():
         image_bytes = file.read()
         
         # Usamos Gemini para analizar la imagen de la ficha de inscripción
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-2.5-flash')
         
         prompt = """
         Analiza esta imagen de una ficha de inscripción escolar y extrae la información en formato JSON estricto. 
@@ -1511,7 +1511,6 @@ def escanear_ficha():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
     
-
 
 if __name__ == '__main__':
     app.run(debug=True)
