@@ -273,26 +273,34 @@ def login():
         usuario_ingresado = request.form.get('usuario') or request.form.get('username')
         password = request.form.get('password') or request.form.get('contrasena')
         
-        conn = get_db_connection()
         user = None
         try:
-            cursor = conn
-            cursor.execute('SELECT username, rol, nombre_completo, curso_asignado FROM usuarios WHERE username = ? AND password = ?', (usuario_ingresado, password))
-            row = cursor.fetchone()
+            conn = get_db_connection()
+            is_postgres = DATABASE_URL is not None
             
-            if row:
-                if isinstance(row, dict):
-                    user = row
-                else:
+            if is_postgres:
+                cur = conn.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+                cur.execute('SELECT username, rol, nombre_completo, curso_asignado FROM usuarios WHERE username = %s AND password = %s', (usuario_ingresado, password))
+                row = cur.fetchone()
+                cur.close()
+                if row:
+                    user = dict(row)
+            else:
+                conn.row_factory = sqlite3.Row
+                cur = conn.cursor()
+                cur.execute('SELECT username, rol, nombre_completo, curso_asignado FROM usuarios WHERE username = ? AND password = ?', (usuario_ingresado, password))
+                row = cur.fetchone()
+                cur.close()
+                if row:
                     user = {
-                        'username': row[0],
-                        'rol': row[1],
-                        'nombre_completo': row[2],
-                        'curso_asignado': row[3] if row[3] else ''
+                        'username': row['username'],
+                        'rol': row['rol'],
+                        'nombre_completo': row['nombre_completo'],
+                        'curso_asignado': row['curso_asignado'] if row['curso_asignado'] else ''
                     }
-            cursor.close()
+            conn.close()
         except Exception as e:
-            print("Error general en login:", e)
+            print("Error detallado en login:", e)
             user = None
         
         if user:
@@ -302,7 +310,8 @@ def login():
             session['curso_asignado'] = user.get('curso_asignado', '')
             return redirect(url_for('menu'))
         else:
-            return "Usuario o contraseña incorrectos"
+            flash("Usuario o contraseña incorrectos", "danger")
+            return redirect(url_for('login'))
             
     return render_template('login.html')
 
