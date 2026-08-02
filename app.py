@@ -1047,13 +1047,43 @@ def listado_estudiantes():
         flash('Acceso denegado.', 'danger')
         return redirect(url_for('login'))
         
+    usuario_actual = str(session.get('usuario', '')).strip()
+    rol_actual = str(session.get('rol', '')).strip().lower()
+    grado_docente = session.get('grado') or session.get('grado_asignado')
+    
     conn = get_db_connection()
     try:
-        # Consulta directa y abierta para verificar si trae registros de la tabla
-        estudiantes = conn.execute('SELECT * FROM estudiantes').fetchall()
-        print(f"DEBUG: Estudiantes encontrados -> {len(estudiantes)}")
+        # Si es oficina o admin, muestra todos ordenados por grado y apellido
+        if rol_actual in ['oficina', 'admin']:
+            estudiantes = conn.execute('''
+                SELECT * FROM estudiantes 
+                ORDER BY grado ASC, apellidos ASC, nombres ASC
+            ''').fetchall()
+        else:
+            # Si es maestro, filtramos por su grado y los ordenamos estrictamente por apellido alfabéticamente
+            if grado_docente:
+                estudiantes = conn.execute('''
+                    SELECT * FROM estudiantes 
+                    WHERE grado = ? 
+                    ORDER BY apellidos ASC, nombres ASC
+                ''', (grado_docente,)).fetchall()
+            else:
+                maestro_db = conn.execute('SELECT grado FROM usuarios WHERE usuario = ?', (usuario_actual,)).fetchone()
+                if maestro_db and 'grado' in maestro_db.keys() and maestro_db['grado']:
+                    grado_encontrado = maestro_db['grado']
+                    estudiantes = conn.execute('''
+                        SELECT * FROM estudiantes 
+                        WHERE grado = ? 
+                        ORDER BY apellidos ASC, nombres ASC
+                    ''', (grado_encontrado,)).fetchall()
+                else:
+                    estudiantes = conn.execute('''
+                        SELECT * FROM estudiantes 
+                        ORDER BY grado ASC, apellidos ASC, nombres ASC
+                    ''').fetchall()
+                
     except Exception as e:
-        print(f"Error crítico en listado_estudiantes: {e}")
+        print(f"Error en listado_estudiantes: {e}")
         estudiantes = []
     finally:
         conn.close()
