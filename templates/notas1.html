@@ -123,19 +123,23 @@
     </div>
 
     <!-- SELECTOR DE ESTUDIANTE -->
-    <div class="selector-container">
-        <form method="GET" action="{{ url_for('notas1') }}" style="display: flex; align-items: center; width: 100%; gap: 10px; margin: 0;">
-            <label for="id_estudiante" class="bold">SELECCIONAR ESTUDIANTE:</label>
-            <select name="id_estudiante" id="id_estudiante" onchange="this.form.submit()" style="padding: 5px; font-size: 12px; flex-grow: 1; border: 1px solid #000; background: #fff;">
+<!-- SECCIÓN DE SELECCIÓN DE ESTUDIANTE -->
+<div class="row mb-3 align-items-center">
+    <div class="col-md-6">
+        <label for="id_estudiante" class="font-weight-bold">SELECCIONAR ESTUDIANTE:</label>
+        <select name="id_estudiante" id="id_estudiante" class="form-control" onchange="this.form.submit()">
+            {% if lista_estudiantes %}
                 {% for est in lista_estudiantes %}
-                    <option value="{{ est.id_estudiante }}" {% if est.id_estudiante|string == estudiante.id_estudiante|string %}selected{% endif %}>
-                        {{ est.nombres }} {{ est.apellidos }} — (ID: {{ est.id_estudiante }})
+                    <option value="{{ est.id_estudiante }}" {% if estudiante and estudiante.id_estudiante == est.id_estudiante %}selected{% endif %}>
+                        {{ est.apellidos }}, {{ est.nombres }}
                     </option>
                 {% endfor %}
-            </select>
-        </form>
+            {% else %}
+                <option value="">No hay estudiantes registrados</option>
+            {% endif %}
+        </select>
     </div>
-
+</div>
     <form id="form-informe" method="POST" action="{{ url_for('notas1') }}">
         <input type="hidden" name="id_estudiante" value="{{ estudiante.id_estudiante }}">
 
