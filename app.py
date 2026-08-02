@@ -1047,44 +1047,19 @@ def listado_estudiantes():
         flash('Acceso denegado.', 'danger')
         return redirect(url_for('login'))
         
-    usuario_actual = session.get('usuario')
-    rol_actual = str(session.get('rol', '')).strip().lower()
-    
     conn = get_db_connection()
     try:
-        # Si es admin u oficina, ve todos los estudiantes ordenados por grado, apellidos y nombres
-        if rol_actual in ['oficina', 'admin']:
-            estudiantes = conn.execute('''
-                SELECT * FROM estudiantes 
-                ORDER BY grado ASC, apellidos ASC, nombres ASC
-            ''').fetchall()
-        else:
-            # Si es un maestro, primero buscamos qué grado tiene asignado ese usuario en la tabla de maestros/usuarios
-            maestro_info = conn.execute('SELECT grado FROM maestros WHERE usuario = ?', (usuario_actual,)).fetchone()
-            
-            # Si no está en maestros, probamos buscando por nombre de usuario o usando el grado que tenga en sesión
-            grado_docente = maestro_info['grado'] if maestro_info and 'grado' in maestro_info.keys() else session.get('grado')
-            
-            if grado_docente:
-                estudiantes = conn.execute('''
-                    SELECT * FROM estudiantes 
-                    WHERE grado = ? 
-                    ORDER BY apellidos ASC, nombres ASC
-                ''', (grado_docente,)).fetchall()
-            else:
-                # Si no se encuentra su grado, se muestra vacío o todos para evitar error
-                estudiantes = conn.execute('''
-                    SELECT * FROM estudiantes 
-                    ORDER BY grado ASC, apellidos ASC, nombres ASC
-                ''').fetchall()
-                
+        # Consulta directa y abierta para verificar si trae registros de la tabla
+        estudiantes = conn.execute('SELECT * FROM estudiantes').fetchall()
+        print(f"DEBUG: Estudiantes encontrados -> {len(estudiantes)}")
     except Exception as e:
-        print(f"Error en listado_estudiantes: {e}")
+        print(f"Error crítico en listado_estudiantes: {e}")
         estudiantes = []
     finally:
         conn.close()
     
     return render_template('listado_estudiantes.html', estudiantes=estudiantes)
+
 
 @app.route('/buscar_estudiante', methods=['GET', 'POST'])
 def buscar_estudiante():
@@ -1701,6 +1676,7 @@ def escanear_ficha():
         return jsonify({'success': False, 'error': str(e)}), 500
     
     
+
     
 if __name__ == '__main__':
     app.run(debug=True)
