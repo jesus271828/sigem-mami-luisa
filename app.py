@@ -1052,13 +1052,13 @@ def listado_estudiantes():
     
     conn = get_db_connection()
     if rol_actual in ['oficina', 'admin']:
-        estudiantes = conn.execute('SELECT * FROM inscripciones').fetchall()
+        estudiantes = conn.execute('SELECT * FROM estudiantes ORDER BY apellidos, nombres ASC').fetchall()
     else:
-        estudiantes = conn.execute('SELECT * FROM inscripciones WHERE maestro = ?', (usuario_actual,)).fetchall()
+        # Si tienes el campo maestro en la tabla estudiantes, se filtra; si no, puedes quitar el WHERE o ajustarlo
+        estudiantes = conn.execute('SELECT * FROM estudiantes WHERE maestro = ? ORDER BY apellidos, nombres ASC', (usuario_actual,)).fetchall()
     conn.close()
     
     return render_template('listado_estudiantes.html', estudiantes=estudiantes)
-
 
 @app.route('/buscar_estudiante', methods=['GET', 'POST'])
 def buscar_estudiante():
