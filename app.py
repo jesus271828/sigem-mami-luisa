@@ -1198,61 +1198,71 @@ def menu_notas():
 def notas1():
     tipo_inf = 'notas1'
     
-    # Asegúrate de usar la conexión SQLite correcta de tu proyecto (ej. sqlite3.connect('sigem_ml.db'))
-    import sqlite3
+    # Conexión a la base de datos SQLite local
     conexion = sqlite3.connect('sigem_ml.db')
-    conexion.row_factory = sqlite3.Row  # Esto permite leer las columnas por nombre
+    conexion.row_factory = sqlite3.Row  # Permite acceder a las columnas por su nombre
     cursor = conexion.cursor()
 
-    # 1. Obtener lista de estudiantes
-    cursor.execute("SELECT id_estudiante, nombres, apellidos, orden, grado FROM estudiantes")
-    lista_estudiantes = cursor.fetchall()
+    try:
+        # 1. Obtener la lista de estudiantes
+        cursor.execute("SELECT id_estudiante, nombres, apellidos, orden, grado FROM estudiantes")
+        lista_estudiantes = cursor.fetchall()
 
-    if not lista_estudiantes:
+        if not lista_estudiantes:
+            cursor.close()
+            conexion.close()
+            flash('No hay estudiantes registrados.', 'warning')
+            return render_template('notas1.html', lista_estudiantes=[], estudiante=None, notas={})
+
+        # 2. Identificar el estudiante seleccionado (por parámetro GET o formulario POST)
+        id_est_sel = request.args.get('id_estudiante') or request.form.get('id_estudiante')
+        if id_est_sel:
+            estudiante = next((e for e in lista_estudiantes if str(e['id_estudiante']) == str(id_est_sel)), lista_estudiantes[0])
+        else:
+            estudiante = lista_estudiantes[0]
+
+        # 3. GUARDAR TODOS LOS CAMPOS DEL FORMULARIO (Método POST cuando el usuario hace clic en guardar)
+        if request.method == 'POST':
+            for campo, valor in request.form.items():
+                if campo == 'id_estudiante':
+                    continue
+                # Inserta o actualiza dinámicamente cada input del HTML en la tabla clave-valor
+                cursor.execute("""
+                    INSERT INTO calificaciones_detalle (id_estudiante, tipo_informe, campo_nombre, valor)
+                    VALUES (?, ?, ?, ?)
+                    ON CONFLICT(id_estudiante, tipo_informe, campo_nombre) 
+                    DO UPDATE SET valor = ?
+                """, (estudiante['id_estudiante'], tipo_inf, campo, valor, valor))
+                
+            conexion.commit()
+            flash('Calificaciones guardadas correctamente.', 'success')
+            cursor.close()
+            conexion.close()
+            return redirect(url_for('notas1', id_estudiante=estudiante['id_estudiante']))
+
+        # 4. CARGAR LOS DATOS GUARDADOS PARA MOSTRARLOS EN EL HTML (Método GET)
+        cursor.execute("SELECT campo_nombre, valor FROM calificaciones_detalle WHERE id_estudiante = ? AND tipo_informe = ?", 
+                       (estudiante['id_estudiante'], tipo_inf))
+        resultados = cursor.fetchall()
+        
+        # Diccionario clave-valor donde la llave es el 'name' del input y el valor es lo que está guardado
+        notas = {row['campo_nombre']: row['valor'] for row in resultados}
+
         cursor.close()
         conexion.close()
-        return render_template('notas1.html', lista_estudiantes=[], estudiante=None, notas={})
+        
+        return render_template('notas1.html', 
+                               lista_estudiantes=lista_estudiantes, 
+                               estudiante=estudiante, 
+                               notas=notas)
 
-    # 2. Estudiante seleccionado (por defecto el primero o el que elijan)
-    id_est_sel = request.args.get('id_estudiante') or request.form.get('id_estudiante')
-    if id_est_sel:
-        estudiante = next((e for e in lista_estudiantes if str(e['id_estudiante']) == str(id_est_sel)), lista_estudiantes[0])
-    else:
-        estudiante = lista_estudiantes[0]
-
-    # 3. GUARDAR TODOS LOS CAMPOS DEL FORMULARIO (POST)
-    if request.method == 'POST':
-        for campo, valor in request.form.items():
-            if campo == 'id_estudiante':
-                continue
-            # Inserta o actualiza dinámicamente cada input del HTML sin importar cuál sea
-            cursor.execute("""
-                INSERT INTO calificaciones_detalle (id_estudiante, tipo_informe, campo_nombre, valor)
-                VALUES (?, ?, ?, ?)
-                ON CONFLICT(id_estudiante, tipo_informe, campo_nombre) 
-                DO UPDATE SET valor = ?
-            """, (estudiante['id_estudiante'], tipo_inf, campo, valor, valor))
-            
-        conexion.commit()
-        cursor.close()
-        conexion.close()
-        return redirect(url_for('notas1', id_estudiante=estudiante['id_estudiante']))
-
-    # 4. CARGAR LOS DATOS GUARDADOS PARA MOSTRARLOS EN EL HTML
-    cursor.execute("SELECT campo_nombre, valor FROM calificaciones_detalle WHERE id_estudiante = ? AND tipo_informe = ?", 
-                   (estudiante['id_estudiante'], tipo_inf))
-    resultados = cursor.fetchall()
+    except Exception as e:
+        if conexion:
+            conexion.close()
+        print(f"Error en la ruta notas1: {e}")
+        flash(f'Ocurrió un error en el servidor: {e}', 'danger')
+        return redirect(url_for('index')) # O la ruta principal de tu menú
     
-    # Creamos un diccionario donde la llave es el 'name' del input y el valor es lo que se guardó
-    notas = {row['campo_nombre']: row['valor'] for row in resultados}
-
-    cursor.close()
-    conexion.close()
-    
-    return render_template('notas1.html', 
-                           lista_estudiantes=lista_estudiantes, 
-                           estudiante=estudiante, 
-                           notas=notas)
 @app.route('/notas2')
 def notas2():
     rol = str(session.get('rol', '')).strip().lower()
