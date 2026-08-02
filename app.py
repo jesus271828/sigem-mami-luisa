@@ -1047,16 +1047,22 @@ def listado_estudiantes():
         flash('Acceso denegado.', 'danger')
         return redirect(url_for('login'))
         
-    usuario_actual = session.get('usuario')
-    rol_actual = session.get('rol')
+    rol_actual = str(session.get('rol', '')).strip().lower()
+    grado_docente = session.get('grado') or session.get('grado_asignado')
     
     conn = get_db_connection()
-    if rol_actual in ['oficina', 'admin']:
-        estudiantes = conn.execute('SELECT * FROM estudiantes ORDER BY apellidos, nombres ASC').fetchall()
-    else:
-        # Si tienes el campo maestro en la tabla estudiantes, se filtra; si no, puedes quitar el WHERE o ajustarlo
-        estudiantes = conn.execute('SELECT * FROM estudiantes WHERE maestro = ? ORDER BY apellidos, nombres ASC', (usuario_actual,)).fetchall()
-    conn.close()
+    try:
+        # Si es oficina o admin, muestra todos los estudiantes
+        if rol_actual in ['oficina', 'admin'] or not grado_docente:
+            estudiantes = conn.execute('SELECT * FROM estudiantes ORDER BY apellidos, nombres ASC').fetchall()
+        else:
+            # Si es maestro, filtra los estudiantes que coincidan con su grado
+            estudiantes = conn.execute('SELECT * FROM estudiantes WHERE grado = ? ORDER BY apellidos, nombres ASC', (grado_docente,)).fetchall()
+    except Exception as e:
+        print(f"Error consultando estudiantes por grado: {e}")
+        estudiantes = []
+    finally:
+        conn.close()
     
     return render_template('listado_estudiantes.html', estudiantes=estudiantes)
 
