@@ -300,7 +300,7 @@ def login():
             session['rol'] = user.get('rol', '')
             session['nombre_completo'] = user.get('nombre_completo', '')
             session['curso_asignado'] = user.get('curso_asignado', '')
-            return redirect(url_for('index'))
+            return redirect(url_for('menu'))
         else:
             return "Usuario o contraseña incorrectos"
             
@@ -858,7 +858,6 @@ def menu_buscar():
             return redirect(url_for('login'))
             
         rol_actual = str(session.get('rol', '')).lower().strip()
-        # Los maestros quedan excluidos y verán el mensaje de acceso denegado
         if rol_actual not in ['admin', 'oficina']:
             flash('Acceso denegado.', 'danger')
             return redirect(url_for('menu'))
