@@ -308,7 +308,7 @@ def login():
             session['rol'] = user.get('rol', '')
             session['nombre_completo'] = user.get('nombre_completo', '')
             session['curso_asignado'] = user.get('curso_asignado', '')
-            return redirect(url_for('menu'))
+            return redirect('/menu')
         else:
             flash("Usuario o contraseña incorrectos", "danger")
             return redirect(url_for('login'))
