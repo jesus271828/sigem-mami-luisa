@@ -869,7 +869,7 @@ def menu_buscar():
         rol_actual = str(session.get('rol', '')).lower().strip()
         if rol_actual not in ['admin', 'oficina']:
             flash('Acceso denegado.', 'danger')
-            return redirect(url_for('menu'))
+            return redirect('/menu')
 
         conexion = get_db_connection()
         is_postgres = DATABASE_URL is not None
@@ -903,7 +903,7 @@ def menu_buscar():
     except Exception as e:
         print(f"Error en menu_buscar: {e}")
         flash("Ocurrió un error interno en el servidor.", "danger")
-        return redirect(url_for('menu'))
+        return redirect('/menu')
 
 @app.route('/buscar_autorizado', methods=['GET', 'POST'])
 def buscar_autorizado():
