@@ -1194,39 +1194,65 @@ def asistencia():
 def menu_notas():
     return render_template('menu_notas.html')
 
+import sqlite3
+from flask import render_template, request, redirect, url_for, session, flash
+
 @app.route('/notas1', methods=['GET', 'POST'])
 def notas1():
     tipo_inf = 'notas1'
     
-    # Conexión a la base de datos SQLite local
+    # Obtenemos el rol o el maestro actual de la sesión
+    rol_actual = str(session.get('rol', '')).strip().lower()
+    maestro_actual = session.get('usuario') or session.get('nombre_maestro')
+    
     conexion = sqlite3.connect('sigem_ml.db')
-    conexion.row_factory = sqlite3.Row  # Permite acceder a las columnas por su nombre
+    conexion.row_factory = sqlite3.Row
     cursor = conexion.cursor()
 
     try:
-        # 1. Obtener la lista de estudiantes
-        cursor.execute("SELECT id_estudiante, nombres, apellidos, orden, grado FROM estudiantes")
+        # 1. FILTRAR ESTUDIANTES POR MAESTRO (si no es admin)
+        if rol_actual != 'admin' and maestro_actual and maestro_actual.lower() != 'admin':
+            cursor.execute("""
+                SELECT id_estudiante, nombres, apellidos, orden, grado 
+                FROM estudiantes 
+                WHERE maestro = ? 
+                ORDER BY apellidos, nombres ASC
+            """, (maestro_actual,))
+        else:
+            # Si es administrador, muestra todos los estudiantes ordenados alfabéticamente
+            cursor.execute("""
+                SELECT id_estudiante, nombres, apellidos, orden, grado 
+                FROM estudiantes 
+                ORDER BY apellidos, nombres ASC
+            """)
+            
         lista_estudiantes = cursor.fetchall()
 
         if not lista_estudiantes:
             cursor.close()
             conexion.close()
-            flash('No hay estudiantes registrados.', 'warning')
             return render_template('notas1.html', lista_estudiantes=[], estudiante=None, notas={})
 
-        # 2. Identificar el estudiante seleccionado (por parámetro GET o formulario POST)
+        # 2. SELECCIONAR ESTUDIANTE Y GENERAR NÚMERO DE ORDEN AUTOMÁTICO
         id_est_sel = request.args.get('id_estudiante') or request.form.get('id_estudiante')
+        
         if id_est_sel:
             estudiante = next((e for e in lista_estudiantes if str(e['id_estudiante']) == str(id_est_sel)), lista_estudiantes[0])
         else:
             estudiante = lista_estudiantes[0]
 
-        # 3. GUARDAR TODOS LOS CAMPOS DEL FORMULARIO (Método POST cuando el usuario hace clic en guardar)
+        # Calculamos su número de orden basándose en su posición en la lista (1, 2, 3...)
+        indice_en_lista = list(lista_estudiantes).index(estudiante) + 1
+        
+        estudiante_dict = dict(estudiante)
+        if not estudiante_dict.get('orden') or estudiante_dict['orden'] == 0:
+            estudiante_dict['orden'] = indice_en_lista
+
+        # 3. GUARDAR LOS DATOS DEL FORMULARIO (POST)
         if request.method == 'POST':
             for campo, valor in request.form.items():
                 if campo == 'id_estudiante':
                     continue
-                # Inserta o actualiza dinámicamente cada input del HTML en la tabla clave-valor
                 cursor.execute("""
                     INSERT INTO calificaciones_detalle (id_estudiante, tipo_informe, campo_nombre, valor)
                     VALUES (?, ?, ?, ?)
@@ -1235,17 +1261,14 @@ def notas1():
                 """, (estudiante['id_estudiante'], tipo_inf, campo, valor, valor))
                 
             conexion.commit()
-            flash('Calificaciones guardadas correctamente.', 'success')
             cursor.close()
             conexion.close()
             return redirect(url_for('notas1', id_estudiante=estudiante['id_estudiante']))
 
-        # 4. CARGAR LOS DATOS GUARDADOS PARA MOSTRARLOS EN EL HTML (Método GET)
+        # 4. CARGAR CALIFICACIONES GUARDADAS (GET)
         cursor.execute("SELECT campo_nombre, valor FROM calificaciones_detalle WHERE id_estudiante = ? AND tipo_informe = ?", 
                        (estudiante['id_estudiante'], tipo_inf))
         resultados = cursor.fetchall()
-        
-        # Diccionario clave-valor donde la llave es el 'name' del input y el valor es lo que está guardado
         notas = {row['campo_nombre']: row['valor'] for row in resultados}
 
         cursor.close()
@@ -1253,15 +1276,14 @@ def notas1():
         
         return render_template('notas1.html', 
                                lista_estudiantes=lista_estudiantes, 
-                               estudiante=estudiante, 
+                               estudiante=estudiante_dict, 
                                notas=notas)
 
     except Exception as e:
         if conexion:
             conexion.close()
-        print(f"Error en la ruta notas1: {e}")
-        flash(f'Ocurrió un error en el servidor: {e}', 'danger')
-        return redirect(url_for('index')) # O la ruta principal de tu menú
+        print(f"Error en notas1: {e}")
+        return redirect(url_for('index'))
     
 @app.route('/notas2')
 def notas2():
