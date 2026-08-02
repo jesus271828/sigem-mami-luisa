@@ -9,7 +9,6 @@
     <div class="container mt-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2>Listado General de Estudiantes</h2>
-            <!-- Cambia 'menu_principal' por el nombre exacto de tu función en app.py -->
             <a href="/menu" class="btn btn-secondary">Volver al Menú</a>
         </div>
 
@@ -28,7 +27,8 @@
                     <tbody>
                         {% for est in estudiantes %}
                         <tr>
-                            <td>{{ est.numero_orden }}</td>
+                            <!-- Usamos loop.index para que se enumere 1, 2, 3... secuencialmente por curso -->
+                            <td><strong>{{ loop.index }}</strong></td>
                             <td>{{ est.id_estudiante }}</td>
                             <td>{{ est.nombres }}</td>
                             <td>{{ est.apellidos }}</td>
