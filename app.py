@@ -1201,25 +1201,25 @@ from flask import render_template, request, redirect, url_for, session, flash
 def notas1():
     tipo_inf = 'notas1'
     
-    # Obtenemos el rol o el maestro actual de la sesión
+    # Obtenemos el rol y el grado/sección actual del usuario en sesión (si aplica)
     rol_actual = str(session.get('rol', '')).strip().lower()
-    maestro_actual = session.get('usuario') or session.get('nombre_maestro')
+    grado_docente = session.get('grado') or session.get('grado_asignado')
     
     conexion = sqlite3.connect('sigem_ml.db')
     conexion.row_factory = sqlite3.Row
     cursor = conexion.cursor()
 
     try:
-        # 1. FILTRAR ESTUDIANTES POR MAESTRO (si no es admin)
-        if rol_actual != 'admin' and maestro_actual and maestro_actual.lower() != 'admin':
+        # 1. FILTRAR ESTUDIANTES POR GRADO (o mostrar todos si es administrador o no tiene grado restringido)
+        if rol_actual != 'admin' and grado_docente:
             cursor.execute("""
                 SELECT id_estudiante, nombres, apellidos, orden, grado 
                 FROM estudiantes 
-                WHERE maestro = ? 
+                WHERE grado = ? OR grado IS NULL OR grado = ''
                 ORDER BY apellidos, nombres ASC
-            """, (maestro_actual,))
+            """, (grado_docente,))
         else:
-            # Si es administrador, muestra todos los estudiantes ordenados alfabéticamente
+            # Si es admin o no hay restricción de grado, muestra los 14 estudiantes ordenados alfabéticamente
             cursor.execute("""
                 SELECT id_estudiante, nombres, apellidos, orden, grado 
                 FROM estudiantes 
