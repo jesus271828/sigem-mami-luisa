@@ -1201,31 +1201,17 @@ from flask import render_template, request, redirect, url_for, session, flash
 def notas1():
     tipo_inf = 'notas1'
     
-    # Obtenemos el rol y el grado/sección actual del usuario en sesión (si aplica)
-    rol_actual = str(session.get('rol', '')).strip().lower()
-    grado_docente = session.get('grado') or session.get('grado_asignado')
-    
     conexion = sqlite3.connect('sigem_ml.db')
     conexion.row_factory = sqlite3.Row
     cursor = conexion.cursor()
 
     try:
-        # 1. FILTRAR ESTUDIANTES POR GRADO (o mostrar todos si es administrador o no tiene grado restringido)
-        if rol_actual != 'admin' and grado_docente:
-            cursor.execute("""
-                SELECT id_estudiante, nombres, apellidos, orden, grado 
-                FROM estudiantes 
-                WHERE grado = ? OR grado IS NULL OR grado = ''
-                ORDER BY apellidos, nombres ASC
-            """, (grado_docente,))
-        else:
-            # Si es admin o no hay restricción de grado, muestra los 14 estudiantes ordenados alfabéticamente
-            cursor.execute("""
-                SELECT id_estudiante, nombres, apellidos, orden, grado 
-                FROM estudiantes 
-                ORDER BY apellidos, nombres ASC
-            """)
-            
+        # CONSULTA DIRECTA: Trae absolutamente todos los estudiantes sin filtros restrictivos
+        cursor.execute("""
+            SELECT id_estudiante, nombres, apellidos, grado 
+            FROM estudiantes 
+            ORDER BY apellidos, nombres ASC
+        """)
         lista_estudiantes = cursor.fetchall()
 
         if not lista_estudiantes:
@@ -1233,7 +1219,7 @@ def notas1():
             conexion.close()
             return render_template('notas1.html', lista_estudiantes=[], estudiante=None, notas={})
 
-        # 2. SELECCIONAR ESTUDIANTE Y GENERAR NÚMERO DE ORDEN AUTOMÁTICO
+        # Selección del estudiante activo
         id_est_sel = request.args.get('id_estudiante') or request.form.get('id_estudiante')
         
         if id_est_sel:
@@ -1241,14 +1227,13 @@ def notas1():
         else:
             estudiante = lista_estudiantes[0]
 
-        # Calculamos su número de orden basándose en su posición en la lista (1, 2, 3...)
+        # Número de orden generado por su posición en la lista
         indice_en_lista = list(lista_estudiantes).index(estudiante) + 1
         
         estudiante_dict = dict(estudiante)
-        if not estudiante_dict.get('orden') or estudiante_dict['orden'] == 0:
-            estudiante_dict['orden'] = indice_en_lista
+        estudiante_dict['orden'] = indice_en_lista
 
-        # 3. GUARDAR LOS DATOS DEL FORMULARIO (POST)
+        # Guardar datos (POST)
         if request.method == 'POST':
             for campo, valor in request.form.items():
                 if campo == 'id_estudiante':
@@ -1265,7 +1250,7 @@ def notas1():
             conexion.close()
             return redirect(url_for('notas1', id_estudiante=estudiante['id_estudiante']))
 
-        # 4. CARGAR CALIFICACIONES GUARDADAS (GET)
+        # Cargar notas guardadas (GET)
         cursor.execute("SELECT campo_nombre, valor FROM calificaciones_detalle WHERE id_estudiante = ? AND tipo_informe = ?", 
                        (estudiante['id_estudiante'], tipo_inf))
         resultados = cursor.fetchall()
