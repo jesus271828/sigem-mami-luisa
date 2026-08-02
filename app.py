@@ -324,6 +324,11 @@ def logout():
 def inscripcion():
     if 'usuario' not in session:
         return redirect(url_for('login'))
+        
+    rol_actual = str(session.get('rol', '')).lower().strip()
+    if rol_actual not in ['admin', 'oficina']:
+        flash('Acceso denegado.', 'danger')
+        return redirect('/menu')
 
     if request.method == 'POST':
         import base64
