@@ -1053,7 +1053,8 @@ def listado_estudiantes():
     
     conn = get_db_connection()
     try:
-        cursos_disponibles = conn.execute('SELECT DISTINCT grado FROM estudiantes WHERE grado IS NOT NULL AND grado != "" ORDER BY grado ASC').fetchall()
+        # Obtenemos la lista de cursos para el selector
+        cursos_disponibles = conn.execute('SELECT DISTINCT grado FROM estudiantes WHERE grado IS NOT NULL').fetchall()
         
         if rol_actual in ['oficina', 'admin']:
             if curso_seleccionado:
