@@ -7,16 +7,16 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body class="bg-light p-5">
-    <div class="container" style="max-width: 900px;">
+    <div class="container" style="max-width: 950px;">
         <div class="card shadow p-4">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2><i class="fas fa-calendar-check text-success"></i> Control de Asistencia</h2>
                 <a href="/menu" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Volver al Menú</a>
             </div>
 
-            <!-- SELECTOR DE GRADO (Se envía automáticamente al cambiar de opción) -->
+            <!-- SELECTOR DE GRADO Y FECHA -->
             <form method="GET" action="/asistencia" class="row g-3 align-items-end mb-4 bg-white p-3 rounded border">
-                <div class="col-md-9">
+                <div class="col-md-6">
                     <label for="grado" class="form-label fw-bold">Seleccione el Grado a Evaluar:</label>
                     <select name="grado" id="grado" class="form-select" onchange="this.form.submit()">
                         <option value="">-- Seleccione un grado --</option>
@@ -25,26 +25,59 @@
                         {% endfor %}
                     </select>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Fecha:</label>
+                    <input type="date" name="fecha" class="form-control" value="{{ fecha_actual }}" onchange="this.form.submit()">
+                </div>
+                <div class="col-md-2">
                     <button type="submit" class="btn btn-primary w-100"><i class="fas fa-search"></i> Cargar</button>
                 </div>
             </form>
 
-            <!-- TABLA DE ALUMNOS (Solo aparece si seleccionaste un grado) -->
+            <!-- TABLA DE ALUMNOS Y RESUMEN DE AUSENTES -->
             {% if grado_seleccionado %}
                 <hr>
                 <h4 class="text-primary mb-3">Estudiantes de: <strong>{{ grado_seleccionado }}</strong></h4>
                 
                 {% if estudiantes %}
+                    <!-- SECCIÓN NUEVA: RESUMEN DE AUSENTES DE ESTE DÍA -->
+                    <div class="card border-danger mb-4 shadow-sm">
+                        <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="fas fa-user-times"></i> Estudiantes Ausentes en la Fecha: {{ fecha_actual }}</h5>
+                            <span class="badge bg-light text-danger fs-6">{{ ausentes_hoy|length if ausentes_hoy else 0 }} ausencias</span>
+                        </div>
+                        <div class="card-body">
+                            {% if ausentes_hoy %}
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-bordered table-striped align-middle mb-0">
+                                        <thead class="table-dark">
+                                            <tr>
+                                                <th>Matrícula</th>
+                                                <th>Apellidos y Nombres</th>
+                                                <th class="text-center">Estado Registrado</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for aus in ausentes_hoy %}
+                                            <tr>
+                                                <td><code>{{ aus.id_estudiante }}</code></td>
+                                                <td>{{ aus.apellidos }}, {{ aus.nombres }}</td>
+                                                <td class="text-center"><span class="badge bg-danger">{{ aus.estado }}</span></td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <p class="text-muted mb-0"><i class="fas fa-check-circle text-success"></i> No hay ausencias registradas para este día (o aún no se ha guardado asistencia).</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- FORMULARIO GENERAL PARA PASE DE LISTA -->
                     <form method="POST" action="/asistencia">
                         <input type="hidden" name="grado_actual" value="{{ grado_seleccionado }}">
-
-                        <div class="row mb-4">
-                            <div class="col-md-4">
-                                <label class="form-label fw-bold">Fecha:</label>
-                                <input type="date" name="fecha" class="form-control" required value="{{ fecha_actual }}">
-                            </div>
-                        </div>
+                        <input type="hidden" name="fecha" value="{{ fecha_actual }}">
 
                         <div class="table-responsive">
                             <table class="table table-striped table-hover align-middle">
@@ -62,9 +95,9 @@
                                         <td>{{ est['nombres'] }} {{ est['apellidos'] }}</td>
                                         <td>
                                             <select name="estado_{{ est['id_estudiante'] }}" class="form-select text-center">
-                                                <option value="Presente" class="text-success">🟢 Presente</option>
-                                                <option value="Ausente" class="text-danger">🔴 Ausente</option>
-                                                <option value="Tarde" class="text-warning">🟡 Tarde</option>
+                                                <option value="Presente" {% if est.get('estado_actual') == 'Presente' %}selected{% endif %} class="text-success">🟢 Presente</option>
+                                                <option value="Ausente" {% if est.get('estado_actual') == 'Ausente' %}selected{% endif %} class="text-danger">🔴 Ausente</option>
+                                                <option value="Tarde" {% if est.get('estado_actual') == 'Tarde' %}selected{% endif %} class="text-warning">🟡 Tarde</option>
                                             </select>
                                         </td>
                                     </tr>
