@@ -1363,6 +1363,116 @@ def asistencia():
                            ausentes_hoy=ausentes_hoy)
 
 
+from datetime import datetime
+from flask import send_file, render_template, request, redirect, url_for, session, flash
+import io
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib import colors
+
+@app.route('/asistencia', methods=['GET', 'POST'])
+def asistencia():
+    if 'usuario' not in session:
+        flash('Acceso denegado.', 'danger')
+        return redirect(url_for('login'))
+        
+    usuario_actual = str(session.get('usuario', '')).strip()
+    rol_actual = str(session.get('rol', '')).strip().lower()
+    
+    conn = get_db_connection()
+    try:
+        # Obtenemos la lista de grados únicos garantizando que la variable 'grados' se forme correctamente
+        cursos_db = conn.execute("SELECT DISTINCT grado FROM estudiantes WHERE grado IS NOT NULL AND TRIM(grado) != '' ORDER BY grado ASC").fetchall()
+        grados = [c['grado'] for c in cursos_db]
+        
+        # Fecha por defecto o la que seleccione el usuario en el input de fecha
+        fecha_actual = request.args.get('fecha', '') or request.form.get('fecha', '')
+        if not fecha_actual:
+            fecha_actual = datetime.now().strftime('%Y-%m-%d')
+        
+        curso_docente = None
+        if rol_actual not in ['oficina', 'admin']:
+            usuario_db = conn.execute('SELECT curso_asignado FROM usuarios WHERE username = ?', (usuario_actual,)).fetchone()
+            if usuario_db and usuario_db['curso_asignado']:
+                curso_docente = usuario_db['curso_asignado'].strip()
+
+        if request.method == 'POST':
+            grado_seleccionado = request.form.get('grado_actual', '').strip()
+            
+            estudiantes = conn.execute('''
+                SELECT * FROM estudiantes 
+                WHERE grado = ? 
+                ORDER BY apellidos ASC, nombres ASC
+            ''', (grado_seleccionado,)).fetchall()
+            
+            for est in estudiantes:
+                est_id = str(est['id_estudiante'])
+                estado = request.form.get(f'estado_{est_id}', 'Presente')
+                
+                # Verificamos si ya existe el registro para ese estudiante en esa fecha
+                existe = conn.execute('SELECT id FROM asistencia WHERE id_estudiante = ? AND fecha = ?', (est_id, fecha_actual)).fetchone()
+                if existe:
+                    conn.execute('UPDATE asistencia SET estado = ?, grado = ? WHERE id_estudiante = ? AND fecha = ?', (estado, grado_seleccionado, est_id, fecha_actual))
+                else:
+                    conn.execute('INSERT INTO asistencia (id_estudiante, grado, fecha, estado) VALUES (?, ?, ?, ?)', (est_id, grado_seleccionado, fecha_actual, estado))
+            
+            conn.commit()
+            flash(f'Asistencia guardada correctamente para el grado {grado_seleccionado}.', 'success')
+            return redirect(url_for('asistencia', grado=grado_seleccionado, fecha=fecha_actual))
+            
+        else:
+            grado_seleccionado = request.args.get('grado', '').strip()
+            
+            if not grado_seleccionado and curso_docente:
+                grado_seleccionado = curso_docente
+                
+            estudiantes = []
+            ausentes_hoy = []
+            
+            if grado_seleccionado:
+                rows = conn.execute('''
+                    SELECT e.*, a.estado as estado_asistencia 
+                    FROM estudiantes e
+                    LEFT JOIN asistencia a ON e.id_estudiante = a.id_estudiante AND a.fecha = ?
+                    WHERE e.grado = ? 
+                    ORDER BY e.apellidos ASC, e.nombres ASC
+                ''', (fecha_actual, grado_seleccionado)).fetchall()
+                
+                for row in rows:
+                    est = dict(row)
+                    est['estado_actual'] = est['estado_asistencia'] if est['estado_asistencia'] else 'Presente'
+                    estudiantes.append(est)
+                
+                ausentes_rows = conn.execute('''
+                    SELECT e.id_estudiante, e.nombres, e.apellidos, a.estado 
+                    FROM asistencia a
+                    JOIN estudiantes e ON a.id_estudiante = e.id_estudiante
+                    WHERE a.grado = ? AND a.fecha = ? AND a.estado IN ('Ausente', 'Tarde')
+                    ORDER BY e.apellidos ASC
+                ''', (grado_seleccionado, fecha_actual)).fetchall()
+                
+                for aus in ausentes_rows:
+                    ausentes_hoy.append(dict(aus))
+                    
+    except Exception as e:
+        print(f"Error en asistencia: {e}")
+        grados = []
+        estudiantes = []
+        ausentes_hoy = []
+        grado_seleccionado = ''
+        fecha_actual = datetime.now().strftime('%Y-%m-%d')
+    finally:
+        conn.close()
+        
+    return render_template('asistencia.html', 
+                           grados=grados, 
+                           grado_seleccionado=grado_seleccionado, 
+                           fecha_actual=fecha_actual, 
+                           estudiantes=estudiantes,
+                           ausentes_hoy=ausentes_hoy)
+
+
 @app.route('/descargar_reporte_ausencias')
 def descargar_reporte_ausencias():
     if 'usuario' not in session:
@@ -1373,7 +1483,6 @@ def descargar_reporte_ausencias():
         
     conn = get_db_connection()
     try:
-        # Consultamos las ausencias y tardanzas de TODOS los cursos para la fecha dada
         registros = conn.execute('''
             SELECT a.grado, e.id_estudiante, e.nombres, e.apellidos, a.estado 
             FROM asistencia a
@@ -1382,7 +1491,6 @@ def descargar_reporte_ausencias():
             ORDER BY a.grado ASC, e.apellidos ASC
         ''', (fecha,)).fetchall()
         
-        # --- Generación del PDF en memoria con ReportLab ---
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
         elementos = []
