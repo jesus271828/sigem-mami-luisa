@@ -6,12 +6,12 @@
     <style>
         @page {
             size: letter;
-            margin: 8mm 10mm; /* Márgenes equilibrados para que llene la hoja */
+            margin: 8mm 10mm;
         }
         body {
             font-family: Helvetica, Arial, sans-serif;
-            font-size: 13px; /* Letras más grandes y claras */
-            line-height: 1.25; 
+            font-size: 13px;
+            line-height: 1.22; 
             color: #000;
             margin: 0;
             padding: 0;
@@ -21,25 +21,25 @@
         .header-table {
             width: 100%;
             border-bottom: 2.5px solid #1A237E;
-            margin-bottom: 6px;
-            padding-bottom: 4px;
+            margin-bottom: 5px;
+            padding-bottom: 3px;
         }
         .section-title {
             color: #1A237E;
-            font-size: 14.5px;
+            font-size: 14px;
             font-weight: bold;
             border-bottom: 1.5px solid #1A237E;
-            margin-top: 8px;
-            margin-bottom: 4px;
+            margin-top: 6px;
+            margin-bottom: 3px;
             text-transform: uppercase;
         }
         .grid-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 3px;
+            margin-bottom: 2px;
         }
         .grid-table td {
-            padding: 3px 2px;
+            padding: 2.5px 2px;
             vertical-align: top;
             font-size: 12.5px;
         }
@@ -56,10 +56,10 @@
             margin-top: 15px;
             width: 100%;
         }
-        /* Recuadro de la foto más grande y proporcionado */
+        /* Recuadro de la foto ligeramente más compacto para ahorrar espacio vertical */
         .photo-box {
-            width: 3.2cm;
-            height: 4.1cm;
+            width: 2.8cm;
+            height: 3.5cm;
             border: 1px solid #444;
             text-align: center;
             vertical-align: middle;
@@ -81,7 +81,7 @@
         <tr>
             <td width="10%">
                 {% if logo_src %}
-                    <img src="{{ logo_src }}" width="42">
+                    <img src="{{ logo_src }}" width="40">
                 {% endif %}
             </td>
             <td width="63%">
@@ -212,11 +212,7 @@
         </tr>
     </table>
 
-
-    <!-- ================= PÁGINA 2 ================= -->
-    <div class="page-break"></div>
-
-    <!-- 4. TUTOR -->
+    <!-- 4. TUTOR (Ahora cabe completamente en la primera página) -->
     <div class="section-title">Tutor:</div>
     <table class="grid-table" style="width: 100%; border-collapse: collapse;">
         <tr>
@@ -240,6 +236,10 @@
             </td>
         </tr>
     </table>
+
+
+    <!-- ================= PÁGINA 2 ================= -->
+    <div class="page-break"></div>
 
     <!-- 5. AUTORIZADOS PARA RETIRAR AL ESTUDIANTE -->
     <div class="section-title">AUTORIZADOS PARA RETIRAR AL ESTUDIANTE:</div>
