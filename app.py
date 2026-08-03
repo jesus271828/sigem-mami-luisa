@@ -1050,30 +1050,16 @@ def listado_estudiantes():
     usuario_actual = str(session.get('usuario', '')).strip()
     rol_actual = str(session.get('rol', '')).strip().lower()
     
-    # Capturamos si la oficina seleccionó un curso específico en la URL (ej: /listado-estudiantes?curso=1ro+A)
-    curso_seleccionado = request.args.get('curso', '').strip()
-    
     conn = get_db_connection()
     try:
-        # Obtenemos la lista de todos los cursos disponibles para el menú desplegable de oficina
-        cursos_disponibles = conn.execute('SELECT DISTINCT grado FROM estudiantes WHERE grado IS NOT NULL AND grado != "" ORDER BY grado ASC').fetchall()
-        
+        # Si es oficina o admin, ve todos los estudiantes ordenados por grado y apellido
         if rol_actual in ['oficina', 'admin']:
-            if curso_seleccionado:
-                # Si la oficina seleccionó un curso específico, filtramos y ordenamos por apellido
-                estudiantes = conn.execute('''
-                    SELECT * FROM estudiantes 
-                    WHERE grado = ? 
-                    ORDER BY apellidos ASC, nombres ASC
-                ''', (curso_seleccionado,)).fetchall()
-            else:
-                # Si no ha seleccionado ninguno, mostramos todos ordenados por curso y apellido
-                estudiantes = conn.execute('''
-                    SELECT * FROM estudiantes 
-                    ORDER BY grado ASC, apellidos ASC, nombres ASC
-                ''', '').fetchall()
+            estudiantes = conn.execute('''
+                SELECT * FROM estudiantes 
+                ORDER BY grado ASC, apellidos ASC, nombres ASC
+            ''').fetchall()
         else:
-            # Si es maestro, buscamos su curso asignado en la tabla usuarios (usando 'username')
+            # Buscamos el curso asignado al maestro usando 'username' en la tabla usuarios
             usuario_db = conn.execute('''
                 SELECT curso_asignado FROM usuarios 
                 WHERE username = ?
@@ -1082,12 +1068,14 @@ def listado_estudiantes():
             curso_docente = usuario_db['curso_asignado'] if usuario_db and usuario_db['curso_asignado'] else session.get('grado')
             
             if curso_docente:
+                # Filtramos estrictamente por el curso del maestro y ordenamos por apellido alfabéticamente
                 estudiantes = conn.execute('''
                     SELECT * FROM estudiantes 
                     WHERE grado = ? 
                     ORDER BY apellidos ASC, nombres ASC
                 ''', (curso_docente,)).fetchall()
             else:
+                # Si por alguna razón no tiene curso asignado, muestra todos ordenados
                 estudiantes = conn.execute('''
                     SELECT * FROM estudiantes 
                     ORDER BY grado ASC, apellidos ASC, nombres ASC
@@ -1096,15 +1084,10 @@ def listado_estudiantes():
     except Exception as e:
         print(f"Error en listado_estudiantes: {e}")
         estudiantes = []
-        cursos_disponibles = []
     finally:
         conn.close()
     
-    return render_template('listado_estudiantes.html', 
-                           estudiantes=estudiantes, 
-                           cursos_disponibles=cursos_disponibles, 
-                           curso_seleccionado=curso_seleccionado,
-                           rol_actual=rol_actual)
+    return render_template('listado_estudiantes.html', estudiantes=estudiantes)
 
 
 @app.route('/buscar_estudiante', methods=['GET', 'POST'])
