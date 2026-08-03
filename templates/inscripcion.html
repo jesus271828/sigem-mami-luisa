@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <title>Inscripción - SIGEM Mami Luisa</title>
+    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root { --primary-color: #1A237E; }
@@ -17,13 +19,13 @@
 
 <div class="container-fluid">
     <div class="row">
-        <!-- Sidebar de navegación -->
+        <!-- Sidebar de Navegación -->
         <div class="col-md-3 sidebar mb-4">
             <h4 class="mb-4">SIGEM Mami Luisa</h4>
             <p><i class="fas fa-user-circle"></i> {{ session.get('nombre_completo', 'Administrador') }} ({{ session.get('rol', 'admin') }})</p>
             <hr>
 
-            <!-- TARJETA DE REGISTROS GENERALES -->
+            <!-- Tarjeta de Registros Generales -->
             <div class="card bg-dark text-white p-3 mb-3 border-secondary shadow-sm">
                 <h6 class="text-warning fw-bold mb-3"><i class="fas fa-chart-pie"></i> REGISTROS GENERALES</h6>
                 <div class="d-flex justify-content-between align-items-center mb-2">
@@ -47,7 +49,7 @@
         <!-- Contenido del Formulario -->
         <div class="col-md-9">
 
-            <!-- BLOQUE DE MENSAJES FLASH (ALERTAS) -->
+            <!-- Bloque de Mensajes Flash (Alertas) -->
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
@@ -78,7 +80,7 @@
                     </div>
                 </div>
 
-                <!-- 0. ENCABEZADO -->
+                <!-- 0. Encabezado -->
                 <div class="form-card text-center">
                     <h3 class="mb-1 text-primary fw-bold">Centro Educativo Mami Luisa S.R.L.</h3>
                     <p class="text-muted fst-italic">"Educando con amor para un mundo mejor"</p>
@@ -96,7 +98,7 @@
                     </div>
                 </div>
 
-                <!-- 1. DATOS DEL ESTUDIANTE -->
+                <!-- 1. Datos del Estudiante -->
                 <div class="form-card">
                     <h5 class="section-title">Datos del Estudiante</h5>
                     <div class="row g-3">
@@ -112,22 +114,32 @@
                         <div class="col-md-4">
                             <select name="grado" class="form-select" required>
                                 <option value="" disabled selected>Seleccione Grado</option>
-                                <option value="1ro A">1ro A</option>
-                                <option value="1ro B">1ro B</option>
-                                <option value="2do A">2do A</option>
-                                <option value="2do B">2do B</option>
-                                <option value="3ro A">3ro A</option>
-                                <option value="3ro B">3ro B</option>
-                                <option value="4to A">4to A</option>
-                                <option value="4to B">4to B</option>
-                                <option value="5to A">5to A</option>
-                                <option value="5to B">5to B</option>
-                                <option value="6to A">6to A</option>
-                                <option value="6to B">6to B</option>
+                                <optgroup label="Nivel Inicial ML – L2">
+                                    <option value="Párvulos">Párvulos</option>
+                                    <option value="Prekínder – A">Prekínder – A</option>
+                                    <option value="Kínder – A">Kínder – A</option>
+                                    <option value="Kínder – B">Kínder – B</option>
+                                    <option value="Preprimario – A">Preprimario – A</option>
+                                    <option value="Preprimario – B">Preprimario – B</option>
+                                </optgroup>
+                                <optgroup label="Primaria">
+                                    <option value="1ro A">1ro A</option>
+                                    <option value="1ro B">1ro B</option>
+                                    <option value="2do A">2do A</option>
+                                    <option value="2do B">2do B</option>
+                                    <option value="3ro A">3ro A</option>
+                                    <option value="3ro B">3ro B</option>
+                                    <option value="4to A">4to A</option>
+                                    <option value="4to B">4to B</option>
+                                    <option value="5to A">5to A</option>
+                                    <option value="5to B">5to B</option>
+                                    <option value="6to A">6to A</option>
+                                    <option value="6to B">6to B</option>
+                                </optgroup>
                             </select>
                         </div>
                         <div class="col-md-4">
-                           <input type="date" name="fecha_nacimiento" class="form-control" required>
+                            <input type="date" name="fecha_nacimiento" class="form-control" required>
                         </div>
                         <div class="col-md-2">
                             <input type="number" name="edad" class="form-control" placeholder="Edad">
@@ -189,7 +201,7 @@
                     </div>
                 </div>
 
-                <!-- 2. DATOS DEL PADRE, MADRE Y TUTOR -->
+                <!-- 2. Datos del Padre, Madre y Tutor -->
                 {% for rol_familiar in [('padre', 'Padre'), ('madre', 'Madre'), ('tutor', 'Tutor')] %}
                 <div class="form-card">
                     <h5 class="section-title">Datos del {{ rol_familiar[1] }}</h5>
@@ -232,7 +244,7 @@
                 </div>
                 {% endfor %}
 
-                <!-- 3. DATOS DE LA PERSONA CON LA QUE VIVE -->
+                <!-- 3. Datos de la Persona con la que Vive -->
                 <div class="form-card">
                     <h5 class="section-title">Datos de la Persona con la que Vive</h5>
                     <p class="text-muted small">*(En el caso de que viva con la madre, el padre o el tutor, solo debe completar nombre y parentesco)*</p>
@@ -277,7 +289,7 @@
                     </div>
                 </div>
 
-                <!-- 4. PRINCIPAL RESPONSABLE ECONÓMICO -->
+                <!-- 4. Principal Responsable Económico -->
                 <div class="form-card">
                     <h5 class="section-title">Principal Responsable Económico</h5>
                     <div class="row g-3">
@@ -321,7 +333,7 @@
                     </div>
                 </div>
 
-                <!-- 5. AUTORIZADOS A RETIRAR (5 ESTRICTAMENTE) -->
+                <!-- 5. Autorizados a Retirar (5 Estrictamente) -->
                 <div class="form-card">
                     <h5 class="section-title">Autorizados a Retirar al Estudiante (Hasta 5)</h5>
                     <p class="text-muted small">Adjuntar copia de cédula de los autorizados:</p>
@@ -347,7 +359,7 @@
                     {% endfor %}
                 </div>
 
-                <!-- 6. MEDICACIÓN EN EL CENTRO -->
+                <!-- 6. Medicación en el Centro -->
                 <div class="form-card">
                     <h5 class="section-title">Medicación en el Centro Educativo</h5>
                     <p class="text-muted small">Medicamentos genéricos normalmente utilizados en el centro: Analgésico, Antiinflamatorio, Antipirético, Antihistamínico y Antiespasmódico.</p>
@@ -362,7 +374,7 @@
                     </div>
                 </div>
 
-                <!-- 7. REDES SOCIALES -->
+                <!-- 7. Redes Sociales -->
                 <div class="form-card">
                     <h5 class="section-title">17. Redes Sociales</h5>
                     <p class="text-muted small">
@@ -390,7 +402,7 @@
                     </div>
                 </div>
 
-                <!-- BOTONES DE ACCIÓN PRINCIPAL -->
+                <!-- Botones de Acción Principal -->
                 <div class="d-flex gap-3 mb-5">
                     <button type="submit" formaction="/inscripcion" formmethod="POST" class="btn btn-success btn-lg w-100 shadow">
                         <i class="fas fa-save"></i> Guardar Cambios
