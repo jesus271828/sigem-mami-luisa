@@ -1249,6 +1249,8 @@ def generar_pdf(id_estudiante):
         
     return response
 
+from datetime import datetime
+
 @app.route('/asistencia', methods=['GET', 'POST'])
 def asistencia():
     if 'usuario' not in session:
@@ -1260,45 +1262,77 @@ def asistencia():
     
     conn = get_db_connection()
     try:
-        # Obtenemos los grados disponibles para llenar el select
-        cursos_disponibles = conn.execute('SELECT DISTINCT grado FROM estudiantes WHERE grado IS NOT NULL AND grado != "" ORDER BY grado ASC').fetchall()
+        # Obtenemos la lista de grados únicos para llenar el selector
+        cursos_db = conn.execute('SELECT DISTINCT grado FROM estudiantes WHERE grado IS NOT NULL AND grado != "" ORDER BY grado ASC').fetchall()
+        grados = [c['grado'] for c in cursos_db]
         
-        grado_seleccionado = request.args.get('grado', '') or request.form.get('grado', '')
-        estudiantes = []
+        # Fecha actual por defecto para el formulario
+        fecha_actual = datetime.now().strftime('%Y-%m-%d')
         
-        # Si es maestro (no oficina ni admin) y no ha seleccionado nada, le asignamos su curso por defecto
-        if rol_actual not in ['oficina', 'admin'] and not grado_seleccionado:
+        # Si es maestro y no oficina/admin, determinamos su curso asignado por defecto
+        curso_docente = None
+        if rol_actual not in ['oficina', 'admin']:
             usuario_db = conn.execute('SELECT curso_asignado FROM usuarios WHERE username = ?', (usuario_actual,)).fetchone()
             if usuario_db and usuario_db['curso_asignado']:
-                grado_seleccionado = usuario_db['curso_asignado']
-        
-        if grado_seleccionado:
-            rows = conn.execute('''
+                curso_docente = usuario_db['curso_asignado'].strip()
+            else:
+                curso_docente = str(session.get('grado', '')).strip()
+
+        if request.method == 'POST':
+            # Capturamos los datos enviados al guardar la asistencia
+            grado_seleccionado = request.form.get('grado_actual', '').strip()
+            fecha_asistencia = request.form.get('fecha', fecha_actual)
+            
+            # Buscamos los estudiantes de ese grado para procesar sus estados
+            estudiantes = conn.execute('''
                 SELECT * FROM estudiantes 
                 WHERE grado = ? 
                 ORDER BY apellidos ASC, nombres ASC
             ''', (grado_seleccionado,)).fetchall()
             
-            contador = 1
-            for row in rows:
-                est = dict(row)
-                est['numero_orden'] = contador
-                estudiantes.append(est)
-                contador += 1
+            for est in estudiantes:
+                est_id = str(est['id_estudiante'])
+                estado = request.form.get(f'estado_{est_id}', 'Presente')
                 
+                # Opcional: Aquí puedes insertar o actualizar en tu tabla de asistencia si ya la tienes creada
+                # conn.execute('INSERT INTO asistencia (id_estudiante, fecha, estado) VALUES (?, ?, ?)', (est_id, fecha_asistencia, estado))
+            
+            # conn.commit() # Descomenta si guardas en base de datos
+            flash(f'Asistencia guardada correctamente para el grado {grado_seleccionado}.', 'success')
+            return redirect(url_for('asistencia', grado=grado_seleccionado))
+            
+        else:
+            # Método GET: capturamos el grado seleccionado por la URL o asignamos el del maestro
+            grado_seleccionado = request.args.get('grado', '').strip()
+            
+            if not grado_seleccionado and curso_docente:
+                grado_seleccionado = curso_docente
+                
+            estudiantes = []
+            if grado_seleccionado:
+                rows = conn.execute('''
+                    SELECT * FROM estudiantes 
+                    WHERE grado = ? 
+                    ORDER BY apellidos ASC, nombres ASC
+                ''', (grado_seleccionado,)).fetchall()
+                
+                for row in rows:
+                    estudiantes.append(dict(row))
+                    
     except Exception as e:
         print(f"Error en asistencia: {e}")
-        cursos_disponibles = []
+        grados = []
         estudiantes = []
         grado_seleccionado = ''
+        fecha_actual = datetime.now().strftime('%Y-%m-%d')
     finally:
         conn.close()
         
     return render_template('asistencia.html', 
-                           cursos_disponibles=cursos_disponibles, 
-                           estudiantes=estudiantes, 
-                           grado_seleccionado=grado_seleccionado,
-                           rol_actual=rol_actual)
+                           grados=grados, 
+                           grado_seleccionado=grado_seleccionado, 
+                           fecha_actual=fecha_actual, 
+                           estudiantes=estudiantes)
 
 @app.route('/menu_notas')
 def menu_notas():
