@@ -617,13 +617,8 @@ def inscripcion():
         total_expedientes=total_expedientes, 
         total_usuarios=total_usuarios
     )
-
-import google.generativeai as genai
-import json
-import base64
-
-@app.route('/escanear_ficha', methods=['POST'])
-def escanear_ficha():
+@app.route('/api/escanear-ficha', methods=['POST'])
+def procesar_escaneo_ficha():  # <-- Cambiamos el nombre aquí para que no se repita
     if 'usuario' not in session:
         return {'error': 'No autorizado'}, 401
         
@@ -637,90 +632,28 @@ def escanear_ficha():
 
     try:
         image_bytes = file.read()
-        
-        # Configuramos el modelo de visión para extraer la información de la ficha física
-        # Asegúrate de tener configurada tu API key de Gemini en las variables de entorno de Render (GOOGLE_API_KEY)
         model = genai.GenerativeModel('gemini-1.5-flash')
         
         prompt = """
         Analiza esta imagen de una ficha de inscripción escolar y extrae toda la información disponible.
-        Debes devolver estrictamente un objeto JSON plano (sin bloques de código markdown como ```json ... ```, solo el texto JSON puro) con las siguientes llaves (si algún dato no está presente, déjalo como cadena vacía ""):
+        Devuelve estrictamente un objeto JSON plano (sin bloques de código markdown como ```json ... ```, solo el texto JSON puro) con las siguientes llaves (si algún dato no está presente, déjalo como cadena vacía ""):
         {
-            "anio_escolar": "",
-            "fecha_inscripcion": "",
-            "id_estudiante": "",
-            "nombres": "",
-            "apellidos": "",
-            "grado": "",
-            "fecha_nacimiento": "",
-            "edad": "",
-            "sexo": "",
-            "nacionalidad": "",
-            "lugar_nac": "",
-            "direccion": "",
-            "cant_hermanos": "",
-            "edades_hermanos": "",
-            "lugar_ocupa": "",
-            "tipo_sangre": "",
-            "seguro_medico": "",
-            "alergias": "",
-            "medicamentos": "",
-            "medico_pediatra": "",
-            "centro_medico": "",
-            "emergencia_tel": "",
-            "emergencia_nombre": "",
-            "emergencia_parentesco": "",
-            "padre_nombre": "",
-            "padre_sector": "",
-            "padre_direccion": "",
-            "padre_profesion": "",
-            "padre_cedula": "",
-            "padre_nivel": "",
-            "padre_religion": "",
-            "padre_tel_personal": "",
-            "padre_tel_trabajo": "",
-            "padre_correo": "",
-            "madre_nombre": "",
-            "madre_sector": "",
-            "madre_direccion": "",
-            "madre_profesion": "",
-            "madre_cedula": "",
-            "madre_nivel": "",
-            "madre_religion": "",
-            "madre_tel_personal": "",
-            "madre_tel_trabajo": "",
-            "madre_correo": "",
-            "tutor_nombre": "",
-            "tutor_sector": "",
-            "tutor_direccion": "",
-            "tutor_profesion": "",
-            "tutor_cedula": "",
-            "tutor_nivel": "",
-            "tutor_religion": "",
-            "tutor_tel_personal": "",
-            "tutor_tel_trabajo": "",
-            "tutor_correo": "",
-            "vive_nombres": "",
-            "vive_parentesco": "",
-            "vive_cedula": "",
-            "vive_direccion": "",
-            "vive_sector": "",
-            "vive_profesion": "",
-            "vive_nivel": "",
-            "vive_religion": "",
-            "vive_tel_personal": "",
-            "vive_tel_trabajo": "",
-            "vive_correo": "",
-            "econ_nombres": "",
-            "econ_parentesco": "",
-            "econ_cedula": "",
-            "econ_direccion": "",
-            "econ_sector": "",
-            "econ_profesion": "",
-            "econ_lugar_trabajo": "",
-            "econ_tel_personal": "",
-            "econ_tel_trabajo": "",
-            "econ_correo": "",
+            "anio_escolar": "", "fecha_inscripcion": "", "id_estudiante": "", "nombres": "", "apellidos": "",
+            "grado": "", "fecha_nacimiento": "", "edad": "", "sexo": "", "nacionalidad": "", "lugar_nac": "",
+            "direccion": "", "cant_hermanos": "", "edades_hermanos": "", "lugar_ocupa": "", "tipo_sangre": "",
+            "seguro_medico": "", "alergias": "", "medicamentos": "", "medico_pediatra": "", "centro_medico": "",
+            "emergencia_tel": "", "emergencia_nombre": "", "emergencia_parentesco": "", "padre_nombre": "",
+            "padre_sector": "", "padre_direccion": "", "padre_profesion": "", "padre_cedula": "", "padre_nivel": "",
+            "padre_religion": "", "padre_tel_personal": "", "padre_tel_trabajo": "", "padre_correo": "",
+            "madre_nombre": "", "madre_sector": "", "madre_direccion": "", "madre_profesion": "", "madre_cedula": "",
+            "madre_nivel": "", "madre_religion": "", "madre_tel_personal": "", "madre_tel_trabajo": "", "madre_correo": "",
+            "tutor_nombre": "", "tutor_sector": "", "tutor_direccion": "", "tutor_profesion": "", "tutor_cedula": "",
+            "tutor_nivel": "", "tutor_religion": "", "tutor_tel_personal": "", "tutor_tel_trabajo": "", "tutor_correo": "",
+            "vive_nombres": "", "vive_parentesco": "", "vive_cedula": "", "vive_direccion": "", "vive_sector": "",
+            "vive_profesion": "", "vive_nivel": "", "vive_religion": "", "vive_tel_personal": "", "vive_tel_trabajo": "",
+            "vive_correo": "", "econ_nombres": "", "econ_parentesco": "", "econ_cedula": "", "econ_direccion": "",
+            "econ_sector": "", "econ_profesion": "", "econ_lugar_trabajo": "", "econ_tel_personal": "",
+            "econ_tel_trabajo": "", "econ_correo": "",
             "aut_nombre_1": "", "aut_cedula_1": "", "aut_parentesco_1": "", "aut_tel_1": "",
             "aut_nombre_2": "", "aut_cedula_2": "", "aut_parentesco_2": "", "aut_tel_2": "",
             "aut_nombre_3": "", "aut_cedula_3": "", "aut_parentesco_3": "", "aut_tel_3": "",
