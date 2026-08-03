@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <title>Ficha de Admisión - SIGEM Mami Luisa</title>
-<style>
+    <style>
         @page {
             size: letter;
-            margin: 4mm 8mm; /* Márgenes exteriores compactos */
+            margin: 3mm 6mm; /* Márgenes más compactos para ganar espacio vertical */
         }
         body {
             font-family: Helvetica, Arial, sans-serif;
-            font-size: 13px; /* Tamaño base unificado y legible */
-            line-height: 1.15; 
+            font-size: 11.5px; /* Letra ligeramente más compacta pero 100% legible */
+            line-height: 1.1; 
             color: #000;
             margin: 0;
             padding: 0;
@@ -20,53 +20,56 @@
         }
         .header-table {
             width: 100%;
-            border-bottom: 3px solid #1A237E;
-            margin-bottom: 4px;
-            padding-bottom: 3px;
+            border-bottom: 2px solid #1A237E;
+            margin-bottom: 3px;
+            padding-bottom: 2px;
         }
         .section-title {
             color: #1A237E;
-            font-size: 14px; /* Títulos de sección destacados */
+            font-size: 13px;
             font-weight: bold;
             border-bottom: 1px solid #1A237E;
-            margin-top: 8px;
-            margin-bottom: 3px;
+            margin-top: 5px;
+            margin-bottom: 2px;
             text-transform: uppercase;
         }
         .grid-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 3px;
+            margin-bottom: 2px;
         }
         .grid-table td {
-            padding: 3px 2px; /* Relleno ligeramente ajustado para el nuevo tamaño */
+            padding: 2px 2px;
             vertical-align: top;
-            font-size: 12px; /* Letra de los datos ampliada y clara dentro de las tablas */
+            font-size: 11px;
         }
         .field-label {
             font-weight: bold;
             color: #111;
         }
         .subtext {
-            font-size: 10px; /* Ajustado para que las notas al pie no compitan con los datos */
+            font-size: 9.5px;
             color: #444;
             font-style: italic;
         }
         .signature-section {
-            margin-top: 15px;
+            margin-top: 10px;
             width: 100%;
         }
         /* Estilo para el recuadro de la foto */
         .photo-box {
-            width: 3cm;
-            height: 4cm;
+            width: 2.8cm;
+            height: 3.6cm;
             border: 1px dashed #666;
             text-align: center;
             vertical-align: middle;
             background-color: #f9f9f9;
-            font-size: 10px;
+            font-size: 9px;
             color: #555;
             overflow: hidden;
+        }
+        .page-break {
+            page-break-before: always;
         }
     </style>
 </head>
@@ -76,19 +79,19 @@
 
     <table class="header-table">
         <tr>
-            <td width="12%">
+            <td width="10%">
                 {% if logo_src %}
-                    <img src="{{ logo_src }}" width="40">
+                    <img src="{{ logo_src }}" width="35">
                 {% endif %}
             </td>
-            <td width="100%">
-                <strong style="font-size: 16px; color: #1A237E;">Centro Educativo Mami Luisa S.R.L.</strong><br>
-                <span style="font-size: 14px; color: #444;">"Educando con amor para un mundo mejor"</span>
+            <td width="65%">
+                <strong style="font-size: 15px; color: #1A237E;">Centro Educativo Mami Luisa S.R.L.</strong><br>
+                <span style="font-size: 12px; color: #444;">"Educando con amor para un mundo mejor"</span>
             </td>
-            <td width="30%" style="text-align: right;">
-                <strong style="font-size: 12px; color: #1A237E;">Ficha de Admisión</strong><br>
-                <span>Año Escolar: {{ estudiante.anio_escolar }}</span><br>
-                <span>Fecha: {{ estudiante.fecha_inscripcion }}</span>
+            <td width="25%" style="text-align: right;">
+                <strong style="font-size: 11px; color: #1A237E;">Ficha de Admisión</strong><br>
+                <span style="font-size: 10px;">Año: {{ estudiante.anio_escolar }}</span><br>
+                <span style="font-size: 10px;">Fecha: {{ estudiante.fecha_inscripcion }}</span>
             </td>
         </tr>
     </table>
@@ -97,7 +100,6 @@
     <div class="section-title">Datos del estudiante:</div>
     <table class="grid-table" style="width: 100%; border-collapse: collapse;">
         <tr>
-            <!-- Datos del estudiante (ocupan el espacio izquierdo) -->
             <td style="width: 78%;">
                 <table style="width: 100%; border-collapse: collapse;">
                     <tr>
@@ -108,17 +110,17 @@
                         <td colspan="2"><span class="field-label">Apellidos:</span> {{ estudiante.apellidos }}</td>
                     </tr>
                     <tr>
-                        <td><span class="field-label">Fecha de nacimiento:</span> {{ estudiante.fecha_nacimiento }}</td>
+                        <td><span class="field-label">Nacimiento:</span> {{ estudiante.fecha_nacimiento }}</td>
                         <td><span class="field-label">Edad:</span> {{ estudiante.edad }}</td>
                     </tr>
                     <tr>
                         <td><span class="field-label">Nacionalidad:</span> {{ estudiante.nacionalidad }}</td>
-                        <td><span class="field-label">Lugar de nacimiento:</span> {{ estudiante.lugar_nac }}</td>
+                        <td><span class="field-label">Lugar nac:</span> {{ estudiante.lugar_nac }}</td>
                     </tr>
                 </table>
             </td>
             
-            <!-- Recuadro para la Fotografía (cargada mediante Base64 desde Python) -->
+            <!-- Fotografía dinámica -->
             <td style="width: 22%; text-align: center; vertical-align: top; padding-left: 5px;">
                 <div class="photo-box">
                     {% if estudiante.foto_base64 %}
@@ -131,40 +133,31 @@
         </tr>
     </table>
 
-    <!-- Resto de campos del estudiante que continúan debajo -->
     <table class="grid-table" style="width: 100%; border-collapse: collapse;">
         <tr>
             <td colspan="2"><span class="field-label">Dirección:</span> {{ estudiante.direccion }}</td>
         </tr>
         <tr>
-            <td style="width: 50%;"><span class="field-label">Cantidad de hermanos:</span> {{ estudiante.cant_hermanos }}</td>
-            <td style="width: 50%;"><span class="field-label">Edades:</span> {{ estudiante.edades_hermanos }}</td>
-        </tr>
-        <tr>
-            <td style="width: 50%;"><span class="field-label">Tipo de sangre:</span> {{ estudiante.tipo_sangre }}</td>
-            <td style="width: 50%;"><span class="field-label">Lugar que ocupa:</span> {{ estudiante.lugar_ocupa }}</td>
+            <td style="width: 50%;"><span class="field-label">Hermanos:</span> {{ estudiante.cant_hermanos }} &nbsp; <span class="field-label">Edades:</span> {{ estudiante.edades_hermanos }}</td>
+            <td style="width: 50%;"><span class="field-label">Tipo sangre:</span> {{ estudiante.tipo_sangre }} &nbsp; <span class="field-label">Lugar ocupa:</span> {{ estudiante.lugar_ocupa }}</td>
         </tr>
         <tr>
             <td colspan="2"><span class="field-label">Seguro médico:</span> {{ estudiante.seguro_medico }}</td>
         </tr>
         <tr>
-            <td colspan="2"><span class="field-label">Alergias o condición médica:</span> {{ estudiante.alergias }}</td>
+            <td colspan="2"><span class="field-label">Alergias/Condición:</span> {{ estudiante.alergias }}</td>
         </tr>
         <tr>
-            <td colspan="2"><span class="field-label">Medicamentos que usa:</span> {{ estudiante.medicamentos }}</td>
+            <td colspan="2"><span class="field-label">Medicamentos:</span> {{ estudiante.medicamentos }}</td>
         </tr>
         <tr>
-            <td style="width: 50%;"><span class="field-label">Médico o pediatra:</span> {{ estudiante.medico_pediatra }}</td>
+            <td style="width: 50%;"><span class="field-label">Médico/Pediatra:</span> {{ estudiante.medico_pediatra }}</td>
             <td style="width: 50%;"><span class="field-label">Centro médico:</span> {{ estudiante.centro_medico }}</td>
         </tr>
         <tr>
-            <td colspan="2"><span class="field-label">Teléfono emergencia:</span> {{ estudiante.emergencia_tel }}</td>
-        </tr>
-        <tr>
             <td colspan="2">
-                <span class="field-label">Nombre del adulto:</span> {{ estudiante.emergencia_nombre }} &nbsp;&nbsp;&nbsp;&nbsp; 
-                <span class="field-label">Parentesco:</span> {{ estudiante.emergencia_parentesco }}<br>
-                <span class="subtext">(Adjuntar copia de cédula)</span>
+                <span class="field-label">Emergencia Tel:</span> {{ estudiante.emergencia_tel }} &nbsp;&nbsp;
+                <span class="field-label">Adulto:</span> {{ estudiante.emergencia_nombre }} ({{ estudiante.emergencia_parentesco }}) <span class="subtext">(Cédula)</span>
             </td>
         </tr>
     </table>
@@ -180,20 +173,16 @@
             <td style="width: 40%;"><span class="field-label">Sector:</span> {{ estudiante.padre_sector }}</td>
         </tr>
         <tr>
-            <td style="width: 50%;"><span class="field-label">Profesión u Ocupación:</span> {{ estudiante.padre_profesion }}</td>
-            <td style="width: 50%;"><span class="field-label">Cédula No:</span> {{ estudiante.padre_cedula }}</td>
+            <td style="width: 50%;"><span class="field-label">Ocupación:</span> {{ estudiante.padre_profesion }}</td>
+            <td style="width: 50%;"><span class="field-label">Cédula:</span> {{ estudiante.padre_cedula }}</td>
         </tr>
         <tr>
             <td style="width: 50%;"><span class="field-label">Nivel académico:</span> {{ estudiante.padre_nivel }}</td>
-            <td style="width: 50%;"><span class="field-label">Religión:</span> {{ estudiante.padre_religion }}</td>
-        </tr>
-        <tr>
-            <td style="width: 50%;"><span class="field-label">Teléfono personal:</span> {{ estudiante.padre_tel_personal }}</td>
-            <td style="width: 50%;"><span class="field-label">Teléfono trabajo:</span> {{ estudiante.padre_tel_trabajo }}</td>
+            <td style="width: 50%;"><span class="field-label">Teléfono:</span> {{ estudiante.padre_tel_personal }} / {{ estudiante.padre_tel_trabajo }}</td>
         </tr>
         <tr>
             <td colspan="2">
-                <span class="field-label">Correo electrónico:</span> {{ estudiante.padre_correo }} <span class="subtext">(Adjuntar copia de cédula)</span>
+                <span class="field-label">Correo:</span> {{ estudiante.padre_correo }} &nbsp; <span class="field-label">Religión:</span> {{ estudiante.padre_religion }}
             </td>
         </tr>
     </table>
@@ -209,20 +198,16 @@
             <td style="width: 40%;"><span class="field-label">Sector:</span> {{ estudiante.madre_sector }}</td>
         </tr>
         <tr>
-            <td style="width: 50%;"><span class="field-label">Profesión u Ocupación:</span> {{ estudiante.madre_profesion }}</td>
-            <td style="width: 50%;"><span class="field-label">Cédula No:</span> {{ estudiante.madre_cedula }}</td>
+            <td style="width: 50%;"><span class="field-label">Ocupación:</span> {{ estudiante.madre_profesion }}</td>
+            <td style="width: 50%;"><span class="field-label">Cédula:</span> {{ estudiante.madre_cedula }}</td>
         </tr>
         <tr>
             <td style="width: 50%;"><span class="field-label">Nivel académico:</span> {{ estudiante.madre_nivel }}</td>
-            <td style="width: 50%;"><span class="field-label">Religión:</span> {{ estudiante.madre_religion }}</td>
-        </tr>
-        <tr>
-            <td style="width: 50%;"><span class="field-label">Teléfono personal:</span> {{ estudiante.madre_tel_personal }}</td>
-            <td style="width: 50%;"><span class="field-label">Teléfono trabajo:</span> {{ estudiante.madre_tel_trabajo }}</td>
+            <td style="width: 50%;"><span class="field-label">Teléfono:</span> {{ estudiante.madre_tel_personal }} / {{ estudiante.madre_tel_trabajo }}</td>
         </tr>
         <tr>
             <td colspan="2">
-                <span class="field-label">Correo electrónico:</span> {{ estudiante.madre_correo }} <span class="subtext">(Adjuntar copia de cédula)</span>
+                <span class="field-label">Correo:</span> {{ estudiante.madre_correo }} &nbsp; <span class="field-label">Religión:</span> {{ estudiante.madre_religion }}
             </td>
         </tr>
     </table>
@@ -238,20 +223,16 @@
             <td style="width: 40%;"><span class="field-label">Sector:</span> {{ estudiante.tutor_sector }}</td>
         </tr>
         <tr>
-            <td style="width: 50%;"><span class="field-label">Profesión u Ocupación:</span> {{ estudiante.tutor_profesion }}</td>
-            <td style="width: 50%;"><span class="field-label">Cédula No:</span> {{ estudiante.tutor_cedula }}</td>
+            <td style="width: 50%;"><span class="field-label">Ocupación:</span> {{ estudiante.tutor_profesion }}</td>
+            <td style="width: 50%;"><span class="field-label">Cédula:</span> {{ estudiante.tutor_cedula }}</td>
         </tr>
         <tr>
             <td style="width: 50%;"><span class="field-label">Nivel académico:</span> {{ estudiante.tutor_nivel }}</td>
-            <td style="width: 50%;"><span class="field-label">Religión:</span> {{ estudiante.tutor_religion }}</td>
-        </tr>
-        <tr>
-            <td style="width: 50%;"><span class="field-label">Teléfono personal:</span> {{ estudiante.tutor_tel_personal }}</td>
-            <td style="width: 50%;"><span class="field-label">Teléfono trabajo:</span> {{ estudiante.tutor_tel_trabajo }}</td>
+            <td style="width: 50%;"><span class="field-label">Teléfono:</span> {{ estudiante.tutor_tel_personal }}</td>
         </tr>
         <tr>
             <td colspan="2">
-                <span class="field-label">Correo electrónico:</span> {{ estudiante.tutor_correo }} <span class="subtext">(Adjuntar copia de cédula)</span>
+                <span class="field-label">Correo:</span> {{ estudiante.tutor_correo }}
             </td>
         </tr>
     </table>
@@ -261,80 +242,61 @@
     <div class="page-break"></div>
 
     <!-- 5. AUTORIZADOS PARA RETIRAR AL ESTUDIANTE -->
-    <div class="section-title" style="page-break-before: always;">AUTORIZADOS PARA RETIRAR AL ESTUDIANTE:</div>
-    <div class="subtext" style="margin-bottom: 6px; font-style: italic;">(Adjuntar cédula de identidad de los autorizados)</div>
+    <div class="section-title">AUTORIZADOS PARA RETIRAR AL ESTUDIANTE:</div>
+    <div class="subtext" style="margin-bottom: 4px;">(Adjuntar cédula de identidad de los autorizados)</div>
     
-    <table style="width: 100%; border-collapse: collapse; border: 1px solid #000; margin-bottom: 10px; font-size: 12px;">
-        <!-- Cabecera de la tabla -->
+    <table style="width: 100%; border-collapse: collapse; border: 1px solid #000; margin-bottom: 8px; font-size: 11px;">
         <tr>
-            <td style="width: 40%; font-weight: bold; border: 1px solid #000; padding: 6px; background-color: #f2f2f2;">Nombre</td>
-            <td style="width: 20%; font-weight: bold; border: 1px solid #000; padding: 6px; background-color: #f2f2f2;">Cédula</td>
-            <td style="width: 22%; font-weight: bold; border: 1px solid #000; padding: 6px; background-color: #f2f2f2;">Parentesco</td>
-            <td style="width: 18%; font-weight: bold; border: 1px solid #000; padding: 6px; background-color: #f2f2f2;">Teléfono</td>
+            <td style="width: 40%; font-weight: bold; border: 1px solid #000; padding: 4px; background-color: #f2f2f2;">Nombre</td>
+            <td style="width: 20%; font-weight: bold; border: 1px solid #000; padding: 4px; background-color: #f2f2f2;">Cédula</td>
+            <td style="width: 22%; font-weight: bold; border: 1px solid #000; padding: 4px; background-color: #f2f2f2;">Parentesco</td>
+            <td style="width: 18%; font-weight: bold; border: 1px solid #000; padding: 4px; background-color: #f2f2f2;">Teléfono</td>
         </tr>
-        <!-- Fila 1 -->
         <tr>
-            <td style="border: 1px solid #000; padding: 6px; height: 30px;">{{ estudiante.aut_nombre_1 or '&nbsp;' }}</td>
-            <td style="border: 1px solid #000; padding: 6px;">{{ estudiante.aut_cedula_1 or '&nbsp;' }}</td>
-            <td style="border: 1px solid #000; padding: 6px;">{{ estudiante.aut_parentesco_1 or '&nbsp;' }}</td>
-            <td style="border: 1px solid #000; padding: 6px;">{{ estudiante.aut_tel_1 or '&nbsp;' }}</td>
+            <td style="border: 1px solid #000; padding: 4px; height: 22px;">{{ estudiante.aut_nombre_1 or '&nbsp;' }}</td>
+            <td style="border: 1px solid #000; padding: 4px;">{{ estudiante.aut_cedula_1 or '&nbsp;' }}</td>
+            <td style="border: 1px solid #000; padding: 4px;">{{ estudiante.aut_parentesco_1 or '&nbsp;' }}</td>
+            <td style="border: 1px solid #000; padding: 4px;">{{ estudiante.aut_tel_1 or '&nbsp;' }}</td>
         </tr>
-        <!-- Fila 2 -->
         <tr>
-            <td style="border: 1px solid #000; padding: 6px; height: 30px;">{{ estudiante.aut_nombre_2 or '&nbsp;' }}</td>
-            <td style="border: 1px solid #000; padding: 6px;">{{ estudiante.aut_cedula_2 or '&nbsp;' }}</td>
-            <td style="border: 1px solid #000; padding: 6px;">{{ estudiante.aut_parentesco_2 or '&nbsp;' }}</td>
-            <td style="border: 1px solid #000; padding: 6px;">{{ estudiante.aut_tel_2 or '&nbsp;' }}</td>
+            <td style="border: 1px solid #000; padding: 4px; height: 22px;">{{ estudiante.aut_nombre_2 or '&nbsp;' }}</td>
+            <td style="border: 1px solid #000; padding: 4px;">{{ estudiante.aut_cedula_2 or '&nbsp;' }}</td>
+            <td style="border: 1px solid #000; padding: 4px;">{{ estudiante.aut_parentesco_2 or '&nbsp;' }}</td>
+            <td style="border: 1px solid #000; padding: 4px;">{{ estudiante.aut_tel_2 or '&nbsp;' }}</td>
         </tr>
-        <!-- Fila 3 -->
         <tr>
-            <td style="border: 1px solid #000; padding: 6px; height: 30px;">{{ estudiante.aut_nombre_3 or '&nbsp;' }}</td>
-            <td style="border: 1px solid #000; padding: 6px;">{{ estudiante.aut_cedula_3 or '&nbsp;' }}</td>
-            <td style="border: 1px solid #000; padding: 6px;">{{ estudiante.aut_parentesco_3 or '&nbsp;' }}</td>
-            <td style="border: 1px solid #000; padding: 6px;">{{ estudiante.aut_tel_3 or '&nbsp;' }}</td>
+            <td style="border: 1px solid #000; padding: 4px; height: 22px;">{{ estudiante.aut_nombre_3 or '&nbsp;' }}</td>
+            <td style="border: 1px solid #000; padding: 4px;">{{ estudiante.aut_cedula_3 or '&nbsp;' }}</td>
+            <td style="border: 1px solid #000; padding: 4px;">{{ estudiante.aut_parentesco_3 or '&nbsp;' }}</td>
+            <td style="border: 1px solid #000; padding: 4px;">{{ estudiante.aut_tel_3 or '&nbsp;' }}</td>
         </tr>
-        <!-- Fila 4 -->
         <tr>
-            <td style="border: 1px solid #000; padding: 6px; height: 30px;">{{ estudiante.aut_nombre_4 or '&nbsp;' }}</td>
-            <td style="border: 1px solid #000; padding: 6px;">{{ estudiante.aut_cedula_4 or '&nbsp;' }}</td>
-            <td style="border: 1px solid #000; padding: 6px;">{{ estudiante.aut_parentesco_4 or '&nbsp;' }}</td>
-            <td style="border: 1px solid #000; padding: 6px;">{{ estudiante.aut_tel_4 or '&nbsp;' }}</td>
+            <td style="border: 1px solid #000; padding: 4px; height: 22px;">{{ estudiante.aut_nombre_4 or '&nbsp;' }}</td>
+            <td style="border: 1px solid #000; padding: 4px;">{{ estudiante.aut_cedula_4 or '&nbsp;' }}</td>
+            <td style="border: 1px solid #000; padding: 4px;">{{ estudiante.aut_parentesco_4 or '&nbsp;' }}</td>
+            <td style="border: 1px solid #000; padding: 4px;">{{ estudiante.aut_tel_4 or '&nbsp;' }}</td>
         </tr>
-        <!-- Fila 5 -->
         <tr>
-            <td style="border: 1px solid #000; padding: 6px; height: 30px;">{{ estudiante.aut_nombre_5 or '&nbsp;' }}</td>
-            <td style="border: 1px solid #000; padding: 6px;">{{ estudiante.aut_cedula_5 or '&nbsp;' }}</td>
-            <td style="border: 1px solid #000; padding: 6px;">{{ estudiante.aut_parentesco_5 or '&nbsp;' }}</td>
-            <td style="border: 1px solid #000; padding: 6px;">{{ estudiante.aut_tel_5 or '&nbsp;' }}</td>
+            <td style="border: 1px solid #000; padding: 4px; height: 22px;">{{ estudiante.aut_nombre_5 or '&nbsp;' }}</td>
+            <td style="border: 1px solid #000; padding: 4px;">{{ estudiante.aut_cedula_5 or '&nbsp;' }}</td>
+            <td style="border: 1px solid #000; padding: 4px;">{{ estudiante.aut_parentesco_5 or '&nbsp;' }}</td>
+            <td style="border: 1px solid #000; padding: 4px;">{{ estudiante.aut_tel_5 or '&nbsp;' }}</td>
         </tr>
     </table>
 
     <!-- 6. PERSONA CON LA QUE VIVE -->
     <div class="section-title">Persona con la que vive:</div>
-    <div class="subtext">En el caso de que viva con la madre, el padre o el tutor, solo debe completar nombre y parentesco</div>
     <table class="grid-table">
         <tr>
             <td width="60%"><span class="field-label">Nombres y apellidos:</span> {{ estudiante.vive_nombres }}</td>
-            <td width="40%"><span class="field-label">Cédula No:</span> {{ estudiante.vive_cedula }}</td>
+            <td width="40%"><span class="field-label">Cédula:</span> {{ estudiante.vive_cedula }}</td>
         </tr>
         <tr>
-            <td><span class="field-label">Parentesco:</span> {{ estudiante.vive_parentesco }}</td>
-            <td><span class="field-label">Sector:</span> {{ estudiante.vive_sector }}</td>
+            <td><span class="field-label">Parentesco:</span> {{ estudiante.vive_parentesco }} &nbsp; <span class="field-label">Sector:</span> {{ estudiante.vive_sector }}</td>
+            <td><span class="field-label">Teléfono:</span> {{ estudiante.vive_tel_personal }}</td>
         </tr>
         <tr>
             <td colspan="2"><span class="field-label">Dirección:</span> {{ estudiante.vive_direccion }}</td>
-        </tr>
-        <tr>
-            <td><span class="field-label">Profesión u Ocupación:</span> {{ estudiante.vive_profesion }}</td>
-            <td><span class="field-label">Nivel académico:</span> {{ estudiante.vive_nivel }}</td>
-        </tr>
-        <tr>
-            <td><span class="field-label">Religión:</span> {{ estudiante.vive_religion }}</td>
-            <td><span class="field-label">Teléfono personal:</span> {{ estudiante.vive_tel_personal }}</td>
-        </tr>
-        <tr>
-            <td><span class="field-label">Teléfono trabajo:</span> {{ estudiante.vive_tel_trabajo }}</td>
-            <td><span class="field-label">Correo electrónico:</span> {{ estudiante.vive_correo }}</td>
         </tr>
     </table>
 
@@ -343,58 +305,43 @@
     <table class="grid-table">
         <tr>
             <td width="60%"><span class="field-label">Nombres y apellidos:</span> {{ estudiante.econ_nombres }}</td>
-            <td width="40%"><span class="field-label">Cédula No:</span> {{ estudiante.econ_cedula }}</td>
+            <td width="40%"><span class="field-label">Cédula:</span> {{ estudiante.econ_cedula }}</td>
         </tr>
         <tr>
-            <td><span class="field-label">Parentesco con el estudiante:</span> {{ estudiante.econ_parentesco }}</td>
-            <td><span class="field-label">Sector:</span> {{ estudiante.econ_sector }}</td>
+            <td><span class="field-label">Parentesco:</span> {{ estudiante.econ_parentesco }} &nbsp; <span class="field-label">Sector:</span> {{ estudiante.econ_sector }}</td>
+            <td><span class="field-label">Teléfono:</span> {{ estudiante.econ_tel_personal }}</td>
         </tr>
         <tr>
-            <td colspan="2"><span class="field-label">Dirección:</span> {{ estudiante.econ_direccion }}</td>
-        </tr>
-        <tr>
-            <td><span class="field-label">Profesión u Ocupación:</span> {{ estudiante.econ_profesion }}</td>
-            <td><span class="field-label">Lugar de trabajo:</span> {{ estudiante.econ_lugar_trabajo }}</td>
-        </tr>
-        <tr>
-            <td><span class="field-label">Teléfono personal:</span> {{ estudiante.econ_tel_personal }}</td>
-            <td><span class="field-label">Teléfono trabajo:</span> {{ estudiante.econ_tel_trabajo }}</td>
-        </tr>
-        <tr>
-            <td colspan="2"><span class="field-label">Correo electrónico:</span> {{ estudiante.econ_correo }}</td>
+            <td colspan="2"><span class="field-label">Dirección:</span> {{ estudiante.econ_direccion }} &nbsp; <span class="field-label">Trabajo:</span> {{ estudiante.econ_lugar_trabajo }}</td>
         </tr>
     </table>
-    <div class="subtext">Nota Importante: Quedan los padres, madres y tutores legales como responsables económicos directos de los estudiantes matriculados en este centro.</div>
+    <div class="subtext">Nota: Quedan los padres, madres y tutores legales como responsables económicos directos.</div>
 
-    <!-- 8. MEDICACIÓN EN EL CENTRO EDUCATIVO -->
+    <!-- 8. MEDICACIÓN -->
     <div class="section-title">Medicación en el centro educativo:</div>
-    <div style="font-size: 8px; margin-bottom: 2px;">
-        Medicamentos genéricos: Analgésico, Antiinflamatorio, Antipirético, Antihistamínico y Antiespasmódico. ¿Autoriza usted que le sean suministrados sin previo aviso en caso de no poder contactarle?
-    </div>
-    <div style="font-size: 9px; margin-bottom: 3px;">
+    <div style="font-size: 8px; margin-bottom: 1px;">¿Autoriza usted que le sean suministrados analgésicos/antipiréticos genéricos sin previo aviso en caso de emergencia?</div>
+    <div style="font-size: 9px; margin-bottom: 4px;">
         SI [ {% if estudiante.autoriza_medicamentos == 'SI' %}X{% else %}&nbsp;&nbsp;{% endif %} ] &nbsp;&nbsp;&nbsp;&nbsp; 
         NO [ {% if estudiante.autoriza_medicamentos == 'NO' %}X{% else %}&nbsp;&nbsp;{% endif %} ]
     </div>
 
-    <!-- 9. AUTORIZACIÓN DE REDES SOCIALES -->
+    <!-- 9. REDES SOCIALES -->
     <div class="section-title">Autorización de redes sociales:</div>
-    <div style="font-size: 8px; margin-bottom: 2px;">
-        ¿Autoriza usted el uso de la imagen de su hijo/a en las redes abiertas al público del centro (Instagram, Facebook, etc.)?
-    </div>
-    <div style="font-size: 9px; margin-bottom: 8px;">
+    <div style="font-size: 8px; margin-bottom: 1px;">¿Autoriza usted el uso de la imagen de su hijo/a en las redes abiertas del centro?</div>
+    <div style="font-size: 9px; margin-bottom: 6px;">
         SI [ {% if estudiante.autoriza_redes == 'SI' %}X{% else %}&nbsp;&nbsp;{% endif %} ] &nbsp;&nbsp;&nbsp;&nbsp; 
-        NO [ {% if estudiante.autoriza_redes == 'NO' %}X{% else %}&nbsp;&nbsp;{% endif %} ] &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        NO [ {% if estudiante.autoriza_redes == 'NO' %}X{% else %}&nbsp;&nbsp;{% endif %} ] &nbsp;&nbsp;&nbsp;&nbsp;
         <strong>Firma:</strong> {{ estudiante.firma_redes or '' }}
     </div>
 
     <!-- FIRMAS AL PIE -->
     <table class="signature-section">
         <tr>
-            <td width="50%" style="text-align: center; border-top: 1px solid #000; padding-top: 3px;">
+            <td width="45%" style="text-align: center; border-top: 1px solid #000; padding-top: 2px; font-size: 10px;">
                 <strong>PADRE, MADRE Y/O TUTOR</strong>
             </td>
             <td width="10%"></td>
-            <td width="40%" style="text-align: center; border-top: 1px solid #000; padding-top: 3px;">
+            <td width="45%" style="text-align: center; border-top: 1px solid #000; padding-top: 2px; font-size: 10px;">
                 <strong>ENCARGADO DE ADMISIÓN</strong>
             </td>
         </tr>
