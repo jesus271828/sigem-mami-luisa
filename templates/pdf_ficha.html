@@ -66,6 +66,7 @@
             background-color: #f9f9f9;
             font-size: 10px;
             color: #555;
+            overflow: hidden;
         }
     </style>
 </head>
@@ -117,11 +118,11 @@
                 </table>
             </td>
             
-            <!-- Recuadro para la Fotografía (cargada dinámicamente desde la base de datos) -->
+            <!-- Recuadro para la Fotografía (cargada mediante Base64 desde Python) -->
             <td style="width: 22%; text-align: center; vertical-align: top; padding-left: 5px;">
                 <div class="photo-box">
-                    {% if estudiante.foto %}
-                        <img src="{{ url_for('static', filename='uploads/' + estudiante.foto) }}" style="width: 100%; height: 100%; object-fit: cover;">
+                    {% if estudiante.foto_base64 %}
+                        <img src="{{ estudiante.foto_base64 }}" style="width: 100%; height: 100%; object-fit: cover;">
                     {% else %}
                         <br><br>SIN<br>FOTO
                     {% endif %}
