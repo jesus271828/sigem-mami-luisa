@@ -618,6 +618,134 @@ def inscripcion():
         total_usuarios=total_usuarios
     )
 
+import google.generativeai as genai
+import json
+
+@app.route('/escanear_ficha', methods=['POST'])
+def escanear_ficha():
+    if 'usuario' not in session:
+        return {'error': 'No autorizado'}, 401
+        
+    rol_actual = str(session.get('rol', '')).lower().strip()
+    if rol_actual not in ['admin', 'oficina']:
+        return {'error': 'Acceso denegado'}, 403
+
+    file = request.files.get('imagen_ficha')
+    if not file or file.filename == '':
+        return {'error': 'No se subió ninguna imagen'}, 400
+
+    try:
+        image_bytes = file.read()
+        
+        # Configuramos el modelo de visión para extraer la información de la ficha física
+        # Asegúrate de tener configurada tu API key de Gemini en las variables de entorno de Render (GOOGLE_API_KEY)
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        
+        prompt = """
+        Analiza esta imagen de una ficha de inscripción escolar y extrae toda la información disponible.
+        Debes devolver estrictamente un objeto JSON plano (sin bloques de código markdown como ```json ... ```, solo el texto JSON puro) con las siguientes llaves (si algún dato no está presente, déjalo como cadena vacía ""):
+        {
+            "anio_escolar": "",
+            "fecha_inscripcion": "",
+            "id_estudiante": "",
+            "nombres": "",
+            "apellidos": "",
+            "grado": "",
+            "fecha_nacimiento": "",
+            "edad": "",
+            "sexo": "",
+            "nacionalidad": "",
+            "lugar_nac": "",
+            "direccion": "",
+            "cant_hermanos": "",
+            "edades_hermanos": "",
+            "lugar_ocupa": "",
+            "tipo_sangre": "",
+            "seguro_medico": "",
+            "alergias": "",
+            "medicamentos": "",
+            "medico_pediatra": "",
+            "centro_medico": "",
+            "emergencia_tel": "",
+            "emergencia_nombre": "",
+            "emergencia_parentesco": "",
+            "padre_nombre": "",
+            "padre_sector": "",
+            "padre_direccion": "",
+            "padre_profesion": "",
+            "padre_cedula": "",
+            "padre_nivel": "",
+            "padre_religion": "",
+            "padre_tel_personal": "",
+            "padre_tel_trabajo": "",
+            "padre_correo": "",
+            "madre_nombre": "",
+            "madre_sector": "",
+            "madre_direccion": "",
+            "madre_profesion": "",
+            "madre_cedula": "",
+            "madre_nivel": "",
+            "madre_religion": "",
+            "madre_tel_personal": "",
+            "madre_tel_trabajo": "",
+            "madre_correo": "",
+            "tutor_nombre": "",
+            "tutor_sector": "",
+            "tutor_direccion": "",
+            "tutor_profesion": "",
+            "tutor_cedula": "",
+            "tutor_nivel": "",
+            "tutor_religion": "",
+            "tutor_tel_personal": "",
+            "tutor_tel_trabajo": "",
+            "tutor_correo": "",
+            "vive_nombres": "",
+            "vive_parentesco": "",
+            "vive_cedula": "",
+            "vive_direccion": "",
+            "vive_sector": "",
+            "vive_profesion": "",
+            "vive_nivel": "",
+            "vive_religion": "",
+            "vive_tel_personal": "",
+            "vive_tel_trabajo": "",
+            "vive_correo": "",
+            "econ_nombres": "",
+            "econ_parentesco": "",
+            "econ_cedula": "",
+            "econ_direccion": "",
+            "econ_sector": "",
+            "econ_profesion": "",
+            "econ_lugar_trabajo": "",
+            "econ_tel_personal": "",
+            "econ_tel_trabajo": "",
+            "econ_correo": "",
+            "aut_nombre_1": "", "aut_cedula_1": "", "aut_parentesco_1": "", "aut_tel_1": "",
+            "aut_nombre_2": "", "aut_cedula_2": "", "aut_parentesco_2": "", "aut_tel_2": "",
+            "aut_nombre_3": "", "aut_cedula_3": "", "aut_parentesco_3": "", "aut_tel_3": "",
+            "aut_nombre_4": "", "aut_cedula_4": "", "aut_parentesco_4": "", "aut_tel_4": "",
+            "aut_nombre_5": "", "aut_cedula_5": "", "aut_parentesco_5": "", "aut_tel_5": ""
+        }
+        """
+        
+        response = model.generate_content([
+            prompt,
+            {"mime_type": file.mimetype or "image/jpeg", "data": image_bytes}
+        ])
+        
+        texto_limpio = response.text.strip()
+        if texto_limpio.startswith("```json"):
+            texto_limpio = texto_limpio[7:]
+        if texto_limpio.endswith("```"):
+            texto_limpio = texto_limpio[:-3]
+            
+        datos_extraidos = json.loads(texto_limpio.strip())
+        return {'success': True, 'data': datos_extraidos}
+        
+    except Exception as e:
+        print(f"Error en escaneo inteligente: {e}")
+        return {'error': str(e)}, 500
+
 @app.route('/inscripcion-publica', methods=['GET', 'POST'])
 def inscripcion_publica():
     if request.method == 'POST':
