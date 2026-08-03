@@ -103,7 +103,7 @@
                     <h5 class="section-title">Datos del Estudiante</h5>
                     <div class="row g-3">
                         <div class="col-md-4">
-                            <!-- AQUÍ SE AÑADIÓ id="id_estudiante" -->
+                            <!-- AQUí TIENE EL id="id_estudiante" VINCULADO AL SCRIPT -->
                             <input type="text" id="id_estudiante" name="id_estudiante" class="form-control" placeholder="ID del Estudiante" required>
                         </div>
                         <div class="col-md-4">
@@ -488,7 +488,7 @@ async function escanearFichaConIA() {
 }
 </script>
 
-<!-- SCRIPT DE AUTOCOMPLETADO AUTOMÁTICO POR ID -->
+<!-- SCRIPT DE AUTOCOMPLETADO POR ID -->
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     const inputId = document.getElementById('id_estudiante');
@@ -502,7 +502,7 @@ document.addEventListener("DOMContentLoaded", function() {
             }
         });
 
-        // O cuando haces clic fuera del campo (al salir)
+        // O cuando haces clic fuera del campo (al salir / blur)
         inputId.addEventListener('blur', function() {
             consultarDatos(this.value.trim());
         });
@@ -519,7 +519,10 @@ function consultarDatos(idEst) {
         .then(data => {
             if (data.encontrado) {
                 let info = data.data;
-                // Rellena automáticamente todos los campos que coincidan con el 'name'
+                console.log("Datos completos recibidos:", info);
+                
+                // Recorre todas las columnas que vienen de la base de datos 
+                // y las coloca en cualquier input o select que tenga el mismo 'name'
                 for (let key in info) {
                     let input = document.querySelector(`[name="${key}"]`);
                     if (input && info[key] !== null) {

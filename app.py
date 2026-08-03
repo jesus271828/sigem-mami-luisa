@@ -320,30 +320,29 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
-from flask import jsonify, session # Asegúrate de importar esto si no lo tienes
+from flask import jsonify
+import sqlite3 # O la librería de base de datos que estés utilizando
 
 @app.route('/api/buscar_estudiante/<id_estudiante>', methods=['GET'])
 def api_buscar_estudiante(id_estudiante):
-    conexion = None
     try:
-        conexion = get_db_connection()
-        is_postgres = DATABASE_URL is not None
+        conexion = get_db_connection() # Usa tu función habitual de conexión
         
-        # IMPORTANTE: Cambia 'id_estudiante' por el nombre exacto de la columna en tu base de datos (ej: 'id', 'codigo', 'matricula')
-        columna_id = 'id_estudiante' 
+        # IMPORTANTE: Asegúrate de que esta consulta seleccione todas las columnas 
+        # de tu tabla de inscripciones (o une las tablas con JOIN si las tienes separadas)
+        query = "SELECT * FROM inscripciones WHERE id_estudiante = ? LIMIT 1"
         
-        if is_postgres:
-            cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-            query = f"SELECT * FROM inscripciones WHERE {columna_id} = %s ORDER BY id DESC LIMIT 1"
-            cur.execute(query, (id_estudiante,))
-            estudiante = cur.fetchone()
-            cur.close()
-        else:
-            conexion.row_factory = sqlite3.Row
-            query = f"SELECT * FROM inscripciones WHERE {columna_id} = ? ORDER BY id DESC LIMIT 1"
-            estudiante = conexion.execute(query, (id_estudiante,)).fetchone()
+        # Esto permite que los resultados se mapeen como un diccionario con los nombres de las columnas
+        conexion.row_factory = sqlite3.Row 
+        cursor = conexion.cursor()
+        cursor.execute(query, (id_estudiante,))
+        estudiante = cursor.fetchone()
+        conexion.close()
             
         if estudiante:
+            # Convertimos la fila de la base de datos a un diccionario de Python puro.
+            # Esto enviará a JavaScript todas las llaves (nombres de columnas) exactamente 
+            # igual a como las pusiste en los 'name="..."' de tu HTML.
             return jsonify({
                 'encontrado': True,
                 'data': dict(estudiante)
@@ -352,11 +351,8 @@ def api_buscar_estudiante(id_estudiante):
             return jsonify({'encontrado': False})
             
     except Exception as e:
-        print("Error en búsqueda:", e)
+        print(f"Error al buscar estudiante: {str(e)}")
         return jsonify({'encontrado': False, 'error': str(e)}), 500
-    finally:
-        if conexion and not is_postgres:
-            conexion.close()
 
 @app.route('/inscripcion', methods=['GET', 'POST'])
 def inscripcion():
