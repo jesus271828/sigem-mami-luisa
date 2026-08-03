@@ -1250,8 +1250,12 @@ def generar_pdf(id_estudiante):
     return response
 
 from datetime import datetime
-
-from datetime import datetime
+from flask import send_file
+import io
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib import colors
 
 @app.route('/asistencia', methods=['GET', 'POST'])
 def asistencia():
@@ -1264,23 +1268,23 @@ def asistencia():
     
     conn = get_db_connection()
     try:
-        # Consulta corregida y compatible con PostgreSQL para evitar el error de comillas vacías
+        # Obtenemos la lista de grados únicos compatible con PostgreSQL y SQLite
         cursos_db = conn.execute("SELECT DISTINCT grado FROM estudiantes WHERE grado IS NOT NULL AND TRIM(grado) != '' ORDER BY grado ASC").fetchall()
         grados = [c['grado'] for c in cursos_db]
         
-        fecha_actual = datetime.now().strftime('%Y-%m-%d')
+        # Fecha por defecto o la que seleccione el usuario en el input de fecha
+        fecha_actual = request.args.get('fecha', '') or request.form.get('fecha', '')
+        if not fecha_actual:
+            fecha_actual = datetime.now().strftime('%Y-%m-%d')
         
         curso_docente = None
         if rol_actual not in ['oficina', 'admin']:
             usuario_db = conn.execute('SELECT curso_asignado FROM usuarios WHERE username = ?', (usuario_actual,)).fetchone()
             if usuario_db and usuario_db['curso_asignado']:
                 curso_docente = usuario_db['curso_asignado'].strip()
-            else:
-                curso_docente = str(session.get('grado', '')).strip()
 
         if request.method == 'POST':
             grado_seleccionado = request.form.get('grado_actual', '').strip()
-            fecha_asistencia = request.form.get('fecha', fecha_actual)
             
             estudiantes = conn.execute('''
                 SELECT * FROM estudiantes 
@@ -1291,9 +1295,18 @@ def asistencia():
             for est in estudiantes:
                 est_id = str(est['id_estudiante'])
                 estado = request.form.get(f'estado_{est_id}', 'Presente')
+                
+                # Guardamos o actualizamos la asistencia en la base de datos
+                # Verificamos si ya existe el registro para ese estudiante en esa fecha
+                existe = conn.execute('SELECT id FROM asistencia WHERE id_estudiante = ? AND fecha = ?', (est_id, fecha_actual)).fetchone()
+                if existe:
+                    conn.execute('UPDATE asistencia SET estado = ?, grado = ? WHERE id_estudiante = ? AND fecha = ?', (estado, grado_seleccionado, est_id, fecha_actual))
+                else:
+                    conn.execute('INSERT INTO asistencia (id_estudiante, grado, fecha, estado) VALUES (?, ?, ?, ?)', (est_id, grado_seleccionado, fecha_actual, estado))
             
+            conn.commit()
             flash(f'Asistencia guardada correctamente para el grado {grado_seleccionado}.', 'success')
-            return redirect(url_for('asistencia', grado=grado_seleccionado))
+            return redirect(url_for('asistencia', grado=grado_seleccionado, fecha=fecha_actual))
             
         else:
             grado_seleccionado = request.args.get('grado', '').strip()
@@ -1302,20 +1315,41 @@ def asistencia():
                 grado_seleccionado = curso_docente
                 
             estudiantes = []
+            ausentes_hoy = []
+            
             if grado_seleccionado:
+                # Buscamos los alumnos del grado y su estado de asistencia si ya fue guardado hoy
                 rows = conn.execute('''
-                    SELECT * FROM estudiantes 
-                    WHERE grado = ? 
-                    ORDER BY apellidos ASC, nombres ASC
-                ''', (grado_seleccionado,)).fetchall()
+                    SELECT e.*, a.estado as estado_asistencia 
+                    FROM estudiantes e
+                    LEFT JOIN asistencia a ON e.id_estudiante = a.id_estudiante AND a.fecha = ?
+                    WHERE e.grado = ? 
+                    ORDER BY e.apellidos ASC, e.nombres ASC
+                ''', (fecha_actual, grado_seleccionado)).fetchall()
                 
                 for row in rows:
-                    estudiantes.append(dict(row))
+                    est = dict(row)
+                    # Si ya tiene asistencia guardada, la asignamos; si no, por defecto 'Presente'
+                    est['estado_actual'] = est['estado_asistencia'] if est['estado_asistencia'] else 'Presente'
+                    estudiantes.append(est)
+                
+                # Consultamos los ausentes o tardanzas específicos de este curso en esta fecha para la tarjeta superior
+                ausentes_rows = conn.execute('''
+                    SELECT e.id_estudiante, e.nombres, e.apellidos, a.estado 
+                    FROM asistencia a
+                    JOIN estudiantes e ON a.id_estudiante = e.id_estudiante
+                    WHERE a.grado = ? AND a.fecha = ? AND a.estado IN ('Ausente', 'Tarde')
+                    ORDER BY e.apellidos ASC
+                ''', (grado_seleccionado, fecha_actual)).fetchall()
+                
+                for aus in ausentes_rows:
+                    ausentes_hoy.append(dict(aus))
                     
     except Exception as e:
         print(f"Error en asistencia: {e}")
         grados = []
         estudiantes = []
+        ausentes_hoy = []
         grado_seleccionado = ''
         fecha_actual = datetime.now().strftime('%Y-%m-%d')
     finally:
@@ -1325,7 +1359,89 @@ def asistencia():
                            grados=grados, 
                            grado_seleccionado=grado_seleccionado, 
                            fecha_actual=fecha_actual, 
-                           estudiantes=estudiantes)
+                           estudiantes=estudiantes,
+                           ausentes_hoy=ausentes_hoy)
+
+
+@app.route('/descargar_reporte_ausencias')
+def descargar_reporte_ausencias():
+    if 'usuario' not in session:
+        flash('Acceso denegado.', 'danger')
+        return redirect(url_for('login'))
+        
+    fecha = request.args.get('fecha', datetime.now().strftime('%Y-%m-%d'))
+        
+    conn = get_db_connection()
+    try:
+        # Consultamos las ausencias y tardanzas de TODOS los cursos para la fecha dada
+        registros = conn.execute('''
+            SELECT a.grado, e.id_estudiante, e.nombres, e.apellidos, a.estado 
+            FROM asistencia a
+            JOIN estudiantes e ON a.id_estudiante = e.id_estudiante
+            WHERE a.fecha = ? AND a.estado IN ('Ausente', 'Tarde')
+            ORDER BY a.grado ASC, e.apellidos ASC
+        ''', (fecha,)).fetchall()
+        
+        # --- Generación del PDF en memoria con ReportLab ---
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
+        elementos = []
+        
+        styles = getSampleStyleSheet()
+        titulo_estilo = ParagraphStyle(
+            'TituloReporte',
+            parent=styles['Heading1'],
+            fontSize=16,
+            textColor=colors.HexColor('#198754'),
+            alignment=1,
+            spaceAfter=10
+        )
+        sub_estilo = ParagraphStyle(
+            'SubReporte',
+            parent=styles['Normal'],
+            fontSize=11,
+            textColor=colors.HexColor('#333333'),
+            alignment=1,
+            spaceAfter=15
+        )
+        
+        elementos.append(Paragraph("<b>SIGEM - Reporte General de Ausencias (Todos los Cursos)</b>", titulo_estilo))
+        elementos.append(Paragraph(f"<b>Fecha del Reporte:</b> {fecha}", sub_estilo))
+        elementos.append(Spacer(1, 10))
+        
+        data = [["Grado", "Matrícula", "Apellidos y Nombres", "Estado"]]
+        
+        for reg in registros:
+            data.append([str(reg['grado']), str(reg['id_estudiante']), f"{reg['apellidos']}, {reg['nombres']}", reg['estado']])
+            
+        if len(data) == 1:
+            data.append(["-", "-", "No hay registros de ausencias para esta fecha en ningún curso.", "-"])
+            
+        t = Table(data, colWidths=[90, 80, 260, 70])
+        t.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#212529')),
+            ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+            ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+            ('BOTTOMPADDING', (0,0), (-1,0), 8),
+            ('BACKGROUND', (0,1), (-1,-1), colors.HexColor('#f8f9fa')),
+            ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#dee2e6')),
+            ('ALIGN', (2,1), (2,-1), 'LEFT'),
+        ]))
+        
+        elementos.append(t)
+        doc.build(elementos)
+        buffer.seek(0)
+        
+        nombre_archivo = f"Reporte_General_Ausencias_{fecha}.pdf"
+        return send_file(buffer, as_attachment=True, download_name=nombre_archivo, mimetype='application/pdf')
+        
+    except Exception as e:
+        print(f"Error generando PDF general: {e}")
+        flash('Error al generar el reporte general en PDF.', 'danger')
+        return redirect(url_for('asistencia'))
+    finally:
+        conn.close()
 
 @app.route('/menu_notas')
 def menu_notas():
