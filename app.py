@@ -1047,30 +1047,39 @@ def listado_estudiantes():
         flash('Acceso denegado.', 'danger')
         return redirect(url_for('login'))
         
+    usuario_actual = str(session.get('usuario', '')).strip()
     rol_actual = str(session.get('rol', '')).strip().lower()
-    grado_docente = session.get('grado') or session.get('grado_asignado')
     
     conn = get_db_connection()
     try:
-        # Si es admin u oficina, muestra todos ordenados por apellido
+        # Si es admin u oficina, ve todos los estudiantes ordenados por grado y apellido
         if rol_actual in ['oficina', 'admin']:
             estudiantes = conn.execute('''
                 SELECT * FROM estudiantes 
-                ORDER BY apellidos ASC, nombres ASC
+                ORDER BY grado ASC, apellidos ASC, nombres ASC
             ''').fetchall()
-        elif grado_docente:
-            # Si el maestro tiene un grado en sesión, filtramos por él estrictamente
-            estudiantes = conn.execute('''
-                SELECT * FROM estudiantes 
-                WHERE grado = ? 
-                ORDER BY apellidos ASC, nombres ASC
-            ''', (grado_docente,)).fetchall()
         else:
-            # Si es maestro pero no tiene grado en sesión, mostramos todos ordenados por apellido
-            estudiantes = conn.execute('''
-                SELECT * FROM estudiantes 
-                ORDER BY apellidos ASC, nombres ASC
-            ''').fetchall()
+            # Buscamos el curso asignado al maestro en la tabla usuarios
+            usuario_db = conn.execute('''
+                SELECT curso_asignado FROM usuarios 
+                WHERE username = ? OR usuario = ?
+            ''', (usuario_actual, usuario_actual)).fetchone()
+            
+            curso_docente = usuario_db['curso_asignado'] if usuario_db and usuario_db['curso_asignado'] else session.get('grado')
+            
+            if curso_docente:
+                # Filtramos por su curso y ordenamos alfabéticamente por apellido
+                estudiantes = conn.execute('''
+                    SELECT * FROM estudiantes 
+                    WHERE grado = ? 
+                    ORDER BY apellidos ASC, nombres ASC
+                ''', (curso_docente,)).fetchall()
+            else:
+                # Por seguridad, si no tiene curso asignado, muestra todo ordenado
+                estudiantes = conn.execute('''
+                    SELECT * FROM estudiantes 
+                    ORDER BY grado ASC, apellidos ASC, nombres ASC
+                ''').fetchall()
                 
     except Exception as e:
         print(f"Error en listado_estudiantes: {e}")
