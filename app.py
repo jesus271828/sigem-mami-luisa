@@ -1249,12 +1249,56 @@ def generar_pdf(id_estudiante):
         
     return response
 
-@app.route('/asistencia')
+@app.route('/asistencia', methods=['GET', 'POST'])
 def asistencia():
-    if 'rol' not in session or session['rol'] != 'admin':
+    if 'usuario' not in session:
         flash('Acceso denegado.', 'danger')
-        return redirect(url_for('index'))
-    return render_template('asistencia.html')
+        return redirect(url_for('login'))
+        
+    usuario_actual = str(session.get('usuario', '')).strip()
+    rol_actual = str(session.get('rol', '')).strip().lower()
+    
+    conn = get_db_connection()
+    try:
+        # Obtenemos los grados disponibles para llenar el select
+        cursos_disponibles = conn.execute('SELECT DISTINCT grado FROM estudiantes WHERE grado IS NOT NULL AND grado != "" ORDER BY grado ASC').fetchall()
+        
+        grado_seleccionado = request.args.get('grado', '') or request.form.get('grado', '')
+        estudiantes = []
+        
+        # Si es maestro (no oficina ni admin) y no ha seleccionado nada, le asignamos su curso por defecto
+        if rol_actual not in ['oficina', 'admin'] and not grado_seleccionado:
+            usuario_db = conn.execute('SELECT curso_asignado FROM usuarios WHERE username = ?', (usuario_actual,)).fetchone()
+            if usuario_db and usuario_db['curso_asignado']:
+                grado_seleccionado = usuario_db['curso_asignado']
+        
+        if grado_seleccionado:
+            rows = conn.execute('''
+                SELECT * FROM estudiantes 
+                WHERE grado = ? 
+                ORDER BY apellidos ASC, nombres ASC
+            ''', (grado_seleccionado,)).fetchall()
+            
+            contador = 1
+            for row in rows:
+                est = dict(row)
+                est['numero_orden'] = contador
+                estudiantes.append(est)
+                contador += 1
+                
+    except Exception as e:
+        print(f"Error en asistencia: {e}")
+        cursos_disponibles = []
+        estudiantes = []
+        grado_seleccionado = ''
+    finally:
+        conn.close()
+        
+    return render_template('asistencia.html', 
+                           cursos_disponibles=cursos_disponibles, 
+                           estudiantes=estudiantes, 
+                           grado_seleccionado=grado_seleccionado,
+                           rol_actual=rol_actual)
 
 @app.route('/menu_notas')
 def menu_notas():
