@@ -8,3 +8,7 @@ pytesseract
 pillow
 google-generativeai
 google-api-core
+
+Flask
+psycopg2-binary
+google-generativeai

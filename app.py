@@ -620,6 +620,7 @@ def inscripcion():
 
 import google.generativeai as genai
 import json
+import base64
 
 @app.route('/escanear_ficha', methods=['POST'])
 def escanear_ficha():
