@@ -60,18 +60,32 @@
                     <label for="curso_asignado" class="form-label">Curso Asignado</label>
                     <select class="form-control" id="curso_asignado" name="curso_asignado" required>
                         <option value="" disabled {% if not maestro_a_editar %}selected{% endif %}>Selecciona un curso...</option>
-                        <option value="1ro A" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '1ro A' %}selected{% endif %}>1ro A</option>
-                        <option value="1ro B" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '1ro B' %}selected{% endif %}>1ro B</option>
-                        <option value="2do A" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '2do A' %}selected{% endif %}>2do A</option>
-                        <option value="2do B" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '2do B' %}selected{% endif %}>2do B</option>
-                        <option value="3ro A" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '3ro A' %}selected{% endif %}>3ro A</option>
-                        <option value="3ro B" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '3ro B' %}selected{% endif %}>3ro B</option>
-                        <option value="4to A" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '4to A' %}selected{% endif %}>4to A</option>
-                        <option value="4to B" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '4to B' %}selected{% endif %}>4to B</option>
-                        <option value="5to A" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '5to A' %}selected{% endif %}>5to A</option>
-                        <option value="5to B" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '5to B' %}selected{% endif %}>5to B</option>
-                        <option value="6to A" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '6to A' %}selected{% endif %}>6to A</option>
-                        <option value="6to B" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '6to B' %}selected{% endif %}>6to B</option>
+                        
+                        <!-- Nuevos cursos de Nivel Inicial -->
+                        <optgroup label="Nivel Inicial ML – L2">
+                            <option value="Párvulos" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == 'Párvulos' %}selected{% endif %}>Párvulos</option>
+                            <option value="Prekínder – A" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == 'Prekínder – A' %}selected{% endif %}>Prekínder – A</option>
+                            <option value="Kínder – A" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == 'Kínder – A' %}selected{% endif %}>Kínder – A</option>
+                            <option value="Kínder – B" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == 'Kínder – B' %}selected{% endif %}>Kínder – B</option>
+                            <option value="Preprimario – A" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == 'Preprimario – A' %}selected{% endif %}>Preprimario – A</option>
+                            <option value="Preprimario – B" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == 'Preprimario – B' %}selected{% endif %}>Preprimario – B</option>
+                        </optgroup>
+
+                        <!-- Cursos anteriores -->
+                        <optgroup label="Cursos Anteriores / Primaria">
+                            <option value="1ro A" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '1ro A' %}selected{% endif %}>1ro A</option>
+                            <option value="1ro B" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '1ro B' %}selected{% endif %}>1ro B</option>
+                            <option value="2do A" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '2do A' %}selected{% endif %}>2do A</option>
+                            <option value="2do B" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '2do B' %}selected{% endif %}>2do B</option>
+                            <option value="3ro A" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '3ro A' %}selected{% endif %}>3ro A</option>
+                            <option value="3ro B" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '3ro B' %}selected{% endif %}>3ro B</option>
+                            <option value="4to A" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '4to A' %}selected{% endif %}>4to A</option>
+                            <option value="4to B" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '4to B' %}selected{% endif %}>4to B</option>
+                            <option value="5to A" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '5to A' %}selected{% endif %}>5to A</option>
+                            <option value="5to B" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '5to B' %}selected{% endif %}>5to B</option>
+                            <option value="6to A" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '6to A' %}selected{% endif %}>6to A</option>
+                            <option value="6to B" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '6to B' %}selected{% endif %}>6to B</option>
+                        </optgroup>
                     </select>
                 </div>
                 
@@ -83,7 +97,6 @@
                     <a href="{{ url_for('registrar_usuario') }}" class="btn btn-secondary w-100 mb-2">Cancelar Edición</a>
                 {% endif %}
                 
-                <!-- Corregido a 'index' para que coincida con app.py -->
                 <a href="{{ url_for('index') }}" class="btn btn-light w-100">← Volver al Menú</a>
             </form>
         </div>
