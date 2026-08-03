@@ -92,7 +92,7 @@
         </tr>
     </table>
 
-<!-- 1. DATOS DEL ESTUDIANTE -->
+    <!-- 1. DATOS DEL ESTUDIANTE -->
     <div class="section-title">Datos del estudiante:</div>
     <table class="grid-table" style="width: 100%; border-collapse: collapse;">
         <tr>
@@ -117,13 +117,13 @@
                 </table>
             </td>
             
-            <!-- Recuadro para la Fotografía (ubicado a la derecha) -->
+            <!-- Recuadro para la Fotografía (cargada dinámicamente desde la base de datos) -->
             <td style="width: 22%; text-align: center; vertical-align: top; padding-left: 5px;">
                 <div class="photo-box">
-                    {% if estudiante.foto_src %}
-                        <img src="{{ estudiante.foto_src }}" style="width: 100%; height: 100%; object-fit: cover;">
+                    {% if estudiante.foto %}
+                        <img src="{{ url_for('static', filename='uploads/' + estudiante.foto) }}" style="width: 100%; height: 100%; object-fit: cover;">
                     {% else %}
-                        <br><br>FOTO<br>2 x 2
+                        <br><br>SIN<br>FOTO
                     {% endif %}
                 </div>
             </td>
@@ -168,7 +168,7 @@
         </tr>
     </table>
 
-<!-- 2. DATOS DEL PADRE -->
+    <!-- 2. DATOS DEL PADRE -->
     <div class="section-title">Datos del padre:</div>
     <table class="grid-table" style="width: 100%; border-collapse: collapse;">
         <tr>
@@ -259,7 +259,7 @@
     <!-- ================= PÁGINA 2 ================= -->
     <div class="page-break"></div>
 
-<!-- 5. AUTORIZADOS PARA RETIRAR AL ESTUDIANTE -->
+    <!-- 5. AUTORIZADOS PARA RETIRAR AL ESTUDIANTE -->
     <div class="section-title" style="page-break-before: always;">AUTORIZADOS PARA RETIRAR AL ESTUDIANTE:</div>
     <div class="subtext" style="margin-bottom: 6px; font-style: italic;">(Adjuntar cédula de identidad de los autorizados)</div>
     
@@ -356,7 +356,7 @@
             <td><span class="field-label">Lugar de trabajo:</span> {{ estudiante.econ_lugar_trabajo }}</td>
         </tr>
         <tr>
-            <td><span class="field-label5">Teléfono personal:</span> {{ estudiante.econ_tel_personal }}</td>
+            <td><span class="field-label">Teléfono personal:</span> {{ estudiante.econ_tel_personal }}</td>
             <td><span class="field-label">Teléfono trabajo:</span> {{ estudiante.econ_tel_trabajo }}</td>
         </tr>
         <tr>
