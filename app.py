@@ -1049,15 +1049,25 @@ def listado_estudiantes():
         
     usuario_actual = str(session.get('usuario', '')).strip()
     rol_actual = str(session.get('rol', '')).strip().lower()
+    curso_seleccionado = request.args.get('curso', '').strip()
     
     conn = get_db_connection()
     try:
+        cursos_disponibles = conn.execute('SELECT DISTINCT grado FROM estudiantes WHERE grado IS NOT NULL AND grado != "" ORDER BY grado ASC').fetchall()
+        
         if rol_actual in ['oficina', 'admin']:
-            rows = conn.execute('''
-                SELECT * FROM estudiantes 
-                ORDER BY grado ASC, apellidos ASC, nombres ASC
-            ''').fetchall()
-            
+            if curso_seleccionado:
+                rows = conn.execute('''
+                    SELECT * FROM estudiantes 
+                    WHERE grado = ? 
+                    ORDER BY apellidos ASC, nombres ASC
+                ''', (curso_seleccionado,)).fetchall()
+            else:
+                rows = conn.execute('''
+                    SELECT * FROM estudiantes 
+                    ORDER BY grado ASC, apellidos ASC, nombres ASC
+                ''').fetchall()
+                
             estudiantes = []
             contador = 1
             grado_anterior = None
@@ -1104,10 +1114,15 @@ def listado_estudiantes():
     except Exception as e:
         print(f"Error en listado_estudiantes: {e}")
         estudiantes = []
+        cursos_disponibles = []
     finally:
         conn.close()
     
-    return render_template('listado_estudiantes.html', estudiantes=estudiantes)
+    return render_template('listado_estudiantes.html', 
+                           estudiantes=estudiantes, 
+                           cursos_disponibles=cursos_disponibles, 
+                           curso_seleccionado=curso_seleccionado,
+                           rol_actual=rol_actual)
 
 
 @app.route('/buscar_estudiante', methods=['GET', 'POST'])
