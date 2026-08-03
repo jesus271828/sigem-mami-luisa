@@ -1054,30 +1054,29 @@ def listado_estudiantes():
     try:
         if rol_actual in ['oficina', 'admin']:
             # Traemos todos ordenados por grado y apellido alfabéticamente
-            sql = '''
+            rows = conn.execute('''
                 SELECT * FROM estudiantes 
-                ORDER BY grado ASC, apellidos ASC, nombres ASC
-            '''
-            rows = conn.execute(sql).fetchall()
+                ORDER BY TRIM(grado) ASC, apellidos ASC, nombres ASC
+            ''').fetchall()
             
-            # Convertimos a diccionarios o listas modificables para asignar el número de orden por curso
             estudiantes = []
-            grado_actual = None
-            contador_orden = 1
+            contadores_por_grado = {}
             
             for row in rows:
                 est = dict(row)
-                if est['grado'] != grado_actual:
-                    grado_actual = est['grado']
-                    contador_orden = 1 # Se reinicia a 1 cuando cambia de curso
+                grado_limpio = str(est.get('grado', '')).strip()
                 
-                # Asignamos el número de orden reiniciado por curso
-                est['numero_orden'] = contador_orden
+                # Inicializamos o incrementamos el contador específico para este grado
+                if grado_limpio not in contadores_por_grado:
+                    contadores_por_grado[grado_limpio] = 1
+                else:
+                    contadores_por_grado[grado_limpio] += 1
+                
+                est['numero_orden'] = contadores_por_grado[grado_limpio]
                 estudiantes.append(est)
-                contador_orden += 1
                 
         else:
-            # Lógica para los maestros (filtra su curso y enumera del 1 en adelante)
+            # Lógica para los maestros
             usuario_db = conn.execute('''
                 SELECT curso_asignado FROM usuarios 
                 WHERE username = ?
@@ -1088,22 +1087,22 @@ def listado_estudiantes():
             if curso_docente:
                 rows = conn.execute('''
                     SELECT * FROM estudiantes 
-                    WHERE grado = ? 
+                    WHERE TRIM(grado) = TRIM(?) 
                     ORDER BY apellidos ASC, nombres ASC
                 ''', (curso_docente,)).fetchall()
             else:
                 rows = conn.execute('''
                     SELECT * FROM estudiantes 
-                    ORDER BY grado ASC, apellidos ASC, nombres ASC
+                    ORDER BY TRIM(grado) ASC, apellidos ASC, nombres ASC
                 ''').fetchall()
                 
             estudiantes = []
-            contador_orden = 1
+            contador = 1
             for row in rows:
                 est = dict(row)
-                est['numero_orden'] = contador_orden
+                est['numero_orden'] = contador
                 estudiantes.append(est)
-                contador_orden += 1
+                contador += 1
                 
     except Exception as e:
         print(f"Error en listado_estudiantes: {e}")
