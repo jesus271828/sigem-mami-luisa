@@ -12,7 +12,6 @@
             <a href="/menu" class="btn btn-secondary">Volver al Menú</a>
         </div>
 
-        <!-- Si es oficina/admin, mostramos un selector para elegir el curso que desea ver -->
         {% if rol_actual in ['oficina', 'admin'] %}
         <div class="card shadow-sm mb-4">
             <div class="card-body">
@@ -51,7 +50,6 @@
                     <tbody>
                         {% for est in estudiantes %}
                         <tr>
-                            <!-- loop.index reiniciará el número de orden a 1, 2, 3... basándose en el curso filtrado -->
                             <td><strong>{{ loop.index }}</strong></td>
                             <td>{{ est.id_estudiante }}</td>
                             <td>{{ est.nombres }}</td>
@@ -60,7 +58,7 @@
                         </tr>
                         {% else %}
                         <tr>
-                            <td colspan="5" class="text-center text-muted">No hay estudiantes registrados todavía para este curso.</td>
+                            <td colspan="5" class="text-center text-muted">No hay estudiantes registrados todavía.</td>
                         </tr>
                         {% endfor %}
                     </tbody>
