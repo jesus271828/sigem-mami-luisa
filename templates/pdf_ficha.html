@@ -6,12 +6,12 @@
     <style>
         @page {
             size: letter;
-            margin: 5mm 8mm;
+            margin: 5mm 9mm;
         }
         body {
             font-family: Helvetica, Arial, sans-serif;
-            font-size: 11.5px;
-            line-height: 1.12; 
+            font-size: 12px;
+            line-height: 1.15; 
             color: #000;
             margin: 0;
             padding: 0;
@@ -26,9 +26,9 @@
         }
         .section-title {
             color: #1A237E;
-            font-size: 12.5px;
+            font-size: 13px;
             font-weight: bold;
-            border-bottom: 1.2px solid #1A237E;
+            border-bottom: 1.5px solid #1A237E;
             margin-top: 4px;
             margin-bottom: 2px;
             text-transform: uppercase;
@@ -39,16 +39,16 @@
             margin-bottom: 1px;
         }
         .grid-table td {
-            padding: 1.5px 2px;
+            padding: 2px 2px;
             vertical-align: top;
-            font-size: 11px;
+            font-size: 11.5px;
         }
         .field-label {
             font-weight: bold;
             color: #111;
         }
         .subtext {
-            font-size: 9.5px;
+            font-size: 10px;
             color: #444;
             font-style: italic;
         }
@@ -56,7 +56,6 @@
             margin-top: 8px;
             width: 100%;
         }
-        /* Foto compacta para garantizar que el tutor entre en la Pág 1 */
         .photo-box {
             width: 2.6cm;
             height: 3.2cm;
@@ -64,7 +63,7 @@
             text-align: center;
             vertical-align: middle;
             background-color: #f9f9f9;
-            font-size: 9.5px;
+            font-size: 10px;
             color: #555;
             overflow: hidden;
         }
@@ -81,17 +80,17 @@
         <tr>
             <td width="10%">
                 {% if logo_src %}
-                    <img src="{{ logo_src }}" width="35">
+                    <img src="{{ logo_src }}" width="36">
                 {% endif %}
             </td>
             <td width="63%">
-                <strong style="font-size: 15px; color: #1A237E;">Centro Educativo Mami Luisa S.R.L.</strong><br>
-                <span style="font-size: 11px; color: #444;">"Educando con amor para un mundo mejor"</span>
+                <strong style="font-size: 15.5px; color: #1A237E;">Centro Educativo Mami Luisa S.R.L.</strong><br>
+                <span style="font-size: 11.5px; color: #444;">"Educando con amor para un mundo mejor"</span>
             </td>
             <td width="27%" style="text-align: right;">
-                <strong style="font-size: 10.5px; color: #1A237E;">Ficha de Admisión</strong><br>
-                <span style="font-size: 10px;">Año: {{ estudiante.anio_escolar }}</span><br>
-                <span style="font-size: 10px;">Fecha: {{ estudiante.fecha_inscripcion }}</span>
+                <strong style="font-size: 11px; color: #1A237E;">Ficha de Admisión</strong><br>
+                <span style="font-size: 10.5px;">Año: {{ estudiante.anio_escolar }}</span><br>
+                <span style="font-size: 10.5px;">Fecha: {{ estudiante.fecha_inscripcion }}</span>
             </td>
         </tr>
     </table>
@@ -212,7 +211,7 @@
         </tr>
     </table>
 
-    <!-- 4. TUTOR -->
+    <!-- 4. TUTOR (Cierra la página 1) -->
     <div class="section-title">Tutor:</div>
     <table class="grid-table" style="width: 100%; border-collapse: collapse;">
         <tr>
@@ -245,42 +244,42 @@
     <div class="section-title">AUTORIZADOS PARA RETIRAR AL ESTUDIANTE:</div>
     <div class="subtext" style="margin-bottom: 3px;">(Adjuntar cédula de identidad de los autorizados)</div>
     
-    <table style="width: 100%; border-collapse: collapse; border: 1px solid #000; margin-bottom: 4px; font-size: 10.5px;">
+    <table style="width: 100%; border-collapse: collapse; border: 1px solid #000; margin-bottom: 4px; font-size: 11px;">
         <tr>
-            <td style="width: 40%; font-weight: bold; border: 1px solid #000; padding: 3px; background-color: #f2f2f2;">Nombre</td>
-            <td style="width: 20%; font-weight: bold; border: 1px solid #000; padding: 3px; background-color: #f2f2f2;">Cédula</td>
-            <td style="width: 22%; font-weight: bold; border: 1px solid #000; padding: 3px; background-color: #f2f2f2;">Parentesco</td>
-            <td style="width: 18%; font-weight: bold; border: 1px solid #000; padding: 3px; background-color: #f2f2f2;">Teléfono</td>
+            <td style="width: 40%; font-weight: bold; border: 1px solid #000; padding: 4px; background-color: #f2f2f2;">Nombre</td>
+            <td style="width: 20%; font-weight: bold; border: 1px solid #000; padding: 4px; background-color: #f2f2f2;">Cédula</td>
+            <td style="width: 22%; font-weight: bold; border: 1px solid #000; padding: 4px; background-color: #f2f2f2;">Parentesco</td>
+            <td style="width: 18%; font-weight: bold; border: 1px solid #000; padding: 4px; background-color: #f2f2f2;">Teléfono</td>
         </tr>
         <tr>
-            <td style="border: 1px solid #000; padding: 3px; height: 18px;">{{ estudiante.aut_nombre_1 or '&nbsp;' }}</td>
-            <td style="border: 1px solid #000; padding: 3px;">{{ estudiante.aut_cedula_1 or '&nbsp;' }}</td>
-            <td style="border: 1px solid #000; padding: 3px;">{{ estudiante.aut_parentesco_1 or '&nbsp;' }}</td>
-            <td style="border: 1px solid #000; padding: 3px;">{{ estudiante.aut_tel_1 or '&nbsp;' }}</td>
+            <td style="border: 1px solid #000; padding: 4px; height: 18px;">{{ estudiante.aut_nombre_1 or '&nbsp;' }}</td>
+            <td style="border: 1px solid #000; padding: 4px;">{{ estudiante.aut_cedula_1 or '&nbsp;' }}</td>
+            <td style="border: 1px solid #000; padding: 4px;">{{ estudiante.aut_parentesco_1 or '&nbsp;' }}</td>
+            <td style="border: 1px solid #000; padding: 4px;">{{ estudiante.aut_tel_1 or '&nbsp;' }}</td>
         </tr>
         <tr>
-            <td style="border: 1px solid #000; padding: 3px; height: 18px;">{{ estudiante.aut_nombre_2 or '&nbsp;' }}</td>
-            <td style="border: 1px solid #000; padding: 3px;">{{ estudiante.aut_cedula_2 or '&nbsp;' }}</td>
-            <td style="border: 1px solid #000; padding: 3px;">{{ estudiante.aut_parentesco_2 or '&nbsp;' }}</td>
-            <td style="border: 1px solid #000; padding: 3px;">{{ estudiante.aut_tel_2 or '&nbsp;' }}</td>
+            <td style="border: 1px solid #000; padding: 4px; height: 18px;">{{ estudiante.aut_nombre_2 or '&nbsp;' }}</td>
+            <td style="border: 1px solid #000; padding: 4px;">{{ estudiante.aut_cedula_2 or '&nbsp;' }}</td>
+            <td style="border: 1px solid #000; padding: 4px;">{{ estudiante.aut_parentesco_2 or '&nbsp;' }}</td>
+            <td style="border: 1px solid #000; padding: 4px;">{{ estudiante.aut_tel_2 or '&nbsp;' }}</td>
         </tr>
         <tr>
-            <td style="border: 1px solid #000; padding: 3px; height: 18px;">{{ estudiante.aut_nombre_3 or '&nbsp;' }}</td>
-            <td style="border: 1px solid #000; padding: 3px;">{{ estudiante.aut_cedula_3 or '&nbsp;' }}</td>
-            <td style="border: 1px solid #000; padding: 3px;">{{ estudiante.aut_parentesco_3 or '&nbsp;' }}</td>
-            <td style="border: 1px solid #000; padding: 3px;">{{ estudiante.aut_tel_3 or '&nbsp;' }}</td>
+            <td style="border: 1px solid #000; padding: 4px; height: 18px;">{{ estudiante.aut_nombre_3 or '&nbsp;' }}</td>
+            <td style="border: 1px solid #000; padding: 4px;">{{ estudiante.aut_cedula_3 or '&nbsp;' }}</td>
+            <td style="border: 1px solid #000; padding: 4px;">{{ estudiante.aut_parentesco_3 or '&nbsp;' }}</td>
+            <td style="border: 1px solid #000; padding: 4px;">{{ estudiante.aut_tel_3 or '&nbsp;' }}</td>
         </tr>
         <tr>
-            <td style="border: 1px solid #000; padding: 3px; height: 18px;">{{ estudiante.aut_nombre_4 or '&nbsp;' }}</td>
-            <td style="border: 1px solid #000; padding: 3px;">{{ estudiante.aut_cedula_4 or '&nbsp;' }}</td>
-            <td style="border: 1px solid #000; padding: 3px;">{{ estudiante.aut_parentesco_4 or '&nbsp;' }}</td>
-            <td style="border: 1px solid #000; padding: 3px;">{{ estudiante.aut_tel_4 or '&nbsp;' }}</td>
+            <td style="border: 1px solid #000; padding: 4px; height: 18px;">{{ estudiante.aut_nombre_4 or '&nbsp;' }}</td>
+            <td style="border: 1px solid #000; padding: 4px;">{{ estudiante.aut_cedula_4 or '&nbsp;' }}</td>
+            <td style="border: 1px solid #000; padding: 4px;">{{ estudiante.aut_parentesco_4 or '&nbsp;' }}</td>
+            <td style="border: 1px solid #000; padding: 4px;">{{ estudiante.aut_tel_4 or '&nbsp;' }}</td>
         </tr>
         <tr>
-            <td style="border: 1px solid #000; padding: 3px; height: 18px;">{{ estudiante.aut_nombre_5 or '&nbsp;' }}</td>
-            <td style="border: 1px solid #000; padding: 3px;">{{ estudiante.aut_cedula_5 or '&nbsp;' }}</td>
-            <td style="border: 1px solid #000; padding: 3px;">{{ estudiante.aut_parentesco_5 or '&nbsp;' }}</td>
-            <td style="border: 1px solid #000; padding: 3px;">{{ estudiante.aut_tel_5 or '&nbsp;' }}</td>
+            <td style="border: 1px solid #000; padding: 4px; height: 18px;">{{ estudiante.aut_nombre_5 or '&nbsp;' }}</td>
+            <td style="border: 1px solid #000; padding: 4px;">{{ estudiante.aut_cedula_5 or '&nbsp;' }}</td>
+            <td style="border: 1px solid #000; padding: 4px;">{{ estudiante.aut_parentesco_5 or '&nbsp;' }}</td>
+            <td style="border: 1px solid #000; padding: 4px;">{{ estudiante.aut_tel_5 or '&nbsp;' }}</td>
         </tr>
     </table>
 
@@ -343,20 +342,20 @@
 
     <!-- 8. MEDICACIÓN EN EL CENTRO EDUCATIVO -->
     <div class="section-title">Medicación en el centro educativo:</div>
-    <div style="font-size: 8.5px; margin-bottom: 1px;">
+    <div style="font-size: 9px; margin-bottom: 1px;">
         Medicamentos genéricos: Analgésico, Antiinflamatorio, Antipirético, Antihistamínico y Antiespasmódico. ¿Autoriza usted que le sean suministrados sin previo aviso en caso de no poder contactarle?
     </div>
-    <div style="font-size: 9.5px; margin-bottom: 2px;">
+    <div style="font-size: 10px; margin-bottom: 2px;">
         SI [ {% if estudiante.autoriza_medicamentos == 'SI' %}X{% else %}&nbsp;&nbsp;{% endif %} ] &nbsp;&nbsp;&nbsp;&nbsp; 
         NO [ {% if estudiante.autoriza_medicamentos == 'NO' %}X{% else %}&nbsp;&nbsp;{% endif %} ]
     </div>
 
     <!-- 9. AUTORIZACIÓN DE REDES SOCIALES -->
     <div class="section-title">Autorización de redes sociales:</div>
-    <div style="font-size: 8.5px; margin-bottom: 1px;">
+    <div style="font-size: 9px; margin-bottom: 1px;">
         ¿Autoriza usted el uso de la imagen de su hijo/a en las redes abiertas al público del centro (Instagram, Facebook, etc.)?
     </div>
-    <div style="font-size: 9.5px; margin-bottom: 4px;">
+    <div style="font-size: 10px; margin-bottom: 4px;">
         SI [ {% if estudiante.autoriza_redes == 'SI' %}X{% else %}&nbsp;&nbsp;{% endif %} ] &nbsp;&nbsp;&nbsp;&nbsp; 
         NO [ {% if estudiante.autoriza_redes == 'NO' %}X{% else %}&nbsp;&nbsp;{% endif %} ] &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
         <strong>Firma:</strong> {{ estudiante.firma_redes or '' }}
