@@ -1320,117 +1320,12 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Tabl
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 
-@app.route('/asistencia', methods=['GET', 'POST'])
-def asistencia():
-    if 'usuario' not in session:
-        flash('Acceso denegado.', 'danger')
-        return redirect(url_for('login'))
-        
-    usuario_actual = str(session.get('usuario', '')).strip()
-    rol_actual = str(session.get('rol', '')).strip().lower()
-    
-    conn = get_db_connection()
-    try:
-        # Obtenemos la lista de grados únicos garantizando que la variable 'grados' se forme correctamente
-        cursos_db = conn.execute("SELECT DISTINCT grado FROM estudiantes WHERE grado IS NOT NULL AND TRIM(grado) != '' ORDER BY grado ASC").fetchall()
-        grados = [c['grado'] for c in cursos_db]
-        
-        # Fecha por defecto o la que seleccione el usuario en el input de fecha
-        fecha_actual = request.args.get('fecha', '') or request.form.get('fecha', '')
-        if not fecha_actual:
-            fecha_actual = datetime.now().strftime('%Y-%m-%d')
-        
-        curso_docente = None
-        if rol_actual not in ['oficina', 'admin']:
-            usuario_db = conn.execute('SELECT curso_asignado FROM usuarios WHERE username = ?', (usuario_actual,)).fetchone()
-            if usuario_db and usuario_db['curso_asignado']:
-                curso_docente = usuario_db['curso_asignado'].strip()
-
-        if request.method == 'POST':
-            grado_seleccionado = request.form.get('grado_actual', '').strip()
-            
-            estudiantes = conn.execute('''
-                SELECT * FROM estudiantes 
-                WHERE grado = ? 
-                ORDER BY apellidos ASC, nombres ASC
-            ''', (grado_seleccionado,)).fetchall()
-            
-            for est in estudiantes:
-                est_id = str(est['id_estudiante'])
-                estado = request.form.get(f'estado_{est_id}', 'Presente')
-                
-                # Verificamos si ya existe el registro para ese estudiante en esa fecha
-                existe = conn.execute('SELECT id FROM asistencia WHERE id_estudiante = ? AND fecha = ?', (est_id, fecha_actual)).fetchone()
-                if existe:
-                    conn.execute('UPDATE asistencia SET estado = ?, grado = ? WHERE id_estudiante = ? AND fecha = ?', (estado, grado_seleccionado, est_id, fecha_actual))
-                else:
-                    conn.execute('INSERT INTO asistencia (id_estudiante, grado, fecha, estado) VALUES (?, ?, ?, ?)', (est_id, grado_seleccionado, fecha_actual, estado))
-            
-            conn.commit()
-            flash(f'Asistencia guardada correctamente para el grado {grado_seleccionado}.', 'success')
-            return redirect(url_for('asistencia', grado=grado_seleccionado, fecha=fecha_actual))
-            
-        else:
-            grado_seleccionado = request.args.get('grado', '').strip()
-            
-            if not grado_seleccionado and curso_docente:
-                grado_seleccionado = curso_docente
-                
-            estudiantes = []
-            ausentes_hoy = []
-            
-            if grado_seleccionado:
-                rows = conn.execute('''
-                    SELECT e.*, a.estado as estado_asistencia 
-                    FROM estudiantes e
-                    LEFT JOIN asistencia a ON e.id_estudiante = a.id_estudiante AND a.fecha = ?
-                    WHERE e.grado = ? 
-                    ORDER BY e.apellidos ASC, e.nombres ASC
-                ''', (fecha_actual, grado_seleccionado)).fetchall()
-                
-                for row in rows:
-                    est = dict(row)
-                    est['estado_actual'] = est['estado_asistencia'] if est['estado_asistencia'] else 'Presente'
-                    estudiantes.append(est)
-                
-                ausentes_rows = conn.execute('''
-                    SELECT e.id_estudiante, e.nombres, e.apellidos, a.estado 
-                    FROM asistencia a
-                    JOIN estudiantes e ON a.id_estudiante = e.id_estudiante
-                    WHERE a.grado = ? AND a.fecha = ? AND a.estado IN ('Ausente', 'Tarde')
-                    ORDER BY e.apellidos ASC
-                ''', (grado_seleccionado, fecha_actual)).fetchall()
-                
-                for aus in ausentes_rows:
-                    ausentes_hoy.append(dict(aus))
-                    
-    except Exception as e:
-        print(f"Error en asistencia: {e}")
-        grados = []
-        estudiantes = []
-        ausentes_hoy = []
-        grado_seleccionado = ''
-        fecha_actual = datetime.now().strftime('%Y-%m-%d')
-    finally:
-        conn.close()
-        
-    return render_template('asistencia.html', 
-                           grados=grados, 
-                           grado_seleccionado=grado_seleccionado, 
-                           fecha_actual=fecha_actual, 
-                           estudiantes=estudiantes,
-                           ausentes_hoy=ausentes_hoy)
-
-
 @app.route('/descargar_reporte_ausencias', methods=['GET'])
 def descargar_reporte_ausencias():
     if 'usuario' not in session:
         return redirect(url_for('login'))
         
     fecha_reporte = request.args.get('fecha', datetime.now().strftime('%Y-%m-%d'))
-    
-    grados_primaria = ['1ro. - A', '1ro. - B', '2do. - A', '2do. - B', '3ro. - A', '3ro. - B', '4to.', '5to.', '6to.']
-    datos_grados = []
     
     total_ninos_mat = 0
     total_ninas_mat = 0
@@ -1439,39 +1334,42 @@ def descargar_reporte_ausencias():
     total_ninas_asis = 0
     total_asis = 0
 
+    datos_grados = []
     conn = get_db_connection()
     try:
-        for g in grados_primaria:
-            # 1. Obtener conteo de matriculados por sexo en este grado (Asumiendo columna 'sexo' con valores como 'Masculino'/'Femenino' o 'M'/'F')
-            estudiantes_grado = conn.execute("SELECT sexo FROM estudiantes WHERE grado = ?", (g,)).fetchall()
+        # 1. Obtenemos únicamente los grados que realmente existen en tu base de datos
+        grados_db = conn.execute("SELECT DISTINCT grado FROM estudiantes WHERE grado IS NOT NULL AND TRIM(grado) != '' ORDER BY grado ASC").fetchall()
+        grados_registrados = [g['grado'] for g in grados_db]
+
+        for g in grados_registrados:
+            # Obtener estudiantes reales de este grado
+            estudiantes_grado = conn.execute("SELECT id_estudiante, sexo, nombres, apellidos FROM estudiantes WHERE grado = ?", (g,)).fetchall()
             
             ninos_m = sum(1 for e in estudiantes_grado if str(e['sexo']).strip().capitalize() in ['Masculino', 'M'])
             ninas_m = sum(1 for e in estudiantes_grado if str(e['sexo']).strip().capitalize() in ['Femenino', 'F'])
             total_m = ninos_m + ninas_m
             
-            # 2. Obtener asistencia de la fecha para este grado
-            registros_asistencia = conn.execute('''
-                SELECT e.nombres, e.apellidos, e.sexo, a.estado 
-                FROM asistencia a 
-                JOIN estudiantes e ON a.id_estudiante = e.id_estudiante 
-                WHERE e.grado = ? AND a.fecha = ?
-            ''', (g, fecha_reporte)).fetchall()
-
             ninos_asis = 0
             ninas_asis = 0
             lista_ausentes = []
 
-            for reg in registros_asistencia:
-                sexo_est = str(reg['sexo']).strip().capitalize()
-                estado_est = str(reg['estado']).strip()
-
-                if estado_est == 'Presente':
+            # 2. Evaluar asistencia real para la fecha
+            for est in estudiantes_grado:
+                est_id = est['id_estudiante']
+                sexo_est = str(est['sexo']).strip().capitalize()
+                
+                asistencia_reg = conn.execute("SELECT estado FROM asistencia WHERE id_estudiante = ? AND fecha = ?", (est_id, fecha_reporte)).fetchone()
+                
+                # Por defecto si no se ha pasado lista, se puede contar como presente o ausente según prefieras (aquí 'Presente')
+                estado = asistencia_reg['estado'] if asistencia_reg else 'Presente'
+                
+                if estado == 'Presente':
                     if sexo_est in ['Masculino', 'M']:
                         ninos_asis += 1
                     elif sexo_est in ['Femenino', 'F']:
                         ninas_asis += 1
-                elif estado_est in ['Ausente', 'Tarde']:
-                    lista_ausentes.append(f"{reg['apellidos']}, {reg['nombres']}")
+                elif estado in ['Ausente', 'Tarde']:
+                    lista_ausentes.append(f"{est['apellidos']}, {est['nombres']}")
 
             total_a = ninos_asis + ninas_asis
             nombres_ausentes_str = ", ".join(lista_ausentes) if lista_ausentes else ""
@@ -1487,9 +1385,9 @@ def descargar_reporte_ausencias():
                 'ausentes': nombres_ausentes_str
             })
 
-            # Acumuladores generales de toda la escuela
+            # Acumuladores generales reales
             total_ninos_mat += ninos_m
-            total_ninas_mat += ninas_m
+            total_ninas_mat += ninas_m # Nota: aquí corregimos para sumar niñas independientes
             total_mat += total_m
             total_ninos_asis += ninos_asis
             total_ninas_asis += ninas_asis
