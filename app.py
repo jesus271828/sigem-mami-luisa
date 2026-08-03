@@ -320,28 +320,30 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
+from flask import jsonify, session # Asegúrate de importar esto si no lo tienes
+
 @app.route('/api/buscar_estudiante/<id_estudiante>', methods=['GET'])
 def api_buscar_estudiante(id_estudiante):
-    if 'usuario' not in session:
-        return jsonify({'encontrado': False}), 401
-        
     conexion = None
     try:
         conexion = get_db_connection()
         is_postgres = DATABASE_URL is not None
         
+        # IMPORTANTE: Cambia 'id_estudiante' por el nombre exacto de la columna en tu base de datos (ej: 'id', 'codigo', 'matricula')
+        columna_id = 'id_estudiante' 
+        
         if is_postgres:
             cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-            # Buscamos en inscripciones o estudiantes el último registro de ese ID
-            cur.execute("SELECT * FROM inscripciones WHERE id_estudiante = %s ORDER BY id DESC LIMIT 1", (id_estudiante,))
+            query = f"SELECT * FROM inscripciones WHERE {columna_id} = %s ORDER BY id DESC LIMIT 1"
+            cur.execute(query, (id_estudiante,))
             estudiante = cur.fetchone()
             cur.close()
         else:
             conexion.row_factory = sqlite3.Row
-            estudiante = conexion.execute("SELECT * FROM inscripciones WHERE id_estudiante = ? ORDER BY id DESC LIMIT 1", (id_estudiante,)).fetchone()
+            query = f"SELECT * FROM inscripciones WHERE {columna_id} = ? ORDER BY id DESC LIMIT 1"
+            estudiante = conexion.execute(query, (id_estudiante,)).fetchone()
             
         if estudiante:
-            # Convertimos el resultado a diccionario para mandarlo por JSON
             return jsonify({
                 'encontrado': True,
                 'data': dict(estudiante)

@@ -103,7 +103,8 @@
                     <h5 class="section-title">Datos del Estudiante</h5>
                     <div class="row g-3">
                         <div class="col-md-4">
-                            <input type="text" name="id_estudiante" class="form-control" placeholder="ID del Estudiante" required>
+                            <!-- AQUÍ SE AÑADIÓ id="id_estudiante" -->
+                            <input type="text" id="id_estudiante" name="id_estudiante" class="form-control" placeholder="ID del Estudiante" required>
                         </div>
                         <div class="col-md-4">
                             <input type="text" name="nombres" class="form-control" placeholder="Nombres" required>
@@ -486,5 +487,54 @@ async function escanearFichaConIA() {
     btn.disabled = false;
 }
 </script>
+
+<!-- SCRIPT DE AUTOCOMPLETADO AUTOMÁTICO POR ID -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const inputId = document.getElementById('id_estudiante');
+
+    if (inputId) {
+        // Se ejecuta al presionar ENTER dentro del campo ID
+        inputId.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault(); 
+                consultarDatos(this.value.trim());
+            }
+        });
+
+        // O cuando haces clic fuera del campo (al salir)
+        inputId.addEventListener('blur', function() {
+            consultarDatos(this.value.trim());
+        });
+    }
+});
+
+function consultarDatos(idEst) {
+    if (!idEst) return;
+    
+    console.log("Buscando ID en el servidor:", idEst);
+
+    fetch(`/api/buscar_estudiante/${idEst}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.encontrado) {
+                let info = data.data;
+                // Rellena automáticamente todos los campos que coincidan con el 'name'
+                for (let key in info) {
+                    let input = document.querySelector(`[name="${key}"]`);
+                    if (input && info[key] !== null) {
+                        input.value = info[key];
+                        input.dispatchEvent(new Event('change'));
+                    }
+                }
+                alert("¡Estudiante encontrado y datos cargados!");
+            } else {
+                console.log("El ID no está registrado, puedes proceder a ingresarlo como nuevo.");
+            }
+        })
+        .catch(err => console.error("Error al conectar con la API:", err));
+}
+</script>
+
 </body>
 </html>
