@@ -1052,30 +1052,29 @@ def listado_estudiantes():
     
     conn = get_db_connection()
     try:
-        # Si es admin u oficina, ve todos los estudiantes ordenados por grado y apellido
+        # Si es oficina o admin, ve todos los estudiantes ordenados
         if rol_actual in ['oficina', 'admin']:
             estudiantes = conn.execute('''
                 SELECT * FROM estudiantes 
                 ORDER BY grado ASC, apellidos ASC, nombres ASC
             ''').fetchall()
         else:
-            # Buscamos el curso asignado al maestro en la tabla usuarios
+            # Consultamos usando 'username' tal como está en tu tabla usuarios
             usuario_db = conn.execute('''
                 SELECT curso_asignado FROM usuarios 
-                WHERE username = ? OR usuario = ?
-            ''', (usuario_actual, usuario_actual)).fetchone()
+                WHERE username = ?
+            ''', (usuario_actual,)).fetchone()
             
             curso_docente = usuario_db['curso_asignado'] if usuario_db and usuario_db['curso_asignado'] else session.get('grado')
             
             if curso_docente:
-                # Filtramos por su curso y ordenamos alfabéticamente por apellido
+                # Filtramos por el curso asignado y ordenamos alfabéticamente por apellido
                 estudiantes = conn.execute('''
                     SELECT * FROM estudiantes 
                     WHERE grado = ? 
                     ORDER BY apellidos ASC, nombres ASC
                 ''', (curso_docente,)).fetchall()
             else:
-                # Por seguridad, si no tiene curso asignado, muestra todo ordenado
                 estudiantes = conn.execute('''
                     SELECT * FROM estudiantes 
                     ORDER BY grado ASC, apellidos ASC, nombres ASC
