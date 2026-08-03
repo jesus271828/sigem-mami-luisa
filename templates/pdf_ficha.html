@@ -56,6 +56,17 @@
             margin-top: 15px;
             width: 100%;
         }
+        /* Estilo para el recuadro de la foto */
+        .photo-box {
+            width: 3cm;
+            height: 4cm;
+            border: 1px dashed #666;
+            text-align: center;
+            vertical-align: middle;
+            background-color: #f9f9f9;
+            font-size: 10px;
+            color: #555;
+        }
     </style>
 </head>
 <body>
@@ -85,20 +96,42 @@
     <div class="section-title">Datos del estudiante:</div>
     <table class="grid-table" style="width: 100%; border-collapse: collapse;">
         <tr>
-            <td style="width: 65%;"><span class="field-label">Nombres:</span> {{ estudiante.nombres }}</td>
-            <td style="width: 65%;"><span class="field-label">Grado:</span> {{ estudiante.grado }}</td>
+            <!-- Datos del estudiante (ocupan el espacio izquierdo) -->
+            <td style="width: 78%;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                        <td style="width: 60%;"><span class="field-label">Nombres:</span> {{ estudiante.nombres }}</td>
+                        <td style="width: 40%;"><span class="field-label">Grado:</span> {{ estudiante.grado }}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2"><span class="field-label">Apellidos:</span> {{ estudiante.apellidos }}</td>
+                    </tr>
+                    <tr>
+                        <td><span class="field-label">Fecha de nacimiento:</span> {{ estudiante.fecha_nacimiento }}</td>
+                        <td><span class="field-label">Edad:</span> {{ estudiante.edad }}</td>
+                    </tr>
+                    <tr>
+                        <td><span class="field-label">Nacionalidad:</span> {{ estudiante.nacionalidad }}</td>
+                        <td><span class="field-label">Lugar de nacimiento:</span> {{ estudiante.lugar_nac }}</td>
+                    </tr>
+                </table>
+            </td>
+            
+            <!-- Recuadro para la Fotografía (ubicado a la derecha) -->
+            <td style="width: 22%; text-align: center; vertical-align: top; padding-left: 5px;">
+                <div class="photo-box">
+                    {% if estudiante.foto_src %}
+                        <img src="{{ estudiante.foto_src }}" style="width: 100%; height: 100%; object-fit: cover;">
+                    {% else %}
+                        <br><br>FOTO<br>2 x 2
+                    {% endif %}
+                </div>
+            </td>
         </tr>
-        <tr>
-            <td colspan="2"><span class="field-label">Apellidos:</span> {{ estudiante.apellidos }}</td>
-        </tr>
-        <tr>
-            <td style="width: 50%;"><span class="field-label">Fecha de nacimiento:</span> {{ estudiante.fecha_nacimiento }}</td>
-            <td style="width: 50%;"><span class="field-label">Edad:</span> {{ estudiante.edad }}</td>
-        </tr>
-        <tr>
-            <td style="width: 50%;"><span class="field-label">Nacionalidad:</span> {{ estudiante.nacionalidad }}</td>
-            <td style="width: 50%;"><span class="field-label">Lugar de nacimiento:</span> {{ estudiante.lugar_nac }}</td>
-        </tr>
+    </table>
+
+    <!-- Resto de campos del estudiante que continúan debajo -->
+    <table class="grid-table" style="width: 100%; border-collapse: collapse;">
         <tr>
             <td colspan="2"><span class="field-label">Dirección:</span> {{ estudiante.direccion }}</td>
         </tr>
@@ -323,7 +356,7 @@
             <td><span class="field-label">Lugar de trabajo:</span> {{ estudiante.econ_lugar_trabajo }}</td>
         </tr>
         <tr>
-            <td><span class="field-label">Teléfono personal:</span> {{ estudiante.econ_tel_personal }}</td>
+            <td><span class="field-label5">Teléfono personal:</span> {{ estudiante.econ_tel_personal }}</td>
             <td><span class="field-label">Teléfono trabajo:</span> {{ estudiante.econ_tel_trabajo }}</td>
         </tr>
         <tr>
