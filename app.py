@@ -1439,29 +1439,66 @@ def descargar_reporte_ausencias():
     total_ninas_asis = 0
     total_asis = 0
 
-    for g in grados_primaria:
-        ninos_m = 0
-        ninas_m = 0
-        total_m = ninos_m + ninas_m
-        
-        ninos_a = 0
-        ninas_a = 0
-        total_a = ninos_a + ninas_a
-        nombres_ausentes_str = ""
+    conn = get_db_connection()
+    try:
+        for g in grados_primaria:
+            # 1. Obtener conteo de matriculados por sexo en este grado (Asumiendo columna 'sexo' con valores como 'Masculino'/'Femenino' o 'M'/'F')
+            estudiantes_grado = conn.execute("SELECT sexo FROM estudiantes WHERE grado = ?", (g,)).fetchall()
+            
+            ninos_m = sum(1 for e in estudiantes_grado if str(e['sexo']).strip().capitalize() in ['Masculino', 'M'])
+            ninas_m = sum(1 for e in estudiantes_grado if str(e['sexo']).strip().capitalize() in ['Femenino', 'F'])
+            total_m = ninos_m + ninas_m
+            
+            # 2. Obtener asistencia de la fecha para este grado
+            registros_asistencia = conn.execute('''
+                SELECT e.nombres, e.apellidos, e.sexo, a.estado 
+                FROM asistencia a 
+                JOIN estudiantes e ON a.id_estudiante = e.id_estudiante 
+                WHERE e.grado = ? AND a.fecha = ?
+            ''', (g, fecha_reporte)).fetchall()
 
-        datos_grados.append({
-            'grado': g,
-            'ninos_m': ninos_m, 'ninas_m': ninas_m, 'total_m': total_m,
-            'ninos_a': ninos_a, 'ninas_a': ninas_a, 'total_a': total_a,
-            'ausentes': nombres_ausentes_str
-        })
+            ninos_asis = 0
+            ninas_asis = 0
+            lista_ausentes = []
 
-        total_ninos_mat += ninos_m
-        total_ninas_mat += ninas_m
-        total_mat += total_m
-        total_ninos_asis += ninos_a
-        total_ninas_asis += ninas_a
-        total_asis += total_a
+            for reg in registros_asistencia:
+                sexo_est = str(reg['sexo']).strip().capitalize()
+                estado_est = str(reg['estado']).strip()
+
+                if estado_est == 'Presente':
+                    if sexo_est in ['Masculino', 'M']:
+                        ninos_asis += 1
+                    elif sexo_est in ['Femenino', 'F']:
+                        ninas_asis += 1
+                elif estado_est in ['Ausente', 'Tarde']:
+                    lista_ausentes.append(f"{reg['apellidos']}, {reg['nombres']}")
+
+            total_a = ninos_asis + ninas_asis
+            nombres_ausentes_str = ", ".join(lista_ausentes) if lista_ausentes else ""
+
+            datos_grados.append({
+                'grado': g,
+                'ninos_m': ninos_m, 
+                'ninas_m': ninas_m, 
+                'total_m': total_m,
+                'ninos_a': ninos_asis, 
+                'ninas_a': ninas_asis, 
+                'total_a': total_a,
+                'ausentes': nombres_ausentes_str
+            })
+
+            # Acumuladores generales de toda la escuela
+            total_ninos_mat += ninos_m
+            total_ninas_mat += ninas_m
+            total_mat += total_m
+            total_ninos_asis += ninos_asis
+            total_ninas_asis += ninas_asis
+            total_asis += total_a
+
+    except Exception as e:
+        print(f"Error generando reporte de ausencias PDF: {e}")
+    finally:
+        conn.close()
 
     return render_template(
         'control_asistencia_pdf.html',
@@ -1474,6 +1511,7 @@ def descargar_reporte_ausencias():
         total_ninas_asis=total_ninas_asis,
         total_asis=total_asis
     )
+
 
 @app.route('/menu_notas')
 def menu_notas():
