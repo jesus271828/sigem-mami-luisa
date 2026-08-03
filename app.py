@@ -1377,7 +1377,7 @@ def generar_pdf(id_estudiante):
         for fila in filas:
             valores = list(fila.values()) if isinstance(fila, dict) else list(fila)
             if len(valores) >= 4 and str(valores[3]).strip() == str(id_estudiante).strip():
-                estudiante = dict(fila) if not isinstance(fila, dict) else fila # Convertimos a dict para poder modificarlo si es necesario
+                estudiante = dict(fila) if not isinstance(fila, dict) else fila
                 break
 
         if estudiante:
@@ -1404,22 +1404,27 @@ def generar_pdf(id_estudiante):
             logo_base64 = base64.b64encode(image_file.read()).decode('utf-8')
         logo_src = f"data:image/png;base64,{logo_base64}"
         
-    # NUEVO: Procesar Foto del Estudiante en Base64
-    # (Asumiendo que la columna en tu base de datos se llama 'foto' o ajusta el nombre de la clave)
-    foto_nombre = estudiante.get('foto') if isinstance(estudiante, dict) else estudiante[ 'foto' ] if 'foto' in estudiante.keys() else None
+    # Procesar la foto desde la columna correcta: foto_estudiante_cedula
+    foto_valor = estudiante.get('foto_estudiante_cedula') if isinstance(estudiante, dict) else estudiante['foto_estudiante_cedula'] if 'foto_estudiante_cedula' in estudiante.keys() else None
     foto_base64_src = ""
     
-    if foto_nombre:
-        foto_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'uploads', str(foto_nombre).strip())
-        if os.path.exists(foto_path):
-            with open(foto_path, "rb") as foto_file:
-                foto_encoded = base64.b64encode(foto_file.read()).decode('utf-8')
-                # Detectar extensión básica para el mime type
-                ext = str(foto_nombre).split('.')[-1].lower()
-                mime_type = 'image/png' if ext == 'png' else 'image/jpeg'
-                foto_base64_src = f"data:{mime_type};base64,{foto_encoded}"
+    if foto_valor:
+        foto_str = str(foto_valor).strip()
+        # Si ya viene guardada como base64 directo en la base de datos
+        if foto_str.startswith('/9j/') or foto_str.startswith('data:image'):
+            mime = 'image/jpeg' if foto_str.startswith('/9j/') else 'image/png'
+            foto_base64_src = foto_str if foto_str.startswith('data:') else f"data:{mime};base64,{foto_str}"
+        else:
+            # Si guarda una ruta tipo 'uploads/nombre.jpg' o 'nombre.jpg'
+            nombre_archivo = foto_str.replace('uploads/', '')
+            foto_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'uploads', nombre_archivo)
+            if os.path.exists(foto_path):
+                with open(foto_path, "rb") as foto_file:
+                    foto_encoded = base64.b64encode(foto_file.read()).decode('utf-8')
+                    ext = nombre_archivo.split('.')[-1].lower()
+                    mime_type = 'image/png' if ext == 'png' else 'image/jpeg'
+                    foto_base64_src = f"data:{mime_type};base64,{foto_encoded}"
 
-    # Si `estudiante` es una fila de sqlite (Row object), la convertimos a dict o inyectamos la propiedad de manera segura
     if not isinstance(estudiante, dict):
         estudiante = dict(estudiante)
     
