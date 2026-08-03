@@ -1361,91 +1361,6 @@ def asistencia():
                            ausentes_hoy=ausentes_hoy)
 
 
-@app.route('/descargar_reporte_ausencias', methods=['GET'])
-def descargar_reporte_ausencias():
-    if 'usuario' not in session:
-        return redirect(url_for('login'))
-        
-    fecha_reporte = request.args.get('fecha', datetime.now().strftime('%Y-%m-%d'))
-    
-    datos_grados = []
-    total_ninos_mat = 0
-    total_ninas_mat = 0
-    total_mat = 0
-    total_ninos_asis = 0
-    total_ninas_asis = 0
-    total_asis = 0
-
-    conn = get_db_connection()
-    try:
-        # Carga únicamente los grados que tienen alumnos registrados en la base de datos
-        grados_db = conn.execute("SELECT DISTINCT grado FROM estudiantes WHERE grado IS NOT NULL AND TRIM(grado) != '' ORDER BY grado ASC").fetchall()
-        grados_registrados = [g['grado'] for g in grados_db]
-
-        for g in grados_registrados:
-            estudiantes_grado = conn.execute("SELECT id_estudiante, sexo, nombres, apellidos FROM estudiantes WHERE grado = ?", (g,)).fetchall()
-            
-            ninos_m = sum(1 for e in estudiantes_grado if str(e['sexo']).strip().capitalize() in ['Masculino', 'M'])
-            ninas_m = sum(1 for e in estudiantes_grado if str(e['sexo']).strip().capitalize() in ['Femenino', 'F'])
-            total_m = ninos_m + ninas_m
-            
-            ninos_asis = 0
-            ninas_asis = 0
-            lista_ausentes = []
-
-            for est in estudiantes_grado:
-                est_id = est['id_estudiante']
-                sexo_est = str(est['sexo']).strip().capitalize()
-                
-                asistencia_reg = conn.execute("SELECT estado FROM asistencia WHERE id_estudiante = ? AND fecha = ?", (est_id, fecha_reporte)).fetchone()
-                estado = asistencia_reg['estado'] if asistencia_reg else 'Presente'
-                
-                if estado == 'Presente':
-                    if sexo_est in ['Masculino', 'M']:
-                        ninos_asis += 1
-                    elif sexo_est in ['Femenino', 'F']:
-                        ninas_asis += 1
-                elif estado in ['Ausente', 'Tarde']:
-                    lista_ausentes.append(f"{est['apellidos']}, {est['nombres']}")
-
-            total_a = ninos_asis + ninas_asis
-            nombres_ausentes_str = ", ".join(lista_ausentes) if lista_ausentes else ""
-
-            datos_grados.append({
-                'grado': g,
-                'ninos_m': ninos_m, 
-                'ninas_m': ninas_m, 
-                'total_m': total_m,
-                'ninos_a': ninos_asis, 
-                'ninas_a': ninas_asis, 
-                'total_a': total_a,
-                'ausentes': nombres_ausentes_str
-            })
-
-            total_ninos_mat += ninos_m
-            total_ninas_mat += ninas_m
-            total_mat += total_m
-            total_ninos_asis += ninos_asis
-            total_ninas_asis += ninas_asis
-            total_asis += total_a
-
-    except Exception as e:
-        print(f"Error generando reporte de ausencias PDF: {e}")
-    finally:
-        conn.close()
-
-    return render_template(
-        'control_asistencia_pdf.html',
-        fecha=fecha_reporte,
-        datos_grados=datos_grados,
-        total_ninos_mat=total_ninos_mat,
-        total_ninas_mat=total_ninas_mat,
-        total_mat=total_mat,
-        total_ninos_asis=total_ninos_asis,
-        total_ninas_asis=total_ninas_asis,
-        total_asis=total_asis
-    )
-
 @app.route('/generar_pdf/<path:id_estudiante>')
 def generar_pdf(id_estudiante):
     if 'usuario' not in session:
@@ -1462,7 +1377,7 @@ def generar_pdf(id_estudiante):
         for fila in filas:
             valores = list(fila.values()) if isinstance(fila, dict) else list(fila)
             if len(valores) >= 4 and str(valores[3]).strip() == str(id_estudiante).strip():
-                estudiante = fila
+                estudiante = dict(fila) if not isinstance(fila, dict) else fila # Convertimos a dict para poder modificarlo si es necesario
                 break
 
         if estudiante:
@@ -1481,12 +1396,34 @@ def generar_pdf(id_estudiante):
     if not estudiante:
         return f"No se encontró ninguna inscripción para el ID: {id_estudiante}", 404
 
+    # Procesar Logo en Base64
     logo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'img', 'logo2.png')
     logo_src = ""
     if os.path.exists(logo_path):
         with open(logo_path, "rb") as image_file:
             logo_base64 = base64.b64encode(image_file.read()).decode('utf-8')
         logo_src = f"data:image/png;base64,{logo_base64}"
+        
+    # NUEVO: Procesar Foto del Estudiante en Base64
+    # (Asumiendo que la columna en tu base de datos se llama 'foto' o ajusta el nombre de la clave)
+    foto_nombre = estudiante.get('foto') if isinstance(estudiante, dict) else estudiante[ 'foto' ] if 'foto' in estudiante.keys() else None
+    foto_base64_src = ""
+    
+    if foto_nombre:
+        foto_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'uploads', str(foto_nombre).strip())
+        if os.path.exists(foto_path):
+            with open(foto_path, "rb") as foto_file:
+                foto_encoded = base64.b64encode(foto_file.read()).decode('utf-8')
+                # Detectar extensión básica para el mime type
+                ext = str(foto_nombre).split('.')[-1].lower()
+                mime_type = 'image/png' if ext == 'png' else 'image/jpeg'
+                foto_base64_src = f"data:{mime_type};base64,{foto_encoded}"
+
+    # Si `estudiante` es una fila de sqlite (Row object), la convertimos a dict o inyectamos la propiedad de manera segura
+    if not isinstance(estudiante, dict):
+        estudiante = dict(estudiante)
+    
+    estudiante['foto_base64'] = foto_base64_src
     
     html = render_template('pdf_ficha.html', estudiante=estudiante, autorizados=autorizados, logo_src=logo_src)
     
@@ -1500,7 +1437,6 @@ def generar_pdf(id_estudiante):
         return 'Hubo un error al generar el PDF', 500
         
     return response
-
 
 
 
