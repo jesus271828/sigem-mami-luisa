@@ -1422,8 +1422,6 @@ def asistencia():
                            ausentes_hoy=ausentes_hoy)
 
 
-from datetime import datetime
-
 @app.route('/descargar_reporte_ausencias', methods=['GET'])
 def descargar_reporte_ausencias():
     if 'usuario' not in session:
@@ -1431,46 +1429,39 @@ def descargar_reporte_ausencias():
         
     fecha_reporte = request.args.get('fecha', datetime.now().strftime('%Y-%m-%d'))
     
-    # Lista de grados oficiales del centro según tu formato
     grados_primaria = ['1ro. - A', '1ro. - B', '2do. - A', '2do. - B', '3ro. - A', '3ro. - B', '4to.', '5to.', '6to.']
-    
-    # Diccionario o consulta para recolectar los datos dinámicos de cada curso
-    # Aquí puedes consultar tu base de datos para cada grado_seccion en la fecha_reporte
     datos_grados = []
+    
     total_ninos_mat = 0
     total_ninas_mat = 0
     total_mat = 0
     total_ninos_asis = 0
     total_ninas_asis = 0
     total_asis = 0
-    
-    # Estructura de ejemplo para recorrer cada curso (reemplaza con tu consulta SQL real)
+
     for g in grados_primaria:
-        # Ejemplo de consulta simulada para obtener matriculados y ausentes de la BD:
-        # matriculados = obtener_matriculados(g)
-        # ausentes = obtener_ausentes(g, fecha_reporte)
+        ninos_m = 0
+        ninas_m = 0
+        total_m = ninos_m + ninas_m
         
-        # Por ahora lo dejamos preparado para que inyectes los valores calculados de tu BD:
-        ninos_m = 0  # Cantidad de niños matriculados
-        ninas_m = 0  # Cantidad de niñas matriculadas
-        t_m = ninos_m + ninas_m
-        
-        ninos_a = 0  # Niños asistentes
-        ninas_a = 0  # Niñas asistentes
-        t_a = ninos_a + ninas_a
-        
-        nombres_ausentes = "" # Nombres concatenados de los ausentes para la celda de la derecha
-        
+        ninos_a = 0
+        ninas_a = 0
+        total_a = ninos_a + ninas_a
+        nombres_ausentes_str = ""
+
         datos_grados.append({
             'grado': g,
-            'ninos_m': ninos_m, 'ninas_m': ninas_m, 'total_m': t_m,
-            'ninos_a': ninos_a, 'ninas_a': ninas_a, 'total_a': t_a,
-            'ausentes': nombres_ausentes
+            'ninos_m': ninos_m, 'ninas_m': ninas_m, 'total_m': total_m,
+            'ninos_a': ninos_a, 'ninas_a': ninas_a, 'total_a': total_a,
+            'ausentes': nombres_ausentes_str
         })
-        
+
         total_ninos_mat += ninos_m
         total_ninas_mat += ninas_m
-        total_mat += t_m
+        total_mat += total_m
+        total_ninos_asis += ninos_a
+        total_ninas_asis += ninas_a
+        total_asis += total_a
 
     return render_template(
         'control_asistencia_pdf.html',
@@ -1479,7 +1470,9 @@ def descargar_reporte_ausencias():
         total_ninos_mat=total_ninos_mat,
         total_ninas_mat=total_ninas_mat,
         total_mat=total_mat,
-        responsable=session.get('usuario', 'Administrador')
+        total_ninos_asis=total_ninos_asis,
+        total_ninas_asis=total_ninas_asis,
+        total_asis=total_asis
     )
 
 @app.route('/menu_notas')
