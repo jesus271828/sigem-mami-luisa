@@ -1251,6 +1251,8 @@ def generar_pdf(id_estudiante):
 
 from datetime import datetime
 
+from datetime import datetime
+
 @app.route('/asistencia', methods=['GET', 'POST'])
 def asistencia():
     if 'usuario' not in session:
@@ -1262,14 +1264,12 @@ def asistencia():
     
     conn = get_db_connection()
     try:
-        # Obtenemos la lista de grados únicos para llenar el selector
-        cursos_db = conn.execute('SELECT DISTINCT grado FROM estudiantes WHERE grado IS NOT NULL AND grado != "" ORDER BY grado ASC').fetchall()
+        # Consulta corregida y compatible con PostgreSQL para evitar el error de comillas vacías
+        cursos_db = conn.execute("SELECT DISTINCT grado FROM estudiantes WHERE grado IS NOT NULL AND TRIM(grado) != '' ORDER BY grado ASC").fetchall()
         grados = [c['grado'] for c in cursos_db]
         
-        # Fecha actual por defecto para el formulario
         fecha_actual = datetime.now().strftime('%Y-%m-%d')
         
-        # Si es maestro y no oficina/admin, determinamos su curso asignado por defecto
         curso_docente = None
         if rol_actual not in ['oficina', 'admin']:
             usuario_db = conn.execute('SELECT curso_asignado FROM usuarios WHERE username = ?', (usuario_actual,)).fetchone()
@@ -1279,11 +1279,9 @@ def asistencia():
                 curso_docente = str(session.get('grado', '')).strip()
 
         if request.method == 'POST':
-            # Capturamos los datos enviados al guardar la asistencia
             grado_seleccionado = request.form.get('grado_actual', '').strip()
             fecha_asistencia = request.form.get('fecha', fecha_actual)
             
-            # Buscamos los estudiantes de ese grado para procesar sus estados
             estudiantes = conn.execute('''
                 SELECT * FROM estudiantes 
                 WHERE grado = ? 
@@ -1293,16 +1291,11 @@ def asistencia():
             for est in estudiantes:
                 est_id = str(est['id_estudiante'])
                 estado = request.form.get(f'estado_{est_id}', 'Presente')
-                
-                # Opcional: Aquí puedes insertar o actualizar en tu tabla de asistencia si ya la tienes creada
-                # conn.execute('INSERT INTO asistencia (id_estudiante, fecha, estado) VALUES (?, ?, ?)', (est_id, fecha_asistencia, estado))
             
-            # conn.commit() # Descomenta si guardas en base de datos
             flash(f'Asistencia guardada correctamente para el grado {grado_seleccionado}.', 'success')
             return redirect(url_for('asistencia', grado=grado_seleccionado))
             
         else:
-            # Método GET: capturamos el grado seleccionado por la URL o asignamos el del maestro
             grado_seleccionado = request.args.get('grado', '').strip()
             
             if not grado_seleccionado and curso_docente:
