@@ -14,9 +14,9 @@
                 <a href="/menu" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Volver al Menú</a>
             </div>
 
-            <!-- SELECTOR DE GRADO Y FECHA -->
+            <!-- SELECTOR DE GRADO Y FECHA + BOTÓN DE REPORTE GENERAL -->
             <form method="GET" action="/asistencia" class="row g-3 align-items-end mb-4 bg-white p-3 rounded border">
-                <div class="col-md-6">
+                <div class="col-md-5">
                     <label for="grado" class="form-label fw-bold">Seleccione el Grado a Evaluar:</label>
                     <select name="grado" id="grado" class="form-select" onchange="this.form.submit()">
                         <option value="">-- Seleccione un grado --</option>
@@ -29,10 +29,17 @@
                     <label class="form-label fw-bold">Fecha:</label>
                     <input type="date" name="fecha" class="form-control" value="{{ fecha_actual }}" onchange="this.form.submit()">
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-3">
                     <button type="submit" class="btn btn-primary w-100"><i class="fas fa-search"></i> Cargar</button>
                 </div>
             </form>
+
+            <!-- ACCESO DIRECTO AL REPORTE GENERAL DE TODOS LOS CURSOS -->
+            <div class="mb-4 text-end">
+                <a href="/descargar_reporte_ausencias?fecha={{ fecha_actual }}" class="btn btn-danger" target="_blank">
+                    <i class="fas fa-file-pdf"></i> Descargar Reporte General de Ausencias (PDF)
+                </a>
+            </div>
 
             <!-- CONTENIDO SI HAY UN GRADO SELECCIONADO -->
             {% if grado_seleccionado %}
@@ -106,11 +113,8 @@
                             </table>
                         </div>
 
-                        <!-- BOTONES DE ACCIÓN: GUARDAR Y DESCARGAR PDF -->
-                        <div class="mt-4 d-flex justify-content-between align-items-center">
-                            <a href="/descargar_reporte_ausencias?grado={{ grado_seleccionado }}&fecha={{ fecha_actual }}" class="btn btn-danger btn-lg" target="_blank">
-                                <i class="fas fa-file-pdf"></i> Descargar Reporte PDF ({{ grado_seleccionado }})
-                            </a>
+                        <!-- BOTÓN DE GUARDAR ASISTENCIA -->
+                        <div class="mt-4 text-end">
                             <button type="submit" class="btn btn-success btn-lg"><i class="fas fa-save"></i> Guardar Asistencia</button>
                         </div>
                     </form>
