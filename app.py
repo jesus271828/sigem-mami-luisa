@@ -1446,6 +1446,62 @@ def descargar_reporte_ausencias():
         total_asis=total_asis
     )
 
+    @app.route('/generar_pdf/<path:id_estudiante>')
+def generar_pdf(id_estudiante):
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+        
+    conexion = get_db_connection()
+    estudiante = None
+    autorizados = []
+
+    try:
+        conexion.execute("SELECT * FROM inscripciones")
+        filas = conexion.fetchall()
+        
+        for fila in filas:
+            valores = list(fila.values()) if isinstance(fila, dict) else list(fila)
+            if len(valores) >= 4 and str(valores[3]).strip() == str(id_estudiante).strip():
+                estudiante = fila
+                break
+
+        if estudiante:
+            valores_est = list(estudiante.values()) if isinstance(estudiante, dict) else list(estudiante)
+            id_real_estudiante = valores_est[3]
+            
+            conexion.execute("SELECT * FROM autorizados WHERE id_estudiante = ?", (str(id_real_estudiante),))
+            autorizados = conexion.fetchall()
+
+    except Exception as e:
+        print("--- ERROR CRÍTICO EN PDF:", e)
+        estudiante = None
+    finally:
+        conexion.close()
+    
+    if not estudiante:
+        return f"No se encontró ninguna inscripción para el ID: {id_estudiante}", 404
+
+    logo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'img', 'logo2.png')
+    logo_src = ""
+    if os.path.exists(logo_path):
+        with open(logo_path, "rb") as image_file:
+            logo_base64 = base64.b64encode(image_file.read()).decode('utf-8')
+        logo_src = f"data:image/png;base64,{logo_base64}"
+    
+    html = render_template('pdf_ficha.html', estudiante=estudiante, autorizados=autorizados, logo_src=logo_src)
+    
+    response = make_response()
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = f'inline; filename=ficha_inscripcion_{id_estudiante}.pdf'
+    
+    pisa_status = pisa.CreatePDF(html, dest=response.stream)
+    
+    if pisa_status.err:
+        return 'Hubo un error al generar el PDF', 500
+        
+    return response
+
+
 
 @app.route('/menu_notas')
 def menu_notas():
