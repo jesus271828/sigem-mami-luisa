@@ -320,6 +320,42 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
+@app.route('/api/buscar_estudiante/<id_estudiante>', methods=['GET'])
+def api_buscar_estudiante(id_estudiante):
+    if 'usuario' not in session:
+        return jsonify({'encontrado': False}), 401
+        
+    conexion = None
+    try:
+        conexion = get_db_connection()
+        is_postgres = DATABASE_URL is not None
+        
+        if is_postgres:
+            cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            # Buscamos en inscripciones o estudiantes el último registro de ese ID
+            cur.execute("SELECT * FROM inscripciones WHERE id_estudiante = %s ORDER BY id DESC LIMIT 1", (id_estudiante,))
+            estudiante = cur.fetchone()
+            cur.close()
+        else:
+            conexion.row_factory = sqlite3.Row
+            estudiante = conexion.execute("SELECT * FROM inscripciones WHERE id_estudiante = ? ORDER BY id DESC LIMIT 1", (id_estudiante,)).fetchone()
+            
+        if estudiante:
+            # Convertimos el resultado a diccionario para mandarlo por JSON
+            return jsonify({
+                'encontrado': True,
+                'data': dict(estudiante)
+            })
+        else:
+            return jsonify({'encontrado': False})
+            
+    except Exception as e:
+        print("Error en búsqueda:", e)
+        return jsonify({'encontrado': False, 'error': str(e)}), 500
+    finally:
+        if conexion and not is_postgres:
+            conexion.close()
+
 @app.route('/inscripcion', methods=['GET', 'POST'])
 def inscripcion():
     if 'usuario' not in session:
