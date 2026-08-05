@@ -323,40 +323,40 @@ def logout():
 
 @app.route('/api/buscar-estudiante', methods=['GET'])
 def api_buscar_estudiante():
-    estudiante_id = request.args.get('id', '').strip()
+    estudiante_id = request.args.get('id')
     
-    # Limpiamos los ceros a la izquierda por si en la base de datos está guardado como "1" en lugar de "001"
-    estudiante_id_limpio = estudiante_id.lstrip('0') or '0'
+    conn = get_db_connection() # O la variable que uses para conectar
     
+    # Dependiendo de cómo tengas configurada tu conexión para psycopg2 o flask-sqlalchemy:
+    # Si 'conn' ya es el cursor o usa un cursor directo, lo manejamos de forma segura:
     try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
+        cursor = conn if hasattr(conn, 'execute') else conn.cursor()
         
-        # Buscamos tanto por el valor exacto como por el valor sin ceros iniciales
-        cursor.execute(
-            "SELECT * FROM inscripciones WHERE id_estudiante = %s OR id_estudiante = %s", 
-            (estudiante_id, estudiante_id_limpio)
-        )
+        cursor.execute("SELECT * FROM inscripciones WHERE id_estudiante = %s", (estudiante_id,))
+        
+        # Intentamos obtener la fila como diccionario o tupla
         fila = cursor.fetchone()
         
-        if not fila:
+        if hasattr(cursor, 'close') and cursor != conn:
             cursor.close()
+        if hasattr(conn, 'close'):
             conn.close()
+            
+        if fila:
+            # Si 'fila' es un diccionario o se puede convertir
+            try:
+                data_dict = dict(fila)
+            except Exception:
+                # Si viene como tupla de psycopg2 con descripciones de columnas
+                columns = [col[0] for col in cursor.description] if hasattr(cursor, 'description') else []
+                data_dict = dict(zip(columns, fila))
+                
+            return jsonify({'success': True, 'data': data_dict})
+        else:
             return jsonify({'success': False})
             
-        columnas = [desc[0] for desc in cursor.description]
-        cursor.close()
-        conn.close()
-        
-        if isinstance(fila, dict):
-            data_dict = fila
-        else:
-            data_dict = dict(zip(columnas, fila))
-            
-        return jsonify({'success': True, 'data': data_dict})
-        
     except Exception as e:
-        print(f"Error completo en buscar-estudiante: {e}")
+        print(f"Error en buscar-estudiante: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
