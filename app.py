@@ -325,38 +325,35 @@ def logout():
 def api_buscar_estudiante():
     estudiante_id = request.args.get('id')
     
-    conn = get_db_connection() # O la variable que uses para conectar
-    
-    # Dependiendo de cómo tengas configurada tu conexión para psycopg2 o flask-sqlalchemy:
-    # Si 'conn' ya es el cursor o usa un cursor directo, lo manejamos de forma segura:
     try:
-        cursor = conn if hasattr(conn, 'execute') else conn.cursor()
+        conn = get_db_connection()
+        # Usamos RealDictCursor si está disponible, o mapeamos las columnas manualmente
+        cursor = conn.cursor()
         
         cursor.execute("SELECT * FROM inscripciones WHERE id_estudiante = %s", (estudiante_id,))
-        
-        # Intentamos obtener la fila como diccionario o tupla
         fila = cursor.fetchone()
         
-        if hasattr(cursor, 'close') and cursor != conn:
+        if not fila:
             cursor.close()
-        if hasattr(conn, 'close'):
             conn.close()
-            
-        if fila:
-            # Si 'fila' es un diccionario o se puede convertir
-            try:
-                data_dict = dict(fila)
-            except Exception:
-                # Si viene como tupla de psycopg2 con descripciones de columnas
-                columns = [col[0] for col in cursor.description] if hasattr(cursor, 'description') else []
-                data_dict = dict(zip(columns, fila))
-                
-            return jsonify({'success': True, 'data': data_dict})
-        else:
             return jsonify({'success': False})
             
+        # Obtener los nombres de las columnas para armar el diccionario perfecto
+        columnas = [desc[0] for desc in cursor.description]
+        
+        cursor.close()
+        conn.close()
+        
+        # Convertir la fila de la base de datos en un diccionario clave-valor
+        if isinstance(fila, dict):
+            data_dict = fila
+        else:
+            data_dict = dict(zip(columnas, fila))
+            
+        return jsonify({'success': True, 'data': data_dict})
+        
     except Exception as e:
-        print(f"Error en buscar-estudiante: {e}")
+        print(f"Error completo en buscar-estudiante: {e}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
