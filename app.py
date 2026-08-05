@@ -1842,7 +1842,8 @@ def escanear_ficha():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
     
-    
+
+
 
     
 if __name__ == '__main__':
