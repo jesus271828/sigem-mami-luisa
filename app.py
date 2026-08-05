@@ -325,23 +325,39 @@ def logout():
 def api_buscar_estudiante():
     estudiante_id = request.args.get('id')
     
-    # Asegúrate de usar tu conexión actual de PostgreSQL
-    conn = get_db_connection() # O la función que uses para conectar a Postgres
-    cursor = conn.cursor()
+    conn = get_db_connection() # O la variable que uses para conectar
     
-    # Cambiamos 'estudiantes' por 'inscripciones' y el placeholder de '?' a '%s' (o f-string)
-    cursor.execute("SELECT * FROM inscripciones WHERE id_estudiante = %s", (estudiante_id,))
-    
-    # Si usas diccionarios para las filas en psycopg2:
-    fila = cursor.fetchone()
-    cursor.close()
-    conn.close()
-    
-    if fila:
-        # Convertir la fila de Postgres a diccionario si es necesario
-        return jsonify({'success': True, 'data': dict(fila)})
-    else:
-        return jsonify({'success': False})
+    # Dependiendo de cómo tengas configurada tu conexión para psycopg2 o flask-sqlalchemy:
+    # Si 'conn' ya es el cursor o usa un cursor directo, lo manejamos de forma segura:
+    try:
+        cursor = conn if hasattr(conn, 'execute') else conn.cursor()
+        
+        cursor.execute("SELECT * FROM inscripciones WHERE id_estudiante = %s", (estudiante_id,))
+        
+        # Intentamos obtener la fila como diccionario o tupla
+        fila = cursor.fetchone()
+        
+        if hasattr(cursor, 'close') and cursor != conn:
+            cursor.close()
+        if hasattr(conn, 'close'):
+            conn.close()
+            
+        if fila:
+            # Si 'fila' es un diccionario o se puede convertir
+            try:
+                data_dict = dict(fila)
+            except Exception:
+                # Si viene como tupla de psycopg2 con descripciones de columnas
+                columns = [col[0] for col in cursor.description] if hasattr(cursor, 'description') else []
+                data_dict = dict(zip(columns, fila))
+                
+            return jsonify({'success': True, 'data': data_dict})
+        else:
+            return jsonify({'success': False})
+            
+    except Exception as e:
+        print(f"Error en buscar-estudiante: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 @app.route('/inscripcion', methods=['GET', 'POST'])
