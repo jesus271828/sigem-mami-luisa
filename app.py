@@ -323,14 +323,20 @@ def logout():
 
 @app.route('/api/buscar-estudiante', methods=['GET'])
 def api_buscar_estudiante():
-    estudiante_id = request.args.get('id')
+    estudiante_id = request.args.get('id', '').strip()
+    
+    # Limpiamos los ceros a la izquierda por si en la base de datos está guardado como "1" en lugar de "001"
+    estudiante_id_limpio = estudiante_id.lstrip('0') or '0'
     
     try:
         conn = get_db_connection()
-        # Usamos RealDictCursor si está disponible, o mapeamos las columnas manualmente
         cursor = conn.cursor()
         
-        cursor.execute("SELECT * FROM inscripciones WHERE id_estudiante = %s", (estudiante_id,))
+        # Buscamos tanto por el valor exacto como por el valor sin ceros iniciales
+        cursor.execute(
+            "SELECT * FROM inscripciones WHERE id_estudiante = %s OR id_estudiante = %s", 
+            (estudiante_id, estudiante_id_limpio)
+        )
         fila = cursor.fetchone()
         
         if not fila:
@@ -338,13 +344,10 @@ def api_buscar_estudiante():
             conn.close()
             return jsonify({'success': False})
             
-        # Obtener los nombres de las columnas para armar el diccionario perfecto
         columnas = [desc[0] for desc in cursor.description]
-        
         cursor.close()
         conn.close()
         
-        # Convertir la fila de la base de datos en un diccionario clave-valor
         if isinstance(fila, dict):
             data_dict = fila
         else:
