@@ -324,16 +324,21 @@ def logout():
 @app.route('/api/buscar-estudiante', methods=['GET'])
 def api_buscar_estudiante():
     estudiante_id = request.args.get('id')
-    conn = sqlite3.connect('tu_base_de_datos.db') # Cambia por tu archivo de base de datos
-    conn.row_factory = sqlite3.Row
+    
+    # Asegúrate de usar tu conexión actual de PostgreSQL
+    conn = get_db_connection() # O la función que uses para conectar a Postgres
     cursor = conn.cursor()
     
-    cursor.execute("SELECT * FROM estudiantes WHERE id_estudiante = ?", (estudiante_id,))
+    # Cambiamos 'estudiantes' por 'inscripciones' y el placeholder de '?' a '%s' (o f-string)
+    cursor.execute("SELECT * FROM inscripciones WHERE id_estudiante = %s", (estudiante_id,))
+    
+    # Si usas diccionarios para las filas en psycopg2:
     fila = cursor.fetchone()
+    cursor.close()
     conn.close()
     
     if fila:
-        # Convierte la fila de SQLite en un diccionario para enviarla como JSON
+        # Convertir la fila de Postgres a diccionario si es necesario
         return jsonify({'success': True, 'data': dict(fila)})
     else:
         return jsonify({'success': False})
