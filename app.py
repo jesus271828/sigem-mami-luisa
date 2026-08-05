@@ -320,6 +320,25 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
+
+@app.route('/api/buscar-estudiante', methods=['GET'])
+def api_buscar_estudiante():
+    estudiante_id = request.args.get('id')
+    conn = sqlite3.connect('tu_base_de_datos.db') # Cambia por tu archivo de base de datos
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    
+    cursor.execute("SELECT * FROM estudiantes WHERE id_estudiante = ?", (estudiante_id,))
+    fila = cursor.fetchone()
+    conn.close()
+    
+    if fila:
+        # Convierte la fila de SQLite en un diccionario para enviarla como JSON
+        return jsonify({'success': True, 'data': dict(fila)})
+    else:
+        return jsonify({'success': False})
+
+
 @app.route('/inscripcion', methods=['GET', 'POST'])
 def inscripcion():
     if 'usuario' not in session:
@@ -1673,76 +1692,35 @@ def expediente_viejo():
                            total_expedientes=total_expedientes,
                            total_usuarios=total_usuarios)
 
-@app.route('/registrar_expediente_viejo', methods=['GET'])
+import re
+from flask import render_template, request, redirect, url_for
+import sqlite3 # Asegúrate de tener importado sqlite3 si lo usas
+
+@app.route('/registrar_expediente_viejo', methods=['GET', 'POST'])
 def registrar_expediente_viejo():
-    if 'usuario' not in session:
-        return redirect(url_for('login'))
-        
-    if session.get('rol', '').lower() not in ['oficina', 'admin']:
-        flash('Acceso denegado.', 'danger')
-        return redirect(url_for('menu_viejo'))
-        
-    conexion = get_db_connection()
-    is_postgres = DATABASE_URL is not None
-    
-    total_estudiantes = 0
-    total_expedientes = 0
-    total_usuarios = 0
-    siguiente_ficha = "F-1"
+    if request.method == 'POST':
+        # Tu lógica actual para guardar
+        return redirect(url_for('registrar_expediente_viejo'))
 
-    try:
-        if is_postgres:
-            cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-            cur.execute("SELECT COUNT(*) as total FROM estudiantes")
-            total_estudiantes = cur.fetchone()['total']
-            cur.execute("SELECT COUNT(*) as total FROM usuarios")
-            total_usuarios = cur.fetchone()['total']
-            
-            cur.execute("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'expedientes_viejos')")
-            if cur.fetchone()['exists']:
-                cur.execute("SELECT COUNT(*) as total FROM expedientes_viejos")
-                total_expedientes = cur.fetchone()['total']
-                
-                cur.execute('SELECT "Unnamed: 5" FROM expedientes_viejos ORDER BY id DESC LIMIT 1')
-                ultimo = cur.fetchone()
-                if ultimo and ultimo['Unnamed: 5']:
-                    val = str(ultimo['Unnamed: 5']).strip()
-                    import re
-                    numeros = re.findall(r'\d+', val)
-                    if numeros:
-                        num_siguiente = int(numeros[-1]) + 1
-                        siguiente_ficha = f"F-{num_siguiente}"
-            cur.close()
-        else:
-            conexion.execute("SELECT COUNT(*) FROM estudiantes")
-            total_estudiantes = conexion.fetchone()[0]
-            conexion.execute("SELECT COUNT(*) FROM usuarios")
-            total_usuarios = conexion.fetchone()[0]
-            
-            cursor_chk = conexion.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='expedientes_viejos'").fetchone()
-            if cursor_chk:
-                conexion.execute("SELECT COUNT(*) FROM expedientes_viejos")
-                total_expedientes = conexion.fetchone()[0]
-                
-                cursor_f = conexion.execute('SELECT "Unnamed: 5" FROM expedientes_viejos ORDER BY id DESC LIMIT 1').fetchone()
-                if cursor_f and cursor_f[0]:
-                    val = str(cursor_f[0]).strip()
-                    import re
-                    numeros = re.findall(r'\d+', val)
-                    if numeros:
-                        num_siguiente = int(numeros[-1]) + 1
-                        siguiente_ficha = f"F-{num_siguiente}"
-    except Exception as e:
-        print(f"Error cargando ficha: {e}")
-    finally:
-        conexion.close()
+    # Reemplaza 'sigem_ml.db' por el nombre de tu archivo de base de datos actual si es diferente
+    conexion = sqlite3.connect('sigem_ml.db')
+    cursor = conexion.cursor()
 
-    return render_template('registrar_expediente_viejo.html',
-                           total_estudiantes=total_estudiantes,
-                           total_expedientes=total_expedientes,
-                           total_usuarios=total_usuarios,
-                           siguiente_ficha=siguiente_ficha)
+    # Asegúrate de que la tabla y la columna coincidan con tu base de datos
+    cursor.execute("SELECT numero_ficha FROM expedientes_viejos ORDER BY id DESC LIMIT 1")
+    ultimo_registro = cursor.fetchone()
+    conexion.close()
 
+    siguiente_ficha = "F-1" # Valor por defecto si la tabla está vacía
+
+    if ultimo_registro:
+        ultimo_valor = ultimo_registro[0]
+        numeros = re.findall(r'\d+', ultimo_valor)
+        if numeros:
+            siguiente_numero = int(numeros[-1]) + 1
+            siguiente_ficha = f"F-{siguiente_numero}"
+
+    return render_template('registrar_expediente_viejo.html', siguiente_ficha=siguiente_ficha)
 
 @app.route('/guardar_expediente_viejo', methods=['POST'])
 def guardar_expediente_viejo():
