@@ -103,8 +103,7 @@
                     <h5 class="section-title">Datos del Estudiante</h5>
                     <div class="row g-3">
                         <div class="col-md-4">
-                            <!-- MODIFICADO: Se añade id="id_estudiante" y evento onblur para buscar automático -->
-                            <input type="text" id="id_estudiante" name="id_estudiante" class="form-control" placeholder="ID del Estudiante" required onblur="buscarEstudiantePorId()">
+                            <input type="text" id="id_estudiante_input" name="id_estudiante" class="form-control" placeholder="ID del Estudiante" required>
                             <small class="text-muted" style="font-size: 11px;">Al salir del campo se autocompletará si ya existe.</small>
                         </div>
                         <div class="col-md-4">
@@ -330,11 +329,15 @@
                             <input type="email" name="econ_correo" class="form-control" placeholder="Correo electrónico">
                         </div>
                     </div>
+                    <div class="alert alert-light border mt-3 small text-muted mb-0">
+                        <strong>Nota Importante:</strong> Quedan los padres, madres y tutores legales como responsables económicos directos de los estudiantes matriculados en este centro, sin importar el tipo de relación que lleven entre padre y madre.
+                    </div>
                 </div>
 
-                <!-- 5. Autorizados a Retirar -->
+                <!-- 5. Autorizados a Retirar (5 Estrictamente) -->
                 <div class="form-card">
                     <h5 class="section-title">Autorizados a Retirar al Estudiante (Hasta 5)</h5>
+                    <p class="text-muted small">Adjuntar copia de cédula de los autorizados:</p>
                     {% for i in range(1, 6) %}
                     <div class="row g-2 mb-3 align-items-center border-bottom pb-2">
                         <div class="col-md-3">
@@ -360,6 +363,8 @@
                 <!-- 6. Medicación en el Centro -->
                 <div class="form-card">
                     <h5 class="section-title">Medicación en el Centro Educativo</h5>
+                    <p class="text-muted small">Medicamentos genéricos normalmente utilizados en el centro: Analgésico, Antiinflamatorio, Antipirético, Antihistamínico y Antiespasmódico.</p>
+                    <p class="text-muted small">Tomando en cuenta la información anterior y ante la posibilidad de que no podamos contactarle vía telefónica, ¿autoriza usted a que le sean suministrados los medicamentos enlistados anteriormente sin previo aviso?</p>
                     <div class="form-check form-check-inline">
                         <input class="form-check-input" type="radio" name="autoriza_medicamentos" id="med_si" value="SI">
                         <label class="form-check-label" for="med_si">SÍ</label>
@@ -373,22 +378,34 @@
                 <!-- 7. Redes Sociales -->
                 <div class="form-card">
                     <h5 class="section-title">17. Redes Sociales</h5>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="autoriza_redes" id="redes_si" value="SI">
-                        <label class="form-check-label" for="redes_si">SÍ</label>
-                    </div>
-                    <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="autoriza_redes" id="redes_no" value="NO" checked>
-                        <label class="form-check-label" for="redes_no">NO</label>
-                    </div>
-                    <div class="mt-3">
-                        <input type="text" name="firma_redes" class="form-control" placeholder="Firma del padre, madre o tutor">
+                    <p class="text-muted small">
+                        Por medio de las redes sociales estaremos compartiendo con nuestra comunidad educativa las imágenes de actividades realizadas en el centro. En dichas imágenes serán capturados nuestros estudiantes, docentes, equipo de apoyo, invitados...
+                    </p>
+                    <p class="text-muted small">
+                        A diferencia de las fotos enviadas por los grupos privados de WhatsApp de cada grado, para el uso de la imagen de los niños y niñas en las redes abiertas al público como Instagram, Facebook y cualquier otro relacionado, se requiere la autorización de los padres, madres y/o tutores.
+                    </p>
+                    <hr>
+                    <p class="fw-bold mb-2">¿Autoriza usted el uso de la imagen de su hijo/a en las redes abiertas al público del centro?</p>
+                    <div class="row align-items-center g-3">
+                        <div class="col-md-4">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="autoriza_redes" id="redes_si" value="SI">
+                                <label class="form-check-label" for="redes_si">SÍ</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="autoriza_redes" id="redes_no" value="NO" checked>
+                                <label class="form-check-label" for="redes_no">NO</label>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <input type="text" name="firma_redes" class="form-control" placeholder="Firma del padre, madre o tutor">
+                        </div>
                     </div>
                 </div>
 
                 <!-- Botones de Acción Principal -->
                 <div class="d-flex gap-3 mb-5">
-                    <button type="submit" class="btn btn-success btn-lg w-100 shadow">
+                    <button type="submit" formaction="/inscripcion" formmethod="POST" class="btn btn-success btn-lg w-100 shadow">
                         <i class="fas fa-save"></i> Guardar Cambios
                     </button>
                 </div>
@@ -401,39 +418,31 @@
 <!-- Script de Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
+<!-- Script para manejar el autocompletado por ID y escaneo de IA -->
 <script>
-// Función para buscar y autocompletar el estudiante por ID automáticamente
-async function buscarEstudiantePorId() {
-    const idEstudiante = document.getElementById('id_estudiante').value.trim();
+// Autocompletado automático al salir del campo ID de Estudiante
+document.getElementById('id_estudiante_input').addEventListener('blur', function() {
+    let idEstudiante = this.value.trim();
     if (!idEstudiante) return;
 
-    try {
-        const response = await fetch(`/api/buscar-estudiante?id=${encodeURIComponent(idEstudiante)}`);
-        const resultado = await response.json();
-
-        if (response.ok && resultado.success && resultado.data) {
-            const data = resultado.data;
-            for (const [key, value] of Object.entries(data)) {
-                const campo = document.querySelector(`[name="${key}"]`);
-                if (campo && value !== null && value !== undefined) {
-                    if (campo.type === 'radio') {
-                        if (campo.value === value) campo.checked = true;
-                    } else {
+    fetch('/buscar_estudiante/' + idEstudiante)
+        .then(response => response.json())
+        .then(data => {
+            if (data.encontrado && data.datos) {
+                let d = data.datos;
+                // Rellena todos los campos que existan en el formulario correspondientes
+                for (const [key, value] of Object.entries(d)) {
+                    let campo = document.querySelector(`[name="${key}"]`);
+                    if (campo && value !== null && value !== undefined) {
                         campo.value = value;
+                        campo.dispatchEvent(new Event('change'));
                     }
-                    campo.dispatchEvent(new Event('change'));
                 }
             }
-            console.log('¡Datos del estudiante cargados en el formulario!');
-        } else {
-            console.log('Estudiante nuevo o no registrado previamente.');
-        }
-    } catch (error) {
-        console.error('Error al buscar el estudiante:', error);
-    }
-}
+        })
+        .catch(error => console.error('Error al buscar estudiante:', error));
+});
 
-// Función existente para el escaneo con IA
 async function escanearFichaConIA() {
     const input = document.getElementById('inputFichaEscaneada');
     const spinnerContainer = document.getElementById('loadingEscaneo');
@@ -452,10 +461,12 @@ async function escanearFichaConIA() {
     btn.disabled = true;
 
     const maxIntentos = 3;
+    let exito = false;
+
     for (let intento = 0; intento < maxIntentos; intento++) {
         try {
             if (intento > 0) {
-                loadingText.innerText = `Reintentando (${intento}/${maxIntentos - 1})...`;
+                loadingText.innerText = `Límite ocupado. Reintentando automáticamente (${intento}/${maxIntentos - 1})...`;
                 await new Promise(resolve => setTimeout(resolve, 8000));
             } else {
                 loadingText.innerText = 'Leyendo documento con IA...';
@@ -477,14 +488,19 @@ async function escanearFichaConIA() {
                     }
                 }
                 alert('¡Ficha escaneada y rellenada con éxito!');
+                exito = true;
                 break;
             } else {
+                if (resultado.error && !resultado.error.includes("Límite de uso")) {
+                    throw new Error(resultado.error);
+                }
                 if (intento === maxIntentos - 1) {
                     throw new Error(resultado.error || 'Límite de uso alcanzado.');
                 }
             }
         } catch (error) {
             if (intento === maxIntentos - 1) {
+                console.error('Error de escaneo:', error);
                 alert('Error al procesar la imagen: ' + error.message);
             }
         }
