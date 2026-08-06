@@ -353,15 +353,12 @@ import base64
 
 @app.route('/inscripcion', methods=['GET', 'POST'])
 def inscripcion():
-    # Validar que el usuario sea administrador
     if 'usuario' not in session or session.get('rol') != 'admin':
         flash('Acceso denegado. No tienes permisos para realizar nuevas inscripciones.', 'danger')
-        # Cambia 'nombre_de_tu_funcion_menu' por el nombre real de la función de tu menú en app.py
-        return redirect(url_for('menu'))
+        # Coloca aquí el nombre real de la función de tu menú (ej. menu_principal)
+        return redirect(url_for('menu')) 
 
-    conexion = get_db_connection()
-    is_postgres = DATABASE_URL is not None
-    
+    # El resto de tu código de inscripción...
     if request.method == 'POST':
         def guardar_archivo(input_name):
             file = request.files.get(input_name)
