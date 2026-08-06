@@ -1315,13 +1315,13 @@ def asistencia():
             ''', (grado_seleccionado,)).fetchall()
             
             for est in estudiantes:
-                est_id = str(est['id']) # Asegúrate de que la columna ID de estudiantes sea 'id' o 'id_estudiante' según tu BD
+                est_id = str(est['id']) # Asegúrate de que el ID de estudiantes coincida con tu columna en la BD
                 estado = request.form.get(f'estado_{est_id}', 'Presente')
                 
-                # Verificamos si ya existe el registro para ese estudiante en esa fecha (usando %s para Postgres)
+                # Verificamos si ya existe el registro para ese estudiante en esa fecha
                 existe = conn.execute('SELECT id FROM asistencia WHERE id_estudiante = %s AND fecha = %s', (est_id, fecha_actual)).fetchone()
                 if existe:
-                    conn.execute('UPDATE asistencia SET estado = %, grado = %s WHERE id_estudiante = %s AND fecha = %s', (estado, grado_seleccionado, est_id, fecha_actual))
+                    conn.execute('UPDATE asistencia SET estado = %s, grado = %s WHERE id_estudiante = %s AND fecha = %s', (estado, grado_seleccionado, est_id, fecha_actual))
                 else:
                     conn.execute('INSERT INTO asistencia (id_estudiante, grado, fecha, estado) VALUES (%s, %s, %s, %s)', (est_id, grado_seleccionado, fecha_actual, estado))
             
@@ -1409,7 +1409,7 @@ def descargar_reporte_ausencias():
             ninos_m = 0
             ninas_m = 0
             for m in mat_rows:
-                sexo_str = str(m['sexo']).strip().upper()
+                sexo_str = str(m['sexo']).strip().upper() if m['sexo'] else ''
                 if sexo_str in ['M', 'MASCULINO', 'NIÑO', 'NINO']:
                     ninos_m = m['total']
                 elif sexo_str in ['F', 'FEMENINO', 'NIÑA', 'NINA']:
@@ -1428,7 +1428,7 @@ def descargar_reporte_ausencias():
             ninas_a = 0
             for a in asis_rows:
                 if a['estado'] == 'Presente':
-                    sexo_str = str(a['sexo']).strip().upper()
+                    sexo_str = str(a['sexo']).strip().upper() if a['sexo'] else ''
                     if sexo_str in ['M', 'MASCULINO', 'NIÑO', 'NINO']:
                         ninos_a += 1
                     elif sexo_str in ['F', 'FEMENINO', 'NIÑA', 'NINA']:
@@ -1490,7 +1490,6 @@ def descargar_reporte_ausencias():
                            total_ninos_asis=total_ninos_asis,
                            total_ninas_asis=total_ninas_asis,
                            total_asis=total_asis)
-
 
 @app.route('/generar_pdf/<path:id_estudiante>')
 def generar_pdf(id_estudiante):
