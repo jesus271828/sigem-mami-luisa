@@ -321,14 +321,17 @@ def logout():
     return redirect(url_for('login'))
 
 
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+import base64
+
+# Nota: Asegúrate de mantener tu función get_db_connection() y la inicialización de 'app' tal como las tengas en tu proyecto.
+
 @app.route('/inscripcion', methods=['GET', 'POST'])
 def inscripcion():
     if 'usuario' not in session:
         return redirect(url_for('login'))
 
     if request.method == 'POST':
-        import base64
-
         def guardar_archivo(input_name):
             file = request.files.get(input_name)
             if file and file.filename != '':
@@ -442,8 +445,6 @@ def inscripcion():
         conexion = None
         try:
             conexion = get_db_connection()
-            
-            # Verificamos si ya existe el id_estudiante en inscripciones
             cursor_check = conexion if hasattr(conexion, 'execute') else conexion.cursor()
             cursor_check.execute("SELECT COUNT(*) FROM inscripciones WHERE id_estudiante = %s", (id_estudiante,))
             resultado_existe = cursor_check.fetchone()
@@ -628,7 +629,6 @@ def inscripcion():
                 ))
                 flash('¡Estudiante inscrito y guardado correctamente en todas las tablas!', 'success')
             
-            # Recalcular orden alfabético global
             conexion.execute("SELECT id FROM estudiantes ORDER BY nombres ASC, apellidos ASC")
             registros_estudiantes = conexion.fetchall()
             for indice, reg in enumerate(registros_estudiantes, start=1):
@@ -648,7 +648,28 @@ def inscripcion():
         return redirect(url_for('inscripcion'))
 
     # Método GET (Renderizado normal con contadores)
-    # ... (mantén tu lógica GET actual tal cual la tienes)
+    conexion = get_db_connection()
+    cursor = conexion if hasattr(conexion, 'execute') else conexion.cursor()
+    
+    cursor.execute("SELECT COUNT(*) FROM estudiantes")
+    res_est = cursor.fetchone()
+    total_estudiantes = res_est[0] if res_est else 0
+
+    cursor.execute("SELECT COUNT(*) FROM expedientes")
+    res_exp = cursor.fetchone()
+    total_expedientes = res_exp[0] if res_exp else 0
+
+    cursor.execute("SELECT COUNT(*) FROM usuarios")
+    res_usu = cursor.fetchone()
+    total_usuarios = res_usu[0] if res_usu else 0
+
+    if conexion:
+        conexion.close()
+
+    return render_template('inscripcion.html', 
+                           total_estudiantes=total_estudiantes, 
+                           total_expedientes=total_expedientes, 
+                           total_usuarios=total_usuarios)
 
 @app.route('/inscripcion-publica', methods=['GET', 'POST'])
 def inscripcion_publica():
