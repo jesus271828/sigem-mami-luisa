@@ -102,21 +102,19 @@
                 <div class="form-card">
                     <h5 class="section-title">Datos del Estudiante</h5>
                     <div class="row g-3">
-                        <!-- ID del Estudiante (Presionar Enter para buscar) -->
                         <div class="col-md-4">
-                            <label class="form-label small text-muted">ID (Digite y presione Enter)</label>
-                            <input type="text" id="id_estudiante" name="id_estudiante" class="form-control" placeholder="ID del Estudiante" required>
+                            <!-- MODIFICADO: Se añade id="id_estudiante" y evento onblur para buscar automático -->
+                            <input type="text" id="id_estudiante" name="id_estudiante" class="form-control" placeholder="ID del Estudiante" required onblur="buscarEstudiantePorId()">
+                            <small class="text-muted" style="font-size: 11px;">Al salir del campo se autocompletará si ya existe.</small>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label small text-muted">Nombres</label>
-                            <input type="text" id="nombres" name="nombres" class="form-control" placeholder="Nombres" required>
+                            <input type="text" name="nombres" class="form-control" placeholder="Nombres" required>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label small text-muted">Apellidos</label>
-                            <input type="text" id="apellidos" name="apellidos" class="form-control" placeholder="Apellidos" required>
+                            <input type="text" name="apellidos" class="form-control" placeholder="Apellidos" required>
                         </div>
                         <div class="col-md-4">
-                            <select id="grado" name="grado" class="form-select" required>
+                            <select name="grado" class="form-select" required>
                                 <option value="" disabled selected>Seleccione Grado</option>
                                 <optgroup label="Nivel Inicial ML – L2">
                                     <option value="Párvulos">Párvulos</option>
@@ -143,71 +141,64 @@
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <input type="date" id="fecha_nacimiento" name="fecha_nacimiento" class="form-control" required>
+                            <input type="date" name="fecha_nacimiento" class="form-control" required>
                         </div>
                         <div class="col-md-2">
-                            <input type="number" id="edad" name="edad" class="form-control" placeholder="Edad">
+                            <input type="number" name="edad" class="form-control" placeholder="Edad">
                         </div>
                         <div class="col-md-2">
-                            <input type="text" id="sexo" name="sexo" class="form-control" placeholder="Sexo">
+                            <input type="text" name="sexo" class="form-control" placeholder="Sexo">
                         </div>
                         <div class="col-md-6">
-                            <input type="text" id="nacionalidad" name="nacionalidad" class="form-control" placeholder="Nacionalidad">
+                            <input type="text" name="nacionalidad" class="form-control" placeholder="Nacionalidad">
                         </div>
                         <div class="col-md-6">
-                            <input type="text" id="lugar_nac" name="lugar_nac" class="form-control" placeholder="Lugar de nacimiento">
+                            <input type="text" name="lugar_nac" class="form-control" placeholder="Lugar de nacimiento">
                         </div>
                         <div class="col-md-12">
-                            <input type="text" id="direccion" name="direccion" class="form-control" placeholder="Dirección residencial">
+                            <input type="text" name="direccion" class="form-control" placeholder="Dirección residencial">
                         </div>
                         <div class="col-md-4">
-                            <input type="number" id="cant_hermanos" name="cant_hermanos" class="form-control" placeholder="Cant. hermanos">
+                            <input type="number" name="cant_hermanos" class="form-control" placeholder="Cant. hermanos">
                         </div>
                         <div class="col-md-4">
-                            <input type="text" id="edades_hermanos" name="edades_hermanos" class="form-control" placeholder="Edades hermanos">
+                            <input type="text" name="edades_hermanos" class="form-control" placeholder="Edades hermanos">
                         </div>
                         <div class="col-md-4">
-                            <input type="text" id="lugar_ocupa" name="lugar_ocupa" class="form-control" placeholder="Lugar que ocupa">
+                            <input type="text" name="lugar_ocupa" class="form-control" placeholder="Lugar que ocupa">
                         </div>
                         <div class="col-md-4">
-                            <input type="text" id="tipo_sangre" name="tipo_sangre" class="form-control" placeholder="Tipo de sangre">
+                            <input type="text" name="tipo_sangre" class="form-control" placeholder="Tipo de sangre">
                         </div>
                         <div class="col-md-4">
-                            <input type="text" id="seguro_medico" name="seguro_medico" class="form-control" placeholder="Seguro médico">
+                            <input type="text" name="seguro_medico" class="form-control" placeholder="Seguro médico">
                         </div>
-                        
-                        <!-- Visualizador de la foto actual guardada -->
                         <div class="col-md-4">
                             <label class="form-label small text-muted">Foto / Copia Cédula Estudiante</label>
-                            <input type="file" name="foto_estudiante_cedula" class="form-control mb-2" accept="image/*,application/pdf">
-                            <div id="contenedor_foto_actual" style="display: none;" class="mt-2">
-                                <span class="small text-success d-block mb-1"><i class="fas fa-image"></i> Foto actual guardada:</span>
-                                <img id="preview_foto" src="" alt="Foto Actual" class="img-thumbnail" style="max-height: 100px;">
-                            </div>
-                        </div>
-
-                        <div class="col-md-12">
-                            <input type="text" id="alergias" name="alergias" class="form-control" placeholder="Alergias o condición médica">
+                            <input type="file" name="foto_estudiante_cedula" class="form-control" accept="image/*,application/pdf">
                         </div>
                         <div class="col-md-12">
-                            <input type="text" id="medicamentos" name="medicamentos" class="form-control" placeholder="Medicamentos que usa">
+                            <input type="text" name="alergias" class="form-control" placeholder="Alergias o condición médica">
+                        </div>
+                        <div class="col-md-12">
+                            <input type="text" name="medicamentos" class="form-control" placeholder="Medicamentos que usa">
                         </div>
                         <div class="col-md-6">
-                            <input type="text" id="medico_pediatra" name="medico_pediatra" class="form-control" placeholder="Médico o pediatra">
+                            <input type="text" name="medico_pediatra" class="form-control" placeholder="Médico o pediatra">
                         </div>
                         <div class="col-md-6">
-                            <input type="text" id="centro_medico" name="centro_medico" class="form-control" placeholder="Centro médico">
+                            <input type="text" name="centro_medico" class="form-control" placeholder="Centro médico">
                         </div>
                         
                         <div class="col-md-12 mt-3 fw-bold text-dark border-top pt-2">Número para llamar en caso de emergencia:</div>
                         <div class="col-md-4">
-                            <input type="text" id="emergencia_tel" name="emergencia_tel" class="form-control" placeholder="Teléfono">
+                            <input type="text" name="emergencia_tel" class="form-control" placeholder="Teléfono">
                         </div>
                         <div class="col-md-4">
-                            <input type="text" id="emergencia_nombre" name="emergencia_nombre" class="form-control" placeholder="Nombre del adulto">
+                            <input type="text" name="emergencia_nombre" class="form-control" placeholder="Nombre del adulto">
                         </div>
                         <div class="col-md-4">
-                            <input type="text" id="emergencia_parentesco" name="emergencia_parentesco" class="form-control" placeholder="Parentesco">
+                            <input type="text" name="emergencia_parentesco" class="form-control" placeholder="Parentesco">
                         </div>
                     </div>
                 </div>
@@ -218,38 +209,38 @@
                     <h5 class="section-title">Datos del {{ rol_familiar[1] }}</h5>
                     <div class="row g-3">
                         <div class="col-md-8">
-                            <input type="text" id="{{ rol_familiar[0] }}_nombre" name="{{ rol_familiar[0] }}_nombre" class="form-control" placeholder="Nombres y apellidos">
+                            <input type="text" name="{{ rol_familiar[0] }}_nombre" class="form-control" placeholder="Nombres y apellidos">
                         </div>
                         <div class="col-md-4">
-                            <input type="text" id="{{ rol_familiar[0] }}_sector" name="{{ rol_familiar[0] }}_sector" class="form-control" placeholder="Sector">
+                            <input type="text" name="{{ rol_familiar[0] }}_sector" class="form-control" placeholder="Sector">
                         </div>
                         <div class="col-md-12">
-                            <input type="text" id="{{ rol_familiar[0] }}_direccion" name="{{ rol_familiar[0] }}_direccion" class="form-control" placeholder="Dirección">
+                            <input type="text" name="{{ rol_familiar[0] }}_direccion" class="form-control" placeholder="Dirección">
                         </div>
                         <div class="col-md-4">
-                            <input type="text" id="{{ rol_familiar[0] }}_profesion" name="{{ rol_familiar[0] }}_profesion" class="form-control" placeholder="Profesión u ocupación">
+                            <input type="text" name="{{ rol_familiar[0] }}_profesion" class="form-control" placeholder="Profesión u ocupación">
                         </div>
                         <div class="col-md-4">
-                            <input type="text" id="{{ rol_familiar[0] }}_cedula" name="{{ rol_familiar[0] }}_cedula" class="form-control" placeholder="Cédula No.">
+                            <input type="text" name="{{ rol_familiar[0] }}_cedula" class="form-control" placeholder="Cédula No.">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label small text-muted">Foto Cédula de {{ rol_familiar[1] }}</label>
                             <input type="file" name="foto_{{ rol_familiar[0] }}_cedula" class="form-control" accept="image/*,application/pdf">
                         </div>
                         <div class="col-md-4">
-                            <input type="text" id="{{ rol_familiar[0] }}_nivel" name="{{ rol_familiar[0] }}_nivel" class="form-control" placeholder="Nivel académico">
+                            <input type="text" name="{{ rol_familiar[0] }}_nivel" class="form-control" placeholder="Nivel académico">
                         </div>
                         <div class="col-md-4">
-                            <input type="text" id="{{ rol_familiar[0] }}_religion" name="{{ rol_familiar[0] }}_religion" class="form-control" placeholder="Credo o Religión">
+                            <input type="text" name="{{ rol_familiar[0] }}_religion" class="form-control" placeholder="Credo o Religión">
                         </div>
                         <div class="col-md-4">
-                            <input type="text" id="{{ rol_familiar[0] }}_tel_personal" name="{{ rol_familiar[0] }}_tel_personal" class="form-control" placeholder="Teléfono personal">
+                            <input type="text" name="{{ rol_familiar[0] }}_tel_personal" class="form-control" placeholder="Teléfono personal">
                         </div>
                         <div class="col-md-6">
-                            <input type="text" id="{{ rol_familiar[0] }}_tel_trabajo" name="{{ rol_familiar[0] }}_tel_trabajo" class="form-control" placeholder="Teléfono de trabajo">
+                            <input type="text" name="{{ rol_familiar[0] }}_tel_trabajo" class="form-control" placeholder="Teléfono de trabajo">
                         </div>
                         <div class="col-md-6">
-                            <input type="email" id="{{ rol_familiar[0] }}_correo" name="{{ rol_familiar[0] }}_correo" class="form-control" placeholder="Correo electrónico">
+                            <input type="email" name="{{ rol_familiar[0] }}_correo" class="form-control" placeholder="Correo electrónico">
                         </div>
                     </div>
                 </div>
@@ -261,41 +252,41 @@
                     <p class="text-muted small">*(En el caso de que viva con la madre, el padre o el tutor, solo debe completar nombre y parentesco)*</p>
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <input type="text" id="vive_nombres" name="vive_nombres" class="form-control" placeholder="Nombres y apellidos">
+                            <input type="text" name="vive_nombres" class="form-control" placeholder="Nombres y apellidos">
                         </div>
                         <div class="col-md-6">
-                            <input type="text" id="vive_parentesco" name="vive_parentesco" class="form-control" placeholder="Parentesco con el estudiante">
+                            <input type="text" name="vive_parentesco" class="form-control" placeholder="Parentesco con el estudiante">
                         </div>
                         <div class="col-md-6">
-                            <input type="text" id="vive_cedula" name="vive_cedula" class="form-control" placeholder="Cédula No.">
+                            <input type="text" name="vive_cedula" class="form-control" placeholder="Cédula No.">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label small text-muted">Foto Cédula</label>
                             <input type="file" name="foto_vive_cedula" class="form-control" accept="image/*,application/pdf">
                         </div>
                         <div class="col-md-6">
-                            <input type="text" id="vive_direccion" name="vive_direccion" class="form-control" placeholder="Dirección">
+                            <input type="text" name="vive_direccion" class="form-control" placeholder="Dirección">
                         </div>
                         <div class="col-md-6">
-                            <input type="text" id="vive_sector" name="vive_sector" class="form-control" placeholder="Sector">
+                            <input type="text" name="vive_sector" class="form-control" placeholder="Sector">
                         </div>
                         <div class="col-md-4">
-                            <input type="text" id="vive_profesion" name="vive_profesion" class="form-control" placeholder="Profesión, Oficio u Ocupación">
+                            <input type="text" name="vive_profesion" class="form-control" placeholder="Profesión, Oficio u Ocupación">
                         </div>
                         <div class="col-md-4">
-                            <input type="text" id="vive_nivel" name="vive_nivel" class="form-control" placeholder="Nivel académico">
+                            <input type="text" name="vive_nivel" class="form-control" placeholder="Nivel académico">
                         </div>
                         <div class="col-md-4">
-                            <input type="text" id="vive_religion" name="vive_religion" class="form-control" placeholder="Credo o Religión">
+                            <input type="text" name="vive_religion" class="form-control" placeholder="Credo o Religión">
                         </div>
                         <div class="col-md-4">
-                            <input type="text" id="vive_tel_personal" name="vive_tel_personal" class="form-control" placeholder="Teléfono personal">
+                            <input type="text" name="vive_tel_personal" class="form-control" placeholder="Teléfono personal">
                         </div>
                         <div class="col-md-4">
-                            <input type="text" id="vive_tel_trabajo" name="vive_tel_trabajo" class="form-control" placeholder="Teléfono de trabajo">
+                            <input type="text" name="vive_tel_trabajo" class="form-control" placeholder="Teléfono de trabajo">
                         </div>
                         <div class="col-md-4">
-                            <input type="email" id="vive_correo" name="vive_correo" class="form-control" placeholder="Correo electrónico">
+                            <input type="email" name="vive_correo" class="form-control" placeholder="Correo electrónico">
                         </div>
                     </div>
                 </div>
@@ -305,49 +296,45 @@
                     <h5 class="section-title">Principal Responsable Económico</h5>
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <input type="text" id="econ_nombres" name="econ_nombres" class="form-control" placeholder="Nombres y apellidos">
+                            <input type="text" name="econ_nombres" class="form-control" placeholder="Nombres y apellidos">
                         </div>
                         <div class="col-md-6">
-                            <input type="text" id="econ_parentesco" name="econ_parentesco" class="form-control" placeholder="Parentesco con el estudiante">
+                            <input type="text" name="econ_parentesco" class="form-control" placeholder="Parentesco con el estudiante">
                         </div>
                         <div class="col-md-6">
-                            <input type="text" id="econ_cedula" name="econ_cedula" class="form-control" placeholder="Cédula No.">
+                            <input type="text" name="econ_cedula" class="form-control" placeholder="Cédula No.">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label small text-muted">Foto Cédula</label>
                             <input type="file" name="foto_econ_cedula" class="form-control" accept="image/*,application/pdf">
                         </div>
                         <div class="col-md-6">
-                            <input type="text" id="econ_direccion" name="econ_direccion" class="form-control" placeholder="Dirección">
+                            <input type="text" name="econ_direccion" class="form-control" placeholder="Dirección">
                         </div>
                         <div class="col-md-6">
-                            <input type="text" id="econ_sector" name="econ_sector" class="form-control" placeholder="Sector">
+                            <input type="text" name="econ_sector" class="form-control" placeholder="Sector">
                         </div>
                         <div class="col-md-4">
-                            <input type="text" id="econ_profesion" name="econ_profesion" class="form-control" placeholder="Profesión, Oficio u Ocupación">
+                            <input type="text" name="econ_profesion" class="form-control" placeholder="Profesión, Oficio u Ocupación">
                         </div>
                         <div class="col-md-4">
-                            <input type="text" id="econ_lugar_trabajo" name="econ_lugar_trabajo" class="form-control" placeholder="Lugar de trabajo">
+                            <input type="text" name="econ_lugar_trabajo" class="form-control" placeholder="Lugar de trabajo">
                         </div>
                         <div class="col-md-4">
-                            <input type="text" id="econ_tel_personal" name="econ_tel_personal" class="form-control" placeholder="Teléfono personal">
+                            <input type="text" name="econ_tel_personal" class="form-control" placeholder="Teléfono personal">
                         </div>
                         <div class="col-md-6">
-                            <input type="text" id="econ_tel_trabajo" name="econ_tel_trabajo" class="form-control" placeholder="Teléfono de trabajo">
+                            <input type="text" name="econ_tel_trabajo" class="form-control" placeholder="Teléfono de trabajo">
                         </div>
                         <div class="col-md-6">
-                            <input type="email" id="econ_correo" name="econ_correo" class="form-control" placeholder="Correo electrónico">
+                            <input type="email" name="econ_correo" class="form-control" placeholder="Correo electrónico">
                         </div>
-                    </div>
-                    <div class="alert alert-light border mt-3 small text-muted mb-0">
-                        <strong>Nota Importante:</strong> Quedan los padres, madres y tutores legales como responsables económicos directos de los estudiantes matriculados en este centro, sin importar el tipo de relación que lleven entre padre y madre.
                     </div>
                 </div>
 
-                <!-- 5. Autorizados a Retirar (5 Estrictamente) -->
+                <!-- 5. Autorizados a Retirar -->
                 <div class="form-card">
                     <h5 class="section-title">Autorizados a Retirar al Estudiante (Hasta 5)</h5>
-                    <p class="text-muted small">Adjuntar copia de cédula de los autorizados:</p>
                     {% for i in range(1, 6) %}
                     <div class="row g-2 mb-3 align-items-center border-bottom pb-2">
                         <div class="col-md-3">
@@ -373,8 +360,6 @@
                 <!-- 6. Medicación en el Centro -->
                 <div class="form-card">
                     <h5 class="section-title">Medicación en el Centro Educativo</h5>
-                    <p class="text-muted small">Medicamentos genéricos normalmente utilizados en el centro: Analgésico, Antiinflamatorio, Antipirético, Antihistamínico y Antiespasmódico.</p>
-                    <p class="text-muted small">Tomando en cuenta la información anterior y ante la posibilidad de que no podamos contactarle vía telefónica, ¿autoriza usted a que le sean suministrados los medicamentos enlistados anteriormente sin previo aviso?</p>
                     <div class="form-check form-check-inline">
                         <input class="form-check-input" type="radio" name="autoriza_medicamentos" id="med_si" value="SI">
                         <label class="form-check-label" for="med_si">SÍ</label>
@@ -388,35 +373,23 @@
                 <!-- 7. Redes Sociales -->
                 <div class="form-card">
                     <h5 class="section-title">17. Redes Sociales</h5>
-                    <p class="text-muted small">
-                        Por medio de las redes sociales estaremos compartiendo con nuestra comunidad educativa las imágenes de actividades realizadas en el centro. En dichas imágenes serán capturados nuestros estudiantes, docentes, equipo de apoyo, invitados...
-                    </p>
-                    <p class="text-muted small">
-                        A diferencia de las fotos enviadas por los grupos privados de WhatsApp de cada grado, para el uso de la imagen de los niños y niñas en las redes abiertas al público como Instagram, Facebook y cualquier otro relacionado, se requiere la autorización de los padres, madres y/o tutores.
-                    </p>
-                    <hr>
-                    <p class="fw-bold mb-2">¿Autoriza usted el uso de la imagen de su hijo/a en las redes abiertas al público del centro?</p>
-                    <div class="row align-items-center g-3">
-                        <div class="col-md-4">
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="autoriza_redes" id="redes_si" value="SI">
-                                <label class="form-check-label" for="redes_si">SÍ</label>
-                            </div>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="autoriza_redes" id="redes_no" value="NO" checked>
-                                <label class="form-check-label" for="redes_no">NO</label>
-                            </div>
-                        </div>
-                        <div class="col-md-8">
-                            <input type="text" name="firma_redes" class="form-control" placeholder="Firma del padre, madre o tutor">
-                        </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="autoriza_redes" id="redes_si" value="SI">
+                        <label class="form-check-label" for="redes_si">SÍ</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="autoriza_redes" id="redes_no" value="NO" checked>
+                        <label class="form-check-label" for="redes_no">NO</label>
+                    </div>
+                    <div class="mt-3">
+                        <input type="text" name="firma_redes" class="form-control" placeholder="Firma del padre, madre o tutor">
                     </div>
                 </div>
 
                 <!-- Botones de Acción Principal -->
                 <div class="d-flex gap-3 mb-5">
-                    <button type="submit" formaction="/inscripcion" formmethod="POST" class="btn btn-success btn-lg w-100 shadow">
-                        <i class="fas fa-save"></i> Guardar Cambios (Actualizar/Registrar)
+                    <button type="submit" class="btn btn-success btn-lg w-100 shadow">
+                        <i class="fas fa-save"></i> Guardar Cambios
                     </button>
                 </div>
 
@@ -428,52 +401,39 @@
 <!-- Script de Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-<!-- Script para buscar estudiante al presionar la tecla Enter en el campo ID -->
 <script>
-document.getElementById('id_estudiante').addEventListener('keydown', function(event) {
-    if (event.key === 'Enter') {
-        event.preventDefault(); // Evita que se envíe el formulario por error
-        
-        const estudianteId = this.value.trim();
-        if (!estudianteId) return;
+// Función para buscar y autocompletar el estudiante por ID automáticamente
+async function buscarEstudiantePorId() {
+    const idEstudiante = document.getElementById('id_estudiante').value.trim();
+    if (!idEstudiante) return;
 
-        fetch(`/api/buscar-estudiante?id=${estudianteId}`)
-            .then(response => response.json())
-            .then(resultado => {
-                if (resultado.success && resultado.data) {
-                    const data = resultado.data;
-                    
-                    // Rellenar automáticamente cada input que coincida con el nombre del campo
-                    for (const [key, value] of Object.entries(data)) {
-                        const campo = document.querySelector(`[name="${key}"]`);
-                        if (campo && value !== null && value !== undefined) {
-                            campo.value = value;
-                            campo.dispatchEvent(new Event('change'));
-                        }
-                    }
+    try {
+        const response = await fetch(`/api/buscar-estudiante?id=${encodeURIComponent(idEstudiante)}`);
+        const resultado = await response.json();
 
-                    // Mostrar la foto actual si existe en la base de datos
-                    if (data.foto_estudiante_cedula) {
-                        const previewImg = document.getElementById('preview_foto');
-                        previewImg.src = `/static/uploads/${data.foto_estudiante_cedula}`;
-                        document.getElementById('contenedor_foto_actual').style.display = 'block';
+        if (response.ok && resultado.success && resultado.data) {
+            const data = resultado.data;
+            for (const [key, value] of Object.entries(data)) {
+                const campo = document.querySelector(`[name="${key}"]`);
+                if (campo && value !== null && value !== undefined) {
+                    if (campo.type === 'radio') {
+                        if (campo.value === value) campo.checked = true;
                     } else {
-                        document.getElementById('contenedor_foto_actual').style.display = 'none';
+                        campo.value = value;
                     }
-
-                    console.log("Estudiante encontrado y cargado.");
-                } else {
-                    alert("El ID del estudiante no existe en la base de datos. Puede proceder con el registro.");
-                    document.getElementById('contenedor_foto_actual').style.display = 'none';
+                    campo.dispatchEvent(new Event('change'));
                 }
-            })
-            .catch(error => console.error('Error al buscar el estudiante:', error));
+            }
+            console.log('¡Datos del estudiante cargados en el formulario!');
+        } else {
+            console.log('Estudiante nuevo o no registrado previamente.');
+        }
+    } catch (error) {
+        console.error('Error al buscar el estudiante:', error);
     }
-});
-</script>
+}
 
-<!-- Script para manejar el escaneo de la ficha con IA -->
-<script>
+// Función existente para el escaneo con IA
 async function escanearFichaConIA() {
     const input = document.getElementById('inputFichaEscaneada');
     const spinnerContainer = document.getElementById('loadingEscaneo');
@@ -492,12 +452,10 @@ async function escanearFichaConIA() {
     btn.disabled = true;
 
     const maxIntentos = 3;
-    let exito = false;
-
     for (let intento = 0; intento < maxIntentos; intento++) {
         try {
             if (intento > 0) {
-                loadingText.innerText = `Límite ocupado. Reintentando automáticamente (${intento}/${maxIntentos - 1})...`;
+                loadingText.innerText = `Reintentando (${intento}/${maxIntentos - 1})...`;
                 await new Promise(resolve => setTimeout(resolve, 8000));
             } else {
                 loadingText.innerText = 'Leyendo documento con IA...';
@@ -519,19 +477,14 @@ async function escanearFichaConIA() {
                     }
                 }
                 alert('¡Ficha escaneada y rellenada con éxito!');
-                exito = true;
                 break;
             } else {
-                if (resultado.error && !resultado.error.includes("Límite de uso")) {
-                    throw new Error(resultado.error);
-                }
                 if (intento === maxIntentos - 1) {
                     throw new Error(resultado.error || 'Límite de uso alcanzado.');
                 }
             }
         } catch (error) {
             if (intento === maxIntentos - 1) {
-                console.error('Error de escaneo:', error);
                 alert('Error al procesar la imagen: ' + error.message);
             }
         }
@@ -543,4 +496,3 @@ async function escanearFichaConIA() {
 </script>
 </body>
 </html>
-```[cite: 1]

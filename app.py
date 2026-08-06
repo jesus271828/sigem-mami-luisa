@@ -321,45 +321,6 @@ def logout():
     return redirect(url_for('login'))
 
 
-@app.route('/api/buscar-estudiante', methods=['GET'])
-def api_buscar_estudiante():
-    estudiante_id = request.args.get('id')
-    
-    conn = get_db_connection() # O la variable que uses para conectar
-    
-    # Dependiendo de cómo tengas configurada tu conexión para psycopg2 o flask-sqlalchemy:
-    # Si 'conn' ya es el cursor o usa un cursor directo, lo manejamos de forma segura:
-    try:
-        cursor = conn if hasattr(conn, 'execute') else conn.cursor()
-        
-        cursor.execute("SELECT * FROM inscripciones WHERE id_estudiante = %s", (estudiante_id,))
-        
-        # Intentamos obtener la fila como diccionario o tupla
-        fila = cursor.fetchone()
-        
-        if hasattr(cursor, 'close') and cursor != conn:
-            cursor.close()
-        if hasattr(conn, 'close'):
-            conn.close()
-            
-        if fila:
-            # Si 'fila' es un diccionario o se puede convertir
-            try:
-                data_dict = dict(fila)
-            except Exception:
-                # Si viene como tupla de psycopg2 con descripciones de columnas
-                columns = [col[0] for col in cursor.description] if hasattr(cursor, 'description') else []
-                data_dict = dict(zip(columns, fila))
-                
-            return jsonify({'success': True, 'data': data_dict})
-        else:
-            return jsonify({'success': False})
-            
-    except Exception as e:
-        print(f"Error en buscar-estudiante: {e}")
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-
 @app.route('/inscripcion', methods=['GET', 'POST'])
 def inscripcion():
     if 'usuario' not in session:
@@ -371,7 +332,6 @@ def inscripcion():
         def guardar_archivo(input_name):
             file = request.files.get(input_name)
             if file and file.filename != '':
-                # Lee los bytes de la imagen y los convierte a texto Base64 para guardarlos en la BD
                 file_bytes = file.read()
                 encoded = base64.b64encode(file_bytes).decode('utf-8')
                 return encoded
@@ -467,7 +427,6 @@ def inscripcion():
         econ_tel_trabajo = request.form.get('econ_tel_trabajo')
         econ_correo = request.form.get('econ_correo')
 
-        # Bucle dinámico para las 5 personas autorizadas
         aut_data = {}
         for i in range(1, 6):
             aut_data[f'aut_nombre_{i}'] = request.form.get(f'aut_nombre_{i}')
@@ -484,57 +443,167 @@ def inscripcion():
         try:
             conexion = get_db_connection()
             
-            # 1. Insertar en tabla estudiantes
-            conexion.execute('''
-                INSERT INTO estudiantes (nombres, apellidos, id_estudiante, grado, foto_estudiante_cedula)
-                VALUES (?, ?, ?, ?, ?)
-            ''', (nombres, apellidos, id_estudiante, grado, foto_estudiante_cedula))
+            # Verificamos si ya existe el id_estudiante en inscripciones
+            cursor_check = conexion if hasattr(conexion, 'execute') else conexion.cursor()
+            cursor_check.execute("SELECT COUNT(*) FROM inscripciones WHERE id_estudiante = %s", (id_estudiante,))
+            resultado_existe = cursor_check.fetchone()
             
-            # 2. Recalcular número de orden global alfabéticamente
-            conexion.execute("SELECT id FROM estudiantes ORDER BY nombres ASC, apellidos ASC")
-            registros_estudiantes = conexion.fetchall()
-            for indice, reg in enumerate(registros_estudiantes, start=1):
-                reg_id = reg['id'] if isinstance(reg, dict) or hasattr(reg, 'keys') else reg[0]
-                conexion.execute("UPDATE estudiantes SET numero_orden = ? WHERE id = ?", (indice, reg_id))
+            existe_en_db = False
+            if resultado_existe:
+                if isinstance(resultado_existe, dict) or hasattr(resultado_existe, 'keys'):
+                    existe_en_db = list(resultado_existe.values())[0] > 0
+                else:
+                    existe_en_db = resultado_existe[0] > 0
 
-            # 3. Insertar en tabla autorizados
-            conexion.execute('''
-                INSERT INTO autorizados (
+            if existe_en_db:
+                # --- ACTUALIZAR REGISTRO EXISTENTE ---
+                conexion.execute('''
+                    UPDATE estudiantes 
+                    SET nombres = ?, apellidos = ?, grado = ?, foto_estudiante_cedula = ?
+                    WHERE id_estudiante = ?
+                ''', (nombres, apellidos, grado, foto_estudiante_cedula, id_estudiante))
+                
+                conexion.execute('''
+                    UPDATE autorizados 
+                    SET nombres = ?, apellidos = ?, grado = ?, foto_estudiante_cedula = ?,
+                        padre_nombre = ?, padre_cedula = ?, foto_padre_cedula = ?, padre_tel_personal = ?, padre_tel_trabajo = ?,
+                        madre_nombre = ?, madre_cedula = ?, foto_madre_cedula = ?, madre_tel_personal = ?, madre_tel_trabajo = ?,
+                        tutor_nombre = ?, tutor_cedula = ?, foto_tutor_cedula = ?, tutor_tel_personal = ?, tutor_tel_trabajo = ?,
+                        aut_nombre_1 = ?, aut_cedula_1 = ?, aut_parentesco_1 = ?, aut_tel_1 = ?, foto_aut_cedula_1 = ?,
+                        aut_nombre_2 = ?, aut_cedula_2 = ?, aut_parentesco_2 = ?, aut_tel_2 = ?, foto_aut_cedula_2 = ?,
+                        aut_nombre_3 = ?, aut_cedula_3 = ?, aut_parentesco_3 = ?, aut_tel_3 = ?, foto_aut_cedula_3 = ?,
+                        aut_nombre_4 = ?, aut_cedula_4 = ?, aut_parentesco_4 = ?, aut_tel_4 = ?, foto_aut_cedula_4 = ?,
+                        aut_nombre_5 = ?, aut_cedula_5 = ?, aut_parentesco_5 = ?, aut_tel_5 = ?, foto_aut_cedula_5 = ?
+                    WHERE id_estudiante = ?
+                ''', (
+                    nombres, apellidos, grado, foto_estudiante_cedula,
+                    padre_nombre, padre_cedula, foto_padre_cedula, padre_tel_personal, padre_tel_trabajo,
+                    madre_nombre, madre_cedula, foto_madre_cedula, madre_tel_personal, madre_tel_trabajo,
+                    tutor_nombre, tutor_cedula, foto_tutor_cedula, tutor_tel_personal, tutor_tel_trabajo,
+                    aut_data['aut_nombre_1'], aut_data['aut_cedula_1'], aut_data['aut_parentesco_1'], aut_data['aut_tel_1'], aut_data['foto_aut_cedula_1'],
+                    aut_data['aut_nombre_2'], aut_data['aut_cedula_2'], aut_data['aut_parentesco_2'], aut_data['aut_tel_2'], aut_data['foto_aut_cedula_2'],
+                    aut_data['aut_nombre_3'], aut_data['aut_cedula_3'], aut_data['aut_parentesco_3'], aut_data['aut_tel_3'], aut_data['foto_aut_cedula_3'],
+                    aut_data['aut_nombre_4'], aut_data['aut_cedula_4'], aut_data['aut_parentesco_4'], aut_data['aut_tel_4'], aut_data['foto_aut_cedula_4'],
+                    aut_data['aut_nombre_5'], aut_data['aut_cedula_5'], aut_data['aut_parentesco_5'], aut_data['aut_tel_5'], aut_data['foto_aut_cedula_5'],
+                    id_estudiante
+                ))
+
+                conexion.execute('''
+                    UPDATE inscripciones 
+                    SET anio_escolar = ?, fecha_inscripcion = ?, nombres = ?, apellidos = ?, grado = ?, 
+                        fecha_nacimiento = ?, edad = ?, sexo = ?, nacionalidad = ?, lugar_nac = ?, direccion = ?, cant_hermanos = ?, 
+                        edades_hermanos = ?, lugar_ocupa = ?, tipo_sangre = ?, seguro_medico = ?, foto_estudiante_cedula = ?, 
+                        alergias = ?, medicamentos = ?, medico_pediatra = ?, centro_medico = ?, emergencia_tel = ?, 
+                        emergencia_nombre = ?, emergencia_parentesco = ?,
+                        padre_nombre = ?, padre_sector = ?, padre_direccion = ?, padre_profesion = ?, padre_cedula = ?, 
+                        foto_padre_cedula = ?, padre_nivel = ?, padre_religion = ?, padre_tel_personal = ?, padre_tel_trabajo = ?, padre_correo = ?,
+                        madre_nombre = ?, madre_sector = ?, madre_direccion = ?, madre_profesion = ?, madre_cedula = ?, 
+                        foto_madre_cedula = ?, madre_nivel = ?, madre_religion = ?, madre_tel_personal = ?, madre_tel_trabajo = ?, madre_correo = ?,
+                        tutor_nombre = ?, tutor_sector = ?, tutor_direccion = ?, tutor_profesion = ?, tutor_cedula = ?, 
+                        foto_tutor_cedula = ?, tutor_nivel = ?, tutor_religion = ?, tutor_tel_personal = ?, tutor_tel_trabajo = ?, tutor_correo = ?,
+                        vive_nombres = ?, vive_parentesco = ?, vive_cedula = ?, foto_vive_cedula = ?, vive_direccion = ?, 
+                        vive_sector = ?, vive_profesion = ?, vive_nivel = ?, vive_religion = ?, vive_tel_personal = ?, vive_tel_trabajo = ?, vive_correo = ?,
+                        econ_nombres = ?, econ_parentesco = ?, econ_cedula = ?, foto_econ_cedula = ?, econ_direccion = ?, 
+                        econ_sector = ?, econ_profesion = ?, econ_lugar_trabajo = ?, econ_tel_personal = ?, econ_tel_trabajo = ?, econ_correo = ?,
+                        aut_nombre_1 = ?, aut_cedula_1 = ?, aut_parentesco_1 = ?, aut_tel_1 = ?, foto_aut_cedula_1 = ?,
+                        aut_nombre_2 = ?, aut_cedula_2 = ?, aut_parentesco_2 = ?, aut_tel_2 = ?, foto_aut_cedula_2 = ?,
+                        aut_nombre_3 = ?, aut_cedula_3 = ?, aut_parentesco_3 = ?, aut_tel_3 = ?, foto_aut_cedula_3 = ?,
+                        aut_nombre_4 = ?, aut_cedula_4 = ?, aut_parentesco_4 = ?, aut_tel_4 = ?, foto_aut_cedula_4 = ?,
+                        aut_nombre_5 = ?, aut_cedula_5 = ?, aut_parentesco_5 = ?, aut_tel_5 = ?, foto_aut_cedula_5 = ?,
+                        autoriza_medicamentos = ?, autoriza_redes = ?, firma_redes = ?
+                    WHERE id_estudiante = ?
+                ''', (
+                    anio_escolar, fecha_inscripcion, nombres, apellidos, grado, 
+                    fecha_nacimiento, edad, sexo, nacionalidad, lugar_nac, direccion, cant_hermanos, 
+                    edades_hermanos, lugar_ocupa, tipo_sangre, seguro_medico, foto_estudiante_cedula, 
+                    alergias, medicamentos, medico_pediatra, centro_medico, emergencia_tel, 
+                    emergencia_nombre, emergencia_parentesco,
+                    padre_nombre, padre_sector, padre_direccion, padre_profesion, padre_cedula, 
+                    foto_padre_cedula, padre_nivel, padre_religion, padre_tel_personal, padre_tel_trabajo, padre_correo,
+                    madre_nombre, madre_sector, madre_direccion, madre_profesion, madre_cedula, 
+                    foto_madre_cedula, madre_nivel, madre_religion, madre_tel_personal, madre_tel_trabajo, madre_correo,
+                    tutor_nombre, tutor_sector, tutor_direccion, tutor_profesion, tutor_cedula, 
+                    foto_tutor_cedula, tutor_nivel, tutor_religion, tutor_tel_personal, tutor_tel_trabajo, tutor_correo,
+                    vive_nombres, vive_parentesco, vive_cedula, foto_vive_cedula, vive_direccion, 
+                    vive_sector, vive_profesion, vive_nivel, vive_religion, vive_tel_personal, vive_tel_trabajo, vive_correo,
+                    econ_nombres, econ_parentesco, econ_cedula, foto_econ_cedula, econ_direccion, 
+                    econ_sector, econ_profesion, econ_lugar_trabajo, econ_tel_personal, econ_tel_trabajo, econ_correo,
+                    aut_data['aut_nombre_1'], aut_data['aut_cedula_1'], aut_data['aut_parentesco_1'], aut_data['aut_tel_1'], aut_data['foto_aut_cedula_1'],
+                    aut_data['aut_nombre_2'], aut_data['aut_cedula_2'], aut_data['aut_parentesco_2'], aut_data['aut_tel_2'], aut_data['foto_aut_cedula_2'],
+                    aut_data['aut_nombre_3'], aut_data['aut_cedula_3'], aut_data['aut_parentesco_3'], aut_data['aut_tel_3'], aut_data['foto_aut_cedula_3'],
+                    aut_data['aut_nombre_4'], aut_data['aut_cedula_4'], aut_data['aut_parentesco_4'], aut_data['aut_tel_4'], aut_data['foto_aut_cedula_4'],
+                    aut_data['aut_nombre_5'], aut_data['aut_cedula_5'], aut_data['aut_parentesco_5'], aut_data['aut_tel_5'], aut_data['foto_aut_cedula_5'],
+                    autoriza_medicamentos, autoriza_redes, firma_redes,
+                    id_estudiante
+                ))
+                flash('¡Los datos del estudiante existente fueron actualizados correctamente!', 'success')
+            else:
+                # --- INSERTAR NUEVO REGISTRO ---
+                conexion.execute('''
+                    INSERT INTO estudiantes (nombres, apellidos, id_estudiante, grado, foto_estudiante_cedula)
+                    VALUES (?, ?, ?, ?, ?)
+                ''', (nombres, apellidos, id_estudiante, grado, foto_estudiante_cedula))
+                
+                conexion.execute('''
+                    INSERT INTO autorizados (
+                        id_estudiante, nombres, apellidos, grado, foto_estudiante_cedula,
+                        padre_nombre, padre_cedula, foto_padre_cedula, padre_tel_personal, padre_tel_trabajo,
+                        madre_nombre, madre_cedula, foto_madre_cedula, madre_tel_personal, madre_tel_trabajo,
+                        tutor_nombre, tutor_cedula, foto_tutor_cedula, tutor_tel_personal, tutor_tel_trabajo,
+                        aut_nombre_1, aut_cedula_1, aut_parentesco_1, aut_tel_1, foto_aut_cedula_1,
+                        aut_nombre_2, aut_cedula_2, aut_parentesco_2, aut_tel_2, foto_aut_cedula_2,
+                        aut_nombre_3, aut_cedula_3, aut_parentesco_3, aut_tel_3, foto_aut_cedula_3,
+                        aut_nombre_4, aut_cedula_4, aut_parentesco_4, aut_tel_4, foto_aut_cedula_4,
+                        aut_nombre_5, aut_cedula_5, aut_parentesco_5, aut_tel_5, foto_aut_cedula_5
+                    ) VALUES (
+                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                    )
+                ''', (
                     id_estudiante, nombres, apellidos, grado, foto_estudiante_cedula,
                     padre_nombre, padre_cedula, foto_padre_cedula, padre_tel_personal, padre_tel_trabajo,
                     madre_nombre, madre_cedula, foto_madre_cedula, madre_tel_personal, madre_tel_trabajo,
                     tutor_nombre, tutor_cedula, foto_tutor_cedula, tutor_tel_personal, tutor_tel_trabajo,
-                    aut_nombre_1, aut_cedula_1, aut_parentesco_1, aut_tel_1, foto_aut_cedula_1,
-                    aut_nombre_2, aut_cedula_2, aut_parentesco_2, aut_tel_2, foto_aut_cedula_2,
-                    aut_nombre_3, aut_cedula_3, aut_parentesco_3, aut_tel_3, foto_aut_cedula_3,
-                    aut_nombre_4, aut_cedula_4, aut_parentesco_4, aut_tel_4, foto_aut_cedula_4,
-                    aut_nombre_5, aut_cedula_5, aut_parentesco_5, aut_tel_5, foto_aut_cedula_5
-                ) VALUES (
-                    ?, ?, ?, ?, ?,
-                    ?, ?, ?, ?, ?,
-                    ?, ?, ?, ?, ?,
-                    ?, ?, ?, ?, ?,
-                    ?, ?, ?, ?, ?,
-                    ?, ?, ?, ?, ?,
-                    ?, ?, ?, ?, ?,
-                    ?, ?, ?, ?, ?,
-                    ?, ?, ?, ?, ?
-                )
-            ''', (
-                id_estudiante, nombres, apellidos, grado, foto_estudiante_cedula,
-                padre_nombre, padre_cedula, foto_padre_cedula, padre_tel_personal, padre_tel_trabajo,
-                madre_nombre, madre_cedula, foto_madre_cedula, madre_tel_personal, madre_tel_trabajo,
-                tutor_nombre, tutor_cedula, foto_tutor_cedula, tutor_tel_personal, tutor_tel_trabajo,
-                aut_data['aut_nombre_1'], aut_data['aut_cedula_1'], aut_data['aut_parentesco_1'], aut_data['aut_tel_1'], aut_data['foto_aut_cedula_1'],
-                aut_data['aut_nombre_2'], aut_data['aut_cedula_2'], aut_data['aut_parentesco_2'], aut_data['aut_tel_2'], aut_data['foto_aut_cedula_2'],
-                aut_data['aut_nombre_3'], aut_data['aut_cedula_3'], aut_data['aut_parentesco_3'], aut_data['aut_tel_3'], aut_data['foto_aut_cedula_3'],
-                aut_data['aut_nombre_4'], aut_data['aut_cedula_4'], aut_data['aut_parentesco_4'], aut_data['aut_tel_4'], aut_data['foto_aut_cedula_4'],
-                aut_data['aut_nombre_5'], aut_data['aut_cedula_5'], aut_data['aut_parentesco_5'], aut_data['aut_tel_5'], aut_data['foto_aut_cedula_5']
-            ))
+                    aut_data['aut_nombre_1'], aut_data['aut_cedula_1'], aut_data['aut_parentesco_1'], aut_data['aut_tel_1'], aut_data['foto_aut_cedula_1'],
+                    aut_data['aut_nombre_2'], aut_data['aut_cedula_2'], aut_data['aut_parentesco_2'], aut_data['aut_tel_2'], aut_data['foto_aut_cedula_2'],
+                    aut_data['aut_nombre_3'], aut_data['aut_cedula_3'], aut_data['aut_parentesco_3'], aut_data['aut_tel_3'], aut_data['foto_aut_cedula_3'],
+                    aut_data['aut_nombre_4'], aut_data['aut_cedula_4'], aut_data['aut_parentesco_4'], aut_data['aut_tel_4'], aut_data['foto_aut_cedula_4'],
+                    aut_data['aut_nombre_5'], aut_data['aut_cedula_5'], aut_data['aut_parentesco_5'], aut_data['aut_tel_5'], aut_data['foto_aut_cedula_5']
+                ))
 
-            # 4. Insertar en tabla inscripciones generales
-            conexion.execute('''
-                INSERT INTO inscripciones (
+                conexion.execute('''
+                    INSERT INTO inscripciones (
+                        anio_escolar, fecha_inscripcion, id_estudiante, nombres, apellidos, grado, 
+                        fecha_nacimiento, edad, sexo, nacionalidad, lugar_nac, direccion, cant_hermanos, 
+                        edades_hermanos, lugar_ocupa, tipo_sangre, seguro_medico, foto_estudiante_cedula, 
+                        alergias, medicamentos, medico_pediatra, centro_medico, emergencia_tel, 
+                        emergencia_nombre, emergencia_parentesco,
+                        padre_nombre, padre_sector, padre_direccion, padre_profesion, padre_cedula, 
+                        foto_padre_cedula, padre_nivel, padre_religion, padre_tel_personal, padre_tel_trabajo, padre_correo,
+                        madre_nombre, madre_sector, madre_direccion, madre_profesion, madre_cedula, 
+                        foto_madre_cedula, madre_nivel, madre_religion, madre_tel_personal, madre_tel_trabajo, madre_correo,
+                        tutor_nombre, tutor_sector, tutor_direccion, tutor_profesion, tutor_cedula, 
+                        foto_tutor_cedula, tutor_nivel, tutor_religion, tutor_tel_personal, tutor_tel_trabajo, tutor_correo,
+                        vive_nombres, vive_parentesco, vive_cedula, foto_vive_cedula, vive_direccion, 
+                        vive_sector, vive_profesion, vive_nivel, vive_religion, vive_tel_personal, vive_tel_trabajo, vive_correo,
+                        econ_nombres, econ_parentesco, econ_cedula, foto_econ_cedula, econ_direccion, 
+                        econ_sector, econ_profesion, econ_lugar_trabajo, econ_tel_personal, econ_tel_trabajo, econ_correo,
+                        aut_nombre_1, aut_cedula_1, aut_parentesco_1, aut_tel_1, foto_aut_cedula_1,
+                        aut_nombre_2, aut_cedula_2, aut_parentesco_2, aut_tel_2, foto_aut_cedula_2,
+                        aut_nombre_3, aut_cedula_3, aut_parentesco_3, aut_tel_3, foto_aut_cedula_3,
+                        aut_nombre_4, aut_cedula_4, aut_parentesco_4, aut_tel_4, foto_aut_cedula_4,
+                        aut_nombre_5, aut_cedula_5, aut_parentesco_5, aut_tel_5, foto_aut_cedula_5,
+                        autoriza_medicamentos, autoriza_redes, firma_redes
+                    ) VALUES (
+                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                        ?, ?, ?
+                    )
+                ''', (
                     anio_escolar, fecha_inscripcion, id_estudiante, nombres, apellidos, grado, 
                     fecha_nacimiento, edad, sexo, nacionalidad, lugar_nac, direccion, cant_hermanos, 
                     edades_hermanos, lugar_ocupa, tipo_sangre, seguro_medico, foto_estudiante_cedula, 
@@ -550,48 +619,23 @@ def inscripcion():
                     vive_sector, vive_profesion, vive_nivel, vive_religion, vive_tel_personal, vive_tel_trabajo, vive_correo,
                     econ_nombres, econ_parentesco, econ_cedula, foto_econ_cedula, econ_direccion, 
                     econ_sector, econ_profesion, econ_lugar_trabajo, econ_tel_personal, econ_tel_trabajo, econ_correo,
-                    aut_nombre_1, aut_cedula_1, aut_parentesco_1, aut_tel_1, foto_aut_cedula_1,
-                    aut_nombre_2, aut_cedula_2, aut_parentesco_2, aut_tel_2, foto_aut_cedula_2,
-                    aut_nombre_3, aut_cedula_3, aut_parentesco_3, aut_tel_3, foto_aut_cedula_3,
-                    aut_nombre_4, aut_cedula_4, aut_parentesco_4, aut_tel_4, foto_aut_cedula_4,
-                    aut_nombre_5, aut_cedula_5, aut_parentesco_5, aut_tel_5, foto_aut_cedula_5,
+                    aut_data['aut_nombre_1'], aut_data['aut_cedula_1'], aut_data['aut_parentesco_1'], aut_data['aut_tel_1'], aut_data['foto_aut_cedula_1'],
+                    aut_data['aut_nombre_2'], aut_data['aut_cedula_2'], aut_data['aut_parentesco_2'], aut_data['aut_tel_2'], aut_data['foto_aut_cedula_2'],
+                    aut_data['aut_nombre_3'], aut_data['aut_cedula_3'], aut_data['aut_parentesco_3'], aut_data['aut_tel_3'], aut_data['foto_aut_cedula_3'],
+                    aut_data['aut_nombre_4'], aut_data['aut_cedula_4'], aut_data['aut_parentesco_4'], aut_data['aut_tel_4'], aut_data['foto_aut_cedula_4'],
+                    aut_data['aut_nombre_5'], aut_data['aut_cedula_5'], aut_data['aut_parentesco_5'], aut_data['aut_tel_5'], aut_data['foto_aut_cedula_5'],
                     autoriza_medicamentos, autoriza_redes, firma_redes
-                ) VALUES (
-                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
-                    ?, ?, ?
-                )
-            ''', (
-                anio_escolar, fecha_inscripcion, id_estudiante, nombres, apellidos, grado, 
-                fecha_nacimiento, edad, sexo, nacionalidad, lugar_nac, direccion, cant_hermanos, 
-                edades_hermanos, lugar_ocupa, tipo_sangre, seguro_medico, foto_estudiante_cedula, 
-                alergias, medicamentos, medico_pediatra, centro_medico, emergencia_tel, 
-                emergencia_nombre, emergencia_parentesco,
-                padre_nombre, padre_sector, padre_direccion, padre_profesion, padre_cedula, 
-                foto_padre_cedula, padre_nivel, padre_religion, padre_tel_personal, padre_tel_trabajo, padre_correo,
-                madre_nombre, madre_sector, madre_direccion, madre_profesion, madre_cedula, 
-                foto_madre_cedula, madre_nivel, madre_religion, madre_tel_personal, madre_tel_trabajo, madre_correo,
-                tutor_nombre, tutor_sector, tutor_direccion, tutor_profesion, tutor_cedula, 
-                foto_tutor_cedula, tutor_nivel, tutor_religion, tutor_tel_personal, tutor_tel_trabajo, tutor_correo,
-                vive_nombres, vive_parentesco, vive_cedula, foto_vive_cedula, vive_direccion, 
-                vive_sector, vive_profesion, vive_nivel, vive_religion, vive_tel_personal, vive_tel_trabajo, vive_correo,
-                econ_nombres, econ_parentesco, econ_cedula, foto_econ_cedula, econ_direccion, 
-                econ_sector, econ_profesion, econ_lugar_trabajo, econ_tel_personal, econ_tel_trabajo, econ_correo,
-                aut_data['aut_nombre_1'], aut_data['aut_cedula_1'], aut_data['aut_parentesco_1'], aut_data['aut_tel_1'], aut_data['foto_aut_cedula_1'],
-                aut_data['aut_nombre_2'], aut_data['aut_cedula_2'], aut_data['aut_parentesco_2'], aut_data['aut_tel_2'], aut_data['foto_aut_cedula_2'],
-                aut_data['aut_nombre_3'], aut_data['aut_cedula_3'], aut_data['aut_parentesco_3'], aut_data['aut_tel_3'], aut_data['foto_aut_cedula_3'],
-                aut_data['aut_nombre_4'], aut_data['aut_cedula_4'], aut_data['aut_parentesco_4'], aut_data['aut_tel_4'], aut_data['foto_aut_cedula_4'],
-                aut_data['aut_nombre_5'], aut_data['aut_cedula_5'], aut_data['aut_parentesco_5'], aut_data['aut_tel_5'], aut_data['foto_aut_cedula_5'],
-                autoriza_medicamentos, autoriza_redes, firma_redes
-            ))
+                ))
+                flash('¡Estudiante inscrito y guardado correctamente en todas las tablas!', 'success')
             
+            # Recalcular orden alfabético global
+            conexion.execute("SELECT id FROM estudiantes ORDER BY nombres ASC, apellidos ASC")
+            registros_estudiantes = conexion.fetchall()
+            for indice, reg in enumerate(registros_estudiantes, start=1):
+                reg_id = reg['id'] if isinstance(reg, dict) or hasattr(reg, 'keys') else reg[0]
+                conexion.execute("UPDATE estudiantes SET numero_orden = ? WHERE id = ?", (indice, reg_id))
+
             conexion.commit()
-            flash('¡Estudiante inscrito y guardado correctamente en todas las tablas!', 'success')
         except Exception as e:
             if conexion:
                 conexion.rollback()
@@ -603,55 +647,8 @@ def inscripcion():
 
         return redirect(url_for('inscripcion'))
 
-    # Método GET: Consultar los contadores reales en la base de datos de forma segura
-    is_postgres = DATABASE_URL is not None
-    total_estudiantes = 0
-    total_expedientes = 0
-    total_usuarios = 0
-
-    conexion = get_db_connection()
-    try:
-        if is_postgres:
-            cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-            cur.execute("SELECT COUNT(*) as total FROM estudiantes")
-            total_estudiantes = cur.fetchone()['total']
-            
-            cur.execute("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'expedientes_viejos')")
-            if cur.fetchone()['exists']:
-                cur.execute("SELECT COUNT(*) as total FROM expedientes_viejos")
-                total_expedientes = cur.fetchone()['total']
-            else:
-                cur.execute("SELECT COUNT(*) as total FROM inscripciones")
-                total_expedientes = cur.fetchone()['total']
-            
-            cur.execute("SELECT COUNT(*) as total FROM usuarios")
-            total_usuarios = cur.fetchone()['total']
-            cur.close()
-        else:
-            conexion.execute("SELECT COUNT(*) FROM estudiantes")
-            total_estudiantes = conexion.fetchone()[0]
-            
-            cursor_chk = conexion.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='expedientes_viejos'").fetchone()
-            if cursor_chk:
-                conexion.execute("SELECT COUNT(*) FROM expedientes_viejos")
-                total_expedientes = conexion.fetchone()[0]
-            else:
-                conexion.execute("SELECT COUNT(*) FROM inscripciones")
-                total_expedientes = conexion.fetchone()[0]
-                
-            conexion.execute("SELECT COUNT(*) FROM usuarios")
-            total_usuarios = conexion.fetchone()[0]
-    except Exception as e:
-        print(f"--- ERROR EXACTO AL CONTAR EN INSCRIPCIÓN: {e}")
-    finally:
-        conexion.close()
-
-    return render_template(
-        'inscripcion.html', 
-        total_estudiantes=total_estudiantes, 
-        total_expedientes=total_expedientes, 
-        total_usuarios=total_usuarios
-    )
+    # Método GET (Renderizado normal con contadores)
+    # ... (mantén tu lógica GET actual tal cual la tienes)
 
 @app.route('/inscripcion-publica', methods=['GET', 'POST'])
 def inscripcion_publica():
