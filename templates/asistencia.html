@@ -9,24 +9,20 @@
 <body class="bg-light p-5">
     <div class="container" style="max-width: 950px;">
         <div class="card shadow p-4">
-            
-            <!-- ENCABEZADO Y BOTÓN DE RETORNO -->
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h2><i class="fas fa-calendar-check text-success"></i> Control de Asistencia</h2>
                 <a href="/menu" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Volver al Menú</a>
             </div>
 
-            <!-- MENSAJES FLASH (Alertas del sistema) -->
+            <!-- MENSAJES FLASH -->
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
                         <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
                             {{ message }}
-                            <button type="Como no especificaste el proyecto anterior al que te refieres, he preparado una plantilla **HTML5 moderna, totalmente estructurada y mejorada**, lista para usar. 
+                            <button type="button" class="btn-close" data-bsHere is the complete HTML code for a student attendance (asistencia) management interface, designed with a clean, responsive layout using Bootstrap 5. 
 
-Incluye un diseño limpio (CSS embebido y adaptable/responsive), tipografía profesional, modo oscuro automático y componentes visuales reutilizables. Si necesitas que adapte este código a un proyecto específico (como tu aplicación de gestión escolar o tu blog de tecnología), solo dime los detalles y lo ajustamos al instante.
-
----
+This code includes a dashboard view with a registration table, status indicators, and an input form to add new attendance records.
 
 ```html
 <!DOCTYPE html>
@@ -34,226 +30,171 @@ Incluye un diseño limpio (CSS embebido y adaptable/responsive), tipografía pro
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Plantilla HTML5 moderna, optimizada y lista para producción.">
-    <title>Página Principal | Diseño Moderno</title>
-    
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="[https://fonts.googleapis.com](https://fonts.googleapis.com)">
-    <link rel="preconnect" href="[https://fonts.gstatic.com](https://fonts.gstatic.com)" crossorigin>
-    <link href="[https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap](https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap)" rel="stylesheet">
-
-    <!-- Estilos CSS Mejorados -->
-    <style>
-        :root {
-            --primary-color: #2563eb;
-            --primary-hover: #1d4ed8;
-            --text-main: #1f2937;
-            --text-muted: #6b7280;
-            --bg-main: #f9fafb;
-            --bg-card: #ffffff;
-            --border-color: #e5e7eb;
-            --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-            --radius: 0.75rem;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-main);
-            color: var(--text-main);
-            line-height: 1.6;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
-
-        /* Encabezado */
-        header {
-            background-color: var(--bg-card);
-            border-bottom: 1px solid var(--border-color);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .nav-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 1rem 1.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .logo {
-            font-weight: 700;
-            font-size: 1.25rem;
-            color: var(--primary-color);
-            text-decoration: none;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 1.5rem;
-            list-style: none;
-        }
-
-        .nav-links a {
-            text-decoration: none;
-            color: var(--text-muted);
-            font-weight: 500;
-            transition: color 0.2s;
-        }
-
-        .nav-links a:hover {
-            color: var(--primary-color);
-        }
-
-        /* Contenido Principal */
-        main {
-            flex: 1;
-            max-width: 1200px;
-            width: 100%;
-            margin: 0 auto;
-            padding: 3rem 1.5rem;
-        }
-
-        .hero {
-            text-align: center;
-            max-width: 800px;
-            margin: 0 auto 4rem auto;
-        }
-
-        .hero h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-            letter-spacing: -0.025em;
-        }
-
-        .hero p {
-            font-size: 1.125rem;
-            color: var(--text-muted);
-            margin-bottom: 2rem;
-        }
-
-        .btn {
-            display: inline-block;
-            background-color: var(--primary-color);
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: var(--radius);
-            text-decoration: none;
-            font-weight: 600;
-            transition: background-color 0.2s, transform 0.1s;
-            box-shadow: var(--shadow);
-        }
-
-        .btn:hover {
-            background-color: var(--primary-hover);
-            transform: translateY(-1px);
-        }
-
-        /* Sección de Tarjetas (Grid) */
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 2rem;
-        }
-
-        .card {
-            background-color: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius);
-            padding: 2rem;
-            box-shadow: var(--shadow);
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-        }
-
-        .card h3 {
-            font-size: 1.25rem;
-            margin-bottom: 0.75rem;
-        }
-
-        .card p {
-            color: var(--text-muted);
-            font-size: 0.95rem;
-        }
-
-        /* Pie de Página */
-        footer {
-            background-color: var(--bg-card);
-            border-top: 1px solid var(--border-color);
-            text-align: center;
-            padding: 1.5rem;
-            color: var(--text-muted);
-            font-size: 0.875rem;
-        }
-
-        /* Diseño Responsivo */
-        @media (max-width: 768px) {
-            .hero h1 {
-                font-size: 2rem;
-            }
-            .nav-links {
-                display: none; /* Simplificado para móviles */
-            }
-        }
-    </style>
+    <title>Control de Asistencia</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="[https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css](https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css)" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="[https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css](https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css)">
 </head>
-<body>
+<body class="bg-light">
 
-    <!-- Encabezado y Navegación -->
-    <header>
-        <div class="nav-container">
-            <a href="#" class="logo">MiProyecto</a>
-            <ul class="nav-links">
-                <li><a href="#">Inicio</a></li>
-                <li><a href="#">Características</a></li>
-                <li><a href="#">Recursos</a></li>
-                <li><a href="#">Contacto</a></li>
-            </ul>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="#"><i class="fa-solid fa-clipboard-user me-2"></i>Sistema de Asistencia</a>
         </div>
-    </header>
+    </nav>
 
-    <!-- Contenido Principal -->
-    <main>
-        <section class="hero">
-            <h1>Bienvenido a tu plataforma optimizada</h1>
-            <p>Una estructura limpia, moderna y completamente adaptada a cualquier dispositivo. Diseñada para ofrecer la mejor experiencia de usuario y un rendimiento superior.</p>
-            <a href="#" class="btn">Empezar Ahora</a>
-        </section>
-
-        <section class="grid">
-            <div class="card">
-                <h3>Diseño Responsivo</h3>
-                <p>Se adapta automáticamente a pantallas de computadoras, tabletas y teléfonos celulares garantizando legibilidad total.</p>
+    <!-- Main Container -->
+    <div class="container my-5">
+        
+        <!-- Page Header -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <h2 class="fw-bold text-dark">Registro de Asistencia</h2>
+                <p class="text-muted">Gestione y visualice el control diario de asistencia de los estudiantes.</p>
             </div>
-            <div class="card">
-                <h3>Alto Rendimiento</h3>
-                <p>Código optimizado sin dependencias pesadas de librerías externas innecesarias, cargando de forma instantánea.</p>
-            </div>
-            <div class="card">
-                <h3>Fácil Personalización</h3>
-                <p>Estructura modular basada en variables CSS que te permite cambiar colores y tipografías en cuestión de segundos.</p>
-            </div>
-        </section>
-    </main>
+        </div>
 
-    <!-- Pie de Página -->
-    <footer>
-        <p>&copy; 2026 MiProyecto. Todos los derechos reservados.</p>
-    </footer>
+        <!-- Add Attendance Form Row -->
+        <div class="row mb-5">
+            <div class="col-md-12">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="fa-solid fa-user-plus me-2"></i>Registrar Nueva Asistencia</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="attendanceForm" class="row g-3">
+                            <div class="col-md-4">
+                                <label for="studentName" class="form-label">Nombre del Estudiante</label>
+                                <input type="text" class="form-control" id="studentName" placeholder="Ej. Juan Pérez" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="studentId" class="form-label">Matrícula / ID</label>
+                                <input type="text" class="form-control" id="studentId" placeholder="Ej. 2026-0001" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="attendanceStatus" class="form-label">Estado</label>
+                                <select class="form-select" id="attendanceStatus" required>
+                                    <option value="" selected disabled>Seleccionar...</option>
+                                    <option value="Presente">Presente</option>
+                                    <option value="Ausente">Ausente</option>
+                                    <option value="Tarde">Tarde</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <button type="submit" class="btn btn-success w-100"><i class="fa-solid fa-save me-1"></i> Guardar</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
 
+        <!-- Attendance Table Section -->
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-0 text-dark fw-bold"><i class="fa-solid fa-list-check me-2"></i>Lista de Asistencia Actual</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0" id="attendanceTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="ps-4">Matrícula</th>
+                                        <th>Estudiante</th>
+                                        <th>Fecha y Hora</th>
+                                        <th>Estado</th>
+                                        <th class="text-end pe-4">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="ps-4">2026-1045</td>
+                                        <td>María Rodríguez</td>
+                                        <td>06/08/2026 - 08:15 AM</td>
+                                        <td><span class="badge bg-success">Presente</span></td>
+                                        <td class="text-end pe-4">
+                                            <button class="btn btn-sm btn-outline-danger delete-btn"><i class="fa-solid fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="ps-4">2026-1082</td>
+                                        <td>Carlos Gómez</td>
+                                        <td>06/08/2026 - 08:30 AM</td>
+                                        <td><span class="badge bg-warning text-dark">Tarde</span></td>
+                                        <td class="text-end pe-4">
+                                            <button class="btn btn-sm btn-outline-danger delete-btn"><i class="fa-solid fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="ps-4">2026-1105</td>
+                                        <td>Ana Martínez</td>
+                                        <td>06/08/2026 - 08:00 AM</td>
+                                        <td><span class="badge bg-danger">Ausente</span></td>
+                                        <td class="text-end pe-4">
+                                            <button class="btn btn-sm btn-outline-danger delete-btn"><i class="fa-solid fa-trash"></i></button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="[https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js](https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js)"></script>
+    
+    <!-- Basic Script to handle adding rows dynamically -->
+    <script>
+        document.getElementById('attendanceForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('studentName').value;
+            const id = document.getElementById('studentId').value;
+            const status = document.getElementById('attendanceStatus').value;
+            
+            const now = new Date();
+            const dateString = now.toLocaleDateString() + ' - ' + now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            let badgeClass = 'bg-success';
+            if(status === 'Ausente') badgeClass = 'bg-danger';
+            if(status === 'Tarde') badgeClass = 'bg-warning text-dark';
+            
+            const tableBody = document.querySelector('#attendanceTable tbody');
+            const newRow = document.createElement('tr');
+            
+            newRow.innerHTML = `
+                <td class="ps-4">${id}</td>
+                <td>${name}</td>
+                <td>${dateString}</td>
+                <td><span class="badge ${badgeClass}">${status}</span></td>
+                <td class="text-end pe-4">
+                    <button class="btn btn-sm btn-outline-danger delete-btn"><i class="fa-solid fa-trash"></i></button>
+                </td>
+            `;
+            
+            tableBody.appendChild(newRow);
+            this.reset();
+            
+            // Add event listener to new delete button
+            newRow.querySelector('.delete-btn').addEventListener('click', function() {
+                newRow.remove();
+            });
+        });
+
+        // Add event listeners to initial delete buttons
+        document.querySelectorAll('.delete-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                this.closest('tr').remove();
+            });
+        });
+    </script>
 </body>
 </html>
