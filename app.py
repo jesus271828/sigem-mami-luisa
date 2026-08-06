@@ -324,11 +324,6 @@ def logout():
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 import base64
 
-# Nota: Asegúrate de mantener tu función get_db_connection() y la inicialización de 'app' tal como las tengas en tu proyecto.
-
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
-import base64
-
 # Nota: Asegúrate de mantener tu inicialización de 'app' y tu función get_db_connection() tal como las tienes configuradas.
 
 @app.route('/inscripcion', methods=['GET', 'POST'])
@@ -652,21 +647,24 @@ def inscripcion():
 
         return redirect(url_for('inscripcion'))
 
-    # Método GET (Renderizado normal con contadores blindados contra KeyError)
+    # Método GET (Renderizado normal con contadores usando los nombres reales de tus tablas)
     conexion = get_db_connection()
     cursor = conexion if hasattr(conexion, 'execute') else conexion.cursor()
     
     def obtener_conteo(query):
-        cursor.execute(query)
-        res = cursor.fetchone()
-        if not res:
+        try:
+            cursor.execute(query)
+            res = cursor.fetchone()
+            if not res:
+                return 0
+            if isinstance(res, dict) or hasattr(res, 'keys'):
+                return list(res.values())[0]
+            return res[0]
+        except Exception:
             return 0
-        if isinstance(res, dict) or hasattr(res, 'keys'):
-            return list(res.values())[0]
-        return res[0]
 
     total_estudiantes = obtener_conteo("SELECT COUNT(*) FROM estudiantes")
-    total_expedientes = obtener_conteo("SELECT COUNT(*) FROM expedientes")
+    total_expedientes = obtener_conteo("SELECT COUNT(*) FROM expedientes_viejos")
     total_usuarios = obtener_conteo("SELECT COUNT(*) FROM usuarios")
 
     if conexion:
