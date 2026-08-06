@@ -353,8 +353,9 @@ import base64
 
 @app.route('/inscripcion', methods=['GET', 'POST'])
 def inscripcion():
+    # Validar que el usuario haya iniciado sesión y EXCLUSIVAMENTE sea 'admin'
     if 'usuario' not in session or session.get('rol') != 'admin':
-        flash('Acceso denegado. Se requieren permisos de administrador.', 'danger')
+        flash('Acceso denegado.', 'danger')
         return redirect(url_for('menu'))
 
     if request.method == 'POST':
