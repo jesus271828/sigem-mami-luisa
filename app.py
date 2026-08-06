@@ -320,8 +320,8 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
-@app.route('/buscar_estudiante/<id_estudiante>')
-def buscar_estudiante(id_estudiante):
+@app.route('/buscar_estudiante/<id_estudiante>', methods=['GET'])
+def api_buscar_estudiante(id_estudiante): # <-- Nombre de función modificado para evitar duplicados
     if 'usuario' not in session:
         return jsonify({'encontrado': False})
     
@@ -333,8 +333,6 @@ def buscar_estudiante(id_estudiante):
         estudiante = cursor.fetchone()
         
         if estudiante:
-            # Si el cursor devuelve una tupla, conviértela a diccionario según los nombres de tus columnas, 
-            # o si usas RealDictCursor ya vendrá como diccionario.
             return jsonify({'encontrado': True, 'datos': dict(estudiante)})
         else:
             return jsonify({'encontrado': False})
