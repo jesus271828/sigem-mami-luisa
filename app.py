@@ -1761,38 +1761,60 @@ def expediente_viejo():
                            total_usuarios=total_usuarios)
 
 import re
-from flask import render_template, request, redirect, url_for
-import sqlite3 # Asegúrate de tener importado sqlite3 si lo usas
+from flask import render_template, request, redirect, url_for, session, flash
 
 @app.route('/registrar_expediente_viejo', methods=['GET', 'POST'])
 def registrar_expediente_viejo():
+    # 1. Validar que el usuario haya iniciado sesión y sea administrador
+    if 'usuario' not in session or session.get('rol') != 'admin':
+        flash('Acceso denegado. Se requieren permisos de administrador.', 'danger')
+        return redirect(url_for('menu'))
+
     if request.method == 'POST':
-        # Tu lógica actual para guardar
         return redirect(url_for('registrar_expediente_viejo'))
 
-    # Reemplaza 'sigem_ml.db' por el nombre de tu archivo de base de datos actual si es diferente
-    conexion = sqlite3.connect('sigem_ml.db')
-    cursor = conexion.cursor()
+    conexion = get_db_connection()
+    is_postgres = DATABASE_URL is not None
+    ultimo_valor = None
 
-    # Asegúrate de que la tabla y la columna coincidan con tu base de datos
-    cursor.execute("SELECT numero_ficha FROM expedientes_viejos ORDER BY id DESC LIMIT 1")
-    ultimo_registro = cursor.fetchone()
-    conexion.close()
+    try:
+        if is_postgres:
+            cur = conexion.conn.cursor()
+            # Buscamos el último registro en la tabla expedientes_viejos ordenado por id descendente
+            cur.execute('SELECT "Unnamed: 5" FROM expedientes_viejos ORDER BY id DESC LIMIT 1')
+            resultado = cur.fetchone()
+            if resultado:
+                ultimo_valor = resultado[0]
+            cur.close()
+        else:
+            cursor = conexion.cursor()
+            cursor.execute('SELECT "Unnamed: 5" FROM expedientes_viejos ORDER BY id DESC LIMIT 1')
+            resultado = cursor.fetchone()
+            if resultado:
+                ultimo_valor = resultado[0]
+            cursor.close()
+    except Exception as e:
+        print(f"Error al obtener última ficha: {e}")
+    finally:
+        conexion.close()
 
-    siguiente_ficha = "F-1" # Valor por defecto si la tabla está vacía
+    siguiente_ficha = "F-001"  # Valor por defecto si está vacía
 
-    if ultimo_registro:
-        ultimo_valor = ultimo_registro[0]
-        numeros = re.findall(r'\d+', ultimo_valor)
+    if ultimo_valor:
+        numeros = re.findall(r'\d+', str(ultimo_valor))
         if numeros:
             siguiente_numero = int(numeros[-1]) + 1
-            siguiente_ficha = f"F-{siguiente_numero}"
+            # Mantiene el formato con ceros a la izquierda si lo deseas, o estilo simple
+            siguiente_ficha = f"F-{siguiente_numero:03d}" if len(numeros[-1]) >= 3 else f"F-{siguiente_numero}"
 
     return render_template('registrar_expediente_viejo.html', siguiente_ficha=siguiente_ficha)
 
+
 @app.route('/guardar_expediente_viejo', methods=['POST'])
 def guardar_expediente_viejo():
-    if 'usuario' not in session:
+    # Validar sesión y rol de administrador también al guardar
+    if 'usuario' not in session or session.get('rol') != 'admin':
+        flash('Acceso denegado.', 'danger')
         return redirect(url_for('login'))
         
     ficha = request.form.get('ficha', '')
@@ -1811,7 +1833,7 @@ def guardar_expediente_viejo():
             cur.close()
         else:
             conexion.execute('INSERT INTO expedientes_viejos ("Unnamed: 3", "Unnamed: 4", "Unnamed: 5") VALUES (?, ?, ?)', 
-                             (nombre, ano_escolar, ficha))
+                           (nombre, ano_escolar, ficha))
             conexion.commit()
             
         flash('¡Expediente registrado correctamente!', 'success')
@@ -1821,19 +1843,6 @@ def guardar_expediente_viejo():
         conexion.close()
         
     return redirect(url_for('registrar_expediente_viejo'))
-
-@app.route('/ver_estructura_db')
-def ver_estructura_db():
-    conexion = get_db_connection()
-    try:
-        conexion.execute("SELECT * FROM inscripciones LIMIT 1")
-        fila = conexion.fetchone()
-        if fila:
-            f_dict = dict(fila) if isinstance(fila, dict) else dict(zip([column[0] for column in conexion.description], fila))
-            return f_dict
-        return "No hay registros en inscripciones"
-    finally:
-        conexion.close()
 
 import os
 import json
