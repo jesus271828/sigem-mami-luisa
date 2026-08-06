@@ -320,6 +320,30 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
+@app.route('/buscar_estudiante/<id_estudiante>')
+def buscar_estudiante(id_estudiante):
+    if 'usuario' not in session:
+        return jsonify({'encontrado': False})
+    
+    conexion = get_db_connection()
+    cursor = conexion if hasattr(conexion, 'execute') else conexion.cursor()
+    
+    try:
+        cursor.execute("SELECT * FROM inscripciones WHERE id_estudiante = %s", (id_estudiante,))
+        estudiante = cursor.fetchone()
+        
+        if estudiante:
+            # Si el cursor devuelve una tupla, conviértela a diccionario según los nombres de tus columnas, 
+            # o si usas RealDictCursor ya vendrá como diccionario.
+            return jsonify({'encontrado': True, 'datos': dict(estudiante)})
+        else:
+            return jsonify({'encontrado': False})
+    except Exception as e:
+        return jsonify({'encontrado': False, 'error': str(e)})
+    finally:
+        if conexion:
+            conexion.close()
+
 
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 import base64
