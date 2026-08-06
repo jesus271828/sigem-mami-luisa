@@ -321,22 +321,26 @@ def logout():
     return redirect(url_for('login'))
 
 @app.route('/buscar_estudiante/<id_estudiante>', methods=['GET'])
-def api_buscar_estudiante(id_estudiante): # <-- Nombre de función modificado para evitar duplicados
+def api_buscar_estudiante(id_estudiante):
     if 'usuario' not in session:
         return jsonify({'encontrado': False})
     
     conexion = get_db_connection()
-    cursor = conexion if hasattr(conexion, 'execute') else conexion.cursor()
+    cursor = conexion.cursor(dictionary=True) if hasattr(conexion, 'cursor') else conexion # Dependiendo si usas mysql o sqlite
     
     try:
+        # Asegúrate de consultar la tabla correcta y que el campo coincida
         cursor.execute("SELECT * FROM inscripciones WHERE id_estudiante = %s", (id_estudiante,))
         estudiante = cursor.fetchone()
         
         if estudiante:
-            return jsonify({'encontrado': True, 'datos': dict(estudiante)})
+            # Convierte la fila a dict por si acaso usas sqlite o pymysql
+            datos_dict = dict(estudiante) if not isinstance(estudiante, dict) else estudiante
+            return jsonify({'encontrado': True, 'datos': datos_dict})
         else:
             return jsonify({'encontrado': False})
     except Exception as e:
+        print("Error en búsqueda:", str(e))
         return jsonify({'encontrado': False, 'error': str(e)})
     finally:
         if conexion:

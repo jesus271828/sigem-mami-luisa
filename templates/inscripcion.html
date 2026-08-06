@@ -418,9 +418,9 @@
 <!-- Script de Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-<!-- Script para manejar el autocompletado por ID y escaneo de IA -->
+<!-- Script completo para autocompletar por ID y escaneo de IA -->
 <script>
-// Autocompletado automático al salir del campo ID de Estudiante
+// Autocompletado automático al salir del campo ID de Estudiante trayendo todos los campos
 document.getElementById('id_estudiante_input').addEventListener('blur', function() {
     let idEstudiante = this.value.trim();
     if (!idEstudiante) return;
@@ -430,14 +430,25 @@ document.getElementById('id_estudiante_input').addEventListener('blur', function
         .then(data => {
             if (data.encontrado && data.datos) {
                 let d = data.datos;
-                // Rellena todos los campos que existan en el formulario correspondientes
+                
+                // Recorremos todas las propiedades devueltas por la base de datos
                 for (const [key, value] of Object.entries(d)) {
+                    // Buscamos si existe un input, select o textarea con ese name
                     let campo = document.querySelector(`[name="${key}"]`);
+                    
                     if (campo && value !== null && value !== undefined) {
-                        campo.value = value;
+                        if (campo.tagName === 'SELECT') {
+                            campo.value = value;
+                        } else if (campo.type === 'radio') {
+                            let radio = document.querySelector(`[name="${key}"][value="${value}"]`);
+                            if (radio) radio.checked = true;
+                        } else {
+                            campo.value = value;
+                        }
                         campo.dispatchEvent(new Event('change'));
                     }
                 }
+                console.log("Todos los datos posibles fueron cargados:", d);
             }
         })
         .catch(error => console.error('Error al buscar estudiante:', error));
