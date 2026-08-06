@@ -326,26 +326,25 @@ def api_buscar_estudiante(id_estudiante):
         return jsonify({'encontrado': False})
     
     conexion = get_db_connection()
-    cursor = conexion.cursor(dictionary=True) if hasattr(conexion, 'cursor') else conexion # Dependiendo si usas mysql o sqlite
+    # Si usas psycopg2 (PostgreSQL en Render), ajustamos para que devuelva diccionarios
+    cursor = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor) if hasattr(conexion, 'cursor') else conexion
     
     try:
-        # Asegúrate de consultar la tabla correcta y que el campo coincida
         cursor.execute("SELECT * FROM inscripciones WHERE id_estudiante = %s", (id_estudiante,))
         estudiante = cursor.fetchone()
         
         if estudiante:
-            # Convierte la fila a dict por si acaso usas sqlite o pymysql
-            datos_dict = dict(estudiante) if not isinstance(estudiante, dict) else estudiante
+            # Convertimos a dict estándar por seguridad
+            datos_dict = dict(estudiante)
             return jsonify({'encontrado': True, 'datos': datos_dict})
         else:
             return jsonify({'encontrado': False})
     except Exception as e:
-        print("Error en búsqueda:", str(e))
+        print("Error:", str(e))
         return jsonify({'encontrado': False, 'error': str(e)})
     finally:
         if conexion:
             conexion.close()
-
 
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 import base64
