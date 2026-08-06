@@ -175,6 +175,7 @@
                         <div class="col-md-4">
                             <label class="form-label small text-muted">Foto / Copia Cédula Estudiante</label>
                             <input type="file" name="foto_estudiante_cedula" class="form-control" accept="image/*,application/pdf">
+                            <div id="info_foto_estudiante_cedula" class="mt-1"></div>
                         </div>
                         <div class="col-md-12">
                             <input type="text" name="alergias" class="form-control" placeholder="Alergias o condición médica">
@@ -225,6 +226,7 @@
                         <div class="col-md-4">
                             <label class="form-label small text-muted">Foto Cédula de {{ rol_familiar[1] }}</label>
                             <input type="file" name="foto_{{ rol_familiar[0] }}_cedula" class="form-control" accept="image/*,application/pdf">
+                            <div id="info_foto_{{ rol_familiar[0] }}_cedula" class="mt-1"></div>
                         </div>
                         <div class="col-md-4">
                             <input type="text" name="{{ rol_familiar[0] }}_nivel" class="form-control" placeholder="Nivel académico">
@@ -262,6 +264,7 @@
                         <div class="col-md-6">
                             <label class="form-label small text-muted">Foto Cédula</label>
                             <input type="file" name="foto_vive_cedula" class="form-control" accept="image/*,application/pdf">
+                            <div id="info_foto_vive_cedula" class="mt-1"></div>
                         </div>
                         <div class="col-md-6">
                             <input type="text" name="vive_direccion" class="form-control" placeholder="Dirección">
@@ -306,6 +309,7 @@
                         <div class="col-md-6">
                             <label class="form-label small text-muted">Foto Cédula</label>
                             <input type="file" name="foto_econ_cedula" class="form-control" accept="image/*,application/pdf">
+                            <div id="info_foto_econ_cedula" class="mt-1"></div>
                         </div>
                         <div class="col-md-6">
                             <input type="text" name="econ_direccion" class="form-control" placeholder="Dirección">
@@ -355,6 +359,7 @@
                         <div class="col-md-3">
                             <label class="form-label small text-muted mb-0">Foto Cédula</label>
                             <input type="file" name="foto_aut_cedula_{{i}}" class="form-control" accept="image/*,application/pdf">
+                            <div id="info_foto_aut_cedula_{{i}}" class="mt-1"></div>
                         </div>
                     </div>
                     {% endfor %}
@@ -418,7 +423,7 @@
 <!-- Script de Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-<!-- Script de autocompletado mejorado para mapear exactamente todos los campos -->
+<!-- Script de Autocompletado y Enlaces de Archivos Existentes -->
 <script>
 document.getElementById('id_estudiante_input').addEventListener('blur', function() {
     let idEstudiante = this.value.trim();
@@ -431,10 +436,19 @@ document.getElementById('id_estudiante_input').addEventListener('blur', function
                 let d = data.datos;
                 
                 for (const [key, value] of Object.entries(d)) {
+                    // Si el campo corresponde a una foto o archivo, mostramos un indicador visual debajo del input
+                    let infoContainer = document.getElementById(`info_${key}`);
+                    if (infoContainer) {
+                        if (value && value.trim() !== "") {
+                            infoContainer.innerHTML = `<a href="${value}" target="_blank" class="badge bg-success text-decoration-none p-2 mt-1 d-inline-block"><i class="fas fa-file-image"></i> Ver archivo ya registrado</a>`;
+                        } else {
+                            infoContainer.innerHTML = `<span class="badge bg-secondary text-light p-1 mt-1 d-inline-block" style="font-size:10px;">Ningún archivo previo</span>`;
+                        }
+                    }
+
                     let campo = document.querySelector(`[name="${key}"]`);
-                    
                     if (campo && value !== null && value !== undefined) {
-                        // Los campos de tipo 'file' se omiten por seguridad del navegador web
+                        // Omitimos rellenar el input de tipo archivo por seguridad del navegador
                         if (campo.type === 'file') continue;
 
                         if (campo.tagName === 'SELECT') {
@@ -451,7 +465,7 @@ document.getElementById('id_estudiante_input').addEventListener('blur', function
                         campo.dispatchEvent(new Event('change'));
                     }
                 }
-                console.log("Datos cargados correctamente:", d);
+                console.log("Datos y archivos cargados correctamente:", d);
             }
         })
         .catch(error => console.error('Error al buscar estudiante:', error));
