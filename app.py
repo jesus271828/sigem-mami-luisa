@@ -1765,7 +1765,6 @@ from flask import render_template, request, redirect, url_for, session, flash
 
 @app.route('/registrar_expediente_viejo', methods=['GET', 'POST'])
 def registrar_expediente_viejo():
-    # 1. Validar sesión y rol de administrador
     if 'usuario' not in session or session.get('rol') != 'admin':
         flash('Acceso denegado. Se requieren permisos de administrador.', 'danger')
         return redirect(url_for('menu'))
@@ -1781,55 +1780,61 @@ def registrar_expediente_viejo():
         if is_postgres:
             cur = conexion.conn.cursor()
             
-            # Obtener última ficha
-            cur.execute('SELECT "Unnamed: 5" FROM expedientes_viejos ORDER BY id DESC LIMIT 1')
-            resultado = cur.fetchone()
-            if resultado:
-                ultimo_valor = resultado[0]
-                
-            # Obtener totales para el menú lateral
-            cur.execute('SELECT COUNT(*) FROM estudiantes')
-            total_estudiantes = cur.fetchone()[0]
-            
-            cur.execute('SELECT COUNT(*) FROM expedientes_viejos')
-            total_expedientes = cur.fetchone()[0]
-            
-            cur.execute('SELECT COUNT(*) FROM usuarios')
-            total_usuarios = cur.fetchone()[0]
+            # Intentamos obtener el último registro de la tabla expedientes_viejos
+            try:
+                cur.execute('SELECT "Unnamed: 5" FROM expedientes_viejos ORDER BY ctid DESC LIMIT 1')
+                resultado = cur.fetchone()
+                if resultado:
+                    ultimo_valor = resultado[0]
+            except Exception:
+                pass
+
+            # Totales seguros
+            try:
+                cur.execute('SELECT COUNT(*) FROM estudiantes')
+                total_estudiantes = cur.fetchone()[0]
+            except: pass
+
+            try:
+                cur.execute('SELECT COUNT(*) FROM expedientes_viejos')
+                total_expedientes = cur.fetchone()[0]
+            except: pass
+
+            try:
+                cur.execute('SELECT COUNT(*) FROM usuarios')
+                total_usuarios = cur.fetchone()[0]
+            except: pass
             
             cur.close()
         else:
             cursor = conexion.cursor()
-            
-            # Obtener última ficha
-            cursor.execute('SELECT "Unnamed: 5" FROM expedientes_viejos ORDER BY id DESC LIMIT 1')
+            cursor.execute('SELECT "Unnamed: 5" FROM expedientes_viejos ORDER BY rowid DESC LIMIT 1')
             resultado = cursor.fetchone()
             if resultado:
                 ultimo_valor = resultado[0]
-                
-            # Obtener totales para el menú lateral
+
             cursor.execute('SELECT COUNT(*) FROM estudiantes')
             total_estudiantes = cursor.fetchone()[0]
-            
+
             cursor.execute('SELECT COUNT(*) FROM expedientes_viejos')
             total_expedientes = cursor.fetchone()[0]
-            
+
             cursor.execute('SELECT COUNT(*) FROM usuarios')
             total_usuarios = cursor.fetchone()[0]
             
             cursor.close()
     except Exception as e:
-        print(f"Error al consultar la base de datos: {e}")
+        print(f"Error general: {e}")
     finally:
         conexion.close()
 
-    # Lógica para autoincrementar la ficha (ej: F-001 -> F-002)
-    siguiente_ficha = "F-001"
+    # Autoincremento basado en el último número real encontrado (ej. 500 -> 501)
+    siguiente_ficha = "F-501" # Por si acaso está totalmente vacío
     if ultimo_valor:
         numeros = re.findall(r'\d+', str(ultimo_valor))
         if numeros:
             siguiente_numero = int(numeros[-1]) + 1
-            siguiente_ficha = f"F-{siguiente_numero:03d}" if len(numeros[-1]) >= 3 else f"F-{siguiente_numero}"
+            siguiente_ficha = f"F-{siguiente_numero}"
 
     return render_template(
         'registrar_expediente_viejo.html', 
