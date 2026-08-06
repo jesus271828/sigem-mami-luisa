@@ -353,8 +353,9 @@ import base64
 
 @app.route('/inscripcion', methods=['GET', 'POST'])
 def inscripcion():
-    if 'usuario' not in session:
-        return redirect(url_for('login'))
+    if 'usuario' not in session or session.get('rol') != 'admin':
+        flash('Acceso denegado. Se requieren permisos de administrador.', 'danger')
+        return redirect(url_for('menu'))
 
     if request.method == 'POST':
         def guardar_archivo(input_name):
