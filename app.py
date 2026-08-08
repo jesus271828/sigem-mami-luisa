@@ -1288,6 +1288,11 @@ def asistencia():
     usuario_actual = str(session.get('usuario', '')).strip()
     rol_actual = str(session.get('rol', '')).strip().lower()
     
+    # Restricción estricta: Solo permitir si es de oficina o admin
+    if rol_actual not in ['oficina', 'admin']:
+        flash('Acceso denegado. Sección exclusiva para personal de oficina.', 'danger')
+        return redirect(url_for('menu'))
+    
     conn = get_db_connection()
     try:
         # Obtenemos la lista de grados únicos desde PostgreSQL
@@ -1300,10 +1305,6 @@ def asistencia():
             fecha_actual = datetime.now().strftime('%Y-%m-%d')
         
         curso_docente = None
-        if rol_actual not in ['oficina', 'admin']:
-            usuario_db = conn.execute('SELECT curso_asignado FROM usuarios WHERE username = %s', (usuario_actual,)).fetchone()
-            if usuario_db and usuario_db['curso_asignado']:
-                curso_docente = usuario_db['curso_asignado'].strip()
 
         if request.method == 'POST':
             grado_seleccionado = request.form.get('grado_actual', '').strip()
@@ -1315,10 +1316,9 @@ def asistencia():
             ''', (grado_seleccionado,)).fetchall()
             
             for est in estudiantes:
-                est_id = str(est['id']) # Asegúrate de que el ID de estudiantes coincida con tu columna en la BD
+                est_id = str(est['id']) 
                 estado = request.form.get(f'estado_{est_id}', 'Presente')
                 
-                # Verificamos si ya existe el registro para ese estudiante en esa fecha
                 existe = conn.execute('SELECT id FROM asistencia WHERE id_estudiante = %s AND fecha = %s', (est_id, fecha_actual)).fetchone()
                 if existe:
                     conn.execute('UPDATE asistencia SET estado = %s, grado = %s WHERE id_estudiante = %s AND fecha = %s', (estado, grado_seleccionado, est_id, fecha_actual))
@@ -1386,6 +1386,11 @@ def descargar_reporte_ausencias():
     if 'usuario' not in session:
         flash('Acceso denegado.', 'danger')
         return redirect(url_for('login'))
+        
+    rol_actual = str(session.get('rol', '')).strip().lower()
+    if rol_actual not in ['oficina', 'admin']:
+        flash('Acceso denegado.', 'danger')
+        return redirect(url_for('menu'))
         
     fecha_actual = request.args.get('fecha', datetime.now().strftime('%Y-%m-%d'))
     
