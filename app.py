@@ -1423,9 +1423,9 @@ def descargar_reporte_ausencias():
                 WHERE a.grado = %s AND a.fecha = %s AND a.estado IN ('Ausente', 'Tarde')
             ''', (grado_nombre, fecha_reporte)).fetchall()
             
-            nombres_ausentes = ", ".join([f"{a['nombres']} {a['apellidos']}" for a in ausentes_db])
+            nombres_ausentes = ", ".join([f"{a['apellidos']} {a['nombres']}" for a in ausentes_db])
 
-            # Acumuladores generales corregidos individualmente
+            # Acumuladores generales separados correctamente
             t_tot_mat_ninos += mat_ninos
             t_tot_mat_ninas += mat_ninas
             t_tot_mat += tot_mat
