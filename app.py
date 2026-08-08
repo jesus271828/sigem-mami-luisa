@@ -1386,14 +1386,11 @@ def descargar_reporte_ausencias():
         total_asis = 0
 
         for g in grados_db:
-            # Manejo seguro del nombre del grado según el tipo de fila
             grado_nombre = g['grado'] if isinstance(g, dict) or hasattr(g, 'keys') else g[0]
             
-            # Matrícula total del curso (compatible con cualquier cursor)
             res_mat = conn.execute("SELECT COUNT(*) as total FROM estudiantes WHERE grado = %s", (grado_nombre,)).fetchone()
             t_mat = res_mat['total'] if isinstance(res_mat, dict) or hasattr(res_mat, 'keys') else res_mat[0]
 
-            # Asistencia total presente del día
             res_asis = conn.execute('''
                 SELECT COUNT(*) as total FROM asistencia a
                 JOIN estudiantes e ON a.id_estudiante = e.id
@@ -1401,7 +1398,6 @@ def descargar_reporte_ausencias():
             ''', (grado_nombre, fecha_reporte)).fetchone()
             t_asis = res_asis['total'] if isinstance(res_asis, dict) or hasattr(res_asis, 'keys') else res_asis[0]
 
-            # Nombres de los ausentes o tarde
             ausentes_db = conn.execute('''
                 SELECT e.nombres, e.apellidos 
                 FROM asistencia a
@@ -1428,15 +1424,89 @@ def descargar_reporte_ausencias():
     finally:
         conn.close()
 
-    return render_template('pdf_asistencia.html', 
-                           fecha=fecha_reporte,
-                           datos_grados=datos_grados,
-                           total_ninos_mat=0,
-                           total_ninas_mat=0,
-                           total_mat=total_mat,
-                           total_ninos_asis=0,
-                           total_ninas_asis=0,
-                           total_asis=total_asis)
+    # Plantilla HTML integrada para evitar errores de archivos no encontrados
+    html_template = """<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Control Diario de Asistencia - Mami Luisa</title>
+    <style>
+        body { font-family: Arial, sans-serif; font-size: 11pt; color: #000; margin: 0; padding: 15px; }
+        .header-table, .content-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        .logo { width: 70px; }
+        .titulo-centro { font-size: 14pt; font-weight: bold; }
+        .lema { font-style: italic; color: #b51212; font-size: 10pt; }
+        .info-institucional { font-size: 9pt; line-height: 1.3; }
+        .titulo-seccion { background-color: #e6f2ff; font-weight: bold; font-size: 10pt; padding: 4px; border: 1px solid #000; margin-top: 10px; }
+        table.content-table, table.content-table th, table.content-table td { border: 1px solid #000; padding: 4px 6px; text-align: center; font-size: 9.5pt; }
+        table.content-table th { background-color: #f2f2f2; }
+        .text-left { text-align: left !important; }
+        .total-row { font-weight: bold; background-color: #d4edda; }
+        .no-print { margin-bottom: 20px; text-align: right; }
+        @media print { .no-print { display: none; } }
+    </style>
+</head>
+<body>
+    <div class="no-print">
+        <button onclick="window.print()" style="padding: 8px 16px; background-color: #007bff; color: #fff; border: none; cursor: pointer; border-radius: 4px; font-weight: bold;">Imprimir / Guardar PDF</button>
+    </div>
+    <table class="header-table">
+        <tr>
+            <td style="width: 80px;"><img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" class="logo"></td>
+            <td>
+                <span class="titulo-centro">Centro Educativo Mami Luisa S.R.L</span><br>
+                <span class="lema">"Educando con amor para un mundo mejor"</span>
+                <div class="info-institucional">
+                    <strong>Dirección:</strong> C/ Castillo Márquez No. 53, La Romana | <strong>Tel:</strong> 809-813-3675
+                </div>
+            </td>
+        </tr>
+    </table>
+    <table style="width: 100%; margin-top: 5px; margin-bottom: 10px;">
+        <tr>
+            <td><strong>CONTROL DIARIO DE ASISTENCIA</strong></td>
+            <td style="text-align: right;"><strong>FECHA:</strong> {{ fecha }}</td>
+        </tr>
+    </table>
+    <div class="titulo-seccion">NIVEL PRIMARIO ML – L1</div>
+    <table class="content-table">
+        <thead>
+            <tr>
+                <th rowspan="2" style="width: 100px;">GRADOS</th>
+                <th colspan="3">MATRICULADOS</th>
+                <th colspan="3">ASISTENCIA</th>
+                <th rowspan="2">Nombre de los ausentes</th>
+            </tr>
+            <tr>
+                <th>NIÑOS</th><th>NIÑAS</th><th>TOTAL</th><th>NIÑOS</th><th>NIÑAS</th><th>TOTAL</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in datos_grados %}
+            <tr>
+                <td class="text-left">{{ row.grado }}</td>
+                <td>0</td><td>0</td><td>{{ row.total_m }}</td>
+                <td>0</td><td>0</td><td>{{ row.total_a }}</td>
+                <td class="text-left" style="font-size: 8.5pt;">{{ row.ausentes }}</td>
+            </tr>
+            {% endfor %}
+            <tr class="total-row">
+                <td class="text-left">TOTAL</td>
+                <td>0</td><td>0</td><td>{{ total_mat }}</td>
+                <td>0</td><td>0</td><td>{{ total_asis }}</td>
+                <td></td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>"""
+
+    from flask import render_template_string
+    return render_template_string(html_template, 
+                                  fecha=fecha_reporte,
+                                  datos_grados=datos_grados,
+                                  total_mat=total_mat,
+                                  total_asis=total_asis)
 
 @app.route('/generar_pdf/<path:id_estudiante>')
 def generar_pdf(id_estudiante):
