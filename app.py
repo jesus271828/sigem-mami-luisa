@@ -1285,27 +1285,20 @@ def asistencia():
         flash('Acceso denegado.', 'danger')
         return redirect(url_for('login'))
         
-    usuario_actual = str(session.get('usuario', '')).strip()
     rol_actual = str(session.get('rol', '')).strip().lower()
-    
-    # Restricción estricta: Solo permitir si es de oficina o admin
     if rol_actual not in ['oficina', 'admin']:
         flash('Acceso denegado. Sección exclusiva para personal de oficina.', 'danger')
         return redirect(url_for('menu'))
     
     conn = get_db_connection()
     try:
-        # Obtenemos la lista de grados únicos desde PostgreSQL
         cursos_db = conn.execute("SELECT DISTINCT grado FROM estudiantes WHERE grado IS NOT NULL AND TRIM(grado) != '' ORDER BY grado ASC").fetchall()
         grados = [c['grado'] for c in cursos_db]
         
-        # Fecha por defecto o la que seleccione el usuario
         fecha_actual = request.args.get('fecha', '') or request.form.get('fecha', '')
         if not fecha_actual:
             fecha_actual = datetime.now().strftime('%Y-%m-%d')
         
-        curso_docente = None
-
         if request.method == 'POST':
             grado_seleccionado = request.form.get('grado_actual', '').strip()
             
@@ -1316,7 +1309,7 @@ def asistencia():
             ''', (grado_seleccionado,)).fetchall()
             
             for est in estudiantes:
-                est_id = str(est['id']) 
+                est_id = int(est['id']) 
                 estado = request.form.get(f'estado_{est_id}', 'Presente')
                 
                 existe = conn.execute('SELECT id FROM asistencia WHERE id_estudiante = %s AND fecha = %s', (est_id, fecha_actual)).fetchone()
@@ -1331,10 +1324,6 @@ def asistencia():
             
         else:
             grado_seleccionado = request.args.get('grado', '').strip()
-            
-            if not grado_seleccionado and curso_docente:
-                grado_seleccionado = curso_docente
-                
             estudiantes = []
             ausentes_hoy = []
             
