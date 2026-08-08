@@ -1375,47 +1375,30 @@ def descargar_reporte_ausencias():
     if 'usuario' not in session:
         return redirect(url_for('login'))
         
-    # Capturar la fecha seleccionada o usar la actual
     fecha_reporte = request.args.get('fecha', datetime.now().strftime('%Y-%m-%d'))
     
     conn = get_db_connection()
     try:
-        # 1. Obtener todos los grados únicos registrados en la tabla estudiantes
         grados_db = conn.execute("SELECT DISTINCT grado FROM estudiantes ORDER BY grado ASC").fetchall()
         
         datos_grados = []
-        total_ninos_mat = 0
-        total_ninas_mat = 0
         total_mat = 0
-        total_ninos_asis = 0
-        total_ninas_asis = 0
         total_asis = 0
 
         for g in grados_db:
             grado_nombre = g['grado']
             
-            # Matrícula desglosada por sexo (Asumiendo que tienes una columna 'sexo' o 'genero', ej. 'M'/'F' o 'Niño'/'Niña')
-            # Ajusta 'sexo' y los valores 'M'/'F' según cómo guardes el género en tu base de datos
-            mat_ninos = conn.execute("SELECT COUNT(*) FROM estudiantes WHERE grado = %s AND sexo IN ('M', 'Masculino', 'Niño')", (grado_nombre,)).fetchone()[0]
-            mat_ninas = conn.execute("SELECT COUNT(*) FROM estudiantes WHERE grado = %s AND sexo IN ('F', 'Femenino', 'Niña')", (grado_nombre,)).fetchone()[0]
-            t_mat = mat_ninos + mat_ninas
+            # Matrícula total del curso
+            t_mat = conn.execute("SELECT COUNT(*) FROM estudiantes WHERE grado = %s", (grado_nombre,)).fetchone()[0]
 
-            # Asistencia del día desglosada por sexo basados en la tabla asistencia
-            asis_ninos = conn.execute('''
+            # Asistencia total presente del día
+            t_asis = conn.execute('''
                 SELECT COUNT(*) FROM asistencia a
                 JOIN estudiantes e ON a.id_estudiante = e.id
-                WHERE a.grado = %s AND a.fecha = %s AND a.estado = 'Presente' AND e.sexo IN ('M', 'Masculino', 'Niño')
+                WHERE a.grado = %s AND a.fecha = %s AND a.estado = 'Presente'
             ''', (grado_nombre, fecha_reporte)).fetchone()[0]
 
-            asis_ninas = conn.execute('''
-                SELECT COUNT(*) FROM asistencia a
-                JOIN estudiantes e ON a.id_estudiante = e.id
-                WHERE a.grado = %s AND a.fecha = %s AND a.estado = 'Presente' AND e.sexo IN ('F', 'Femenino', 'Niña')
-            ''', (grado_nombre, fecha_reporte)).fetchone()[0]
-            
-            t_asis = asis_ninos + asis_ninas
-
-            # Obtener nombres de los ausentes o en estado Tarde para este grado en esa fecha
+            # Nombres de los ausentes o tarde
             ausentes_db = conn.execute('''
                 SELECT e.nombres, e.apellidos 
                 FROM asistencia a
@@ -1425,21 +1408,16 @@ def descargar_reporte_ausencias():
             
             nombres_ausentes = ", ".join([f"{a['apellidos']} {a['nombres']}" for a in ausentes_db])
 
-            # Acumuladores globales para la fila de TOTALES de la tabla
-            total_ninos_mat += mat_ninos
-            total_ninas_mat += mat_ninas
             total_mat += t_mat
-            total_ninos_asis += asis_ninos
-            total_ninas_asis += asis_ninas
             total_asis += t_asis
 
             datos_grados.append({
                 'grado': grado_nombre,
-                'ninos_m': mat_ninos,
-                'ninas_m': mat_ninas,
+                'ninos_m': 0,
+                'ninas_m': 0,
                 'total_m': t_mat,
-                'ninos_a': asis_ninos,
-                'ninas_a': asis_ninas,
+                'ninos_a': 0,
+                'ninas_a': 0,
                 'total_a': t_asis,
                 'ausentes': nombres_ausentes
             })
@@ -1450,11 +1428,11 @@ def descargar_reporte_ausencias():
     return render_template('pdf_asistencia.html', 
                            fecha=fecha_reporte,
                            datos_grados=datos_grados,
-                           total_ninos_mat=total_ninos_mat,
-                           total_ninas_mat=total_ninas_mat,
+                           total_ninos_mat=0,
+                           total_ninas_mat=0,
                            total_mat=total_mat,
-                           total_ninos_asis=total_ninos_asis,
-                           total_ninas_asis=total_ninas_asis,
+                           total_ninos_asis=0,
+                           total_ninas_asis=0,
                            total_asis=total_asis)
 
 @app.route('/generar_pdf/<path:id_estudiante>')
