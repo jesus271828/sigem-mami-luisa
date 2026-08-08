@@ -1379,70 +1379,110 @@ def descargar_reporte_ausencias():
     
     conn = get_db_connection()
     try:
+        # Grados del Nivel Primario (ejemplo: 1ro, 2do, etc.)
         grados_db = conn.execute("SELECT DISTINCT grado FROM estudiantes ORDER BY grado ASC").fetchall()
         
         datos_grados = []
-        total_mat = 0
-        total_asis = 0
+        t_n_mat = 0
+        t_ni_mat = 0
+        t_tot_mat = 0
+        t_n_asis = 0
+        t_ni_asis = 0
+        t_tot_asis = 0
 
         for g in grados_db:
             grado_nombre = g['grado'] if isinstance(g, dict) or hasattr(g, 'keys') else g[0]
             
-            res_mat = conn.execute("SELECT COUNT(*) as total FROM estudiantes WHERE grado = %s", (grado_nombre,)).fetchone()
-            t_mat = res_mat['total'] if isinstance(res_mat, dict) or hasattr(res_mat, 'keys') else res_mat[0]
+            # Matrícula y Asistencia dividida por género (asumiendo columna 'sexo' o 'genero')
+            # Si no tienes género separado, puedes ajustar los contadores a 0 o adaptarlos a tu BD
+            n_mat = conn.execute("SELECT COUNT(*) as c FROM estudiantes WHERE grado = %s AND sexo IN ('M', 'Masculino', 'Niño')-", (grado_nombre,)).fetchone()
+            # (Usamos una consulta robusta por si la columna sexo no existe o es diferente)
+            try:
+                n_mat = conn.execute("SELECT COUNT(*) as c FROM estudiantes WHERE grado = %s AND UPPER(sexo) IN ('M', 'MASCULINO', 'NIÑO')", (grado_nombre,)).fetchone()['c']
+            except:
+                n_mat = 0
 
-            res_asis = conn.execute('''
-                SELECT COUNT(*) as total FROM asistencia a
-                JOIN estudiantes e ON a.id_estudiante = e.id
-                WHERE a.grado = %s AND a.fecha = %s AND a.estado = 'Presente'
-            ''', (grado_nombre, fecha_reporte)).fetchone()
-            t_asis = res_asis['total'] if isinstance(res_asis, dict) or hasattr(res_asis, 'keys') else res_asis[0]
+            try:
+                ni_mat = conn.execute("SELECT COUNT(*) as c FROM estudiantes WHERE grado = %s AND UPPER(sexo) IN ('F', 'FEMENINO', 'NIÑA')", (grado_nombre,)).fetchone()['c']
+            except:
+                ni_mat = conn.execute("SELECT COUNT(*) as c FROM estudiantes WHERE grado = %s", (grado_nombre,)).fetchone()
+                ni_mat = ni_mat['c'] if isinstance(ni_mat, dict) or hasattr(ni_mat, 'keys') else ni_mat[0]
+                n_mat = 0 # Si no hay género, agrupamos en total
 
+            tot_mat = n_mat + ni_mat
+
+            # Asistencia presente del día por género
+            try:
+                n_asis = conn.execute('''
+                    SELECT COUNT(*) as c FROM asistencia a JOIN estudiantes e ON a.id_estudiante = e.id
+                    WHERE a.grado = %s AND a.fecha = %s AND a.estado = 'Presente' AND UPPER(e.sexo) IN ('M', 'MASCULINO', 'NIÑO')
+                ''', (grado_nombre, fecha_reporte)).fetchone()['c']
+            except:
+                n_asis = 0
+
+            try:
+                ni_asis = conn.execute('''
+                    SELECT COUNT(*) as c FROM asistencia a JOIN estudiantes e ON a.id_estudiante = e.id
+                    WHERE a.grado = %s AND a.fecha = %s AND a.estado = 'Presente' AND UPPER(e.sexo) IN ('F', 'FEMENINO', 'NIÑA')
+                ''', (grado_nombre, fecha_reporte)).fetchone()['c']
+            except:
+                try:
+                    ni_asis = conn.execute('''
+                        SELECT COUNT(*) as c FROM asistencia a JOIN estudiantes e ON a.id_estudiante = e.id
+                        WHERE a.grado = %s AND a.fecha = %s AND a.estado = 'Presente'
+                    ''', (grado_nombre, fecha_reporte)).fetchone()
+                    ni_asis = ni_asis['c'] if isinstance(ni_asis, dict) or hasattr(ni_asis, 'keys') else ni_asis[0]
+                except:
+                    ni_asis = 0
+
+            tot_asis = n_asis + ni_asis
+
+            # Nombres de ausentes / tarde
             ausentes_db = conn.execute('''
-                SELECT e.nombres, e.apellidos 
-                FROM asistencia a
+                SELECT e.nombres, e.apellidos FROM asistencia a
                 JOIN estudiantes e ON a.id_estudiante = e.id
                 WHERE a.grado = %s AND a.fecha = %s AND a.estado IN ('Ausente', 'Tarde')
             ''', (grado_nombre, fecha_reporte)).fetchall()
             
             nombres_ausentes = ", ".join([f"{a['apellidos']} {a['nombres']}" for a in ausentes_db])
 
-            total_mat += t_mat
-            total_asis += t_asis
+            t_n_mat += n_mat
+            t_ni_mat += ni_mat
+            t_tot_mat += tot_mat
+            t_n_asis += n_asis
+            t_ni_asis += ni_asis
+            t_tot_asis += tot_asis
 
             datos_grados.append({
-                'grado': grado_nombre,
-                'ninos_m': 0,
-                'ninas_m': 0,
-                'total_m': t_mat,
-                'ninos_a': 0,
-                'ninas_a': 0,
-                'total_a': t_asis,
+                'grado': grado_nombre, 'n_mat': n_mat, 'ni_mat': ni_mat, 'tot_mat': tot_mat,
+                'n_asis': n_asis if n_asis > 0 else '', 'ni_asis': ni_asis if ni_asis > 0 else '', 'tot_asis': tot_asis if tot_asis > 0 else '',
                 'ausentes': nombres_ausentes
             })
 
     finally:
         conn.close()
 
-    # Plantilla HTML integrada para evitar errores de archivos no encontrados
     html_template = """<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <title>Control Diario de Asistencia - Mami Luisa</title>
     <style>
-        body { font-family: Arial, sans-serif; font-size: 11pt; color: #000; margin: 0; padding: 15px; }
-        .header-table, .content-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
-        .logo { width: 70px; }
-        .titulo-centro { font-size: 14pt; font-weight: bold; }
-        .lema { font-style: italic; color: #b51212; font-size: 10pt; }
-        .info-institucional { font-size: 9pt; line-height: 1.3; }
-        .titulo-seccion { background-color: #e6f2ff; font-weight: bold; font-size: 10pt; padding: 4px; border: 1px solid #000; margin-top: 10px; }
-        table.content-table, table.content-table th, table.content-table td { border: 1px solid #000; padding: 4px 6px; text-align: center; font-size: 9.5pt; }
+        body { font-family: Arial, sans-serif; font-size: 10pt; color: #000; margin: 0; padding: 10px; }
+        .header-table, .content-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+        .logo { width: 65px; }
+        .titulo-centro { font-size: 13pt; font-weight: bold; }
+        .lema { font-style: italic; color: #b51212; font-size: 9pt; }
+        .info-institucional { font-size: 8.5pt; line-height: 1.2; }
+        .titulo-seccion { color: #000080; font-weight: bold; font-size: 10pt; margin-top: 10px; margin-bottom: 4px; }
+        table.content-table, table.content-table th, table.content-table td { border: 1px solid #000; padding: 3px 5px; text-align: center; font-size: 9pt; }
         table.content-table th { background-color: #f2f2f2; }
         .text-left { text-align: left !important; }
-        .total-row { font-weight: bold; background-color: #d4edda; }
-        .no-print { margin-bottom: 20px; text-align: right; }
+        .total-row { font-weight: bold; }
+        .bg-blue { background-color: #d9edf7; }
+        .bg-pink { background-color: #f2dede; }
+        .bg-yellow { background-color: #fcf8e3; }
+        .no-print { margin-bottom: 15px; text-align: right; }
         @media print { .no-print { display: none; } }
     </style>
 </head>
@@ -1450,29 +1490,34 @@ def descargar_reporte_ausencias():
     <div class="no-print">
         <button onclick="window.print()" style="padding: 8px 16px; background-color: #007bff; color: #fff; border: none; cursor: pointer; border-radius: 4px; font-weight: bold;">Imprimir / Guardar PDF</button>
     </div>
+
     <table class="header-table">
         <tr>
-            <td style="width: 80px;"><img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" class="logo"></td>
+            <td style="width: 75px;"><img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" class="logo"></td>
             <td>
-                <span class="titulo-centro">Centro Educativo Mami Luisa S.R.L</span><br>
-                <span class="lema">"Educando con amor para un mundo mejor"</span>
+                <span class="titulo-centro">Centro Educativo Mami Luisa S.R.L</span> &nbsp;&nbsp; 
+                <span class="lema">"Educando con amor para un mundo mejor"</span><br>
                 <div class="info-institucional">
-                    <strong>Dirección:</strong> C/ Castillo Márquez No. 53, La Romana | <strong>Tel:</strong> 809-813-3675
+                    <strong>Dirección:</strong> C/Castillo Márquez No. 53. La Romana, Centro Ciudad. <strong>Teléfono:</strong> 809-813-3675 <strong>WhatsApp:</strong> 809-710-3395 <strong>Código:</strong> 07121<br>
+                    <strong>Regional de educación:</strong> 05 San Pedro de Macorís. <strong>Distrito Educativo:</strong> 05-03 <strong>Directora:</strong> María Teresa de Jesús Herrero Romero<br>
+                    <strong>Cédula:</strong> 026-00225235 (usuario) / <strong>Celular:</strong> 809-710-3395 / <strong>Correo:</strong> centroeducativomamiluisa@gmail.com
                 </div>
             </td>
         </tr>
     </table>
-    <table style="width: 100%; margin-top: 5px; margin-bottom: 10px;">
+
+    <table style="width: 100%; margin-top: 2px; margin-bottom: 6px;">
         <tr>
-            <td><strong>CONTROL DIARIO DE ASISTENCIA</strong></td>
-            <td style="text-align: right;"><strong>FECHA:</strong> {{ fecha }}</td>
+            <td><strong style="font-size: 11pt;">CONTROL DIARIO DE ASISTENCIA</strong><br><span style="font-size: 9.5pt;">Año Escolar 2025-2026 / Jornada Escolar Regular.</span></td>
+            <td style="text-align: right; vertical-align: bottom;"><strong>FECHA:</strong> {{ fecha }} &nbsp;&nbsp;&nbsp; <strong>Día:</strong> _______</td>
         </tr>
     </table>
+
     <div class="titulo-seccion">NIVEL PRIMARIO ML – L1</div>
     <table class="content-table">
         <thead>
             <tr>
-                <th rowspan="2" style="width: 100px;">GRADOS</th>
+                <th rowspan="2" style="width: 90px;">GRADOS</th>
                 <th colspan="3">MATRICULADOS</th>
                 <th colspan="3">ASISTENCIA</th>
                 <th rowspan="2">Nombre de los ausentes</th>
@@ -1484,19 +1529,95 @@ def descargar_reporte_ausencias():
         <tbody>
             {% for row in datos_grados %}
             <tr>
-                <td class="text-left">{{ row.grado }}</td>
-                <td>0</td><td>0</td><td>{{ row.total_m }}</td>
-                <td>0</td><td>0</td><td>{{ row.total_a }}</td>
-                <td class="text-left" style="font-size: 8.5pt;">{{ row.ausentes }}</td>
+                <td class="text-left font-weight-bold">{{ row.grado }}</td>
+                <td class="bg-blue">{{ row.n_mat if row.n_mat > 0 else '' }}</td>
+                <td class="bg-pink">{{ row.ni_mat if row.ni_mat > 0 else '' }}</td>
+                <td class="bg-yellow">{{ row.tot_mat if row.tot_mat > 0 else '' }}</td>
+                <td>{{ row.n_asis }}</td>
+                <td>{{ row.ni_asis }}</td>
+                <td>{{ row.tot_asis }}</td>
+                <td class="text-left" style="font-size: 8pt;">{{ row.ausentes }}</td>
             </tr>
             {% endfor %}
             <tr class="total-row">
                 <td class="text-left">TOTAL</td>
-                <td>0</td><td>0</td><td>{{ total_mat }}</td>
-                <td>0</td><td>0</td><td>{{ total_asis }}</td>
+                <td class="bg-blue">{{ t_n_mat }}</td>
+                <td class="bg-pink">{{ t_ni_mat }}</td>
+                <td class="bg-yellow">{{ t_tot_mat }}</td>
+                <td></td><td></td><td></td>
                 <td></td>
             </tr>
         </tbody>
+    </table>
+
+    <div class="titulo-seccion" style="margin-top: 10px;">NIVEL INICIAL ML – L2</div>
+    <table style="width: 100%;">
+        <tr>
+            <td style="width: 55%; vertical-align: top;">
+                <table class="content-table" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th rowspan="2">TOTAL</th>
+                            <th colspan="3">MATRICULADOS</th>
+                            <th colspan="3">ASISTENCIA</th>
+                        </tr>
+                        <tr>
+                            <th>NIÑOS</th><th>NIÑAS</th><th>TOTAL</th><th>NIÑOS</th><th>NIÑAS</th><th>TOTAL</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="total-row" style="background-color: #fcf8e3;">
+                            <td>TOTAL</td>
+                            <td class="bg-blue">73</td>
+                            <td class="bg-pink">57</td>
+                            <td class="bg-yellow">130</td>
+                            <td></td><td></td><td></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </td>
+            <td style="width: 5%;"></td>
+            <td style="width: 40%; vertical-align: top;">
+                <table class="content-table" style="width: 100%;">
+                    <tr>
+                        <td class="text-left" style="width: 75%;">Asistencia colocada en plataforma</td>
+                        <td style="width: 25%;"></td>
+                    </tr>
+                    <tr>
+                        <td class="text-left">Captura enviada a grupo</td>
+                        <td></td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <table style="width: 100%; margin-top: 10px;">
+        <tr>
+            <td style="width: 55%; vertical-align: top;">
+                <table class="content-table" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th class="text-left">TIPO DE PERSONAL</th>
+                            <th>Contratado</th>
+                            <th>Presente</th>
+                            <th>Nombre de los ausentes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td class="text-left">Adm. y apoyo.</td><td>12</td><td></td><td rowspan="4" class="text-left"></td></tr>
+                        <tr><td class="text-left">Auxiliares</td><td>08</td><td></td></tr>
+                        <tr><td class="text-left">Docentes</td><td>18</td><td></td></tr>
+                        <tr class="total-row"><td class="text-left">Total</td><td>38</td><td></td></tr>
+                    </tbody>
+                </table>
+            </td>
+            <td style="width: 5%;"></td>
+            <td style="width: 40%; vertical-align: top; text-align: center;">
+                <div style="border-top: 1px solid #000; width: 220px; margin: 35px auto 5px auto;"></div>
+                <div style="font-size: 9pt;"><strong>Responsable del formulario.</strong></div>
+            </td>
+        </tr>
     </table>
 </body>
 </html>"""
@@ -1505,8 +1626,9 @@ def descargar_reporte_ausencias():
     return render_template_string(html_template, 
                                   fecha=fecha_reporte,
                                   datos_grados=datos_grados,
-                                  total_mat=total_mat,
-                                  total_asis=total_asis)
+                                  t_n_mat=t_n_mat,
+                                  t_ni_mat=t_ni_mat,
+                                  t_tot_mat=t_tot_mat)
 
 @app.route('/generar_pdf/<path:id_estudiante>')
 def generar_pdf(id_estudiante):
