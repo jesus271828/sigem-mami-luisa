@@ -1390,12 +1390,12 @@ def descargar_reporte_ausencias():
         for g in grados_db:
             grado_nombre = g['grado'] if isinstance(g, dict) or hasattr(g, 'keys') else g[0]
             
-            # Matrícula Niños (captura M, Masculino, etc.)
-            res_mat_ninos = conn.execute("SELECT COUNT(*) as c FROM estudiantes WHERE grado = %s AND (UPPER(sexo) LIKE 'M%' OR UPPER(sexo) = 'NIÑO')", (grado_nombre,)).fetchone()
+            # Matrícula Niños (Usando 'M%' escapado como '%%' o evaluando por iniciales exactas)
+            res_mat_ninos = conn.execute("SELECT COUNT(*) as c FROM estudiantes WHERE grado = %s AND (UPPER(sexo) LIKE 'M%%' OR UPPER(sexo) = 'NIÑO' OR UPPER(sexo) = 'MASCULINO')", (grado_nombre,)).fetchone()
             mat_ninos = res_mat_ninos['c'] if isinstance(res_mat_ninos, dict) or hasattr(res_mat_ninos, 'keys') else res_mat_ninos[0]
 
-            # Matrícula Niñas (captura F, Femenino, Niña, etc.)
-            res_mat_ninas = conn.execute("SELECT COUNT(*) as c FROM estudiantes WHERE grado = %s AND (UPPER(sexo) LIKE 'F%' OR UPPER(sexo) = 'NIÑA')", (grado_nombre,)).fetchone()
+            # Matrícula Niñas
+            res_mat_ninas = conn.execute("SELECT COUNT(*) as c FROM estudiantes WHERE grado = %s AND (UPPER(sexo) LIKE 'F%%' OR UPPER(sexo) = 'NIÑA' OR UPPER(sexo) = 'FEMENINO')", (grado_nombre,)).fetchone()
             mat_ninas = res_mat_ninas['c'] if isinstance(res_mat_ninas, dict) or hasattr(res_mat_ninas, 'keys') else res_mat_ninas[0]
 
             tot_mat = mat_ninos + mat_ninas
@@ -1405,7 +1405,7 @@ def descargar_reporte_ausencias():
                 SELECT COUNT(*) as c FROM asistencia a 
                 JOIN estudiantes e ON a.id_estudiante = e.id
                 WHERE a.grado = %s AND a.fecha = %s AND a.estado = 'Presente' 
-                AND (UPPER(e.sexo) LIKE 'M%' OR UPPER(e.sexo) = 'NIÑO')
+                AND (UPPER(e.sexo) LIKE 'M%%' OR UPPER(e.sexo) = 'NIÑO' OR UPPER(e.sexo) = 'MASCULINO')
             ''', (grado_nombre, fecha_reporte)).fetchone()
             asis_ninos = res_asis_ninos['c'] if isinstance(res_asis_ninos, dict) or hasattr(res_asis_ninos, 'keys') else res_asis_ninos[0]
 
@@ -1414,7 +1414,7 @@ def descargar_reporte_ausencias():
                 SELECT COUNT(*) as c FROM asistencia a 
                 JOIN estudiantes e ON a.id_estudiante = e.id
                 WHERE a.grado = %s AND a.fecha = %s AND a.estado = 'Presente' 
-                AND (UPPER(e.sexo) LIKE 'F%' OR UPPER(e.sexo) = 'NIÑA')
+                AND (UPPER(e.sexo) LIKE 'F%%' OR UPPER(e.sexo) = 'NIÑA' OR UPPER(e.sexo) = 'FEMENINO')
             ''', (grado_nombre, fecha_reporte)).fetchone()
             asis_ninas = res_asis_ninas['c'] if isinstance(res_asis_ninas, dict) or hasattr(res_asis_ninas, 'keys') else res_asis_ninas[0]
 
