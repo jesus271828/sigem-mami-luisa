@@ -1376,95 +1376,95 @@ def descargar_reporte_ausencias():
     
     conn = get_db_connection()
     try:
-        grados_db = conn.execute("SELECT DISTINCT grado FROM estudiantes ORDER BY grado ASC").fetchall()
-        print("--- GRADOS ENCONTRADOS:", grados_db)
+        # Definir los cursos oficiales de Primaria (1ro a 6to con sus secciones comunes)
+        grados_primaria = ['1ro A', '1ro B', '2do A', '2do B', '3ro A', '3ro B', '4to A', '4to B', '5to A', '5to B', '6to A', '6to B']
         
-        datos_grados = []
-        t_tot_mat_ninos = 0
-        t_tot_mat_ninas = 0
-        t_tot_mat = 0
-        
-        t_tot_asis_ninos = 0
-        t_tot_asis_ninas = 0
-        t_tot_asis = 0
+        # Definir los cursos de Inicial
+        grados_inicial = ['Párvulos', 'Prekínder – A', 'Prekínder – B', 'Kínder – A', 'Kínder – B', 'Preprimario – A', 'Preprimario – B']
 
-        for g in grados_db:
-            grado_nombre = g['grado'] if (isinstance(g, dict) or hasattr(g, 'keys')) else g[0]
-            
-            # --- MATRÍCULA NIÑOS ---
-            cur_mat_ninos = conn.execute("SELECT COUNT(*) FROM estudiantes WHERE grado = %s AND LOWER(TRIM(sexo)) = 'masculino'", (grado_nombre,))
-            res_mat_ninos = cur_mat_ninos.fetchone()
-            mat_ninos = int(res_mat_ninos[0] if (isinstance(res_mat_ninos, (list, tuple)) or not hasattr(res_mat_ninos, 'keys')) else list(res_mat_ninos.values())[0])
+        def procesar_grados(lista_grados):
+            resultado = []
+            tot_mat_ninos = 0
+            tot_mat_ninas = 0
+            tot_mat_gral = 0
+            tot_asis_ninos = 0
+            tot_asis_ninas = 0
+            tot_asis_gral = 0
 
-            # --- MATRÍCULA NIÑAS ---
-            cur_mat_ninas = conn.execute("SELECT COUNT(*) FROM estudiantes WHERE grado = %s AND LOWER(TRIM(sexo)) = 'femenino'", (grado_nombre,))
-            res_mat_ninas = cur_mat_ninas.fetchone()
-            mat_ninas = int(res_mat_ninas[0] if (isinstance(res_mat_ninas, (list, tuple)) or not hasattr(res_mat_ninas, 'keys')) else list(res_mat_ninas.values())[0])
+            for grado_nombre in lista_grados:
+                # Matrícula Niños
+                cur_mn = conn.execute("SELECT COUNT(*) FROM estudiantes WHERE grado = %s AND LOWER(TRIM(sexo)) = 'masculino'", (grado_nombre,))
+                res_mn = cur_mn.fetchone()
+                mat_ninos = int(res_mn[0] if (isinstance(res_mn, (list, tuple)) or not hasattr(res_mn, 'keys')) else list(res_mn.values())[0])
 
-            tot_mat = mat_ninos + mat_ninas
-            print(f"Grado: {grado_nombre} | Niños: {mat_ninos} | Niñas: {mat_ninas}")
+                # Matrícula Niñas
+                cur_mna = conn.execute("SELECT COUNT(*) FROM estudiantes WHERE grado = %s AND LOWER(TRIM(sexo)) = 'femenino'", (grado_nombre,))
+                res_mna = cur_mna.fetchone()
+                mat_ninas = int(res_mna[0] if (isinstance(res_mna, (list, tuple)) or not hasattr(res_mna, 'keys')) else list(res_mna.values())[0])
 
-            # --- ASISTENCIA NIÑOS ---
-            cur_asis_ninos = conn.execute('''
-                SELECT COUNT(*) FROM asistencia a 
-                JOIN estudiantes e ON a.id_estudiante = e.id
-                WHERE a.grado = %s AND a.fecha = %s AND a.estado = 'Presente' AND LOWER(TRIM(e.sexo)) = 'masculino'
-            ''', (grado_nombre, fecha_reporte))
-            res_asis_ninos = cur_asis_ninos.fetchone()
-            asis_ninos = int(res_asis_ninos[0] if (isinstance(res_asis_ninos, (list, tuple)) or not hasattr(res_asis_ninos, 'keys')) else list(res_asis_ninos.values())[0])
+                tot_mat = mat_ninos + mat_ninas
 
-            # --- ASISTENCIA NIÑAS ---
-            cur_asis_ninas = conn.execute('''
-                SELECT COUNT(*) FROM asistencia a 
-                JOIN estudiantes e ON a.id_estudiante = e.id
-                WHERE a.grado = %s AND a.fecha = %s AND a.estado = 'Presente' AND LOWER(TRIM(e.sexo)) = 'femenino'
-            ''', (grado_nombre, fecha_reporte))
-            res_asis_ninas = cur_asis_ninas.fetchone()
-            asis_ninas = int(res_asis_ninas[0] if (isinstance(res_asis_ninas, (list, tuple)) or not hasattr(res_asis_ninas, 'keys')) else list(res_asis_ninas.values())[0])
+                # Asistencia Niños
+                cur_an = conn.execute('''
+                    SELECT COUNT(*) FROM asistencia a JOIN estudiantes e ON a.id_estudiante = e.id
+                    WHERE a.grado = %s AND a.fecha = %s AND a.estado = 'Presente' AND LOWER(TRIM(e.sexo)) = 'masculino'
+                ''', (grado_nombre, fecha_reporte))
+                res_an = cur_an.fetchone()
+                asis_ninos = int(res_an[0] if (isinstance(res_an, (list, tuple)) or not hasattr(res_an, 'keys')) else list(res_an.values())[0])
 
-            tot_asis = asis_ninos + asis_ninas
+                # Asistencia Niñas
+                cur_ana = conn.execute('''
+                    SELECT COUNT(*) FROM asistencia a JOIN estudiantes e ON a.id_estudiante = e.id
+                    WHERE a.grado = %s AND a.fecha = %s AND a.estado = 'Presente' AND LOWER(TRIM(e.sexo)) = 'femenino'
+                ''', (grado_nombre, fecha_reporte))
+                res_ana = cur_ana.fetchone()
+                asis_ninas = int(res_ana[0] if (isinstance(res_ana, (list, tuple)) or not hasattr(res_ana, 'keys')) else list(res_ana.values())[0])
 
-            # --- AUSENTES ---
-            ausentes_db = conn.execute('''
-                SELECT e.nombres, e.apellidos FROM asistencia a
-                JOIN estudiantes e ON a.id_estudiante = e.id
-                WHERE a.grado = %s AND a.fecha = %s AND a.estado IN ('Ausente', 'Tarde')
-            ''', (grado_nombre, fecha_reporte)).fetchall()
-            
-            nombres_ausentes = ", ".join([f"{a['apellidos']} {a['nombres']}" for a in ausentes_db])
+                tot_asis = asis_ninos + asis_ninas
 
-            # --- ACUMULADORES ---
-            t_tot_mat_ninos += mat_ninos
-            t_tot_mat_ninas += mat_ninas
-            t_tot_mat += tot_mat
+                # Ausentes
+                ausentes_db = conn.execute('''
+                    SELECT e.nombres, e.apellidos FROM asistencia a JOIN estudiantes e ON a.id_estudiante = e.id
+                    WHERE a.grado = %s AND a.fecha = %s AND a.estado IN ('Ausente', 'Tarde')
+                ''', (grado_nombre, fecha_reporte)).fetchall()
+                nombres_ausentes = ", ".join([f"{a['apellidos']} {a['nombres']}" for a in ausentes_db])
 
-            t_tot_asis_ninos += asis_ninos
-            t_tot_asis_ninas += asis_ninas
-            t_tot_asis += tot_asis
+                tot_mat_ninos += mat_ninos
+                tot_mat_ninas += mat_ninas
+                tot_mat_gral += tot_mat
+                tot_asis_ninos += asis_ninos
+                tot_asis_ninas += asis_ninas
+                tot_asis_gral += tot_asis
 
-            datos_grados.append({
-                'grado': grado_nombre, 
-                'mat_ninos': mat_ninos if mat_ninos > 0 else '',
-                'mat_ninas': mat_ninas if mat_ninas > 0 else '',
-                'tot_mat': tot_mat if tot_mat > 0 else '',
-                'asis_ninos': asis_ninos if asis_ninos > 0 else '',
-                'asis_ninas': asis_ninas if asis_ninas > 0 else '',
-                'tot_asis': tot_asis if tot_asis > 0 else '',
-                'ausentes': nombres_ausentes
-            })
+                resultado.append({
+                    'grado': grado_nombre,
+                    'mat_ninos': mat_ninos if mat_ninos > 0 else '',
+                    'mat_ninas': mat_ninas if mat_ninas > 0 else '',
+                    'tot_mat': tot_mat if tot_mat > 0 else '',
+                    'asis_ninos': asis_ninos if asis_ninos > 0 else '',
+                    'asis_ninas': asis_ninas if asis_ninas > 0 else '',
+                    'tot_asis': tot_asis if tot_asis > 0 else '',
+                    'ausentes': nombres_ausentes
+                })
+
+            totales = {
+                'mat_ninos': tot_mat_ninos, 'mat_ninas': tot_mat_ninas, 'tot_mat': tot_mat_gral,
+                'asis_ninos': tot_asis_ninos, 'asis_ninas': tot_asis_ninas, 'tot_asis': tot_asis_gral
+            }
+            return resultado, totales
+
+        datos_primaria, tot_primaria = procesar_grados(grados_primaria)
+        datos_inicial, tot_inicial = procesar_grados(grados_inicial)
 
     finally:
         conn.close()
 
     return render_template('control_asistencia_pdf.html', 
                            fecha=fecha_reporte,
-                           datos_grados=datos_grados,
-                           t_tot_mat_ninos=t_tot_mat_ninos,
-                           t_tot_mat_ninas=t_tot_mat_ninas,
-                           t_tot_mat=t_tot_mat,
-                           t_tot_asis_ninos=t_tot_asis_ninos,
-                           t_tot_asis_ninas=t_tot_asis_ninas,
-                           t_tot_asis=t_tot_asis)
+                           datos_primaria=datos_primaria,
+                           tot_primaria=tot_primaria,
+                           datos_inicial=datos_inicial,
+                           tot_inicial=tot_inicial)
 
 @app.route('/generar_pdf/<path:id_estudiante>')
 def generar_pdf(id_estudiante):
