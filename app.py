@@ -1381,51 +1381,23 @@ def descargar_reporte_ausencias():
         grados_db = conn.execute("SELECT DISTINCT grado FROM estudiantes ORDER BY grado ASC").fetchall()
         
         datos_grados = []
-        t_n_mat = 0
-        t_ni_mat = 0
         t_tot_mat = 0
-        t_n_asis = 0
-        t_ni_asis = 0
         t_tot_asis = 0
 
         for g in grados_db:
             grado_nombre = g['grado'] if isinstance(g, dict) or hasattr(g, 'keys') else g[0]
             
-            # Matrícula por género (Niños / Niñas)
-            try:
-                n_mat = conn.execute("SELECT COUNT(*) as c FROM estudiantes WHERE grado = %s AND UPPER(sexo) IN ('M', 'MASCULINO', 'NIÑO')", (grado_nombre,)).fetchone()
-                n_mat = n_mat['c'] if isinstance(n_mat, dict) or hasattr(n_mat, 'keys') else n_mat[0]
-            except:
-                n_mat = 0
+            # Matrícula total del grado
+            res_mat = conn.execute("SELECT COUNT(*) as c FROM estudiantes WHERE grado = %s", (grado_nombre,)).fetchone()
+            tot_mat = res_mat['c'] if isinstance(res_mat, dict) or hasattr(res_mat, 'keys') else res_mat[0]
 
-            try:
-                ni_mat = conn.execute("SELECT COUNT(*) as c FROM estudiantes WHERE grado = %s AND UPPER(sexo) IN ('F', 'FEMENINO', 'NIÑA')", (grado_nombre,)).fetchone()
-                ni_mat = ni_mat['c'] if isinstance(ni_mat, dict) or hasattr(ni_mat, 'keys') else ni_mat[0]
-            except:
-                ni_mat = 0
-
-            tot_mat = n_mat + ni_mat
-
-            # Asistencia presente por género
-            try:
-                n_asis = conn.execute('''
-                    SELECT COUNT(*) as c FROM asistencia a JOIN estudiantes e ON a.id_estudiante = e.id
-                    WHERE a.grado = %s AND a.fecha = %s AND a.estado = 'Presente' AND UPPER(e.sexo) IN ('M', 'MASCULINO', 'NIÑO')
-                ''', (grado_nombre, fecha_reporte)).fetchone()
-                n_asis = n_asis['c'] if isinstance(n_asis, dict) or hasattr(n_asis, 'keys') else n_asis[0]
-            except:
-                n_asis = 0
-
-            try:
-                ni_asis = conn.execute('''
-                    SELECT COUNT(*) as c FROM asistencia a JOIN estudiantes e ON a.id_estudiante = e.id
-                    WHERE a.grado = %s AND a.fecha = %s AND a.estado = 'Presente' AND UPPER(e.sexo) IN ('F', 'FEMENINO', 'NIÑA')
-                ''', (grado_nombre, fecha_reporte)).fetchone()
-                ni_asis = ni_asis['c'] if isinstance(ni_asis, dict) or hasattr(ni_asis, 'keys') else ni_asis[0]
-            except:
-                ni_asis = 0
-
-            tot_asis = n_asis + ni_asis
+            # Asistencia total presente del día
+            res_asis = conn.execute('''
+                SELECT COUNT(*) as c FROM asistencia a 
+                JOIN estudiantes e ON a.id_estudiante = e.id
+                WHERE a.grado = %s AND a.fecha = %s AND a.estado = 'Presente'
+            ''', (grado_nombre, fecha_reporte)).fetchone()
+            tot_asis = res_asis['c'] if isinstance(res_asis, dict) or hasattr(res_asis, 'keys') else res_asis[0]
 
             # Nombres completos de ausentes o tarde (Apellido Nombre)
             ausentes_db = conn.execute('''
@@ -1436,20 +1408,12 @@ def descargar_reporte_ausencias():
             
             nombres_ausentes = ", ".join([f"{a['apellidos']} {a['nombres']}" for a in ausentes_db])
 
-            t_n_mat += n_mat
-            t_ni_mat += ni_mat
             t_tot_mat += tot_mat
-            t_n_asis += n_asis
-            t_ni_asis += ni_asis
             t_tot_asis += tot_asis
 
             datos_grados.append({
                 'grado': grado_nombre, 
-                'n_mat': n_mat if n_mat > 0 else '', 
-                'ni_mat': ni_mat if ni_mat > 0 else '', 
                 'tot_mat': tot_mat if tot_mat > 0 else '',
-                'n_asis': n_asis if n_asis > 0 else '', 
-                'ni_asis': ni_asis if ni_asis > 0 else '', 
                 'tot_asis': tot_asis if tot_asis > 0 else '',
                 'ausentes': nombres_ausentes
             })
@@ -1460,11 +1424,7 @@ def descargar_reporte_ausencias():
     return render_template('control_asistencia_pdf.html', 
                            fecha=fecha_reporte,
                            datos_grados=datos_grados,
-                           t_n_mat=t_n_mat,
-                           t_ni_mat=t_ni_mat,
                            t_tot_mat=t_tot_mat,
-                           t_n_asis=t_n_asis,
-                           t_ni_asis=t_ni_asis,
                            t_tot_asis=t_tot_asis)
 
 @app.route('/generar_pdf/<path:id_estudiante>')
