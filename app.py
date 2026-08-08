@@ -1377,6 +1377,7 @@ def descargar_reporte_ausencias():
     conn = get_db_connection()
     try:
         grados_db = conn.execute("SELECT DISTINCT grado FROM estudiantes ORDER BY grado ASC").fetchall()
+        print("--- GRADOS ENCONTRADOS:", grados_db)
         
         datos_grados = []
         t_tot_mat_ninos = 0
@@ -1391,22 +1392,23 @@ def descargar_reporte_ausencias():
             grado_nombre = g['grado'] if (isinstance(g, dict) or hasattr(g, 'keys')) else g[0]
             
             # --- MATRÍCULA NIÑOS ---
-            cur_mat_ninos = conn.execute("SELECT COUNT(*) FROM estudiantes WHERE grado = %s AND sexo = 'Masculino'", (grado_nombre,))
+            cur_mat_ninos = conn.execute("SELECT COUNT(*) FROM estudiantes WHERE grado = %s AND LOWER(TRIM(sexo)) = 'masculino'", (grado_nombre,))
             res_mat_ninos = cur_mat_ninos.fetchone()
             mat_ninos = int(res_mat_ninos[0] if (isinstance(res_mat_ninos, (list, tuple)) or not hasattr(res_mat_ninos, 'keys')) else list(res_mat_ninos.values())[0])
 
             # --- MATRÍCULA NIÑAS ---
-            cur_mat_ninas = conn.execute("SELECT COUNT(*) FROM estudiantes WHERE grado = %s AND sexo = 'Femenino'", (grado_nombre,))
+            cur_mat_ninas = conn.execute("SELECT COUNT(*) FROM estudiantes WHERE grado = %s AND LOWER(TRIM(sexo)) = 'femenino'", (grado_nombre,))
             res_mat_ninas = cur_mat_ninas.fetchone()
             mat_ninas = int(res_mat_ninas[0] if (isinstance(res_mat_ninas, (list, tuple)) or not hasattr(res_mat_ninas, 'keys')) else list(res_mat_ninas.values())[0])
 
             tot_mat = mat_ninos + mat_ninas
+            print(f"Grado: {grado_nombre} | Niños: {mat_ninos} | Niñas: {mat_ninas}")
 
             # --- ASISTENCIA NIÑOS ---
             cur_asis_ninos = conn.execute('''
                 SELECT COUNT(*) FROM asistencia a 
                 JOIN estudiantes e ON a.id_estudiante = e.id
-                WHERE a.grado = %s AND a.fecha = %s AND a.estado = 'Presente' AND e.sexo = 'Masculino'
+                WHERE a.grado = %s AND a.fecha = %s AND a.estado = 'Presente' AND LOWER(TRIM(e.sexo)) = 'masculino'
             ''', (grado_nombre, fecha_reporte))
             res_asis_ninos = cur_asis_ninos.fetchone()
             asis_ninos = int(res_asis_ninos[0] if (isinstance(res_asis_ninos, (list, tuple)) or not hasattr(res_asis_ninos, 'keys')) else list(res_asis_ninos.values())[0])
@@ -1415,7 +1417,7 @@ def descargar_reporte_ausencias():
             cur_asis_ninas = conn.execute('''
                 SELECT COUNT(*) FROM asistencia a 
                 JOIN estudiantes e ON a.id_estudiante = e.id
-                WHERE a.grado = %s AND a.fecha = %s AND a.estado = 'Presente' AND e.sexo = 'Femenino'
+                WHERE a.grado = %s AND a.fecha = %s AND a.estado = 'Presente' AND LOWER(TRIM(e.sexo)) = 'femenino'
             ''', (grado_nombre, fecha_reporte))
             res_asis_ninas = cur_asis_ninas.fetchone()
             asis_ninas = int(res_asis_ninas[0] if (isinstance(res_asis_ninas, (list, tuple)) or not hasattr(res_asis_ninas, 'keys')) else list(res_asis_ninas.values())[0])
