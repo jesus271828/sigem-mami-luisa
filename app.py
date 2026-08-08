@@ -355,10 +355,8 @@ import base64
 def inscripcion():
     if 'usuario' not in session or session.get('rol') != 'admin':
         flash('Acceso denegado. No tienes permisos para realizar nuevas inscripciones.', 'danger')
-        # Coloca aquí el nombre real de la función de tu menú (ej. menu_principal)
         return redirect(url_for('menu')) 
 
-    # El resto de tu código de inscripción...
     if request.method == 'POST':
         def guardar_archivo(input_name):
             file = request.files.get(input_name)
@@ -485,12 +483,12 @@ def inscripcion():
                     existe_en_db = resultado_existe[0] > 0
 
             if existe_en_db:
-                # --- ACTUALIZAR REGISTRO EXISTENTE ---
+                # --- ACTUALIZAR REGISTRO EXISTENTE (Incluyendo sexo) ---
                 conexion.execute('''
                     UPDATE estudiantes 
-                    SET nombres = ?, apellidos = ?, grado = ?, foto_estudiante_cedula = ?
+                    SET nombres = ?, apellidos = ?, grado = ?, sexo = ?, foto_estudiante_cedula = ?
                     WHERE id_estudiante = ?
-                ''', (nombres, apellidos, grado, foto_estudiante_cedula, id_estudiante))
+                ''', (nombres, apellidos, grado, sexo, foto_estudiante_cedula, id_estudiante))
                 
                 conexion.execute('''
                     UPDATE autorizados 
@@ -567,11 +565,11 @@ def inscripcion():
                 ))
                 flash('¡Los datos del estudiante existente fueron actualizados correctamente!', 'success')
             else:
-                # --- INSERTAR NUEVO REGISTRO ---
+                # --- INSERTAR NUEVO REGISTRO (Incluyendo sexo) ---
                 conexion.execute('''
-                    INSERT INTO estudiantes (nombres, apellidos, id_estudiante, grado, foto_estudiante_cedula)
-                    VALUES (?, ?, ?, ?, ?)
-                ''', (nombres, apellidos, id_estudiante, grado, foto_estudiante_cedula))
+                    INSERT INTO estudiantes (nombres, apellidos, id_estudiante, grado, sexo, foto_estudiante_cedula)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                ''', (nombres, apellidos, id_estudiante, grado, sexo, foto_estudiante_cedula))
                 
                 conexion.execute('''
                     INSERT INTO autorizados (
@@ -675,7 +673,7 @@ def inscripcion():
 
         return redirect(url_for('inscripcion'))
 
-    # Método GET (Renderizado normal con contadores usando los nombres reales de tus tablas)
+    # Método GET
     conexion = get_db_connection()
     cursor = conexion if hasattr(conexion, 'execute') else conexion.cursor()
     
@@ -1381,25 +1379,46 @@ def descargar_reporte_ausencias():
         grados_db = conn.execute("SELECT DISTINCT grado FROM estudiantes ORDER BY grado ASC").fetchall()
         
         datos_grados = []
+        t_tot_mat_ninos = 0
+        t_tot_mat_ninas = 0
         t_tot_mat = 0
+        
+        t_tot_asis_ninos = 0
+        t_tot_asis_ninas = 0
         t_tot_asis = 0
 
         for g in grados_db:
             grado_nombre = g['grado'] if isinstance(g, dict) or hasattr(g, 'keys') else g[0]
             
-            # Matrícula total del grado
-            res_mat = conn.execute("SELECT COUNT(*) as c FROM estudiantes WHERE grado = %s", (grado_nombre,)).fetchone()
-            tot_mat = res_mat['c'] if isinstance(res_mat, dict) or hasattr(res_mat, 'keys') else res_mat[0]
+            # --- MATRÍCULA POR GÉNERO ---
+            res_mat_ninos = conn.execute("SELECT COUNT(*) as c FROM estudiantes WHERE grado = %s AND (LOWER(sexo) IN ('masculino', 'm', 'niño'))", (grado_nombre,)).fetchone()
+            mat_ninos = res_mat_ninos['c'] if isinstance(res_mat_ninos, dict) or hasattr(res_mat_ninos, 'keys') else res_mat_ninos[0]
 
-            # Asistencia total presente del día
-            res_asis = conn.execute('''
+            res_mat_ninas = conn.execute("SELECT COUNT(*) as c FROM estudiantes WHERE grado = %s AND (LOWER(sexo) IN ('femenino', 'f', 'niña'))", (grado_nombre,)).fetchone()
+            mat_ninas = res_mat_ninas['c'] if isinstance(res_mat_ninas, dict) or hasattr(res_mat_ninas, 'keys') else res_mat_ninas[0]
+
+            tot_mat = mat_ninos + mat_ninas
+
+            # --- ASISTENCIA PRESENTE POR GÉNERO ---
+            res_asis_ninos = conn.execute('''
                 SELECT COUNT(*) as c FROM asistencia a 
                 JOIN estudiantes e ON a.id_estudiante = e.id
-                WHERE a.grado = %s AND a.fecha = %s AND a.estado = 'Presente'
+                WHERE a.grado = %s AND a.fecha = %s AND a.estado = 'Presente' 
+                AND (LOWER(e.sexo) IN ('masculino', 'm', 'niño'))
             ''', (grado_nombre, fecha_reporte)).fetchone()
-            tot_asis = res_asis['c'] if isinstance(res_asis, dict) or hasattr(res_asis, 'keys') else res_asis[0]
+            asis_ninos = res_asis_ninos['c'] if isinstance(res_asis_ninos, dict) or hasattr(res_asis_ninos, 'keys') else res_asis_ninos[0]
 
-            # Nombres completos de ausentes o tarde (Apellido Nombre)
+            res_asis_ninas = conn.execute('''
+                SELECT COUNT(*) as c FROM asistencia a 
+                JOIN estudiantes e ON a.id_estudiante = e.id
+                WHERE a.grado = %s AND a.fecha = %s AND a.estado = 'Presente' 
+                AND (LOWER(e.sexo) IN ('femenino', 'f', 'niña'))
+            ''', (grado_nombre, fecha_reporte)).fetchone()
+            asis_ninas = res_asis_ninas['c'] if isinstance(res_asis_ninas, dict) or hasattr(res_asis_ninas, 'keys') else res_asis_ninas[0]
+
+            tot_asis = asis_ninos + asis_ninas
+
+            # --- NOMBRES DE AUSENTES O TARDE ---
             ausentes_db = conn.execute('''
                 SELECT e.nombres, e.apellidos FROM asistencia a
                 JOIN estudiantes e ON a.id_estudiante = e.id
@@ -1408,12 +1427,22 @@ def descargar_reporte_ausencias():
             
             nombres_ausentes = ", ".join([f"{a['apellidos']} {a['nombres']}" for a in ausentes_db])
 
+            # Acumuladores de totales generales
+            t_tot_mat_ninos += mat_ninos
+            t_tot_mat_ninas += mat_ninas
             t_tot_mat += tot_mat
+
+            t_tot_asis_ninos += asis_ninos
+            t_tot_asis_ninas += asis_ninas
             t_tot_asis += tot_asis
 
             datos_grados.append({
                 'grado': grado_nombre, 
+                'mat_ninos': mat_ninos if mat_ninos > 0 else '',
+                'mat_ninas': mat_ninas if mat_ninas > 0 else '',
                 'tot_mat': tot_mat if tot_mat > 0 else '',
+                'asis_ninos': asis_ninos if asis_ninos > 0 else '',
+                'asis_ninas': asis_ninas if asis_ninas > 0 else '',
                 'tot_asis': tot_asis if tot_asis > 0 else '',
                 'ausentes': nombres_ausentes
             })
@@ -1424,7 +1453,11 @@ def descargar_reporte_ausencias():
     return render_template('control_asistencia_pdf.html', 
                            fecha=fecha_reporte,
                            datos_grados=datos_grados,
+                           t_tot_mat_ninos=t_tot_mat_ninos,
+                           t_tot_mat_ninas=t_tot_mat_ninas,
                            t_tot_mat=t_tot_mat,
+                           t_tot_asis_ninos=t_tot_asis_ninos,
+                           t_tot_asis_ninas=t_tot_asis_ninas,
                            t_tot_asis=t_tot_asis)
 
 @app.route('/generar_pdf/<path:id_estudiante>')
