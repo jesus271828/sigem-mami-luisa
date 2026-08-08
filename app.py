@@ -1381,24 +1381,53 @@ def descargar_reporte_ausencias():
         grados_db = conn.execute("SELECT DISTINCT grado FROM estudiantes ORDER BY grado ASC").fetchall()
         
         datos_grados = []
+        t_n_mat = 0
+        t_ni_mat = 0
         t_tot_mat = 0
+        t_n_asis = 0
+        t_ni_asis = 0
+        t_tot_asis = 0
 
         for g in grados_db:
             grado_nombre = g['grado'] if isinstance(g, dict) or hasattr(g, 'keys') else g[0]
             
-            # Matrícula total del grado
-            res_mat = conn.execute("SELECT COUNT(*) as c FROM estudiantes WHERE grado = %s", (grado_nombre,)).fetchone()
-            tot_mat = res_mat['c'] if isinstance(res_mat, dict) or hasattr(res_mat, 'keys') else res_mat[0]
+            # Matrícula por género (Niños / Niñas)
+            try:
+                n_mat = conn.execute("SELECT COUNT(*) as c FROM estudiantes WHERE grado = %s AND UPPER(sexo) IN ('M', 'MASCULINO', 'NIÑO')", (grado_nombre,)).fetchone()
+                n_mat = n_mat['c'] if isinstance(n_mat, dict) or hasattr(n_mat, 'keys') else n_mat[0]
+            except:
+                n_mat = 0
 
-            # Asistencia presente del día
-            res_asis = conn.execute('''
-                SELECT COUNT(*) as c FROM asistencia a 
-                JOIN estudiantes e ON a.id_estudiante = e.id
-                WHERE a.grado = %s AND a.fecha = %s AND a.estado = 'Presente'
-            ''', (grado_nombre, fecha_reporte)).fetchone()
-            tot_asis = res_asis['c'] if isinstance(res_asis, dict) or hasattr(res_asis, 'keys') else res_asis[0]
+            try:
+                ni_mat = conn.execute("SELECT COUNT(*) as c FROM estudiantes WHERE grado = %s AND UPPER(sexo) IN ('F', 'FEMENINO', 'NIÑA')", (grado_nombre,)).fetchone()
+                ni_mat = ni_mat['c'] if isinstance(ni_mat, dict) or hasattr(ni_mat, 'keys') else ni_mat[0]
+            except:
+                ni_mat = 0
 
-            # Nombres de ausentes / tarde
+            tot_mat = n_mat + ni_mat
+
+            # Asistencia presente por género
+            try:
+                n_asis = conn.execute('''
+                    SELECT COUNT(*) as c FROM asistencia a JOIN estudiantes e ON a.id_estudiante = e.id
+                    WHERE a.grado = %s AND a.fecha = %s AND a.estado = 'Presente' AND UPPER(e.sexo) IN ('M', 'MASCULINO', 'NIÑO')
+                ''', (grado_nombre, fecha_reporte)).fetchone()
+                n_asis = n_asis['c'] if isinstance(n_asis, dict) or hasattr(n_asis, 'keys') else n_asis[0]
+            except:
+                n_asis = 0
+
+            try:
+                ni_asis = conn.execute('''
+                    SELECT COUNT(*) as c FROM asistencia a JOIN estudiantes e ON a.id_estudiante = e.id
+                    WHERE a.grado = %s AND a.fecha = %s AND a.estado = 'Presente' AND UPPER(e.sexo) IN ('F', 'FEMENINO', 'NIÑA')
+                ''', (grado_nombre, fecha_reporte)).fetchone()
+                ni_asis = ni_asis['c'] if isinstance(ni_asis, dict) or hasattr(ni_asis, 'keys') else ni_asis[0]
+            except:
+                ni_asis = 0
+
+            tot_asis = n_asis + ni_asis
+
+            # Nombres completos de ausentes o tarde (Apellido Nombre)
             ausentes_db = conn.execute('''
                 SELECT e.nombres, e.apellidos FROM asistencia a
                 JOIN estudiantes e ON a.id_estudiante = e.id
@@ -1407,11 +1436,20 @@ def descargar_reporte_ausencias():
             
             nombres_ausentes = ", ".join([f"{a['apellidos']} {a['nombres']}" for a in ausentes_db])
 
+            t_n_mat += n_mat
+            t_ni_mat += ni_mat
             t_tot_mat += tot_mat
+            t_n_asis += n_asis
+            t_ni_asis += ni_asis
+            t_tot_asis += tot_asis
 
             datos_grados.append({
                 'grado': grado_nombre, 
-                'tot_mat': tot_mat,
+                'n_mat': n_mat if n_mat > 0 else '', 
+                'ni_mat': ni_mat if ni_mat > 0 else '', 
+                'tot_mat': tot_mat if tot_mat > 0 else '',
+                'n_asis': n_asis if n_asis > 0 else '', 
+                'ni_asis': ni_asis if ni_asis > 0 else '', 
                 'tot_asis': tot_asis if tot_asis > 0 else '',
                 'ausentes': nombres_ausentes
             })
@@ -1419,165 +1457,15 @@ def descargar_reporte_ausencias():
     finally:
         conn.close()
 
-    html_template = """<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Control Diario de Asistencia - Mami Luisa</title>
-    <style>
-        body { font-family: Arial, sans-serif; font-size: 10pt; color: #000; margin: 0; padding: 10px; }
-        .header-table, .content-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
-        .logo { width: 65px; }
-        .titulo-centro { font-size: 13pt; font-weight: bold; }
-        .lema { font-style: italic; color: #b51212; font-size: 9pt; }
-        .info-institucional { font-size: 8.5pt; line-height: 1.2; }
-        .titulo-seccion { color: #000080; font-weight: bold; font-size: 10pt; margin-top: 10px; margin-bottom: 4px; }
-        table.content-table, table.content-table th, table.content-table td { border: 1px solid #000; padding: 3px 5px; text-align: center; font-size: 9pt; }
-        table.content-table th { background-color: #f2f2f2; }
-        .text-left { text-align: left !important; }
-        .total-row { font-weight: bold; }
-        .bg-yellow { background-color: #fcf8e3; }
-        .no-print { margin-bottom: 15px; text-align: right; }
-        @media print { .no-print { display: none; } }
-    </style>
-</head>
-<body>
-    <div class="no-print">
-        <button onclick="window.print()" style="padding: 8px 16px; background-color: #007bff; color: #fff; border: none; cursor: pointer; border-radius: 4px; font-weight: bold;">Imprimir / Guardar PDF</button>
-    </div>
-
-    <table class="header-table">
-        <tr>
-            <td style="width: 75px;"><img src="{{ url_for('static', filename='img/logo.png') }}" alt="Logo" class="logo"></td>
-            <td>
-                <span class="titulo-centro">Centro Educativo Mami Luisa S.R.L</span> &nbsp;&nbsp; 
-                <span class="lema">"Educando con amor para un mundo mejor"</span><br>
-                <div class="info-institucional">
-                    <strong>Dirección:</strong> C/Castillo Márquez No. 53. La Romana, Centro Ciudad. <strong>Teléfono:</strong> 809-813-3675 <strong>WhatsApp:</strong> 809-710-3395 <strong>Código:</strong> 07121<br>
-                    <strong>Regional de educación:</strong> 05 San Pedro de Macorís. <strong>Distrito Educativo:</strong> 05-03 <strong>Directora:</strong> María Teresa de Jesús Herrero Romero<br>
-                    <strong>Cédula:</strong> 026-00225235 (usuario) / <strong>Celular:</strong> 809-710-3395 / <strong>Correo:</strong> centroeducativomamiluisa@gmail.com
-                </div>
-            </td>
-        </tr>
-    </table>
-
-    <table style="width: 100%; margin-top: 2px; margin-bottom: 6px;">
-        <tr>
-            <td><strong style="font-size: 11pt;">CONTROL DIARIO DE ASISTENCIA</strong><br><span style="font-size: 9.5pt;">Año Escolar 2025-2026 / Jornada Escolar Regular.</span></td>
-            <td style="text-align: right; vertical-align: bottom;"><strong>FECHA:</strong> {{ fecha }} &nbsp;&nbsp;&nbsp; <strong>Día:</strong> _______</td>
-        </tr>
-    </table>
-
-    <div class="titulo-seccion">NIVEL PRIMARIO ML – L1</div>
-    <table class="content-table">
-        <thead>
-            <tr>
-                <th rowspan="2" style="width: 90px;">GRADOS</th>
-                <th colspan="3">MATRICULADOS</th>
-                <th colspan="3">ASISTENCIA</th>
-                <th rowspan="2">Nombre de los ausentes</th>
-            </tr>
-            <tr>
-                <th>NIÑOS</th><th>NIÑAS</th><th>TOTAL</th><th>NIÑOS</th><th>NIÑAS</th><th>TOTAL</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for row in datos_grados %}
-            <tr>
-                <td class="text-left font-weight-bold">{{ row.grado }}</td>
-                <td></td><td></td>
-                <td class="bg-yellow">{{ row.tot_mat }}</td>
-                <td></td><td></td>
-                <td>{{ row.tot_asis }}</td>
-                <td class="text-left" style="font-size: 8pt;">{{ row.ausentes }}</td>
-            </tr>
-            {% endfor %}
-            <tr class="total-row">
-                <td class="text-left">TOTAL</td>
-                <td></td><td></td>
-                <td class="bg-yellow">{{ t_tot_mat }}</td>
-                <td></td><td></td><td></td>
-                <td></td>
-            </tr>
-        </tbody>
-    </table>
-
-    <div class="titulo-seccion" style="margin-top: 10px;">NIVEL INICIAL ML – L2</div>
-    <table style="width: 100%;">
-        <tr>
-            <td style="width: 55%; vertical-align: top;">
-                <table class="content-table" style="width: 100%;">
-                    <thead>
-                        <tr>
-                            <th rowspan="2">TOTAL</th>
-                            <th colspan="3">MATRICULADOS</th>
-                            <th colspan="3">ASISTENCIA</th>
-                        </tr>
-                        <tr>
-                            <th>NIÑOS</th><th>NIÑAS</th><th>TOTAL</th><th>NIÑOS</th><th>NIÑAS</th><th>TOTAL</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr class="total-row" style="background-color: #fcf8e3;">
-                            <td>TOTAL</td>
-                            <td></td><td></td>
-                            <td class="bg-yellow">130</td>
-                            <td></td><td></td><td></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </td>
-            <td style="width: 5%;"></td>
-            <td style="width: 40%; vertical-align: top;">
-                <table class="content-table" style="width: 100%;">
-                    <tr>
-                        <td class="text-left" style="width: 75%;">Asistencia colocada en plataforma</td>
-                        <td style="width: 25%;"></td>
-                    </tr>
-                    <tr>
-                        <td class="text-left">Captura enviada a grupo</td>
-                        <td></td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
-    </table>
-
-    <table style="width: 100%; margin-top: 10px;">
-        <tr>
-            <td style="width: 55%; vertical-align: top;">
-                <table class="content-table" style="width: 100%;">
-                    <thead>
-                        <tr>
-                            <th class="text-left">TIPO DE PERSONAL</th>
-                            <th>Contratado</th>
-                            <th>Presente</th>
-                            <th>Nombre de los ausentes</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr><td class="text-left">Adm. y apoyo.</td><td>12</td><td></td><td rowspan="4" class="text-left"></td></tr>
-                        <tr><td class="text-left">Auxiliares</td><td>08</td><td></td></tr>
-                        <tr><td class="text-left">Docentes</td><td>18</td><td></td></tr>
-                        <tr class="total-row"><td class="text-left">Total</td><td>38</td><td></td></tr>
-                    </tbody>
-                </table>
-            </td>
-            <td style="width: 5%;"></td>
-            <td style="width: 40%; vertical-align: top; text-align: center;">
-                <div style="border-top: 1px solid #000; width: 220px; margin: 35px auto 5px auto;"></div>
-                <div style="font-size: 9pt;"><strong>Responsable del formulario.</strong></div>
-            </td>
-        </tr>
-    </table>
-</body>
-</html>"""
-
-    from flask import render_template_string
-    return render_template_string(html_template, 
-                                  fecha=fecha_reporte,
-                                  datos_grados=datos_grados,
-                                  t_tot_mat=t_tot_mat)
+    return render_template('control_asistencia_pdf.html', 
+                           fecha=fecha_reporte,
+                           datos_grados=datos_grados,
+                           t_n_mat=t_n_mat,
+                           t_ni_mat=t_ni_mat,
+                           t_tot_mat=t_tot_mat,
+                           t_n_asis=t_n_asis,
+                           t_ni_asis=t_ni_asis,
+                           t_tot_asis=t_tot_asis)
 
 @app.route('/generar_pdf/<path:id_estudiante>')
 def generar_pdf(id_estudiante):
