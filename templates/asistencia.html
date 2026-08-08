@@ -7,117 +7,96 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-<body class="bg-light">
-
-    <!-- Navbar Superior -->
-    <nav class="navbar navbar-dark bg-dark shadow-sm mb-4">
-        <div class="container">
-            <span class="navbar-brand fw-bold"><i class="fas fa-graduation-cap me-2 text-success"></i>SIGEM Mami Luisa</span>
-            <a href="/menu" class="btn btn-outline-light btn-sm"><i class="fas fa-arrow-left me-1"></i> Volver al Menú</a>
-        </div>
-    </nav>
-
-    <div class="container" style="max-width: 1000px;">
-        
-        <!-- Encabezado -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h2 class="fw-bold text-dark"><i class="fas fa-calendar-check text-success me-2"></i>Pase de Asistencia por Curso</h2>
-                <p class="text-muted mb-0">Seleccione el curso, marque el estado de cada estudiante y genere el reporte final.</p>
+<body class="bg-light p-5">
+    <div class="container" style="max-width: 950px;">
+        <div class="card shadow p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-calendar-check text-success"></i> Control de Asistencia</h2>
+                <a href="/menu" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Volver al Menú</a>
             </div>
-        </div>
 
-        <!-- MENSAJES FLASH -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
+            <!-- MENSAJES FLASH -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
 
-        <!-- PASO 1: Selector de Curso -->
-        <div class="card shadow-sm border-0 rounded-4 mb-4">
-            <div class="card-body p-4">
-                <form method="GET" action="/asistencia" class="row g-3 align-items-end">
-                    <div class="col-md-9">
-                        <label for="grado" class="form-label fw-semibold">Seleccione un Curso o Grado:</label>
-                        <select class="form-select" id="grado" name="grado" required onchange="this.form.submit()">
-                            <option value="" selected disabled>-- Elija un curso --</option>
-                            <!-- Ejemplo de opciones de cursos, cámbialas o recórrelas con Jinja si vienen de tu BD -->
-                            <option value="1ro de Primaria" {% if grado_seleccionado == '1ro de Primaria' %}selected{% endif %}>1ro de Primaria</option>
-                            <option value="2do de Primaria" {% if grado_seleccionado == '2do de Primaria' %}selected{% endif %}>2do de Primaria</option>
-                            <option value="3ro de Primaria" {% if grado_seleccionado == '3ro de Primaria' %}selected{% endif %}>3ro de Primaria</option>
-                        </select>
-                    </div>
-                    <div class="col-md-3">
-                        <noscript><button type="submit" class="btn btn-success w-100">Cargar</button></noscript>
-                    </div>
-                </form>
-            </div>
-        </div>
+            <!-- SELECTOR DE CURSO -->
+            <form method="GET" action="/asistencia" class="row g-3 mb-4">
+                <div class="col-md-9">
+                    <label for="grado" class="form-label fw-bold">Seleccionar Curso:</label>
+                    <select class="form-select" id="grado" name="grado" onchange="this.form.submit()" required>
+                        <option value="" selected disabled>-- Elija un curso --</option>
+                        <!-- Asegúrate de pasar la lista de cursos desde tu Flask con un bucle si lo deseas, o déjalos fijos -->
+                        <option value="1ro" {% if grado_seleccionado == '1ro' %}selected{% endif %}>1ro</option>
+                        <option value="2do" {% if grado_seleccionado == '2do' %}selected{% endif %}>2do</option>
+                        <option value="3ro" {% if grado_seleccionado == '3ro' %}selected{% endif %}>3ro</option>
+                    </select>
+                </div>
+            </form>
 
-        <!-- PASO 2: Lista de Estudiantes y Estados -->
-        {% if estudiantes %}
-        <div class="card shadow-sm border-0 rounded-4 mb-5">
-            <div class="card-header bg-white py-3 border-0 rounded-top-4">
-                <h5 class="mb-0 text-dark fw-bold"><i class="fas fa-users text-success me-2"></i>Estudiantes del curso</h5>
-            </div>
-            <div class="card-body p-0">
-                <form action="/guardar_asistencia" method="POST">
-                    <input type="hidden" name="grado" value="{{ grado_seleccionado }}">
-                    
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="table-light">
+            <!-- TABLA DE ESTUDIANTES Y ASISTENCIA -->
+            {% if estudiantes %}
+            <form action="/guardar_asistencia" method="POST">
+                <input type="hidden" name="grado" value="{{ grado_seleccionado }}">
+                
+                <div class="table-responsive mb-4">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">Matrícula</th>
+                                <th>Estudiante</th>
+                                <th class="text-center">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for est in estudiantes %}
                                 <tr>
-                                    <th class="ps-4">Matrícula</th>
-                                    <th>Estudiante</th>
-                                    <th class="text-center">Estado de Asistencia</th>
+                                    <td class="ps-4">{{ est.matricula }}</td>
+                                    <td>{{ est.nombre }}</td>
+                                    <td class="text-center">
+                                        <div class="btn-group" role="group">
+                                            <input type="radio" class="btn-check" name="estado_{{ est.id }}" id="p_{{ est.id }}" value="Presente" checked>
+                                            <label class="btn btn-outline-success btn-sm" for="p_{{ est.id }}">Presente</label>
+
+                                            <input type="radio" class="btn-check" name="estado_{{ est.id }}" id="t_{{ est.id }}" value="Tarde">
+                                            <label class="btn btn-outline-warning text-dark btn-sm" for="t_{{ est.id }}">Tarde</label>
+
+                                            <input type="radio" class="btn-check" name="estado_{{ est.id }}" id="a_{{ est.id }}" value="Ausente">
+                                            <label class="btn btn-outline-danger btn-sm" for="a_{{ est.id }}">Ausente</label>
+                                        </div>
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                {% for estudiante in estudiantes %}
-                                    <tr>
-                                        <td class="ps-4 fw-semibold">{{ estudiante.matricula }}</td>
-                                        <td>{{ estudiante.nombre }}</td>
-                                        <td class="text-center">
-                                            <div class="btn-group" role="group">
-                                                <input type="radio" class="btn-check" name="estado_{{ estudiante.id }}" id="p_{{ estudiante.id }}" value="Presente" checked>
-                                                <label class="btn btn-outline-success btn-sm px-3" for="p_{{ estudiante.id }}">Presente</label>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
 
-                                                <input type="radio" class="btn-check" name="estado_{{ estudiante.id }}" id="t_{{ estudiante.id }}" value="Tarde">
-                                                <label class="btn btn-outline-warning text-dark btn-sm px-3" for="t_{{ estudiante.id }}">Tarde</label>
+                <!-- BOTONES DE ACCIÓN Y REPORTE PDF -->
+                <div class="d-flex justify-content-between align-items-center">
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save"></i> Guardar Asistencia
+                    </button>
 
-                                                <input type="radio" class="btn-check" name="estado_{{ estudiante.id }}" id="a_{{ estudiante.id }}" value="Ausente">
-                                                <label class="btn btn-outline-danger btn-sm px-3" for="a_{{ estudiante.id }}">Ausente</label>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+                    <!-- Aparece al final para generar el PDF del curso -->
+                    <a href="/reporte_asistencia_pdf/{{ grado_seleccionado }}" class="btn btn-danger">
+                        <i class="fas fa-file-pdf"></i> Reporte PDF de Ausencias
+                    </a>
+                </div>
+            </form>
+            {% else %}
+                <div class="text-center text-muted py-4">
+                    <p>Por favor, seleccione un curso para mostrar la lista de estudiantes.</p>
+                </div>
+            {% endif %}
 
-                    <!-- Botón de Guardar y aparición dinámica del Reporte PDF al finalizar -->
-                    <div class="p-4 bg-light rounded-bottom-4 d-flex justify-content-between align-items-center">
-                        <button type="submit" class="btn btn-success px-4 py-2 fw-semibold shadow-sm">
-                            <i class="fas fa-save me-2"></i> Guardar Asistencia del Curso
-                        </button>
-
-                        <!-- Botón de Reporte PDF (Se habilita o muestra tras guardar/último registro) -->
-                        <a href="/reporte_asistencia_pdf/{{ grado_seleccionado }}" class="btn btn-danger px-4 py-2 fw-semibold shadow-sm">
-                            <i class="fas fa-file-pdf me-2"></i> Ver Reporte PDF de Ausencias
-                        </a>
-                    </div>
-                </form>
-            </div>
         </div>
-        {% endif %}
-
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
