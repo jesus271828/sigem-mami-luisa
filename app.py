@@ -1390,17 +1390,16 @@ def descargar_reporte_ausencias():
         for g in grados_db:
             grado_nombre = g['grado'] if isinstance(g, dict) or hasattr(g, 'keys') else g[0]
             
-            # Matrícula Niños
+            # --- MATRÍCULA ---
             res_mat_ninos = conn.execute("SELECT COUNT(*) as c FROM estudiantes WHERE grado = %s AND sexo = 'Masculino'", (grado_nombre,)).fetchone()
             mat_ninos = res_mat_ninos['c'] if isinstance(res_mat_ninos, dict) or hasattr(res_mat_ninos, 'keys') else res_mat_ninos[0]
 
-            # Matrícula Niñas
             res_mat_ninas = conn.execute("SELECT COUNT(*) as c FROM estudiantes WHERE grado = %s AND sexo = 'Femenino'", (grado_nombre,)).fetchone()
             mat_ninas = res_mat_ninas['c'] if isinstance(res_mat_ninas, dict) or hasattr(res_mat_ninas, 'keys') else res_mat_ninas[0]
 
             tot_mat = mat_ninos + mat_ninas
 
-            # Asistencia Niños Presentes
+            # --- ASISTENCIA ---
             res_asis_ninos = conn.execute('''
                 SELECT COUNT(*) as c FROM asistencia a 
                 JOIN estudiantes e ON a.id_estudiante = e.id
@@ -1408,7 +1407,6 @@ def descargar_reporte_ausencias():
             ''', (grado_nombre, fecha_reporte)).fetchone()
             asis_ninos = res_asis_ninos['c'] if isinstance(res_asis_ninos, dict) or hasattr(res_asis_ninos, 'keys') else res_asis_ninos[0]
 
-            # Asistencia Niñas Presentes
             res_asis_ninas = conn.execute('''
                 SELECT COUNT(*) as c FROM asistencia a 
                 JOIN estudiantes e ON a.id_estudiante = e.id
@@ -1418,6 +1416,7 @@ def descargar_reporte_ausencias():
 
             tot_asis = asis_ninos + asis_ninas
 
+            # --- AUSENTES ---
             ausentes_db = conn.execute('''
                 SELECT e.nombres, e.apellidos FROM asistencia a
                 JOIN estudiantes e ON a.id_estudiante = e.id
@@ -1426,7 +1425,7 @@ def descargar_reporte_ausencias():
             
             nombres_ausentes = ", ".join([f"{a['nombres']} {a['apellidos']}" for a in ausentes_db])
 
-            # Acumuladores generales
+            # Acumuladores generales corregidos individualmente
             t_tot_mat_ninos += mat_ninos
             t_tot_mat_ninas += mat_ninas
             t_tot_mat += tot_mat
