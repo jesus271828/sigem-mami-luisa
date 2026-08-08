@@ -1373,110 +1373,82 @@ def asistencia():
 @app.route('/descargar_reporte_ausencias')
 def descargar_reporte_ausencias():
     if 'usuario' not in session:
-        flash('Acceso denegado.', 'danger')
         return redirect(url_for('login'))
         
-    rol_actual = str(session.get('rol', '')).strip().lower()
-    if rol_actual not in ['oficina', 'admin']:
-        flash('Acceso denegado.', 'danger')
-        return redirect(url_for('menu'))
-        
-    fecha_actual = request.args.get('fecha', datetime.now().strftime('%Y-%m-%d'))
+    # Capturar la fecha seleccionada o usar la actual
+    fecha_reporte = request.args.get('fecha', datetime.now().strftime('%Y-%m-%d'))
     
     conn = get_db_connection()
     try:
-        cursos_db = conn.execute("SELECT DISTINCT grado FROM estudiantes WHERE grado IS NOT NULL AND TRIM(grado) != '' ORDER BY grado ASC").fetchall()
+        # 1. Obtener todos los grados únicos registrados en la tabla estudiantes
+        grados_db = conn.execute("SELECT DISTINCT grado FROM estudiantes ORDER BY grado ASC").fetchall()
         
         datos_grados = []
-        total_mat = 0
         total_ninos_mat = 0
         total_ninas_mat = 0
-        
-        total_asis = 0
+        total_mat = 0
         total_ninos_asis = 0
         total_ninas_asis = 0
-        
-        for c in cursos_db:
-            grado_nombre = c['grado']
+        total_asis = 0
+
+        for g in grados_db:
+            grado_nombre = g['grado']
             
-            mat_rows = conn.execute("SELECT sexo, COUNT(*) as total FROM estudiantes WHERE grado = %s GROUP BY sexo", (grado_nombre,)).fetchall()
-            ninos_m = 0
-            ninas_m = 0
-            for m in mat_rows:
-                sexo_str = str(m['sexo']).strip().upper() if m['sexo'] else ''
-                if sexo_str in ['M', 'MASCULINO', 'NIÑO', 'NINO']:
-                    ninos_m = m['total']
-                elif sexo_str in ['F', 'FEMENINO', 'NIÑA', 'NINA']:
-                    ninas_m = m['total']
-            
-            total_curso_m = ninos_m + ninas_m
-            
-            asis_rows = conn.execute('''
-                SELECT e.sexo, a.estado 
-                FROM asistencia a
+            # Matrícula desglosada por sexo (Asumiendo que tienes una columna 'sexo' o 'genero', ej. 'M'/'F' o 'Niño'/'Niña')
+            # Ajusta 'sexo' y los valores 'M'/'F' según cómo guardes el género en tu base de datos
+            mat_ninos = conn.execute("SELECT COUNT(*) FROM estudiantes WHERE grado = %s AND sexo IN ('M', 'Masculino', 'Niño')", (grado_nombre,)).fetchone()[0]
+            mat_ninas = conn.execute("SELECT COUNT(*) FROM estudiantes WHERE grado = %s AND sexo IN ('F', 'Femenino', 'Niña')", (grado_nombre,)).fetchone()[0]
+            t_mat = mat_ninos + mat_ninas
+
+            # Asistencia del día desglosada por sexo basados en la tabla asistencia
+            asis_ninos = conn.execute('''
+                SELECT COUNT(*) FROM asistencia a
                 JOIN estudiantes e ON a.id_estudiante = e.id
-                WHERE a.grado = %s AND a.fecha = %s
-            ''', (grado_nombre, fecha_actual)).fetchall()
+                WHERE a.grado = %s AND a.fecha = %s AND a.estado = 'Presente' AND e.sexo IN ('M', 'Masculino', 'Niño')
+            ''', (grado_nombre, fecha_reporte)).fetchone()[0]
+
+            asis_ninas = conn.execute('''
+                SELECT COUNT(*) FROM asistencia a
+                JOIN estudiantes e ON a.id_estudiante = e.id
+                WHERE a.grado = %s AND a.fecha = %s AND a.estado = 'Presente' AND e.sexo IN ('F', 'Femenino', 'Niña')
+            ''', (grado_nombre, fecha_reporte)).fetchone()[0]
             
-            ninos_a = 0
-            ninas_a = 0
-            for a in asis_rows:
-                if a['estado'] == 'Presente':
-                    sexo_str = str(a['sexo']).strip().upper() if a['sexo'] else ''
-                    if sexo_str in ['M', 'MASCULINO', 'NIÑO', 'NINO']:
-                        ninos_a += 1
-                    elif sexo_str in ['F', 'FEMENINO', 'NIÑA', 'NINA']:
-                        ninas_a += 1
-            
-            total_curso_a = ninos_a + ninas_a
-            
-            ausentes_rows = conn.execute('''
+            t_asis = asis_ninos + asis_ninas
+
+            # Obtener nombres de los ausentes o en estado Tarde para este grado en esa fecha
+            ausentes_db = conn.execute('''
                 SELECT e.nombres, e.apellidos 
                 FROM asistencia a
                 JOIN estudiantes e ON a.id_estudiante = e.id
                 WHERE a.grado = %s AND a.fecha = %s AND a.estado IN ('Ausente', 'Tarde')
-                ORDER BY e.apellidos ASC
-            ''', (grado_nombre, fecha_actual)).fetchall()
+            ''', (grado_nombre, fecha_reporte)).fetchall()
             
-            lista_ausentes = [f"{row['apellidos']}, {row['nombres']}" for row in ausentes_rows]
-            ausentes_str = "; ".join(lista_ausentes) if lista_ausentes else ("Sin ausencias" if asis_rows else "Pendiente de pase")
+            nombres_ausentes = ", ".join([f"{a['apellidos']} {a['nombres']}" for a in ausentes_db])
 
-            total_ninos_mat += ninos_m
-            total_ninas_mat += ninas_m
-            total_mat += total_curso_m
-            
-            total_ninos_asis += ninos_a
-            total_ninas_asis += ninas_a
-            total_asis += total_curso_a
+            # Acumuladores globales para la fila de TOTALES de la tabla
+            total_ninos_mat += mat_ninos
+            total_ninas_mat += mat_ninas
+            total_mat += t_mat
+            total_ninos_asis += asis_ninos
+            total_ninas_asis += asis_ninas
+            total_asis += t_asis
 
             datos_grados.append({
                 'grado': grado_nombre,
-                'ninos_m': ninos_m,
-                'ninas_m': ninas_m,
-                'total_m': total_curso_m,
-                'ninos_a': ninos_a,
-                'ninas_a': ninas_a,
-                'total_a': total_curso_a,
-                'ausentes': ausentes_str
+                'ninos_m': mat_ninos,
+                'ninas_m': mat_ninas,
+                'total_m': t_mat,
+                'ninos_a': asis_ninos,
+                'ninas_a': asis_ninas,
+                'total_a': t_asis,
+                'ausentes': nombres_ausentes
             })
-            
-        total_ninos_mat = sum(d['ninos_m'] for d in datos_grados)
-        total_ninas_mat = sum(d['ninas_m'] for d in datos_grados)
-        total_mat = sum(d['total_m'] for d in datos_grados)
-        
-        total_ninos_asis = sum(d['ninos_a'] for d in datos_grados)
-        total_ninas_asis = sum(d['ninas_a'] for d in datos_grados)
-        total_asis = sum(d['total_a'] for d in datos_grados)
 
-    except Exception as e:
-        print(f"Error generando reporte de ausencias: {e}")
-        datos_grados = []
-        total_mat = total_ninos_mat = total_ninas_mat = total_asis = total_ninos_asis = total_ninas_asis = 0
     finally:
         conn.close()
 
-    return render_template('pdf_asistencia.html',
-                           fecha=fecha_actual,
+    return render_template('pdf_asistencia.html', 
+                           fecha=fecha_reporte,
                            datos_grados=datos_grados,
                            total_ninos_mat=total_ninos_mat,
                            total_ninas_mat=total_ninas_mat,
