@@ -17,13 +17,13 @@
         </div>
     </nav>
 
-    <div class="container" style="max-width: 1100px;">
+    <div class="container" style="max-width: 1000px;">
         
-        <!-- Encabezado de la Sección -->
+        <!-- Encabezado -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
-                <h2 class="fw-bold text-dark"><i class="fas fa-calendar-check text-success me-2"></i>Control de Asistencia</h2>
-                <p class="text-muted mb-0">Registre y administre el estado diario de asistencia de los estudiantes.</p>
+                <h2 class="fw-bold text-dark"><i class="fas fa-calendar-check text-success me-2"></i>Pase de Asistencia por Curso</h2>
+                <p class="text-muted mb-0">Seleccione el curso, marque el estado de cada estudiante y genere el reporte final.</p>
             </div>
         </div>
 
@@ -39,92 +39,84 @@
             {% endif %}
         {% endwith %}
 
-        <div class="row g-4">
-            <!-- Formulario de Registro / Selección -->
-            <div class="col-lg-4">
-                <div class="card shadow-sm border-0 rounded-4">
-                    <div class="card-header bg-success text-white py-3 rounded-top-4">
-                        <h5 class="mb-0"><i class="fas fa-user-plus me-2"></i>Registrar Asistencia</h5>
+        <!-- PASO 1: Selector de Curso -->
+        <div class="card shadow-sm border-0 rounded-4 mb-4">
+            <div class="card-body p-4">
+                <form method="GET" action="/asistencia" class="row g-3 align-items-end">
+                    <div class="col-md-9">
+                        <label for="grado" class="form-label fw-semibold">Seleccione un Curso o Grado:</label>
+                        <select class="form-select" id="grado" name="grado" required onchange="this.form.submit()">
+                            <option value="" selected disabled>-- Elija un curso --</option>
+                            <!-- Ejemplo de opciones de cursos, cámbialas o recórrelas con Jinja si vienen de tu BD -->
+                            <option value="1ro de Primaria" {% if grado_seleccionado == '1ro de Primaria' %}selected{% endif %}>1ro de Primaria</option>
+                            <option value="2do de Primaria" {% if grado_seleccionado == '2do de Primaria' %}selected{% endif %}>2do de Primaria</option>
+                            <option value="3ro de Primaria" {% if grado_seleccionado == '3ro de Primaria' %}selected{% endif %}>3ro de Primaria</option>
+                        </select>
                     </div>
-                    <div class="card-body p-4">
-                        <!-- Ajusta la ruta 'action' según la ruta POST de tu Flask -->
-                        <form action="/asistencia" method="POST">
-                            <div class="mb-3">
-                                <label for="matricula" class="form-label fw-semibold">Matrícula o Estudiante</label>
-                                <input type="text" class="form-control" id="matricula" name="matricula" placeholder="Ej. 2026-1045" required>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label for="estado" class="form-label fw-semibold">Estado</label>
-                                <select class="form-select" id="estado" name="estado" required>
-                                    <option value="" selected disabled>Seleccionar estado...</option>
-                                    <option value="Presente">Presente</option>
-                                    <option value="Tarde">Tarde</option>
-                                    <option value="Ausente">Ausente</option>
-                                </select>
-                            </div>
-
-                            <button type="submit" class="btn btn-success w-100 py-2 fw-semibold shadow-sm">
-                                <i class="fas fa-save me-1"></i> Guardar Registro
-                            </button>
-                        </form>
+                    <div class="col-md-3">
+                        <noscript><button type="submit" class="btn btn-success w-100">Cargar</button></noscript>
                     </div>
-                </div>
-            </div>
-
-            <!-- Tabla de Registros Actuales -->
-            <div class="col-lg-8">
-                <div class="card shadow-sm border-0 rounded-4">
-                    <div class="card-header bg-white py-3 border-0 rounded-top-4">
-                        <h5 class="mb-0 text-dark fw-bold"><i class="fas fa-list-check text-secondary me-2"></i>Lista de Asistencia Actual</h5>
-                    </div>
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th class="ps-4">Matrícula</th>
-                                        <th>Estudiante</th>
-                                        <th>Fecha y Hora</th>
-                                        <th>Estado</th>
-                                        <th class="text-end pe-4">Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% if asistencia %}
-                                        {% for row in asistencia %}
-                                            <tr>
-                                                <td class="ps-4 fw-semibold">{{ row.matricula }}</td>
-                                                <td>{{ row.nombre }}</td>
-                                                <td class="text-muted small">{{ row.fecha }}</td>
-                                                <td>
-                                                    {% if row.estado == 'Presente' %}
-                                                        <span class="badge bg-success bg-opacity-15 text-success px-2 py-1">Presente</span>
-                                                    {% elif row.estado == 'Tarde' %}
-                                                        <span class="badge bg-warning bg-opacity-25 text-dark px-2 py-1">Tarde</span>
-                                                    {% else %}
-                                                        <span class="badge bg-danger bg-opacity-15 text-danger px-2 py-1">Ausente</span>
-                                                    {% endif %}
-                                                </td>
-                                                <td class="text-end pe-4">
-                                                    <a href="/eliminar_asistencia/{{ row.id }}" class="btn btn-sm btn-outline-danger border-0" title="Eliminar registro">
-                                                        <i class="fa-solid fa-trash"></i>
-                                                    </a>
-                                                </td>
-                                            </tr>
-                                        {% endfor %}
-                                    {% else %}
-                                        <tr>
-                                            <td colspan="5" class="text-center py-4 text-muted">No hay registros de asistencia disponibles.</td>
-                                        </tr>
-                                    {% endif %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
+                </form>
             </div>
         </div>
+
+        <!-- PASO 2: Lista de Estudiantes y Estados -->
+        {% if estudiantes %}
+        <div class="card shadow-sm border-0 rounded-4 mb-5">
+            <div class="card-header bg-white py-3 border-0 rounded-top-4">
+                <h5 class="mb-0 text-dark fw-bold"><i class="fas fa-users text-success me-2"></i>Estudiantes del curso</h5>
+            </div>
+            <div class="card-body p-0">
+                <form action="/guardar_asistencia" method="POST">
+                    <input type="hidden" name="grado" value="{{ grado_seleccionado }}">
+                    
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-4">Matrícula</th>
+                                    <th>Estudiante</th>
+                                    <th class="text-center">Estado de Asistencia</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for estudiante in estudiantes %}
+                                    <tr>
+                                        <td class="ps-4 fw-semibold">{{ estudiante.matricula }}</td>
+                                        <td>{{ estudiante.nombre }}</td>
+                                        <td class="text-center">
+                                            <div class="btn-group" role="group">
+                                                <input type="radio" class="btn-check" name="estado_{{ estudiante.id }}" id="p_{{ estudiante.id }}" value="Presente" checked>
+                                                <label class="btn btn-outline-success btn-sm px-3" for="p_{{ estudiante.id }}">Presente</label>
+
+                                                <input type="radio" class="btn-check" name="estado_{{ estudiante.id }}" id="t_{{ estudiante.id }}" value="Tarde">
+                                                <label class="btn btn-outline-warning text-dark btn-sm px-3" for="t_{{ estudiante.id }}">Tarde</label>
+
+                                                <input type="radio" class="btn-check" name="estado_{{ estudiante.id }}" id="a_{{ estudiante.id }}" value="Ausente">
+                                                <label class="btn btn-outline-danger btn-sm px-3" for="a_{{ estudiante.id }}">Ausente</label>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Botón de Guardar y aparición dinámica del Reporte PDF al finalizar -->
+                    <div class="p-4 bg-light rounded-bottom-4 d-flex justify-content-between align-items-center">
+                        <button type="submit" class="btn btn-success px-4 py-2 fw-semibold shadow-sm">
+                            <i class="fas fa-save me-2"></i> Guardar Asistencia del Curso
+                        </button>
+
+                        <!-- Botón de Reporte PDF (Se habilita o muestra tras guardar/último registro) -->
+                        <a href="/reporte_asistencia_pdf/{{ grado_seleccionado }}" class="btn btn-danger px-4 py-2 fw-semibold shadow-sm">
+                            <i class="fas fa-file-pdf me-2"></i> Ver Reporte PDF de Ausencias
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endif %}
 
     </div>
 
