@@ -1386,17 +1386,20 @@ def descargar_reporte_ausencias():
         total_asis = 0
 
         for g in grados_db:
-            grado_nombre = g['grado']
+            # Manejo seguro del nombre del grado según el tipo de fila
+            grado_nombre = g['grado'] if isinstance(g, dict) or hasattr(g, 'keys') else g[0]
             
-            # Matrícula total del curso
-            t_mat = conn.execute("SELECT COUNT(*) FROM estudiantes WHERE grado = %s", (grado_nombre,)).fetchone()[0]
+            # Matrícula total del curso (compatible con cualquier cursor)
+            res_mat = conn.execute("SELECT COUNT(*) as total FROM estudiantes WHERE grado = %s", (grado_nombre,)).fetchone()
+            t_mat = res_mat['total'] if isinstance(res_mat, dict) or hasattr(res_mat, 'keys') else res_mat[0]
 
             # Asistencia total presente del día
-            t_asis = conn.execute('''
-                SELECT COUNT(*) FROM asistencia a
+            res_asis = conn.execute('''
+                SELECT COUNT(*) as total FROM asistencia a
                 JOIN estudiantes e ON a.id_estudiante = e.id
                 WHERE a.grado = %s AND a.fecha = %s AND a.estado = 'Presente'
-            ''', (grado_nombre, fecha_reporte)).fetchone()[0]
+            ''', (grado_nombre, fecha_reporte)).fetchone()
+            t_asis = res_asis['total'] if isinstance(res_asis, dict) or hasattr(res_asis, 'keys') else res_asis[0]
 
             # Nombres de los ausentes o tarde
             ausentes_db = conn.execute('''
