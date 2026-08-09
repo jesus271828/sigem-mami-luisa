@@ -12,30 +12,31 @@
     <div class="container mt-4 mb-5">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2><i class="fas fa-calendar-check"></i> Control de Asistencia</h2>
+            <!-- Cambiado a url_for('menu') para volver al menú principal -->
             <a href="{{ url_for('menu') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Volver al Menú</a>
         </div>
 
         <!-- Mensajes Flash -->
-        with messages = get_flashed_messages(with_categories=true)
-            if messages:
-                for category, message in messages:
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
                     <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
                         {{ message }}
                         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
-                endfor
-            endif
-        endwith
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
 
-        <!-- Formulario de Selección de Curso y Fecha -->
+        <!-- Formulario de Selección -->
         <div class="card shadow-sm mb-4">
             <div class="card-body">
                 <form method="GET" action="{{ url_for('asistencia') }}">
                     <div class="row">
                         <div class="col-md-6 form-group">
-                            <label for="grado">Seleccionar Curso (Primaria/Inicial):</label>
+                            <label for="grado">Seleccionar Curso:</label>
                             <select name="grado" id="grado" class="form-control" required>
                                 <option value="">-- Elija un curso --</option>
                                 {% for curso in lista_grados %}
@@ -57,7 +58,7 @@
             </div>
         </div>
 
-        <!-- Tabla de Estudiantes del Curso Seleccionado (Si se seleccionó un curso) -->
+        <!-- Tabla Estudiantes -->
         {% if grado_seleccionado %}
         <form method="POST" action="{{ url_for('guardar_asistencia') }}">
             <input type="hidden" name="grado" value="{{ grado_seleccionado }}">
@@ -65,109 +66,76 @@
 
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-dark text-white">
-                    <h5 class="mb-0">Estudiantes de {{ grado_seleccionado }} - Fecha: {{ fecha_actual }}</h5>
+                    <h5 class="mb-0">Estudiantes de {{ grado_seleccionado }} - {{ fecha_actual }}</h5>
                 </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-striped table-bordered mb-0">
-                            <thead class="thead-light">
-                                <tr>
-                                    <th style="width: 15%;">Matrícula / ID</th>
-                                    <th>Apellidos y Nombres</th>
-                                    <th style="width: 30%; text-align: center;">Estado de Asistencia</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for est in estudiantes %}
-                                <tr>
-                                    <td>{{ est.matricula if est.matricula else est.id }}</td>
-                                    <td>{{ est.apellidos }}, {{ est.nombres }}</td>
-                                    <td class="text-center">
-                                        <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                                            <label class="btn btn-outline-success btn-sm {% if asistencia_dict.get(est.id) == 'Presente' %}active{% endif %}">
-                                                <input type="radio" name="estado_{{ est.id }}" value="Presente" {% if asistencia_dict.get(est.id, 'Presente') == 'Presente' %}checked{% endif %}> P
-                                            </label>
-                                            <label class="btn btn-outline-warning btn-sm {% if asistencia_dict.get(est.id) == 'Tarde' %}active{% endif %}">
-                                                <input type="radio" name="estado_{{ est.id }}" value="Tarde" {% if asistencia_dict.get(est.id) == 'Tarde' %}checked{% endif %}> T
-                                            </label>
-                                            <label class="btn btn-outline-danger btn-sm {% if asistencia_dict.get(est.id) == 'Ausente' %}active{% endif %}">
-                                                <input type="radio" name="estado_{{ est.id }}" value="Ausente" {% if asistencia_dict.get(est.id) == 'Ausente' %}checked{% endif %}> A
-                                            </label>
-                                        </div>
-                                    </td>
-                                </tr>
-                                {% else %}
-                                <tr>
-                                    <td colspan="3" class="text-center text-muted py-3">No hay estudiantes registrados en este curso.</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+                <div class="table-responsive">
+                    <table class="table table-striped mb-0">
+                        <thead>
+                            <tr><th>Matrícula</th><th>Nombre</th><th class="text-center">Estado</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for est in estudiantes %}
+                            <tr>
+                                <td>{{ est.matricula or est.id }}</td>
+                                <td>{{ est.apellidos }}, {{ est.nombres }}</td>
+                                <td class="text-center">
+                                    <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                                        <label class="btn btn-outline-success btn-sm {% if asistencia_dict.get(est.id) == 'Presente' %}active{% endif %}">
+                                            <input type="radio" name="estado_{{ est.id }}" value="Presente" {% if asistencia_dict.get(est.id, 'Presente') == 'Presente' %}checked{% endif %}> P
+                                        </label>
+                                        <label class="btn btn-outline-warning btn-sm {% if asistencia_dict.get(est.id) == 'Tarde' %}active{% endif %}">
+                                            <input type="radio" name="estado_{{ est.id }}" value="Tarde" {% if asistencia_dict.get(est.id) == 'Tarde' %}checked{% endif %}> T
+                                        </label>
+                                        <label class="btn btn-outline-danger btn-sm {% if asistencia_dict.get(est.id) == 'Ausente' %}active{% endif %}">
+                                            <input type="radio" name="estado_{{ est.id }}" value="Ausente" {% if asistencia_dict.get(est.id) == 'Ausente' %}checked{% endif %}> A
+                                        </label>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
-                {% if estudiantes %}
                 <div class="card-footer text-right">
-                    <button type="submit" class="btn btn-success"><i class="fas fa-save"></i> Guardar Asistencia Estudiantil</button>
+                    <button type="submit" class="btn btn-success"><i class="fas fa-save"></i> Guardar Asistencia</button>
                 </div>
-                {% endif %}
             </div>
         </form>
         {% endif %}
 
-        <!-- Registro de Asistencia del Personal y Reporte General -->
-        <div class="card shadow-sm mb-5 border-primary">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">Registro de Asistencia del Personal y Reporte General</h5>
-            </div>
+        <!-- Registro Personal -->
+        <div class="card shadow-sm border-primary">
+            <div class="card-header bg-primary text-white"><h5>Registro de Asistencia del Personal</h5></div>
             <div class="card-body">
                 <form action="{{ url_for('descargar_reporte_ausencias') }}" method="POST" target="_blank">
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label for="fecha_reporte">Fecha del Reporte General:</label>
-                            <input type="date" name="fecha" id="fecha_reporte" class="form-control" value="{{ fecha_actual }}" required>
+                            <input type="date" name="fecha" class="form-control" value="{{ fecha_actual }}" required>
                         </div>
-                        <div class="col-md-6 d-flex align-items-end">
-                            <button type="submit" class="btn btn-danger btn-block">
-                                <i class="fas fa-file-pdf"></i> Ver / Imprimir Reporte General PDF
-                            </button>
-                        </div>
+                        <div class="col-md-6"><button type="submit" class="btn btn-danger btn-block">Ver / Imprimir Reporte PDF</button></div>
                     </div>
-
-                    <table class="table table-bordered mt-3">
-                        <thead class="thead-light">
-                            <tr>
-                                <th>Tipo de Personal</th>
-                                <th>Contratado</th>
-                                <th>Presente</th>
-                                <th>Nombre de los ausentes</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>Adm. y apoyo.</td>
-                                <td>10</td>
-                                <td><input type="number" name="adm_presente" class="form-control" placeholder="Ej. 10" value="{{ meta.adm_presente if meta else '' }}"></td>
-                                <td><input type="text" name="adm_ausentes" class="form-control" placeholder="Nombres..." value="{{ meta.adm_ausentes if meta else '' }}"></td>
-                            </tr>
-                            <tr>
-                                <td>Auxiliares</td>
-                                <td>N/A</td>
-                                <td><input type="number" name="aux_presente" class="form-control" placeholder="Ej. 2" value="{{ meta.aux_presente if meta else '' }}"></td>
-                                <td><input type="text" name="aux_ausentes" class="form-control" placeholder="Nombres..." value="{{ meta.aux_ausentes if meta else '' }}"></td>
-                            </tr>
-                            <tr>
-                                <td>Docentes</td>
-                                <td>09</td>
-                                <td><input type="number" name="doc_presente" class="form-control" placeholder="Ej. 9" value="{{ meta.doc_presente if meta else '' }}"></td>
-                                <td><input type="text" name="doc_ausentes" class="form-control" placeholder="Nombres..." value="{{ meta.doc_ausentes if meta else '' }}"></td>
-                            </tr>
-                        </tbody>
+                    <table class="table table-bordered">
+                        <tr><th>Tipo</th><th>Presente</th><th>Ausentes</th></tr>
+                        <tr>
+                            <td>Adm. y apoyo</td>
+                            <td><input type="number" name="adm_presente" class="form-control" value="{{ meta.adm_presente or '' }}"></td>
+                            <td><input type="text" name="adm_ausentes" class="form-control" value="{{ meta.adm_ausentes or '' }}"></td>
+                        </tr>
+                        <tr>
+                            <td>Auxiliares</td>
+                            <td><input type="number" name="aux_presente" class="form-control" value="{{ meta.aux_presente or '' }}"></td>
+                            <td><input type="text" name="aux_ausentes" class="form-control" value="{{ meta.aux_ausentes or '' }}"></td>
+                        </tr>
+                        <tr>
+                            <td>Docentes</td>
+                            <td><input type="number" name="doc_presente" class="form-control" value="{{ meta.doc_presente or '' }}"></td>
+                            <td><input type="text" name="doc_ausentes" class="form-control" value="{{ meta.doc_ausentes or '' }}"></td>
+                        </tr>
                     </table>
                 </form>
             </div>
         </div>
     </div>
-
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
