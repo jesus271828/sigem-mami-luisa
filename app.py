@@ -1290,8 +1290,19 @@ def asistencia():
     
     conn = get_db_connection()
     try:
-        cursos_db = conn.execute("SELECT DISTINCT grado FROM estudiantes WHERE grado IS NOT NULL AND TRIM(grado) != '' ORDER BY grado ASC").fetchall()
-        grados = [c['grado'] for c in cursos_db]
+        # 1. Obtener cursos de Primaria excluyendo Nivel Inicial para el selector
+        cursos_db = conn.execute("""
+            SELECT DISTINCT grado FROM estudiantes 
+            WHERE grado IS NOT NULL AND TRIM(grado) != ''
+              AND (LOWER(grado) LIKE '%1ro%' OR LOWER(grado) LIKE '%2do%' OR LOWER(grado) LIKE '%3ro%' 
+                   OR LOWER(grado) LIKE '%4to%' OR LOWER(grado) LIKE '%5to%' OR LOWER(grado) LIKE '%6to%')
+              AND LOWER(grado) NOT LIKE '%párvulos%' AND LOWER(grado) NOT LIKE '%parvulos%'
+              AND LOWER(grado) NOT LIKE '%prekínder%' AND LOWER(grado) NOT LIKE '%prekinder%'
+              AND LOWER(grado) NOT LIKE '%kínder%' AND LOWER(grado) NOT LIKE '%kinder%'
+              AND LOWER(grado) NOT LIKE '%preprimario%'
+            ORDER BY grado ASC
+        """).fetchall()
+        grados = [c['grado'] if isinstance(c, dict) or hasattr(c, 'keys') else c[0] for c in cursos_db]
         
         fecha_actual = request.args.get('fecha', '') or request.form.get('fecha', '')
         if not fecha_actual:
@@ -1300,25 +1311,26 @@ def asistencia():
         if request.method == 'POST':
             grado_seleccionado = request.form.get('grado_actual', '').strip()
             
-            estudiantes = conn.execute('''
-                SELECT * FROM estudiantes 
-                WHERE grado = %s 
-                ORDER BY apellidos ASC, nombres ASC
-            ''', (grado_seleccionado,)).fetchall()
-            
-            for est in estudiantes:
-                est_id = int(est['id']) 
-                estado = request.form.get(f'estado_{est_id}', 'Presente')
+            if grado_seleccionado:
+                estudiantes = conn.execute('''
+                    SELECT * FROM estudiantes 
+                    WHERE grado = %s 
+                    ORDER BY apellidos ASC, nombres ASC
+                ''', (grado_seleccionado,)).fetchall()
                 
-                existe = conn.execute('SELECT id FROM asistencia WHERE id_estudiante = %s AND fecha = %s', (est_id, fecha_actual)).fetchone()
-                if existe:
-                    conn.execute('UPDATE asistencia SET estado = %s, grado = %s WHERE id_estudiante = %s AND fecha = %s', (estado, grado_seleccionado, est_id, fecha_actual))
-                else:
-                    conn.execute('INSERT INTO asistencia (id_estudiante, grado, fecha, estado) VALUES (%s, %s, %s, %s)', (est_id, grado_seleccionado, fecha_actual, estado))
-            
-            conn.commit()
-            flash(f'Asistencia guardada correctamente para el grado {grado_seleccionado}.', 'success')
-            return redirect(url_for('asistencia', grado=grado_seleccionado, fecha=fecha_actual))
+                for est in estudiantes:
+                    est_id = int(est['id']) 
+                    estado = request.form.get(f'estado_{est_id}', 'Presente')
+                    
+                    existe = conn.execute('SELECT id FROM asistencia WHERE id_estudiante = %s AND fecha = %s', (est_id, fecha_actual)).fetchone()
+                    if existe:
+                        conn.execute('UPDATE asistencia SET estado = %s, grado = %s WHERE id_estudiante = %s AND fecha = %s', (estado, grado_seleccionado, est_id, fecha_actual))
+                    else:
+                        conn.execute('INSERT INTO asistencia (id_estudiante, grado, fecha, estado) VALUES (%s, %s, %s, %s)', (est_id, grado_seleccionado, fecha_actual, estado))
+                
+                conn.commit()
+                flash(f'Asistencia guardada correctamente para el grado {grado_seleccionado}.', 'success')
+                return redirect(url_for('asistencia', grado=grado_seleccionado, fecha=fecha_actual))
             
         else:
             grado_seleccionado = request.args.get('grado', '').strip()
@@ -1349,7 +1361,16 @@ def asistencia():
                 
                 for aus in ausentes_rows:
                     ausentes_hoy.append(dict(aus))
-                    
+            
+            # Cargar datos del personal guardados para la fecha actual (si existen)
+            meta = {}
+            try:
+                meta_row = conn.execute('SELECT * FROM asistencia_personal WHERE fecha = %s', (fecha_actual,)).fetchone()
+                if meta_row:
+                    meta = dict(meta_row)
+            except Exception:
+                pass # Si la tabla de personal usa otra estructura o lógica auxiliar
+                
     except Exception as e:
         print(f"Error en asistencia: {e}")
         grados = []
@@ -1357,6 +1378,7 @@ def asistencia():
         ausentes_hoy = []
         grado_seleccionado = ''
         fecha_actual = datetime.now().strftime('%Y-%m-%d')
+        meta = {}
     finally:
         conn.close()
         
@@ -1365,28 +1387,62 @@ def asistencia():
                            grado_seleccionado=grado_seleccionado, 
                            fecha_actual=fecha_actual, 
                            estudiantes=estudiantes,
-                           ausentes_hoy=ausentes_hoy)
+                           ausentes_hoy=ausentes_hoy,
+                           meta=meta)
 
-@app.route('/descargar_reporte_ausencias')
+@app.route('/descargar_reporte_ausencias', methods=['GET', 'POST'])
 def descargar_reporte_ausencias():
     if 'usuario' not in session:
         return redirect(url_for('login'))
         
-    fecha_reporte = request.args.get('fecha', datetime.now().strftime('%Y-%m-%d'))
+    rol_actual = str(session.get('rol', '')).strip().lower()
+    if rol_actual not in ['oficina', 'admin']:
+        flash('Acceso denegado.', 'danger')
+        return redirect(url_for('menu'))
+
+    # Soporte tanto por POST (desde el formulario) como por GET
+    fecha_reporte = request.form.get('fecha', '') or request.args.get('fecha', datetime.now().strftime('%Y-%m-%d'))
     
     conn = get_db_connection()
     try:
-        # 1. Obtener todos los grados de primaria que existan en la BD ordenados alfabéticamente
+        # Si se envían datos del personal al generar el reporte, los guardamos de una vez
+        if request.method == 'POST':
+            adm_p = request.form.get('adm_presente', '')
+            adm_a = request.form.get('adm_ausentes', '')
+            aux_p = request.form.get('aux_presente', '')
+            aux_a = request.form.get('aux_ausentes', '')
+            doc_p = request.form.get('doc_presente', '')
+            doc_a = request.form.get('doc_ausentes', '')
+            
+            # Guardar o actualizar en base de datos (asegúrate de tener la tabla creada o adáptala a tu esquema)
+            try:
+                existe_meta = conn.execute('SELECT id FROM asistencia_personal WHERE fecha = %s', (fecha_reporte,)).fetchone()
+                if existe_meta:
+                    conn.execute('''
+                        UPDATE asistencia_personal 
+                        SET adm_presente=%s, adm_ausentes=%s, aux_presente=%s, aux_ausentes=%s, doc_presente=%s, doc_ausentes=%s
+                        WHERE fecha=%s
+                    ''', (adm_p, adm_a, aux_p, aux_a, doc_p, doc_a, fecha_reporte))
+                else:
+                    conn.execute('''
+                        INSERT INTO asistencia_personal (fecha, adm_presente, adm_ausentes, aux_presente, aux_ausentes, doc_presente, doc_ausentes)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    ''', (fecha_reporte, adm_p, adm_a, aux_p, aux_a, doc_p, doc_a))
+                conn.commit()
+            except Exception:
+                pass # Manejo flexible si prefieres guardarlo directo en memoria para el PDF
+
+        # 1. Obtener todos los grados de primaria ordenados alfabéticamente
         grados_primaria_db = conn.execute("""
             SELECT DISTINCT grado FROM estudiantes 
-            WHERE LOWER(grado) LIKE '%%1ro%%' OR LOWER(grado) LIKE '%%2do%%' OR LOWER(grado) LIKE '%%3ro%%' 
-               OR LOWER(grado) LIKE '%%4to%%' OR LOWER(grado) LIKE '%%5to%%' OR LOWER(grado) LIKE '%%6to%%'
-               OR LOWER(grado) LIKE '%%primario%%'
+            WHERE LOWER(grado) LIKE '%1ro%' OR LOWER(grado) LIKE '%2do%' OR LOWER(grado) LIKE '%3ro%' 
+               OR LOWER(grado) LIKE '%4to%' OR LOWER(grado) LIKE '%5to%' OR LOWER(grado) LIKE '%6to%'
+               OR LOWER(grado) LIKE '%primario%'
             ORDER BY grado ASC
         """).fetchall()
         
         lista_primaria = [g['grado'] if isinstance(g, dict) or hasattr(g, 'keys') else g[0] for g in grados_primaria_db]
-        if not lista_primaria: # Fallback por si acaso
+        if not lista_primaria:
             lista_primaria = ['1ro.- A', '1ro.- B', '2do.- A', '2do.- B', '3ro.- A', '3ro.- B', '4to.', '5to.', '6to.']
 
         datos_primaria = []
@@ -1398,19 +1454,16 @@ def descargar_reporte_ausencias():
         tot_pri_asis_gral = 0
 
         for grado_nombre in lista_primaria:
-            # Matrícula Niños
             cur_mn = conn.execute("SELECT COUNT(*) FROM estudiantes WHERE grado = %s AND LOWER(TRIM(sexo)) = 'masculino'", (grado_nombre,))
             res_mn = cur_mn.fetchone()
             mat_ninos = int(res_mn[0] if (isinstance(res_mn, (list, tuple)) or not hasattr(res_mn, 'keys')) else list(res_mn.values())[0])
 
-            # Matrícula Niñas
             cur_mna = conn.execute("SELECT COUNT(*) FROM estudiantes WHERE grado = %s AND LOWER(TRIM(sexo)) = 'femenino'", (grado_nombre,))
             res_mna = cur_mna.fetchone()
             mat_ninas = int(res_mna[0] if (isinstance(res_mna, (list, tuple)) or not hasattr(res_mna, 'keys')) else list(res_mna.values())[0])
 
             tot_mat = mat_ninos + mat_ninas
 
-            # Asistencia Niños
             cur_an = conn.execute('''
                 SELECT COUNT(*) FROM asistencia a JOIN estudiantes e ON a.id_estudiante = e.id
                 WHERE a.grado = %s AND a.fecha = %s AND a.estado = 'Presente' AND LOWER(TRIM(e.sexo)) = 'masculino'
@@ -1418,7 +1471,6 @@ def descargar_reporte_ausencias():
             res_an = cur_an.fetchone()
             asis_ninos = int(res_an[0] if (isinstance(res_an, (list, tuple)) or not hasattr(res_an, 'keys')) else list(res_an.values())[0])
 
-            # Asistencia Niñas
             cur_ana = conn.execute('''
                 SELECT COUNT(*) FROM asistencia a JOIN estudiantes e ON a.id_estudiante = e.id
                 WHERE a.grado = %s AND a.fecha = %s AND a.estado = 'Presente' AND LOWER(TRIM(e.sexo)) = 'femenino'
@@ -1428,7 +1480,6 @@ def descargar_reporte_ausencias():
 
             tot_asis = asis_ninos + asis_ninas
 
-            # Ausentes
             ausentes_db = conn.execute('''
                 SELECT e.nombres, e.apellidos FROM asistencia a JOIN estudiantes e ON a.id_estudiante = e.id
                 WHERE a.grado = %s AND a.fecha = %s AND a.estado IN ('Ausente', 'Tarde')
@@ -1458,13 +1509,13 @@ def descargar_reporte_ausencias():
             'asis_ninos': tot_pri_asis_ninos, 'asis_ninas': tot_pri_asis_ninas, 'tot_asis': tot_pri_asis_gral
         }
 
-        # 2. Nivel Inicial (L2): Sumar TODO lo correspondiente a inicial (Párvulos, Prekínder, Kínder, Preprimario) en una sola línea total
+        # 2. Nivel Inicial
         grados_inicial_db = conn.execute("""
             SELECT DISTINCT grado FROM estudiantes 
-            WHERE LOWER(grado) LIKE '%%párvulos%%' OR LOWER(grado) LIKE '%%parvulos%%' 
-               OR LOWER(grado) LIKE '%%prekínder%%' OR LOWER(grado) LIKE '%%prekinder%%' 
-               OR LOWER(grado) LIKE '%%kínder%%' OR LOWER(grado) LIKE '%%kinder%%' 
-               OR LOWER(grado) LIKE '%%preprimario%%'
+            WHERE LOWER(grado) LIKE '%párvulos%' OR LOWER(grado) LIKE '%parvulos%' 
+               OR LOWER(grado) LIKE '%prekínder%' OR LOWER(grado) LIKE '%prekinder%' 
+               OR LOWER(grado) LIKE '%kínder%' OR LOWER(grado) LIKE '%kinder%' 
+               OR LOWER(grado) LIKE '%preprimario%'
         """).fetchall()
         
         lista_inicial = [g['grado'] if isinstance(g, dict) or hasattr(g, 'keys') else g[0] for g in grados_inicial_db]
@@ -1475,14 +1526,12 @@ def descargar_reporte_ausencias():
         tot_ini_asis_ninas = 0
 
         for g_ini in lista_inicial:
-            # Matrícula
             c_mn = conn.execute("SELECT COUNT(*) FROM estudiantes WHERE grado = %s AND LOWER(TRIM(sexo)) = 'masculino'", (g_ini,)).fetchone()
             tot_ini_mat_ninos += int(c_mn[0] if (isinstance(c_mn, (list, tuple)) or not hasattr(c_mn, 'keys')) else list(c_mn.values())[0])
             
             c_mna = conn.execute("SELECT COUNT(*) FROM estudiantes WHERE grado = %s AND LOWER(TRIM(sexo)) = 'femenino'", (g_ini,)).fetchone()
             tot_ini_mat_ninas += int(c_mna[0] if (isinstance(c_mna, (list, tuple)) or not hasattr(c_mna, 'keys')) else list(c_mna.values())[0])
 
-            # Asistencia
             c_an = conn.execute("SELECT COUNT(*) FROM asistencia a JOIN estudiantes e ON a.id_estudiante = e.id WHERE a.grado = %s AND a.fecha = %s AND a.estado = 'Presente' AND LOWER(TRIM(e.sexo)) = 'masculino'", (g_ini, fecha_reporte)).fetchone()
             tot_ini_asis_ninos += int(c_an[0] if (isinstance(c_an, (list, tuple)) or not hasattr(c_an, 'keys')) else list(c_an.values())[0])
 
