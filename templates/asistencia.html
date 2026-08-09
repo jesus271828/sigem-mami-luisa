@@ -31,13 +31,12 @@
                 {% endif %}
             {% endwith %}
 
-            <!-- SECCIÓN NUEVA: ACCESO DIRECTO AL REPORTE GENERAL DIARIO (PDF) -->
+            <!-- SECCIÓN 1: REPORTE GENERAL DIARIO (PDF) -->
             <div class="alert alert-info d-flex justify-content-between align-items-center mb-4">
                 <div>
                     <h5 class="mb-1 fw-bold text-dark"><i class="fas fa-file-alt text-primary"></i> Reporte General Diario</h5>
-                    <p class="mb-0 text-muted small">Visualiza e imprime el consolidado de Primaria, Inicial automático y Personal del día seleccionado.</p>
+                    <p class="mb-0 text-muted small">Visualiza e imprime el consolidado de Primaria, Inicial automático y Personal del día.</p>
                 </div>
-                <!-- Este formulario toma la fecha actual del selector o la que elijas y abre el reporte completo -->
                 <form action="/descargar_reporte_ausencias" method="GET" target="_blank" class="d-flex align-items-center gap-2">
                     <input type="date" class="form-control form-control-sm" name="fecha" value="{{ fecha_actual }}" required>
                     <button type="submit" class="btn btn-primary btn-sm text-nowrap fw-bold">
@@ -46,10 +45,67 @@
                 </form>
             </div>
 
-            <!-- SELECTOR DE CURSO -->
+            <!-- SECCIÓN 2: LLENAR ASISTENCIA DEL PERSONAL POR FECHA -->
+            <div class="card border-primary mb-4">
+                <div class="card-header bg-primary text-white fw-bold">
+                    <i class="fas fa-users-cog"></i> Registro de Asistencia del Personal (Administrativo, Auxiliares y Docentes)
+                </div>
+                <div class="card-body">
+                    <form action="/descargar_reporte_ausencias" method="POST">
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold small">Fecha a Registrar:</label>
+                                <input type="date" class="form-control form-control-sm" name="fecha" value="{{ fecha_actual }}" required>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-sm align-middle text-center">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="text-start">Tipo de Personal</th>
+                                        <th>Contratado</th>
+                                        <th style="width: 18%;">Presente</th>
+                                        <th style="width: 45%;">Nombre de los ausentes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="text-start fw-bold">Adm. y apoyo.</td>
+                                        <td>10</td>
+                                        <td><input type="text" name="adm_presente" class="form-control form-control-sm text-center" placeholder="Ej. 10"></td>
+                                        <td><input type="text" name="adm_ausentes" class="form-control form-control-sm" placeholder="Nombres..."></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-start fw-bold">Auxiliares</td>
+                                        <td>N/A</td>
+                                        <td><input type="text" name="aux_presente" class="form-control form-control-sm text-center" placeholder="Ej. 2"></td>
+                                        <td><input type="text" name="aux_ausentes" class="form-control form-control-sm" placeholder="Nombres..."></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-start fw-bold">Docentes</td>
+                                        <td>09</td>
+                                        <td><input type="text" name="doc_presente" class="form-control form-control-sm text-center" placeholder="Ej. 9"></td>
+                                        <td><input type="text" name="doc_ausentes" class="form-control form-control-sm" placeholder="Nombres..."></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="text-end">
+                            <button type="submit" class="btn btn-success btn-sm fw-bold">
+                                <i class="fas fa-save"></i> Guardar Datos del Personal y Ver Reporte
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <hr class="my-4">
+
+            <!-- SELECTOR DE CURSO (ESTUDIANTES) -->
             <form method="GET" action="/asistencia" class="row g-3 mb-4">
                 <div class="col-md-6">
-                    <label for="grado" class="form-label fw-bold">Seleccionar Curso:</label>
+                    <label for="grado" class="form-label fw-bold">Seleccionar Curso (Estudiantes):</label>
                     <select class="form-select" id="grado" name="grado" onchange="this.form.submit()" required>
                         <option value="" selected disabled>-- Elija un curso --</option>
                         {% for g in grados %}
@@ -103,7 +159,7 @@
 
                 <div class="d-flex justify-content-between">
                     <button type="submit" class="btn btn-success px-4">
-                        <i class="fas fa-save"></i> Guardar Asistencia
+                        <i class="fas fa-save"></i> Guardar Asistencia Estudiantil
                     </button>
                     <a href="/descargar_reporte_ausencias?fecha={{ fecha_actual }}" target="_blank" class="btn btn-danger px-4">
                         <i class="fas fa-file-pdf"></i> Exportar Reporte PDF
@@ -113,7 +169,7 @@
             {% else %}
                 <div class="text-center text-muted py-5">
                     <i class="fas fa-search fa-3x mb-3"></i>
-                    <p>Seleccione un curso y fecha para gestionar la asistencia.</p>
+                    <p>Seleccione un curso y fecha para gestionar la asistencia de los estudiantes.</p>
                 </div>
             {% endif %}
         </div>
