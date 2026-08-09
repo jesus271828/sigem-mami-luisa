@@ -1275,72 +1275,64 @@ def buscar_estudiante():
     )
 
 from datetime import datetime
-from flask import render_template, request, redirect, url_for, session, flash
 
 @app.route('/asistencia', methods=['GET', 'POST'])
 def asistencia():
     if 'usuario' not in session:
         return redirect(url_for('login'))
-    
-    # Restringir acceso a maestros
-    if session.get('rol') not in ['oficina', 'admin']:
+        
+    rol_actual = str(session.get('rol', '')).strip().lower()
+    if rol_actual not in ['oficina', 'admin']:
         flash('Acceso denegado.', 'danger')
         return redirect(url_for('menu'))
-    
-    conn = get_db_connection()
-    fecha_actual = request.form.get('fecha') or request.args.get('fecha') or datetime.now().strftime('%Y-%m-%d')
-    
-    if request.method == 'POST':
-        # 1. Guardar asistencia de Estudiantes
-        grado_seleccionado = request.form.get('grado_actual')
-        if grado_seleccionado:
-            estudiantes = conn.execute('SELECT id FROM estudiantes WHERE grado = %s', (grado_seleccionado,)).fetchall()
-            for est in estudiantes:
-                est_id = est['id']
-                estado = request.form.get(f'estado_{est_id}')
-                existe = conn.execute('SELECT id FROM asistencia WHERE id_estudiante = %s AND fecha = %s', (est_id, fecha_actual)).fetchone()
-                if existe:
-                    conn.execute('UPDATE asistencia SET estado = %s WHERE id_estudiante = %s AND fecha = %s', (estado, est_id, fecha_actual))
-                else:
-                    conn.execute('INSERT INTO asistencia (id_estudiante, grado, fecha, estado) VALUES (%s, %s, %s, %s)', (est_id, grado_seleccionado, fecha_actual, estado))
-        
-        # 2. Guardar asistencia de Personal
-        adm_p = request.form.get('adm_presente'); adm_a = request.form.get('adm_ausentes')
-        aux_p = request.form.get('aux_presente'); aux_a = request.form.get('aux_ausentes')
-        doc_p = request.form.get('doc_presente'); doc_a = request.form.get('doc_ausentes')
-        
-        existe_p = conn.execute('SELECT id FROM asistencia_personal WHERE fecha = %s', (fecha_actual,)).fetchone()
-        if existe_p:
-            conn.execute('''UPDATE asistencia_personal SET adm_presente=%s, adm_ausentes=%s, aux_presente=%s, aux_ausentes=%s, doc_presente=%s, doc_ausentes=%s 
-                            WHERE fecha=%s''', (adm_p, adm_a, aux_p, aux_a, doc_p, doc_a, fecha_actual))
-        else:
-            conn.execute('''INSERT INTO asistencia_personal (fecha, adm_presente, adm_ausentes, aux_presente, aux_ausentes, doc_presente, doc_ausentes) 
-                            VALUES (%s, %s, %s, %s, %s, %s, %s)''', (fecha_actual, adm_p, adm_a, aux_p, aux_a, doc_p, doc_a))
-        
-        conn.commit()
-        flash('Datos guardados correctamente.', 'success')
-        return redirect(url_for('asistencia', fecha=fecha_actual, grado=grado_seleccionado))
 
-    # --- Lógica GET (Cargar datos) ---
-    # Obtener grados (excluyendo inicial)
-    cursos = conn.execute("""SELECT DISTINCT grado FROM estudiantes WHERE grado IS NOT NULL 
-                             AND grado NOT LIKE '%kínder%' AND grado NOT LIKE '%párvulos%' 
-                             AND grado NOT LIKE '%preprimario%' ORDER BY grado""").fetchall()
-    
-    # Obtener estudiantes del grado si se seleccionó uno
-    grado_sel = request.args.get('grado')
-    estudiantes = []
-    if grado_sel:
-        estudiantes = conn.execute('''SELECT e.*, a.estado FROM estudiantes e 
-                                      LEFT JOIN asistencia a ON e.id = a.id_estudiante AND a.fecha = %s 
-                                      WHERE e.grado = %s ORDER BY e.apellidos''', (fecha_actual, grado_sel)).fetchall()
-    
-    # Obtener datos de personal guardados
-    meta = conn.execute('SELECT * FROM asistencia_personal WHERE fecha = %s', (fecha_actual,)).fetchone()
-    
-    conn.close()
-    return render_template('asistencia.html', grados=cursos, estudiantes=estudiantes, 
-                           grado_seleccionado=grado_sel, fecha_actual=fecha_actual, meta=meta)
+    fecha_actual = request.args.get('fecha', datetime.now().strftime('%Y-%m-%d'))
+    grado_seleccionado = request.args.get('grado', '')
+
+    conn = get_db_connection()
+    try:
+        # Obtener lista limpia de grados para el selector
+        grados_db = conn.execute("SELECT DISTINCT grado FROM estudiantes WHERE grado IS NOT NULL ORDER BY grado ASC").fetchall()
+        lista_grados = [g['grado'] if isinstance(g, dict) or hasattr(g, 'keys') else g[0] for g in grados_db]
+
+        estudiantes = []
+        asistencia_dict = {}
+
+        if grado_seleccionado:
+            estudiantes_db = conn.execute(
+                "SELECT id, matricula, nombres, apellidos FROM estudiantes WHERE grado = %s ORDER BY apellidos ASC", 
+                (grado_seleccionado,)
+            ).fetchall()
+            
+            # Convertir a lista de diccionarios estándar si es necesario
+            estudiantes = [dict(e) if hasattr(e, 'keys') else {'id': e[0], 'matricula': e[1], 'nombres': e[2], 'apellidos': e[3]} for e in estudiantes_db]
+
+            # Buscar asistencia existente para ese curso y fecha
+            asis_db = conn.execute(
+                "SELECT id_estudiante, estado FROM asistencia WHERE grado = %s AND fecha = %s",
+                (grado_seleccionado, fecha_actual)
+            ).fetchall()
+            
+            for a in asis_db:
+                id_est = a['id_estudiante'] if hasattr(a, 'keys') else a[0]
+                estado_val = a['estado'] if hasattr(a, 'keys') else a[1]
+                asistencia_dict[id_est] = estado_val
+
+        # Obtener datos previos del personal si existen para rellenar la vista previa del formulario
+        meta_personal = conn.execute('SELECT * FROM asistencia_personal WHERE fecha = %s', (fecha_actual,)).fetchone()
+        meta = dict(meta_personal) if meta_personal else {}
+
+    finally:
+        conn.close()
+
+    return render_template('asistencia.html',
+                           lista_grados=lista_grados,
+                           grado_seleccionado=grado_seleccionado,
+                           fecha_actual=fecha_actual,
+                           estudiantes=estudiantes,
+                           asistencia_dict=asistencia_dict,
+                           meta=meta)
+
 
 @app.route('/descargar_reporte_ausencias', methods=['GET', 'POST'])
 def descargar_reporte_ausencias():
@@ -1352,12 +1344,11 @@ def descargar_reporte_ausencias():
         flash('Acceso denegado.', 'danger')
         return redirect(url_for('menu'))
 
-    # Soporte tanto por POST (desde el formulario) como por GET
     fecha_reporte = request.form.get('fecha', '') or request.args.get('fecha', datetime.now().strftime('%Y-%m-%d'))
     
     conn = get_db_connection()
     try:
-        # Si se envían datos del personal al presionar el botón, los guardamos/actualizamos en la BD
+        # Guardar o actualizar los datos del personal enviados desde el formulario al generar el reporte
         if request.method == 'POST':
             adm_p = request.form.get('adm_presente', '')
             adm_a = request.form.get('adm_ausentes', '')
@@ -1383,7 +1374,7 @@ def descargar_reporte_ausencias():
             except Exception:
                 pass
 
-        # 1. Obtener todos los grados de primaria ordenados alfabéticamente
+        # 1. Obtener grados de primaria
         grados_primaria_db = conn.execute("""
             SELECT DISTINCT grado FROM estudiantes 
             WHERE LOWER(grado) LIKE '%1ro%' OR LOWER(grado) LIKE '%2do%' OR LOWER(grado) LIKE '%3ro%' 
@@ -1501,7 +1492,7 @@ def descargar_reporte_ausencias():
             'tot_asis': tot_ini_asis_gral if tot_ini_asis_gral > 0 else ''
         }
 
-        # 3. Obtener los datos del Personal para esa fecha exacta desde la tabla nueva
+        # 3. Obtener datos del personal para el reporte PDF
         meta_personal = conn.execute('SELECT * FROM asistencia_personal WHERE fecha = %s', (fecha_reporte,)).fetchone()
         meta = dict(meta_personal) if meta_personal else {}
 
