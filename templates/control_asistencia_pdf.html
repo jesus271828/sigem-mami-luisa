@@ -11,6 +11,36 @@
             margin: 10px;
             padding: 0;
         }
+
+        /* Estilos para los botones de navegación (solo pantalla) */
+        .action-buttons {
+            text-align: center;
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #f1f1f1;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .btn {
+            background-color: #007bff;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 10pt;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-block;
+            margin: 0 5px;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn:hover {
+            opacity: 0.9;
+        }
+
         .header-table {
             width: 100%;
             border-collapse: collapse;
@@ -103,15 +133,30 @@
             margin-top: 30px;
             text-align: center;
             width: 280px;
+            margin-left: auto;
+            margin-right: auto;
         }
         .signature-line {
             border-top: 1px solid #000;
             padding-top: 3px;
             font-size: 8.5pt;
         }
+
+        /* Ocultar los botones de acción al imprimir o generar PDF */
+        @media print {
+            .action-buttons {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 <body>
+
+    <!-- BARRA DE ACCIÓN (Imprimir / Volver) -->
+    <div class="action-buttons">
+        <button onclick="window.print();" class="btn">🖨️ Imprimir / Guardar PDF</button>
+        <a href="{{ url_for('index') }}" class="btn btn-secondary">⬅️ Volver al Panel</a>
+    </div>
 
     <!-- ENCABEZADO INSTITUCIONAL -->
     <table class="header-table">
@@ -133,7 +178,7 @@
     <table class="control-title-table">
         <tr>
             <td class="title-section" style="width: 65%;">CONTROL DIARIO DE ASISTENCIA</td>
-            <td class="info-bar" style="width: 35%; text-align: right;"><b>FECHA:</b> ________________________</td>
+            <td class="info-bar" style="width: 35%; text-align: right;"><b>FECHA:</b> {{ fecha }}</td>
         </tr>
     </table>
     <table class="control-title-table" style="margin-bottom: 6px;">
