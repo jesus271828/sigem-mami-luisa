@@ -1433,7 +1433,7 @@ def descargar_reporte_ausencias():
                 SELECT e.nombres, e.apellidos FROM asistencia a JOIN estudiantes e ON a.id_estudiante = e.id
                 WHERE a.grado = %s AND a.fecha = %s AND a.estado IN ('Ausente', 'Tarde')
             ''', (grado_nombre, fecha_reporte)).fetchall()
-            nombres_ausentes = ", ".join([f"{a['apellidos']} {a['nombres']}" for a in ausentes_db])
+            nombres_ausentes = ", ".join([f"{a['nombres']} {a['apellidos']}" for a in ausentes_db])
 
             tot_pri_mat_ninos += mat_ninos
             tot_pri_mat_ninas += mat_ninas
