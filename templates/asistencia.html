@@ -31,78 +31,7 @@
                 {% endif %}
             {% endwith %}
 
-            <!-- SECCIÓN 1: REPORTE GENERAL DIARIO (PDF) -->
-            <div class="alert alert-info d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h5 class="mb-1 fw-bold text-dark"><i class="fas fa-file-alt text-primary"></i> Reporte General Diario</h5>
-                    <p class="mb-0 text-muted small">Visualiza e imprime el consolidado de Primaria, Inicial automático y Personal del día.</p>
-                </div>
-                <form action="/descargar_reporte_ausencias" method="GET" target="_blank" class="d-flex align-items-center gap-2">
-                    <input type="date" class="form-control form-control-sm" name="fecha" value="{{ fecha_actual }}" required>
-                    <button type="submit" class="btn btn-primary btn-sm text-nowrap fw-bold">
-                        <i class="fas fa-print"></i> Ver Reporte del Día
-                    </button>
-                </form>
-            </div>
-
-            <!-- SECCIÓN 2: LLENAR ASISTENCIA DEL PERSONAL POR FECHA -->
-            <div class="card border-primary mb-4">
-                <div class="card-header bg-primary text-white fw-bold">
-                    <i class="fas fa-users-cog"></i> Registro de Asistencia del Personal (Administrativo, Auxiliares y Docentes)
-                </div>
-                <div class="card-body">
-                    <form action="/descargar_reporte_ausencias" method="POST">
-                        <div class="row g-3 mb-3">
-                            <div class="col-md-4">
-                                <label class="form-label fw-bold small">Fecha a Registrar:</label>
-                                <input type="date" class="form-control form-control-sm" name="fecha" value="{{ fecha_actual }}" required>
-                            </div>
-                        </div>
-
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-sm align-middle text-center">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th class="text-start">Tipo de Personal</th>
-                                        <th>Contratado</th>
-                                        <th style="width: 18%;">Presente</th>
-                                        <th style="width: 45%;">Nombre de los ausentes</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td class="text-start fw-bold">Adm. y apoyo.</td>
-                                        <td>10</td>
-                                        <td><input type="text" name="adm_presente" class="form-control form-control-sm text-center" placeholder="Ej. 10"></td>
-                                        <td><input type="text" name="adm_ausentes" class="form-control form-control-sm" placeholder="Nombres..."></td>
-                                    </tr>
-                                    <tr>
-                                        <td class="text-start fw-bold">Auxiliares</td>
-                                        <td>N/A</td>
-                                        <td><input type="text" name="aux_presente" class="form-control form-control-sm text-center" placeholder="Ej. 2"></td>
-                                        <td><input type="text" name="aux_ausentes" class="form-control form-control-sm" placeholder="Nombres..."></td>
-                                    </tr>
-                                    <tr>
-                                        <td class="text-start fw-bold">Docentes</td>
-                                        <td>09</td>
-                                        <td><input type="text" name="doc_presente" class="form-control form-control-sm text-center" placeholder="Ej. 9"></td>
-                                        <td><input type="text" name="doc_ausentes" class="form-control form-control-sm" placeholder="Nombres..."></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="text-end">
-                            <button type="submit" class="btn btn-success btn-sm fw-bold">
-                                <i class="fas fa-save"></i> Guardar Datos del Personal y Ver Reporte
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <hr class="my-4">
-
-            <!-- SELECTOR DE CURSO (ESTUDIANTES) -->
+            <!-- SELECTOR DE CURSO Y FECHA (ESTUDIANTES) -->
             <form method="GET" action="/asistencia" class="row g-3 mb-4">
                 <div class="col-md-6">
                     <label for="grado" class="form-label fw-bold">Seleccionar Curso (Estudiantes):</label>
@@ -157,21 +86,77 @@
                     </table>
                 </div>
 
-                <div class="d-flex justify-content-between">
+                <div class="mb-4">
                     <button type="submit" class="btn btn-success px-4">
                         <i class="fas fa-save"></i> Guardar Asistencia Estudiantil
                     </button>
-                    <a href="/descargar_reporte_ausencias?fecha={{ fecha_actual }}" target="_blank" class="btn btn-danger px-4">
-                        <i class="fas fa-file-pdf"></i> Exportar Reporte PDF
-                    </a>
                 </div>
             </form>
             {% else %}
-                <div class="text-center text-muted py-5">
-                    <i class="fas fa-search fa-3x mb-3"></i>
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-search fa-2x mb-2"></i>
                     <p>Seleccione un curso y fecha para gestionar la asistencia de los estudiantes.</p>
                 </div>
             {% endif %}
+
+            <hr class="my-4">
+
+            <!-- SECCIÓN INFERIOR: REGISTRO DE PERSONAL Y BOTÓN ÚNICO DE REPORTE GENERAL -->
+            <div class="card border-primary mb-3">
+                <div class="card-header bg-primary text-white fw-bold">
+                    <i class="fas fa-users-cog"></i> Registro de Asistencia del Personal y Reporte General
+                </div>
+                <div class="card-body">
+                    <form action="/descargar_reporte_ausencias" method="POST" target="_blank">
+                        <div class="row g-3 mb-3 align-items-center">
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold small">Fecha del Reporte General:</label>
+                                <input type="date" class="form-control" name="fecha" value="{{ fecha_actual }}" required>
+                            </div>
+                            <div class="col-md-8 text-md-end">
+                                <span class="text-muted small d-block mb-1">Guarda los datos del personal y genera el PDF consolidado:</span>
+                                <button type="submit" class="btn btn-danger fw-bold px-4">
+                                    <i class="fas fa-file-pdf"></i> Ver / Imprimir Reporte General PDF
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-sm align-middle text-center mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="text-start">Tipo de Personal</th>
+                                        <th>Contratado</th>
+                                        <th style="width: 18%;">Presente</th>
+                                        <th style="width: 45%;">Nombre de los ausentes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="text-start fw-bold">Adm. y apoyo.</td>
+                                        <td>10</td>
+                                        <td><input type="text" name="adm_presente" class="form-control form-control-sm text-center" value="{{ meta.adm_presente if meta and meta.adm_presente else '' }}" placeholder="Ej. 10"></td>
+                                        <td><input type="text" name="adm_ausentes" class="form-control form-control-sm" value="{{ meta.adm_ausentes if meta and meta.adm_ausentes else '' }}" placeholder="Nombres..."></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-start fw-bold">Auxiliares</td>
+                                        <td>N/A</td>
+                                        <td><input type="text" name="aux_presente" class="form-control form-control-sm text-center" value="{{ meta.aux_presente if meta and meta.aux_presente else '' }}" placeholder="Ej. 2"></td>
+                                        <td><input type="text" name="aux_ausentes" class="form-control form-control-sm" value="{{ meta.aux_ausentes if meta and meta.aux_ausentes else '' }}" placeholder="Nombres..."></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-start fw-bold">Docentes</td>
+                                        <td>09</td>
+                                        <td><input type="text" name="doc_presente" class="form-control form-control-sm text-center" value="{{ meta.doc_presente if meta and meta.doc_presente else '' }}" placeholder="Ej. 9"></td>
+                                        <td><input type="text" name="doc_ausentes" class="form-control form-control-sm" value="{{ meta.doc_ausentes if meta and meta.doc_ausentes else '' }}" placeholder="Nombres..."></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
