@@ -36,7 +36,8 @@
                     <div class="row">
                         <div class="col-md-6 form-group">
                             <label for="grado">Seleccionar Curso (Primaria/Inicial):</label>
-                            <select name="grado" id="grado" class="form-control" required>
+                            <!-- Se añadió el evento onchange para que cargue los estudiantes de inmediato al seleccionar -->
+                            <select name="grado" id="grado" class="form-control" onchange="this.form.submit()" required>
                                 <option value="">-- Elija un curso --</option>
                                 {% for curso in lista_grados %}
                                     <option value="{{ curso }}" {% if grado_seleccionado == curso %}selected{% endif %}>
@@ -47,7 +48,7 @@
                         </div>
                         <div class="col-md-4 form-group">
                             <label for="fecha">Fecha:</label>
-                            <input type="date" name="fecha" id="fecha" class="form-control" value="{{ fecha_actual }}" required>
+                            <input type="date" name="fecha" id="fecha" class="form-control" value="{{ fecha_actual }}" onchange="this.form.submit()" required>
                         </div>
                         <div class="col-md-2 form-group d-flex align-items-end">
                             <button type="submit" class="btn btn-primary btn-block"><i class="fas fa-search"></i> Cargar</button>
@@ -72,7 +73,7 @@
                         <table class="table table-striped table-bordered mb-0">
                             <thead class="thead-light">
                                 <tr>
-                                    <th style="width: 15%;">Matrícula / ID</th>
+                                    <th style="width: 15%;">ID</th>
                                     <th>Apellidos y Nombres</th>
                                     <th style="width: 30%; text-align: center;">Estado de Asistencia</th>
                                 </tr>
@@ -80,7 +81,7 @@
                             <tbody>
                                 {% for est in estudiantes %}
                                 <tr>
-                                    <td>{{ est.matricula if est.matricula else est.id }}</td>
+                                    <td>{{ est.id }}</td>
                                     <td>{{ est.apellidos }}, {{ est.nombres }}</td>
                                     <td class="text-center">
                                         <div class="btn-group btn-group-toggle" data-toggle="buttons">
@@ -120,7 +121,6 @@
                 <h5 class="mb-0">Registro de Asistencia del Personal y Reporte General</h5>
             </div>
             <div class="card-body">
-                <!-- Quitamos target="_blank" para que se maneje en la misma página mediante el visor inferior -->
                 <form id="form-reporte" action="{{ url_for('descargar_reporte_ausencias') }}" method="POST">
                     <div class="row mb-3">
                         <div class="col-md-6">
@@ -166,7 +166,7 @@
                     </table>
                 </form>
 
-                <!-- Visor integrado para mostrar el PDF en la misma página sin abrir otra pestaña -->
+                <!-- Visor integrado para mostrar el PDF en la misma página -->
                 <div id="contenedor-visor-pdf" class="mt-4" style="display: none;">
                     <hr>
                     <h5 class="text-danger mb-3"><i class="fas fa-file-pdf"></i> Vista Previa del Reporte General</h5>
@@ -185,17 +185,14 @@
         const formData = new FormData(form);
         const fechaVal = document.getElementById('fecha_reporte').value;
 
-        // Primero enviamos los datos del personal por POST mediante fetch para que se guarden en la base de datos
         fetch("{{ url_for('descargar_reporte_ausencias') }}", {
             method: 'POST',
             body: formData
         }).then(response => {
             if (response.ok) {
-                // Una vez guardado, cargamos el PDF resultante directamente en el iframe de la misma página
                 const iframe = document.getElementById('visor-pdf-iframe');
                 iframe.src = "{{ url_for('descargar_reporte_ausencias') }}?fecha=" + fechaVal;
                 
-                // Mostramos el contenedor y hacemos scroll hacia él
                 document.getElementById('contenedor-visor-pdf').style.display = 'block';
                 document.getElementById('contenedor-visor-pdf').scrollIntoView({ behavior: 'smooth' });
             } else {

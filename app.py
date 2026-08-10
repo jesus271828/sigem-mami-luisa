@@ -1299,13 +1299,14 @@ def asistencia():
         asistencia_dict = {}
 
         if grado_seleccionado:
+            # Consultamos sin la columna matricula para evitar el error 500
             estudiantes_db = conn.execute(
-                "SELECT id, matricula, nombres, apellidos FROM estudiantes WHERE grado = %s ORDER BY apellidos ASC", 
+                "SELECT id, nombres, apellidos FROM estudiantes WHERE grado = %s ORDER BY apellidos ASC", 
                 (grado_seleccionado,)
             ).fetchall()
             
-            # Convertir a lista de diccionarios estándar si es necesario
-            estudiantes = [dict(e) if hasattr(e, 'keys') else {'id': e[0], 'matricula': e[1], 'nombres': e[2], 'apellidos': e[3]} for e in estudiantes_db]
+            # Convertir a lista de diccionarios estándar
+            estudiantes = [dict(e) if hasattr(e, 'keys') else {'id': e[0], 'nombres': e[1], 'apellidos': e[2]} for e in estudiantes_db]
 
             # Buscar asistencia existente para ese curso y fecha
             asis_db = conn.execute(
@@ -1318,7 +1319,7 @@ def asistencia():
                 estado_val = a['estado'] if hasattr(a, 'keys') else a[1]
                 asistencia_dict[id_est] = estado_val
 
-        # Obtener datos previos del personal si existen para rellenar la vista previa del formulario
+        # Obtener datos previos del personal si existen
         meta_personal = conn.execute('SELECT * FROM asistencia_personal WHERE fecha = %s', (fecha_actual,)).fetchone()
         meta = dict(meta_personal) if meta_personal else {}
 
