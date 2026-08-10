@@ -1334,6 +1334,46 @@ def asistencia():
                            asistencia_dict=asistencia_dict,
                            meta=meta)
 
+@app.route('/guardar_asistencia', methods=['POST'])
+def guardar_asistencia():
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+        
+    grado = request.form.get('grado')
+    fecha = request.form.get('fecha')
+    
+    conn = get_db_connection()
+    try:
+        # Recorremos todos los campos enviados en el formulario para buscar los estados de asistencia
+        for key, value in request.form.items():
+            if key.startswith('estado_'):
+                id_estudiante = key.split('_')[1]
+                estado = value
+                
+                # Verificar si ya existe un registro para actualizarlo o insertarlo
+                existing = conn.execute(
+                    "SELECT id FROM asistencia WHERE id_estudiante = %s AND fecha = %s",
+                    (id_estudiante, fecha)
+                ).fetchone()
+                
+                if existing:
+                    conn.execute(
+                        "UPDATE asistencia SET estado = %s WHERE id_estudiante = %s AND fecha = %s",
+                        (estado, id_estudiante, fecha)
+                    )
+                else:
+                    conn.execute(
+                        "INSERT INTO asistencia (id_estudiante, grado, fecha, estado) VALUES (%s, %s, %s, %s)",
+                        (id_estudiante, grado, fecha, estado)
+                    )
+        flash('Asistencia guardada correctamente.', 'success')
+    except Exception as e:
+        flash(f'Error al guardar la asistencia: {e}', 'danger')
+    finally:
+        conn.close()
+        
+    return redirect(url_for('asistencia', grado=grado, fecha=fecha))
+
 
 @app.route('/descargar_reporte_ausencias', methods=['GET', 'POST'])
 def descargar_reporte_ausencias():
