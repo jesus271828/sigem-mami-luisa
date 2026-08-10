@@ -2076,6 +2076,10 @@ def escanear_ficha():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
     
+@app.route('/menu')
+def menu():
+    return render_template('menu.html') # O la plantilla que corresponda a tu menú
+
 
 
 if __name__ == '__main__':
