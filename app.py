@@ -1374,178 +1374,128 @@ def guardar_asistencia():
         
     return redirect(url_for('asistencia', grado=grado, fecha=fecha))
 
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib import colors
 
 @app.route('/descargar_reporte_ausencias', methods=['GET', 'POST'])
 def descargar_reporte_ausencias():
     if 'usuario' not in session:
         return redirect(url_for('login'))
-        
-    rol_actual = str(session.get('rol', '')).strip().lower()
-    if rol_actual not in ['oficina', 'admin']:
-        flash('Acceso denegado.', 'danger')
-        return redirect(url_for('menu'))
 
-    fecha_reporte = request.form.get('fecha', '') or request.args.get('fecha', datetime.now().strftime('%Y-%m-%d'))
+    # 1. Si es POST, guardamos/actualizamos los datos del personal enviados desde el formulario
+    if request.method == 'POST':
+        fecha = request.form.get('fecha')
+        adm_presente = request.form.get('adm_presente') or 0
+        adm_ausentes = request.form.get('adm_ausentes') or ''
+        aux_presente = request.form.get('aux_presente') or 0
+        aux_ausentes = request.form.get('aux_ausentes') or ''
+        doc_presente = request.form.get('doc_presente') or 0
+        doc_ausentes = request.form.get('doc_ausentes') or ''
+
+        conn = get_db_connection()
+        try:
+            existe = conn.execute('SELECT id FROM asistencia_personal WHERE fecha = %s', (fecha,)).fetchone()
+            if existe:
+                conn.execute('''
+                    UPDATE asistencia_personal 
+                    SET adm_presente = %s, adm_ausentes = %s, 
+                        aux_presente = %s, aux_ausentes = %s, 
+                        doc_presente = %s, doc_ausentes = %s 
+                    WHERE fecha = %s
+                ''', (adm_presente, adm_ausentes, aux_presente, aux_ausentes, doc_presente, doc_ausentes, fecha))
+            else:
+                conn.execute('''
+                    INSERT INTO asistencia_personal (fecha, adm_presente, adm_ausentes, aux_presente, aux_ausentes, doc_presente, doc_ausentes) 
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                ''', (fecha, adm_presente, adm_ausentes, aux_presente, aux_ausentes, doc_presente, doc_ausentes))
+        finally:
+            conn.close()
+        
+        return '', 200
+
+    # 2. Si es GET, generamos el PDF usando los datos reales de la base de datos para esa fecha
+    fecha_reporte = request.args.get('fecha', datetime.now().strftime('%Y-%m-%d'))
     
     conn = get_db_connection()
     try:
-        # Guardar o actualizar los datos del personal enviados desde el formulario al generar el reporte
-        if request.method == 'POST':
-            adm_p = request.form.get('adm_presente', '')
-            adm_a = request.form.get('adm_ausentes', '')
-            aux_p = request.form.get('aux_presente', '')
-            aux_a = request.form.get('aux_ausentes', '')
-            doc_p = request.form.get('doc_presente', '')
-            doc_a = request.form.get('doc_ausentes', '')
-            
-            try:
-                existe_meta = conn.execute('SELECT id FROM asistencia_personal WHERE fecha = %s', (fecha_reporte,)).fetchone()
-                if existe_meta:
-                    conn.execute('''
-                        UPDATE asistencia_personal 
-                        SET adm_presente=%s, adm_ausentes=%s, aux_presente=%s, aux_ausentes=%s, doc_presente=%s, doc_ausentes=%s
-                        WHERE fecha=%s
-                    ''', (adm_p, adm_a, aux_p, aux_a, doc_p, doc_a, fecha_reporte))
-                else:
-                    conn.execute('''
-                        INSERT INTO asistencia_personal (fecha, adm_presente, adm_ausentes, aux_presente, aux_ausentes, doc_presente, doc_ausentes)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s)
-                    ''', (fecha_reporte, adm_p, adm_a, aux_p, aux_a, doc_p, doc_a))
-                conn.commit()
-            except Exception:
-                pass
-
-        # 1. Obtener grados de primaria
-        grados_primaria_db = conn.execute("""
-            SELECT DISTINCT grado FROM estudiantes 
-            WHERE LOWER(grado) LIKE '%1ro%' OR LOWER(grado) LIKE '%2do%' OR LOWER(grado) LIKE '%3ro%' 
-               OR LOWER(grado) LIKE '%4to%' OR LOWER(grado) LIKE '%5to%' OR LOWER(grado) LIKE '%6to%'
-               OR LOWER(grado) LIKE '%primario%'
-            ORDER BY grado ASC
-        """).fetchall()
+        # Obtenemos los datos del personal ingresados ese día
+        personal = conn.execute('SELECT * FROM asistencia_personal WHERE fecha = %s', (fecha_reporte,)).fetchone()
         
-        lista_primaria = [g['grado'] if isinstance(g, dict) or hasattr(g, 'keys') else g[0] for g in grados_primaria_db]
-        if not lista_primaria:
-            lista_primaria = ['1ro.- A', '1ro.- B', '2do.- A', '2do.- B', '3ro.- A', '3ro.- B', '4to.', '5to.', '6to.']
-
-        datos_primaria = []
-        tot_pri_mat_ninos = 0
-        tot_pri_mat_ninas = 0
-        tot_pri_mat_gral = 0
-        tot_pri_asis_ninos = 0
-        tot_pri_asis_ninas = 0
-        tot_pri_asis_gral = 0
-
-        for grado_nombre in lista_primaria:
-            cur_mn = conn.execute("SELECT COUNT(*) FROM estudiantes WHERE grado = %s AND LOWER(TRIM(sexo)) = 'masculino'", (grado_nombre,))
-            res_mn = cur_mn.fetchone()
-            mat_ninos = int(res_mn[0] if (isinstance(res_mn, (list, tuple)) or not hasattr(res_mn, 'keys')) else list(res_mn.values())[0])
-
-            cur_mna = conn.execute("SELECT COUNT(*) FROM estudiantes WHERE grado = %s AND LOWER(TRIM(sexo)) = 'femenino'", (grado_nombre,))
-            res_mna = cur_mna.fetchone()
-            mat_ninas = int(res_mna[0] if (isinstance(res_mna, (list, tuple)) or not hasattr(res_mna, 'keys')) else list(res_mna.values())[0])
-
-            tot_mat = mat_ninos + mat_ninas
-
-            cur_an = conn.execute('''
-                SELECT COUNT(*) FROM asistencia a JOIN estudiantes e ON a.id_estudiante = e.id
-                WHERE a.grado = %s AND a.fecha = %s AND LOWER(TRIM(a.estado)) = 'presente' AND LOWER(TRIM(e.sexo)) = 'masculino'
-            ''', (grado_nombre, fecha_reporte))
-            res_an = cur_an.fetchone()
-            asis_ninos = int(res_an[0] if (isinstance(res_an, (list, tuple)) or not hasattr(res_an, 'keys')) else list(res_an.values())[0])
-
-            cur_ana = conn.execute('''
-                SELECT COUNT(*) FROM asistencia a JOIN estudiantes e ON a.id_estudiante = e.id
-                WHERE a.grado = %s AND a.fecha = %s AND LOWER(TRIM(a.estado)) = 'presente' AND LOWER(TRIM(e.sexo)) = 'femenino'
-            ''', (grado_nombre, fecha_reporte))
-            res_ana = cur_ana.fetchone()
-            asis_ninas = int(res_ana[0] if (isinstance(res_ana, (list, tuple)) or not hasattr(res_ana, 'keys')) else list(res_ana.values())[0])
-
-            tot_asis = asis_ninos + asis_ninas
-
-            ausentes_db = conn.execute('''
-                SELECT e.nombres, e.apellidos FROM asistencia a JOIN estudiantes e ON a.id_estudiante = e.id
-                WHERE a.grado = %s AND a.fecha = %s AND LOWER(TRIM(a.estado)) IN ('ausente', 'tarde')
-            ''', (grado_nombre, fecha_reporte)).fetchall()
-            nombres_ausentes = ", ".join([f"{a['nombres']} {a['apellidos']}" for a in ausentes_db])
-
-            tot_pri_mat_ninos += mat_ninos
-            tot_pri_mat_ninas += mat_ninas
-            tot_pri_mat_gral += tot_mat
-            tot_pri_asis_ninos += asis_ninos
-            tot_pri_asis_ninas += asis_ninas
-            tot_pri_asis_gral += tot_asis
-
-            datos_primaria.append({
-                'grado': grado_nombre,
-                'mat_ninos': mat_ninos if mat_ninos > 0 else '',
-                'mat_ninas': mat_ninas if mat_ninas > 0 else '',
-                'tot_mat': tot_mat if tot_mat > 0 else '',
-                'asis_ninos': asis_ninos if asis_ninos > 0 else '',
-                'asis_ninas': asis_ninas if asis_ninas > 0 else '',
-                'tot_asis': tot_asis if tot_asis > 0 else '',
-                'ausentes': nombres_ausentes
-            })
-
-        tot_primaria = {
-            'mat_ninos': tot_pri_mat_ninos, 'mat_ninas': tot_pri_mat_ninas, 'tot_mat': tot_pri_mat_gral,
-            'asis_ninos': tot_pri_asis_ninos, 'asis_ninas': tot_pri_asis_ninas, 'tot_asis': tot_pri_asis_gral
-        }
-
-        # 2. Nivel Inicial
-        grados_inicial_db = conn.execute("""
-            SELECT DISTINCT grado FROM estudiantes 
-            WHERE LOWER(grado) LIKE '%párvulos%' OR LOWER(grado) LIKE '%parvulos%' 
-               OR LOWER(grado) LIKE '%prekínder%' OR LOWER(grado) LIKE '%prekinder%' 
-               OR LOWER(grado) LIKE '%kínder%' OR LOWER(grado) LIKE '%kinder%' 
-               OR LOWER(grado) LIKE '%preprimario%'
-        """).fetchall()
-        
-        lista_inicial = [g['grado'] if isinstance(g, dict) or hasattr(g, 'keys') else g[0] for g in grados_inicial_db]
-
-        tot_ini_mat_ninos = 0
-        tot_ini_mat_ninas = 0
-        tot_ini_asis_ninos = 0
-        tot_ini_asis_ninas = 0
-
-        for g_ini in lista_inicial:
-            c_mn = conn.execute("SELECT COUNT(*) FROM estudiantes WHERE grado = %s AND LOWER(TRIM(sexo)) = 'masculino'", (g_ini,)).fetchone()
-            tot_ini_mat_ninos += int(c_mn[0] if (isinstance(c_mn, (list, tuple)) or not hasattr(c_mn, 'keys')) else list(c_mn.values())[0])
-            
-            c_mna = conn.execute("SELECT COUNT(*) FROM estudiantes WHERE grado = %s AND LOWER(TRIM(sexo)) = 'femenino'", (g_ini,)).fetchone()
-            tot_ini_mat_ninas += int(c_mna[0] if (isinstance(c_mna, (list, tuple)) or not hasattr(c_mna, 'keys')) else list(c_mna.values())[0])
-
-            c_an = conn.execute("SELECT COUNT(*) FROM asistencia a JOIN estudiantes e ON a.id_estudiante = e.id WHERE a.grado = %s AND a.fecha = %s AND LOWER(TRIM(a.estado)) = 'presente' AND LOWER(TRIM(e.sexo)) = 'masculino'", (g_ini, fecha_reporte)).fetchone()
-            tot_ini_asis_ninos += int(c_an[0] if (isinstance(c_an, (list, tuple)) or not hasattr(c_an, 'keys')) else list(c_an.values())[0])
-
-            c_ana = conn.execute("SELECT COUNT(*) FROM asistencia a JOIN estudiantes e ON a.id_estudiante = e.id WHERE a.grado = %s AND a.fecha = %s AND LOWER(TRIM(a.estado)) = 'presente' AND LOWER(TRIM(e.sexo)) = 'femenino'", (g_ini, fecha_reporte)).fetchone()
-            tot_ini_asis_ninas += int(c_ana[0] if (isinstance(c_ana, (list, tuple)) or not hasattr(c_ana, 'keys')) else list(c_ana.values())[0])
-
-        tot_ini_mat_gral = tot_ini_mat_ninos + tot_ini_mat_ninas
-        tot_ini_asis_gral = tot_ini_asis_ninos + tot_ini_asis_ninas
-
-        tot_inicial = {
-            'mat_ninos': tot_ini_mat_ninos if tot_ini_mat_ninos > 0 else '',
-            'mat_ninas': tot_ini_mat_ninas if tot_ini_mat_ninas > 0 else '',
-            'tot_mat': tot_ini_mat_gral if tot_ini_mat_gral > 0 else '',
-            'asis_ninos': tot_ini_asis_ninos if tot_ini_asis_ninos > 0 else '',
-            'asis_ninas': tot_ini_asis_ninas if tot_ini_asis_ninas > 0 else '',
-            'tot_asis': tot_ini_asis_gral if tot_ini_asis_gral > 0 else ''
-        }
-
-        # 3. Obtener datos del personal para el reporte PDF
-        meta_personal = conn.execute('SELECT * FROM asistencia_personal WHERE fecha = %s', (fecha_reporte,)).fetchone()
-        meta = dict(meta_personal) if meta_personal else {}
-
+        # Opcional: Puedes obtener también los estudiantes ausentes si los tienes en la tabla asistencia
+        ausentes_estudiantes = conn.execute('''
+            U.nombres, U.apellidos, A.grado, A.estado 
+            FROM asistencia A 
+            JOIN estudiantes U ON A.id_estudiante = U.id 
+            WHERE A.fecha = %s AND A.estado = 'Ausente'
+        ''', (fecha_reporte,)).fetchall() if False else [] # Cambia a tu consulta real si gustas incluir estudiantes
     finally:
         conn.close()
 
-    return render_template('control_asistencia_pdf.html', 
-                           fecha=fecha_reporte,
-                           datos_primaria=datos_primaria,
-                           tot_primaria=tot_primaria,
-                           tot_inicial=tot_inicial,
-                           meta=meta)
+    # Mapeo seguro de los datos del personal
+    p_data = dict(personal) if personal else {
+        'adm_presente': '0', 'adm_ausentes': 'Ninguno',
+        'aux_presente': '0', 'aux_ausentes': 'Ninguno',
+        'doc_presente': '0', 'doc_ausentes': 'Ninguno'
+    }
+
+    # Ruta temporal para guardar el PDF generado
+    pdf_path = f"/tmp/reporte_asistencia_{fecha_reporte}.pdf"
+    
+    # Construcción del PDF con ReportLab
+    doc = SimpleDocTemplate(pdf_path, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
+    story = []
+    styles = getSampleStyleSheet()
+    
+    # Estilos personalizados
+    title_style = ParagraphStyle(
+        'TitleStyle',
+        parent=styles['Heading1'],
+        fontSize=18,
+        alignment=1, # Centrado
+        textColor=colors.HexColor('#1a365d')
+    )
+    
+    subtitle_style = ParagraphStyle(
+        'SubTitleStyle',
+        parent=styles['Normal'],
+        fontSize=12,
+        alignment=1,
+        textColor=colors.HexColor('#4a5568')
+    )
+
+    story.append(Paragraph("SIGEM Mami Luisa", title_style))
+    story.append(Paragraph(f"<b>Reporte General de Asistencia y Personal</b><br/>Fecha: {fecha_reporte}", subtitle_style))
+    story.append(Spacer(1, 20))
+
+    # Tabla de Asistencia del Personal
+    story.append(Paragraph("<b>Asistencia del Personal</b>", styles['Heading2']))
+    story.append(Spacer(1, 8))
+    
+    table_data = [
+        ["Tipo de Personal", "Contratado", "Presente", "Nombre de los Ausentes"],
+        ["Adm. y apoyo", "10", str(p_data.get('adm_presente', 0)), str(p_data.get('adm_ausentes', 'Ninguno'))],
+        ["Auxiliares", "N/A", str(p_data.get('aux_presente', 0)), str(p_data.get('aux_ausentes', 'Ninguno'))],
+        ["Docentes", "09", str(p_data.get('doc_presente', 0)), str(p_data.get('doc_ausentes', 'Ninguno'))]
+    ]
+
+    t = Table(table_data, colWidths=[120, 70, 70, 280])
+    t.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#2b6cb0')),
+        ('TEXTCOLOR', (0,0), (-1,0), colors.whitesmoke),
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+        ('BOTTOMPADDING', (0,0), (-1,0), 8),
+        ('BACKGROUND', (0,1), (-1,-1), colors.HexColor('#f7fafc')),
+        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#cbd5e0')),
+        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+    ]))
+    
+    story.append(t)
+    doc.build(story)
+
+    return send_file(pdf_path, as_attachment=False, mimetype='application/pdf')
 
 @app.route('/generar_pdf/<path:id_estudiante>')
 def generar_pdf(id_estudiante):
