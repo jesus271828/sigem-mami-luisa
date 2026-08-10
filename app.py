@@ -1437,7 +1437,7 @@ def descargar_reporte_ausencias():
         conn.close()
 
     # Renderiza tu propia plantilla HTML de reporte pasando las variables correspondientes
-    return render_template('reporte_ausencias.html', 
+    return render_template('control_asistencia_pdf.html', 
                            fecha=fecha_reporte, 
                            meta=meta, 
                            ausentes=ausentes)
