@@ -1374,17 +1374,15 @@ def guardar_asistencia():
         
     return redirect(url_for('asistencia', grado=grado, fecha=fecha))
 
-from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib import colors
+from datetime import datetime
+from flask import render_template, request, redirect, url_for, session
 
 @app.route('/descargar_reporte_ausencias', methods=['GET', 'POST'])
 def descargar_reporte_ausencias():
     if 'usuario' not in session:
         return redirect(url_for('login'))
 
-    # 1. Si es POST, guardamos/actualizamos los datos del personal enviados desde el formulario
+    # 1. Si el formulario envía los datos por POST, los guardamos en la base de datos
     if request.method == 'POST':
         fecha = request.form.get('fecha')
         adm_presente = request.form.get('adm_presente') or 0
@@ -1415,87 +1413,34 @@ def descargar_reporte_ausencias():
         
         return '', 200
 
-    # 2. Si es GET, generamos el PDF usando los datos reales de la base de datos para esa fecha
+    # 2. Si es GET, consultamos los datos guardados para mostrarlos en tu HTML de reporte
     fecha_reporte = request.args.get('fecha', datetime.now().strftime('%Y-%m-%d'))
     
     conn = get_db_connection()
     try:
         # Obtenemos los datos del personal ingresados ese día
-        personal = conn.execute('SELECT * FROM asistencia_personal WHERE fecha = %s', (fecha_reporte,)).fetchone()
+        personal_db = conn.execute('SELECT * FROM asistencia_personal WHERE fecha = %s', (fecha_reporte,)).fetchone()
+        meta = dict(personal_db) if personal_db else {}
+
+        # Opcional: Si en tu HTML de reporte también muestras los estudiantes ausentes de ese día
+        estudiantes_ausentes = conn.execute('''
+            SELECT e.nombres, e.apellidos, a.grado, a.estado 
+            FROM asistencia a 
+            JOIN estudiantes e ON a.id_estudiante = e.id 
+            WHERE a.fecha = %s AND a.estado = 'Ausente'
+            ORDER BY a.grado ASC, e.apellidos ASC
+        ''', (fecha_reporte,)).fetchall()
         
-        # Opcional: Puedes obtener también los estudiantes ausentes si los tienes en la tabla asistencia
-        ausentes_estudiantes = conn.execute('''
-            U.nombres, U.apellidos, A.grado, A.estado 
-            FROM asistencia A 
-            JOIN estudiantes U ON A.id_estudiante = U.id 
-            WHERE A.fecha = %s AND A.estado = 'Ausente'
-        ''', (fecha_reporte,)).fetchall() if False else [] # Cambia a tu consulta real si gustas incluir estudiantes
+        ausentes = [dict(est) if hasattr(est, 'keys') else {'nombres': est[0], 'apellidos': est[1], 'grado': est[2], 'estado': est[3]} for est in estudiantes_ausentes]
+
     finally:
         conn.close()
 
-    # Mapeo seguro de los datos del personal
-    p_data = dict(personal) if personal else {
-        'adm_presente': '0', 'adm_ausentes': 'Ninguno',
-        'aux_presente': '0', 'aux_ausentes': 'Ninguno',
-        'doc_presente': '0', 'doc_ausentes': 'Ninguno'
-    }
-
-    # Ruta temporal para guardar el PDF generado
-    pdf_path = f"/tmp/reporte_asistencia_{fecha_reporte}.pdf"
-    
-    # Construcción del PDF con ReportLab
-    doc = SimpleDocTemplate(pdf_path, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
-    story = []
-    styles = getSampleStyleSheet()
-    
-    # Estilos personalizados
-    title_style = ParagraphStyle(
-        'TitleStyle',
-        parent=styles['Heading1'],
-        fontSize=18,
-        alignment=1, # Centrado
-        textColor=colors.HexColor('#1a365d')
-    )
-    
-    subtitle_style = ParagraphStyle(
-        'SubTitleStyle',
-        parent=styles['Normal'],
-        fontSize=12,
-        alignment=1,
-        textColor=colors.HexColor('#4a5568')
-    )
-
-    story.append(Paragraph("SIGEM Mami Luisa", title_style))
-    story.append(Paragraph(f"<b>Reporte General de Asistencia y Personal</b><br/>Fecha: {fecha_reporte}", subtitle_style))
-    story.append(Spacer(1, 20))
-
-    # Tabla de Asistencia del Personal
-    story.append(Paragraph("<b>Asistencia del Personal</b>", styles['Heading2']))
-    story.append(Spacer(1, 8))
-    
-    table_data = [
-        ["Tipo de Personal", "Contratado", "Presente", "Nombre de los Ausentes"],
-        ["Adm. y apoyo", "10", str(p_data.get('adm_presente', 0)), str(p_data.get('adm_ausentes', 'Ninguno'))],
-        ["Auxiliares", "N/A", str(p_data.get('aux_presente', 0)), str(p_data.get('aux_ausentes', 'Ninguno'))],
-        ["Docentes", "09", str(p_data.get('doc_presente', 0)), str(p_data.get('doc_ausentes', 'Ninguno'))]
-    ]
-
-    t = Table(table_data, colWidths=[120, 70, 70, 280])
-    t.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#2b6cb0')),
-        ('TEXTCOLOR', (0,0), (-1,0), colors.whitesmoke),
-        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
-        ('BOTTOMPADDING', (0,0), (-1,0), 8),
-        ('BACKGROUND', (0,1), (-1,-1), colors.HexColor('#f7fafc')),
-        ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#cbd5e0')),
-        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-    ]))
-    
-    story.append(t)
-    doc.build(story)
-
-    return send_file(pdf_path, as_attachment=False, mimetype='application/pdf')
+    # Renderiza tu propia plantilla HTML de reporte pasando las variables correspondientes
+    return render_template('reporte_ausencias.html', 
+                           fecha=fecha_reporte, 
+                           meta=meta, 
+                           ausentes=ausentes)
 
 @app.route('/generar_pdf/<path:id_estudiante>')
 def generar_pdf(id_estudiante):
