@@ -51,13 +51,14 @@ class PostgresCursorWrapper:
 
 def get_db_connection():
     if DATABASE_URL:
-        conn = psycopg2.connect(DATABASE_URL, sslmode='require')
+        # Pasamos la URL directamente ya que incluye el sslmode en su interior
+        conn = psycopg2.connect(DATABASE_URL)
         return PostgresCursorWrapper(conn)
     else:
         conn = sqlite3.connect('sigem_ml.db')
         conn.row_factory = sqlite3.Row
         return conn
-
+    
 def init_db():
     conn = get_db_connection()
     if DATABASE_URL:
