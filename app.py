@@ -2018,6 +2018,5 @@ def menu():
     return render_template('menu.html') # O la plantilla que corresponda a tu menú
 
 
-
 if __name__ == '__main__':
     app.run(debug=True)
