@@ -51,9 +51,15 @@ class PostgresCursorWrapper:
 
 def get_db_connection():
     if DATABASE_URL:
-        # Pasamos la URL directamente ya que incluye el sslmode en su interior
-        conn = psycopg2.connect(DATABASE_URL)
-        return PostgresCursorWrapper(conn)
+        try:
+            # Intentamos conectar con Supabase
+            conn = psycopg2.connect(DATABASE_URL, connect_timeout=5)
+            return PostgresCursorWrapper(conn)
+        except Exception as e:
+            print("Reintentando conexión a base de datos externa...", e)
+            time.sleep(1)
+            conn = psycopg2.connect(DATABASE_URL, connect_timeout=10)
+            return PostgresCursorWrapper(conn)
     else:
         conn = sqlite3.connect('sigem_ml.db')
         conn.row_factory = sqlite3.Row

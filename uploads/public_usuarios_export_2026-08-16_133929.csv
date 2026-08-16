@@ -1,0 +1,6 @@
+id,nombre_completo,username,password,rol,curso_asignado
+3,Maria Alfonseca Duverge,maria,1277,maestro,2do A
+1,Oficina Nivel Primario,oficina,1998,admin,
+4,Oficina Nivel Inicial,oficina2,19982,admin,
+5,Minerva Sánchez,minervasanchez,parvulos2026,maestro,Párvulos
+2,Jesus Maria Alfonseca Duverge,jesus27,1313,maestro,1ro A
