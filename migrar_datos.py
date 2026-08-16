@@ -1,53 +1,45 @@
 import pandas as pd
 import psycopg2
 
-# Tu cadena de conexión completa
-DATABASE_URL = "postgresql://postgres.cfwtrxtncgvqujimcvds:piI4T8inVAPT0n8L@aws-0-ca-central-1.pooler.supabase.com:6543/postgres?sslmode=require"
+# 1. Cargar el archivo CSV de expedientes desde la carpeta uploads
+df = pd.read_csv('uploads/public_expedientes_viejos_export_2026-08-16_191527.csv')
 
-# Nombre del archivo CSV
-csv_filename = "uploads/public_inscripciones_export_2026-08-16_142435.csv"
+# 2. Filtrar y seleccionar únicamente las columnas útiles (índices 3, 4 y 5)
+df_limpio = df.iloc[1:, [3, 4, 5]].copy()
+df_limpio.columns = ['Unnamed: 3', 'Unnamed: 4', 'Unnamed: 5']
 
-print(f"Leyendo el archivo {csv_filename}...")
-df = pd.read_csv(csv_filename)
+# Eliminar filas donde el nombre (Unnamed: 3) esté vacío
+df_limpio = df_limpio.dropna(subset=['Unnamed: 3'])
 
-# Preparar datos: convertir nulos a formato compatible con SQL
-df = df.where(pd.notnull(df), None)
+# 3. Conexión directa a Supabase forzando la codificación UTF-8
+URL_SUPABASE = "postgresql://postgres.cfwtrxtncgvqujimcvds:piI4T8inVAPT0n8L@aws-0-ca-central-1.pooler.supabase.com:6543/postgres"
 
-print(f"Total de registros a migrar: {len(df)}")
+conexion = psycopg2.connect(URL_SUPABASE, client_encoding='utf8')
+cursor = conexion.cursor()
 
-try:
-    print("Conectando a Supabase...")
-    conn = psycopg2.connect(DATABASE_URL)
-    cursor = conn.cursor()
-    print("¡Conexión exitosa!")
-except Exception as e:
-    print("Error al conectar:", e)
-    exit()
+registros_migrados = 0
 
-exitosos = 0
-errores = 0
-
-# Iterar sobre las filas del CSV e insertar
-for index, row in df.iterrows():
+# 4. Recorrer el DataFrame e insertar directamente en Supabase
+for index, row in df_limpio.iterrows():
+    nombre = None if pd.isna(row['Unnamed: 3']) else str(row['Unnamed: 3']).strip()
+    ano_escolar = None if pd.isna(row['Unnamed: 4']) else str(row['Unnamed: 4']).strip()
+    ficha = None if pd.isna(row['Unnamed: 5']) else str(row['Unnamed: 5']).strip()
+    
     try:
-        columns = list(df.columns)
-        placeholders = ", ".join(["%s"] * len(columns))
-        columns_str = ", ".join([f'"{col}"' for col in columns])
-        
-        sql = f'INSERT INTO inscripciones ({columns_str}) VALUES ({placeholders}) ON CONFLICT (id) DO NOTHING;'
-        
-        values = [row[col] for col in columns]
-        
-        cursor.execute(sql, values)
-        conn.commit()
-        exitosos += 1
-    except Exception as err:
-        conn.rollback()
-        print(f"Error en fila {index}: {err}")
-        errores += 1
+        cursor.execute(
+            """
+            INSERT INTO expedientes_viejos ("Unnamed: 3", "Unnamed: 4", "Unnamed: 5")
+            VALUES (%s, %s, %s)
+            """,
+            (nombre, ano_escolar, ficha)
+        )
+        registros_migrados += 1
+    except Exception as e:
+        print(f"Error al insertar el registro {nombre}: {e}")
 
+# Guardar cambios y cerrar conexión de forma segura
+conexion.commit()
 cursor.close()
-conn.close()
+conexion.close()
 
-print(f"\n--- Migración Finalizada ---")
-print(f"Insertados: {exitosos} | Errores: {errores}")
+print(f"¡Migración a Supabase completada con éxito! Se registraron {registros_migrados} expedientes.")
