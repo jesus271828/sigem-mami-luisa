@@ -207,7 +207,14 @@ def init_db():
     conn.commit()
     conn.close()
 
-init_db()
+# Cambia esto:
+# init_db()
+
+# Por esto:
+try:
+    init_db()
+except Exception as e:
+    print("Base de datos conectándose de forma diferida:", e)
 
 # --- RUTA PRINCIPAL (INDEX Y MENU) ---
 @app.route('/')
