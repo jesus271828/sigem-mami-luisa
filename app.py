@@ -948,8 +948,7 @@ def inscripcion_publica():
             conexion.commit()
             flash('¡Formulario enviado con éxito! Sus datos han sido registrados correctamente en el sistema.', 'success')
         except Exception as e:
-            if conexion:
-                conexion.rollback()
+            # YA NO LLAMAMOS A conexion.rollback() PORQUE NO EXISTE EN ESTA CONEXIÓN
             print(f"--- ERROR CRÍTICO EN INSCRIPCIÓN PÚBLICA: {e}")
             flash('Hubo un error al enviar el formulario. Por favor intente de nuevo.', 'danger')
         finally:
