@@ -1673,27 +1673,28 @@ def notas1():
     lista_estudiantes = []
 
     try:
-        # Definimos los grados de 1ro a 3ro permitidos para oficina/admin
-        grados_primer_ciclo = ['1er Grado', '2do Grado', '3er Grado', '1ro', '2do', '3ro', 'Primer Grado', 'Segundo Grado', 'Tercer Grado', '1er', '2do', '3er']
-
         if is_postgres:
             cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             
             if 'oficina' in rol_usuario or 'admin' in rol_usuario:
-                # Si es oficina o admin, trae todos los estudiantes de 1ro a 3ro
-                format_strings = ','.join(['%s'] * len(grados_primer_ciclo))
-                cur.execute(f"""
+                cur.execute("""
                     SELECT id_estudiante, nombres, apellidos, grado 
                     FROM estudiantes 
-                    WHERE grado ILIKE ANY (ARRAY[{','.join([f"'{g}%'" for g in grados_primer_ciclo])}])
+                    WHERE grado ILIKE '1%' OR grado ILIKE '2%' OR grado ILIKE '3%'
                     ORDER BY apellidos, nombres ASC
                 """)
             elif grado_usuario:
-                cur.execute("SELECT id_estudiante, nombres, apellidos, grado FROM estudiantes WHERE grado ILIKE %s ORDER BY apellidos, nombres ASC", (f"%{grado_usuario}%",))
+                cur.execute("""
+                    SELECT id_estudiante, nombres, apellidos, grado 
+                    FROM estudiantes 
+                    WHERE grado ILIKE %s 
+                    ORDER BY apellidos, nombres ASC
+                """, (f"%{grado_usuario}%",))
+            else:
+                cur.execute("SELECT id_estudiante, nombres, apellidos, grado FROM estudiantes ORDER BY apellidos, nombres ASC")
             
             lista_estudiantes = cur.fetchall()
             
-            # Respaldo general por si la tabla de estudiantes está vacía, buscar en inscripciones
             if not lista_estudiantes:
                 cur.execute("SELECT id as id_estudiante, nombres, apellidos, grado FROM inscripciones ORDER BY apellidos, nombres ASC")
                 lista_estudiantes = cur.fetchall()
@@ -1703,7 +1704,6 @@ def notas1():
             cur = conexion.cursor()
             
             if 'oficina' in rol_usuario or 'admin' in rol_usuario:
-                # Consulta flexible para SQLite abarcando 1ro, 2do y 3ro
                 cur.execute("""
                     SELECT id_estudiante, nombres, apellidos, grado 
                     FROM estudiantes 
@@ -1711,7 +1711,14 @@ def notas1():
                     ORDER BY apellidos, nombres ASC
                 """)
             elif grado_usuario:
-                cur.execute("SELECT id_estudiante, nombres, apellidos, grado FROM estudiantes WHERE grado LIKE ? ORDER BY apellidos, nombres ASC", (f"%{grado_usuario}%",))
+                cur.execute("""
+                    SELECT id_estudiante, nombres, apellidos, grado 
+                    FROM estudiantes 
+                    WHERE grado LIKE ? 
+                    ORDER BY apellidos, nombres ASC
+                """, (f"%{grado_usuario}%",))
+            else:
+                cur.execute("SELECT id_estudiante, nombres, apellidos, grado FROM estudiantes ORDER BY apellidos, nombres ASC")
             
             lista_estudiantes = cur.fetchall()
             
@@ -1767,16 +1774,25 @@ def notas1():
             cursor_post.close()
             return redirect(url_for('notas1', id_estudiante=id_post))
 
-        # Cargar notas del estudiante seleccionado
+        # Cargar notas del estudiante seleccionado (CORREGIDO PARA POSTGRES Y SQLITE)
         notas = {}
         if estudiante_dict:
-            cur_n = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) if is_postgres else conexion.cursor()
-            if not is_postgres:
+            if is_postgres:
+                cur_n = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+                cur_n.execute("""
+                    SELECT campo_nombre, valor 
+                    FROM calificaciones_detalle 
+                    WHERE id_estudiante = %s AND tipo_informe = %s
+                """, (estudiante_dict['id_estudiante'], tipo_inf))
+            else:
                 conexion.row_factory = sqlite3.Row
                 cur_n = conexion.cursor()
+                cur_n.execute("""
+                    SELECT campo_nombre, valor 
+                    FROM calificaciones_detalle 
+                    WHERE id_estudiante = ? AND tipo_informe = ?
+                """, (estudiante_dict['id_estudiante'], tipo_inf))
             
-            cur_n.execute("SELECT campo_nombre, valor FROM calificaciones_detalle WHERE id_estudiante = ? AND tipo_informe = ?", 
-                          (estudiante_dict['id_estudiante'], tipo_inf))
             resultados = cur_n.fetchall()
             notas = {row['campo_nombre']: row['valor'] for row in resultados}
             cur_n.close()
