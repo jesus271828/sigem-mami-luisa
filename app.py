@@ -1673,36 +1673,54 @@ def notas1():
     lista_estudiantes = []
 
     try:
+        # Definimos los grados de 1ro a 3ro permitidos para oficina/admin
+        grados_primer_ciclo = ['1er Grado', '2do Grado', '3er Grado', '1ro', '2do', '3ro', 'Primer Grado', 'Segundo Grado', 'Tercer Grado', '1er', '2do', '3er']
+
         if is_postgres:
             cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-            # Primero intentamos filtrar por grado si es maestro
-            if grado_usuario and 'oficina' not in rol_usuario and 'admin' not in rol_usuario:
-                cur.execute("SELECT id_estudiante, nombres, apellidos, grado FROM estudiantes WHERE grado ILIKE %s ORDER BY apellidos, ASC", (f"%{grado_usuario}%",))
-                lista_estudiantes = cur.fetchall()
             
-            # Si no hay estudiantes con ese filtro o es oficina/admin, traemos todos los de la tabla estudiantes o inscripciones
-            if not lista_estudiantes:
-                cur.execute("SELECT id_estudiante, nombres, apellidos, grado FROM estudiantes ORDER BY apellidos ASC")
-                lista_estudiantes = cur.fetchall()
+            if 'oficina' in rol_usuario or 'admin' in rol_usuario:
+                # Si es oficina o admin, trae todos los estudiantes de 1ro a 3ro
+                format_strings = ','.join(['%s'] * len(grados_primer_ciclo))
+                cur.execute(f"""
+                    SELECT id_estudiante, nombres, apellidos, grado 
+                    FROM estudiantes 
+                    WHERE grado ILIKE ANY (ARRAY[{','.join([f"'{g}%'" for g in grados_primer_ciclo])}])
+                    ORDER BY apellidos, nombres ASC
+                """)
+            elif grado_usuario:
+                cur.execute("SELECT id_estudiante, nombres, apellidos, grado FROM estudiantes WHERE grado ILIKE %s ORDER BY apellidos, nombres ASC", (f"%{grado_usuario}%",))
             
+            lista_estudiantes = cur.fetchall()
+            
+            # Respaldo general por si la tabla de estudiantes está vacía, buscar en inscripciones
             if not lista_estudiantes:
-                cur.execute("SELECT id as id_estudiante, nombres, apellidos, grado FROM inscripciones ORDER BY apellidos ASC")
+                cur.execute("SELECT id as id_estudiante, nombres, apellidos, grado FROM inscripciones ORDER BY apellidos, nombres ASC")
                 lista_estudiantes = cur.fetchall()
             cur.close()
         else:
             conexion.row_factory = sqlite3.Row
             cur = conexion.cursor()
             
-            if grado_usuario and 'oficina' not in rol_usuario and 'admin' not in rol_usuario:
-                cur.execute("SELECT id_estudiante, nombres, apellidos, grado FROM estudiantes WHERE grado LIKE ? ORDER BY apellidos ASC", (f"%{grado_usuario}%",))
-                lista_estudiantes = cur.fetchall()
+            if 'oficina' in rol_usuario or 'admin' in rol_usuario:
+                # Consulta flexible para SQLite abarcando 1ro, 2do y 3ro
+                cur.execute("""
+                    SELECT id_estudiante, nombres, apellidos, grado 
+                    FROM estudiantes 
+                    WHERE grado LIKE '1%' OR grado LIKE '2%' OR grado LIKE '3%'
+                    ORDER BY apellidos, nombres ASC
+                """)
+            elif grado_usuario:
+                cur.execute("SELECT id_estudiante, nombres, apellidos, grado FROM estudiantes WHERE grado LIKE ? ORDER BY apellidos, nombres ASC", (f"%{grado_usuario}%",))
+            
+            lista_estudiantes = cur.fetchall()
             
             if not lista_estudiantes:
-                cur.execute("SELECT id_estudiante, nombres, apellidos, grado FROM estudiantes ORDER BY apellidos ASC")
+                cur.execute("SELECT id_estudiante, nombres, apellidos, grado FROM estudiantes ORDER BY apellidos, nombres ASC")
                 lista_estudiantes = cur.fetchall()
                 
             if not lista_estudiantes:
-                cur.execute("SELECT id as id_estudiante, nombres, apellidos, grado FROM inscripciones ORDER BY apellidos ASC")
+                cur.execute("SELECT id as id_estudiante, nombres, apellidos, grado FROM inscripciones ORDER BY apellidos, nombres ASC")
                 lista_estudiantes = cur.fetchall()
             cur.close()
 
