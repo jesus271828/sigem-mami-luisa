@@ -48,12 +48,13 @@
                         <div class="row">
                             <div class="col-md-3 text-center">
                                 {% if estudiante.foto_estudiante_cedula %}
-                                    <img src="{{ url_for('static', filename=estudiante.foto_estudiante_cedula) }}" class="rounded-circle img-thumbnail mb-2" style="width: 120px; height: 120px; object-fit: cover;" alt="Estudiante">
+                                    <!-- Ajuste para cargar la foto correctamente -->
+                                    <img src="/{{ estudiante.foto_estudiante_cedula if not estudiante.foto_estudiante_cedula.startswith('/') else estudiante.foto_estudiante_cedula[1:] }}" class="rounded-circle img-thumbnail mb-2" style="width: 120px; height: 120px; object-fit: cover;" alt="Estudiante" onerror="this.src='https://via.placeholder.com/120?text=Sin+Foto'">
                                 {% else %}
                                     <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center text-white mx-auto mb-2" style="width: 120px; height: 120px;"><i class="fas fa-user fa-3x"></i></div>
                                 {% endif %}
                                 <h5>{{ estudiante.nombres }} {{ estudiante.apellidos }}</h5>
-                                <span class="badge bg-primary">Grado: {{ estudiante.grado }}</span>
+                                <span class="badge bg-primary">Grado: {{ estudiante.grado or 'N/A' }}</span>
                             </div>
                             
                             <div class="col-md-9">
@@ -76,6 +77,25 @@
                         </div>
                     </div>
 
+                    <!-- NUEVA SECCIÓN: Medicación en el Centro Educativo -->
+                    <div class="card card-custom p-4 mb-4">
+                        <h4 class="text-primary border-bottom pb-2"><i class="fas fa-pills me-2"></i>Medicación en el Centro Educativo</h4>
+                        <p class="text-muted mt-2 mb-2">
+                            Medicamentos genéricos normalmente utilizados en el centro: Analgésico, Antiinflamatorio, Antipirético, Antihistamínico y Antiespasmódico.
+                        </p>
+                        <p class="mb-3">
+                            Tomando en cuenta la información anterior y ante la posibilidad de que no podamos contactarle vía telefónica, <strong>¿autoriza usted a que le sean suministrados los medicamentos enlistados anteriormente sin previo aviso?</strong>
+                        </p>
+                        <div class="p-3 bg-light rounded border d-inline-block">
+                            <span class="fw-bold fs-5">
+                                Respuesta registrada: 
+                                <span class="badge {% if estudiante.autoriza_medicamentos == 'SI' or estudiante.autoriza_medicamentos == True %}bg-success{% else %}bg-danger{% endif %}">
+                                    {{ estudiante.autoriza_medicamentos if estudiante.autoriza_medicamentos else 'NO / No especificado' }}
+                                </span>
+                            </span>
+                        </div>
+                    </div>
+
                     <!-- Sección de Fotos y Autorizados / Familiares -->
                     <h3 class="mb-3 mt-4">Personas Autorizadas, Padres y Tutores</h3>
                     <div class="row row-cols-1 row-cols-md-3 g-4">
@@ -86,7 +106,7 @@
                             <div class="card card-custom h-100 text-center p-3">
                                 <div class="mx-auto mb-2">
                                     {% if estudiante.foto_padre_cedula %}
-                                        <img src="{{ url_for('static', filename=estudiante.foto_padre_cedula) }}" class="foto-autorizado" alt="Padre">
+                                        <img src="/{{ estudiante.foto_padre_cedula if not estudiante.foto_padre_cedula.startswith('/') else estudiante.foto_padre_cedula[1:] }}" class="foto-autorizado" alt="Padre" onerror="this.src='https://via.placeholder.com/100?text=Sin+Foto'">
                                     {% else %}
                                         <div class="foto-autorizado bg-light d-flex align-items-center justify-content-center mx-auto"><i class="fas fa-user fa-2x text-muted"></i></div>
                                     {% endif %}
@@ -105,7 +125,7 @@
                             <div class="card card-custom h-100 text-center p-3">
                                 <div class="mx-auto mb-2">
                                     {% if estudiante.foto_madre_cedula %}
-                                        <img src="{{ url_for('static', filename=estudiante.foto_madre_cedula) }}" class="foto-autorizado" alt="Madre">
+                                        <img src="/{{ estudiante.foto_madre_cedula if not estudiante.foto_madre_cedula.startswith('/') else estudiante.foto_madre_cedula[1:] }}" class="foto-autorizado" alt="Madre" onerror="this.src='https://via.placeholder.com/100?text=Sin+Foto'">
                                     {% else %}
                                         <div class="foto-autorizado bg-light d-flex align-items-center justify-content-center mx-auto"><i class="fas fa-user fa-2x text-muted"></i></div>
                                     {% endif %}
@@ -124,7 +144,7 @@
                             <div class="card card-custom h-100 text-center p-3">
                                 <div class="mx-auto mb-2">
                                     {% if estudiante.foto_tutor_cedula %}
-                                        <img src="{{ url_for('static', filename=estudiante.foto_tutor_cedula) }}" class="foto-autorizado" alt="Tutor">
+                                        <img src="/{{ estudiante.foto_tutor_cedula if not estudiante.foto_tutor_cedula.startswith('/') else estudiante.foto_tutor_cedula[1:] }}" class="foto-autorizado" alt="Tutor" onerror="this.src='https://via.placeholder.com/100?text=Sin+Foto'">
                                     {% else %}
                                         <div class="foto-autorizado bg-light d-flex align-items-center justify-content-center mx-auto"><i class="fas fa-user fa-2x text-muted"></i></div>
                                     {% endif %}
@@ -143,13 +163,13 @@
                             <div class="card card-custom h-100 text-center p-3">
                                 <div class="mx-auto mb-2">
                                     {% if estudiante.foto_aut_cedula_1 %}
-                                        <img src="{{ url_for('static', filename=estudiante.foto_aut_cedula_1) }}" class="foto-autorizado" alt="Autorizado 1">
+                                        <img src="/{{ estudiante.foto_aut_cedula_1 if not estudiante.foto_aut_cedula_1.startswith('/') else estudiante.foto_aut_cedula_1[1:] }}" class="foto-autorizado" alt="Autorizado 1" onerror="this.src='https://via.placeholder.com/100?text=Sin+Foto'">
                                     {% else %}
                                         <div class="foto-autorizado bg-light d-flex align-items-center justify-content-center mx-auto"><i class="fas fa-user fa-2x text-muted"></i></div>
                                     {% endif %}
                                 </div>
                                 <h5>{{ estudiante.aut_nombre_1 }}</h5>
-                                <span class="badge bg-warning text-dark mb-2">Autorizado ({{ estudiante.aut_parentesco_1 }})</span>
+                                <span class="badge bg-warning text-dark mb-2">Autorizado ({{ estudiante.aut_parentesco_1 or 'N/A' }})</span>
                                 <p class="small text-muted mb-1">Cédula: {{ estudiante.aut_cedula_1 or 'N/A' }}</p>
                                 <p class="small mb-0"><i class="fas fa-phone text-success"></i> Tel: {{ estudiante.aut_tel_1 or 'N/A' }}</p>
                             </div>
@@ -162,13 +182,13 @@
                             <div class="card card-custom h-100 text-center p-3">
                                 <div class="mx-auto mb-2">
                                     {% if estudiante.foto_aut_cedula_2 %}
-                                        <img src="{{ url_for('static', filename=estudiante.foto_aut_cedula_2) }}" class="foto-autorizado" alt="Autorizado 2">
+                                        <img src="/{{ estudiante.foto_aut_cedula_2 if not estudiante.foto_aut_cedula_2.startswith('/') else estudiante.foto_aut_cedula_2[1:] }}" class="foto-autorizado" alt="Autorizado 2" onerror="this.src='https://via.placeholder.com/100?text=Sin+Foto'">
                                     {% else %}
                                         <div class="foto-autorizado bg-light d-flex align-items-center justify-content-center mx-auto"><i class="fas fa-user fa-2x text-muted"></i></div>
                                     {% endif %}
                                 </div>
                                 <h5>{{ estudiante.aut_nombre_2 }}</h5>
-                                <span class="badge bg-warning text-dark mb-2">Autorizado ({{ estudiante.aut_parentesco_2 }})</span>
+                                <span class="badge bg-warning text-dark mb-2">Autorizado ({{ estudiante.aut_parentesco_2 or 'N/A' }})</span>
                                 <p class="small text-muted mb-1">Cédula: {{ estudiante.aut_cedula_2 or 'N/A' }}</p>
                                 <p class="small mb-0"><i class="fas fa-phone text-success"></i> Tel: {{ estudiante.aut_tel_2 or 'N/A' }}</p>
                             </div>
@@ -181,13 +201,13 @@
                             <div class="card card-custom h-100 text-center p-3">
                                 <div class="mx-auto mb-2">
                                     {% if estudiante.foto_aut_cedula_3 %}
-                                        <img src="{{ url_for('static', filename=estudiante.foto_aut_cedula_3) }}" class="foto-autorizado" alt="Autorizado 3">
+                                        <img src="/{{ estudiante.foto_aut_cedula_3 if not estudiante.foto_aut_cedula_3.startswith('/') else estudiante.foto_aut_cedula_3[1:] }}" class="foto-autorizado" alt="Autorizado 3" onerror="this.src='https://via.placeholder.com/100?text=Sin+Foto'">
                                     {% else %}
                                         <div class="foto-autorizado bg-light d-flex align-items-center justify-content-center mx-auto"><i class="fas fa-user fa-2x text-muted"></i></div>
                                     {% endif %}
                                 </div>
                                 <h5>{{ estudiante.aut_nombre_3 }}</h5>
-                                <span class="badge bg-warning text-dark mb-2">Autorizado ({{ estudiante.aut_parentesco_3 }})</span>
+                                <span class="badge bg-warning text-dark mb-2">Autorizado ({{ estudiante.aut_parentesco_3 or 'N/A' }})</span>
                                 <p class="small text-muted mb-1">Cédula: {{ estudiante.aut_cedula_3 or 'N/A' }}</p>
                                 <p class="small mb-0"><i class="fas fa-phone text-success"></i> Tel: {{ estudiante.aut_tel_3 or 'N/A' }}</p>
                             </div>
