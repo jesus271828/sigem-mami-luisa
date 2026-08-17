@@ -1292,37 +1292,95 @@ def buscar_emergencia():
     if 'usuario' not in session:
         return redirect(url_for('login'))
         
+    conexion = get_db_connection()
     estudiante = None
-    busqueda = request.form.get('busqueda', '').strip() if request.method == 'POST' else ''
+    is_postgres = DATABASE_URL is not None
     
-    # Obtener contadores para la barra lateral (si los usas)
+    # Contadores para la barra lateral
     total_estudiantes = 0
     total_expedientes = 0
     total_usuarios = 0
-    
-    if busqueda:
-        conexion = get_db_connection()
-        is_postgres = DATABASE_URL is not None
+
+    try:
+        # Obtener contadores igual que en las otras vistas
+        if is_postgres:
+            cur_c = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur_c.execute("SELECT COUNT(*) as total FROM inscripciones")
+            total_estudiantes = cur_c.fetchone()['total']
+            cur_c.execute("SELECT COUNT(*) as total FROM expedientes_viejos")
+            total_expedientes = cur_c.fetchone()['total']
+            cur_c.execute("SELECT COUNT(*) as total FROM usuarios")
+            total_usuarios = cur_c.fetchone()['total']
+            cur_c.close()
+        else:
+            conexion.execute("SELECT COUNT(*) FROM inscripciones")
+            total_estudiantes = conexion.fetchone()[0]
+            conexion.execute("SELECT COUNT(*) FROM expedientes_viejos")
+            total_expedientes = conexion.fetchone()[0]
+            conexion.execute("SELECT COUNT(*) FROM usuarios")
+            total_usuarios = conexion.fetchone()[0]
+
+        busqueda = request.form.get('busqueda', '').strip() if request.method == 'POST' else ''
         
-        try:
+        if busqueda:
+            criterio = busqueda.lower()
+            criterio_limpio = busqueda.replace('-', '').lower()
+
             if is_postgres:
                 cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-                # Buscamos por id exacto o por coincidencia en nombres / apellidos
-                cur.execute("""
-                    SELECT * FROM autorizados 
-                    WHERE id::text = %s OR nombres ILIKE %s OR apellidos ILIKE %s
-                """, (busqueda, f"%{busqueda}%", f"%{busqueda}%"))
-                estudiante = cur.fetchone()
+                cur.execute("SELECT * FROM inscripciones")
+                filas = cur.fetchall()
                 cur.close()
             else:
-                # Por si usas SQLite de respaldo local
-                pass
-        except Exception as e:
-            print(f"Error en búsqueda de emergencia: {e}")
-        finally:
-            conexion.close()
-            
-    return render_template('buscar_emergencia.html', estudiante=estudiante, busqueda=busqueda)
+                conexion.execute("SELECT * FROM inscripciones")
+                filas = conexion.fetchall()
+
+            for fila in filas:
+                f_dict = dict(fila) if isinstance(fila, dict) else dict(zip([column[0] for column in conexion.description], fila))
+                
+                nombres_est = str(f_dict.get('nombres') or f_dict.get('estudiante_nombre') or '').lower()
+                apellidos_est = str(f_dict.get('apellidos') or f_dict.get('estudiante_apellido') or '').lower()
+                id_est = str(f_dict.get('id_estudiante') or f_dict.get('id') or '').lower()
+                
+                # Coincidencia flexible igual a tu módulo exitoso
+                if criterio in nombres_est or criterio in apellidos_est or criterio in id_est or criterio_limpio in str(f_dict.get('id_estudiante') or '').lower():
+                    
+                    # Función auxiliar interna para procesar las fotos igual que en tus autorizados
+                    def limpiar_foto(raw_path):
+                        if not raw_path or str(raw_path).lower() in ['none', '']:
+                            return ""
+                        val = str(raw_path)
+                        if val.startswith(('/9j/', 'iVBOR', 'R0lGOD', 'UklGR')):
+                            return val
+                        return os.path.basename(val.replace('\\', '/'))
+
+                    # Procesar foto del estudiante
+                    raw_est = f_dict.get('foto_estudiante_cedula') or f_dict.get('foto_estudiante') or f_dict.get('foto')
+                    f_dict['foto_estudiante_cedula_procesada'] = limpiar_foto(raw_est)
+
+                    # Procesar fotos de padres y tutores
+                    f_dict['foto_padre_cedula_procesada'] = limpiar_foto(f_dict.get('foto_padre_cedula'))
+                    f_dict['foto_madre_cedula_procesada'] = limpiar_foto(f_dict.get('foto_madre_cedula'))
+                    f_dict['foto_tutor_cedula_procesada'] = limpiar_foto(f_dict.get('foto_tutor_cedula'))
+
+                    # Procesar fotos de autorizados 1, 2 y 3
+                    for i in range(1, 4):
+                        f_dict[f'foto_aut_cedula_{i}_procesada'] = limpiar_foto(f_dict.get(f'foto_aut_cedula_{i}'))
+
+                    estudiante = f_dict
+                    break # Encontramos al estudiante, detenemos la búsqueda
+
+    except Exception as e:
+        print("--- ERROR EN BUSCAR EMERGENCIA:", e)
+    finally:
+        conexion.close()
+        
+    return render_template('buscar_emergencia.html', 
+                           estudiante=estudiante, 
+                           busqueda=busqueda or '',
+                           total_estudiantes=total_estudiantes,
+                           total_expedientes=total_expedientes,
+                           total_usuarios=total_usuarios)
 
 from datetime import datetime
 
