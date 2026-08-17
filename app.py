@@ -1390,6 +1390,8 @@ def buscar_emergencia():
                            total_expedientes=total_expedientes,
                            total_usuarios=total_usuarios)
 
+
+
 from datetime import datetime
 
 @app.route('/asistencia', methods=['GET', 'POST'])
