@@ -47,8 +47,9 @@
                     <div class="card card-custom p-4 border-start border-danger border-5">
                         <div class="row">
                             <div class="col-md-3 text-center">
-                                {% if estudiante.foto_estudiante_cedula_procesada %}
-                                    <img src="{% if estudiante.foto_estudiante_cedula_procesada.startswith(('http', '/9j/', 'iVBOR', 'R0lGOD', 'UklGR')) %}{{ estudiante.foto_estudiante_cedula_procesada }}{% else %}{{ url_for('static', filename='uploads/' + estudiante.foto_estudiante_cedula_procesada) }}{% endif %}" class="rounded-circle img-thumbnail mb-2" style="width: 120px; height: 120px; object-fit: cover;" alt="Estudiante" onerror="this.src='https://via.placeholder.com/120?text=Sin+Foto'">
+                                {% set foto_est = estudiante.foto_estudiante_cedula or estudiante.foto_estudiante or estudiante.foto %}
+                                {% if foto_est %}
+                                    <img src="{% if foto_est.startswith(('http', '/9j/', 'iVBOR', 'R0lGOD', 'UklGR')) %}{{ foto_est }}{% else %}{{ url_for('static', filename='uploads/' + foto_est.split('/')[-1]) }}{% endif %}" class="rounded-circle img-thumbnail mb-2" style="width: 120px; height: 120px; object-fit: cover;" alt="Estudiante" onerror="this.src='https://via.placeholder.com/120?text=Sin+Foto'">
                                 {% else %}
                                     <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center text-white mx-auto mb-2" style="width: 120px; height: 120px;"><i class="fas fa-user fa-3x"></i></div>
                                 {% endif %}
@@ -104,8 +105,9 @@
                         <div class="col">
                             <div class="card card-custom h-100 text-center p-3">
                                 <div class="mx-auto mb-2">
-                                    {% if estudiante.foto_padre_cedula_procesada %}
-                                        <img src="{% if estudiante.foto_padre_cedula_procesada.startswith(('http', '/9j/', 'iVBOR', 'R0lGOD', 'UklGR')) %}{{ estudiante.foto_padre_cedula_procesada }}{% else %}{{ url_for('static', filename='uploads/' + estudiante.foto_padre_cedula_procesada) }}{% endif %}" class="foto-autorizado" alt="Padre" onerror="this.src='https://via.placeholder.com/100?text=Sin+Foto'">
+                                    {% set foto_padre = estudiante.foto_padre_cedula %}
+                                    {% if foto_padre %}
+                                        <img src="{% if foto_padre.startswith(('http', '/9j/', 'iVBOR', 'R0lGOD', 'UklGR')) %}{{ foto_padre }}{% else %}{{ url_for('static', filename='uploads/' + foto_padre.split('/')[-1]) }}{% endif %}" class="foto-autorizado" alt="Padre" onerror="this.src='https://via.placeholder.com/100?text=Sin+Foto'">
                                     {% else %}
                                         <div class="foto-autorizado bg-light d-flex align-items-center justify-content-center mx-auto"><i class="fas fa-user fa-2x text-muted"></i></div>
                                     {% endif %}
@@ -123,8 +125,9 @@
                         <div class="col">
                             <div class="card card-custom h-100 text-center p-3">
                                 <div class="mx-auto mb-2">
-                                    {% if estudiante.foto_madre_cedula_procesada %}
-                                        <img src="{% if estudiante.foto_madre_cedula_procesada.startswith(('http', '/9j/', 'iVBOR', 'R0lGOD', 'UklGR')) %}{{ estudiante.foto_madre_cedula_procesada }}{% else %}{{ url_for('static', filename='uploads/' + estudiante.foto_madre_cedula_procesada) }}{% endif %}" class="foto-autorizado" alt="Madre" onerror="this.src='https://via.placeholder.com/100?text=Sin+Foto'">
+                                    {% set foto_madre = estudiante.foto_madre_cedula %}
+                                    {% if foto_madre %}
+                                        <img src="{% if foto_madre.startswith(('http', '/9j/', 'iVBOR', 'R0lGOD', 'UklGR')) %}{{ foto_madre }}{% else %}{{ url_for('static', filename='uploads/' + foto_madre.split('/')[-1]) }}{% endif %}" class="foto-autorizado" alt="Madre" onerror="this.src='https://via.placeholder.com/100?text=Sin+Foto'">
                                     {% else %}
                                         <div class="foto-autorizado bg-light d-flex align-items-center justify-content-center mx-auto"><i class="fas fa-user fa-2x text-muted"></i></div>
                                     {% endif %}
@@ -142,8 +145,9 @@
                         <div class="col">
                             <div class="card card-custom h-100 text-center p-3">
                                 <div class="mx-auto mb-2">
-                                    {% if estudiante.foto_tutor_cedula_procesada %}
-                                        <img src="{% if estudiante.foto_tutor_cedula_procesada.startswith(('http', '/9j/', 'iVBOR', 'R0lGOD', 'UklGR')) %}{{ estudiante.foto_tutor_cedula_procesada }}{% else %}{{ url_for('static', filename='uploads/' + estudiante.foto_tutor_cedula_procesada) }}{% endif %}" class="foto-autorizado" alt="Tutor" onerror="this.src='https://via.placeholder.com/100?text=Sin+Foto'">
+                                    {% set foto_tutor = estudiante.foto_tutor_cedula %}
+                                    {% if foto_tutor %}
+                                        <img src="{% if foto_tutor.startswith(('http', '/9j/', 'iVBOR', 'R0lGOD', 'UklGR')) %}{{ foto_tutor }}{% else %}{{ url_for('static', filename='uploads/' + foto_tutor.split('/')[-1]) }}{% endif %}" class="foto-autorizado" alt="Tutor" onerror="this.src='https://via.placeholder.com/100?text=Sin+Foto'">
                                     {% else %}
                                         <div class="foto-autorizado bg-light d-flex align-items-center justify-content-center mx-auto"><i class="fas fa-user fa-2x text-muted"></i></div>
                                     {% endif %}
@@ -161,8 +165,9 @@
                         <div class="col">
                             <div class="card card-custom h-100 text-center p-3">
                                 <div class="mx-auto mb-2">
-                                    {% if estudiante.foto_aut_cedula_1_procesada %}
-                                        <img src="{% if estudiante.foto_aut_cedula_1_procesada.startswith(('http', '/9j/', 'iVBOR', 'R0lGOD', 'UklGR')) %}{{ estudiante.foto_aut_cedula_1_procesada }}{% else %}{{ url_for('static', filename='uploads/' + estudiante.foto_aut_cedula_1_procesada) }}{% endif %}" class="foto-autorizado" alt="Autorizado 1" onerror="this.src='https://via.placeholder.com/100?text=Sin+Foto'">
+                                    {% set foto_aut1 = estudiante.foto_aut_cedula_1 %}
+                                    {% if foto_aut1 %}
+                                        <img src="{% if foto_aut1.startswith(('http', '/9j/', 'iVBOR', 'R0lGOD', 'UklGR')) %}{{ foto_aut1 }}{% else %}{{ url_for('static', filename='uploads/' + foto_aut1.split('/')[-1]) }}{% endif %}" class="foto-autorizado" alt="Autorizado 1" onerror="this.src='https://via.placeholder.com/100?text=Sin+Foto'">
                                     {% else %}
                                         <div class="foto-autorizado bg-light d-flex align-items-center justify-content-center mx-auto"><i class="fas fa-user fa-2x text-muted"></i></div>
                                     {% endif %}
@@ -180,8 +185,9 @@
                         <div class="col">
                             <div class="card card-custom h-100 text-center p-3">
                                 <div class="mx-auto mb-2">
-                                    {% if estudiante.foto_aut_cedula_2_procesada %}
-                                        <img src="{% if estudiante.foto_aut_cedula_2_procesada.startswith(('http', '/9j/', 'iVBOR', 'R0lGOD', 'UklGR')) %}{{ estudiante.foto_aut_cedula_2_procesada }}{% else %}{{ url_for('static', filename='uploads/' + estudiante.foto_aut_cedula_2_procesada) }}{% endif %}" class="foto-autorizado" alt="Autorizado 2" onerror="this.src='https://via.placeholder.com/100?text=Sin+Foto'">
+                                    {% set foto_aut2 = estudiante.foto_aut_cedula_2 %}
+                                    {% if foto_aut2 %}
+                                        <img src="{% if foto_aut2.startswith(('http', '/9j/', 'iVBOR', 'R0lGOD', 'UklGR')) %}{{ foto_aut2 }}{% else %}{{ url_for('static', filename='uploads/' + foto_aut2.split('/')[-1]) }}{% endif %}" class="foto-autorizado" alt="Autorizado 2" onerror="this.src='https://via.placeholder.com/100?text=Sin+Foto'">
                                     {% else %}
                                         <div class="foto-autorizado bg-light d-flex align-items-center justify-content-center mx-auto"><i class="fas fa-user fa-2x text-muted"></i></div>
                                     {% endif %}
@@ -199,8 +205,9 @@
                         <div class="col">
                             <div class="card card-custom h-100 text-center p-3">
                                 <div class="mx-auto mb-2">
-                                    {% if estudiante.foto_aut_cedula_3_procesada %}
-                                        <img src="{% if estudiante.foto_aut_cedula_3_procesada.startswith(('http', '/9j/', 'iVBOR', 'R0lGOD', 'UklGR')) %}{{ estudiante.foto_aut_cedula_3_procesada }}{% else %}{{ url_for('static', filename='uploads/' + estudiante.foto_aut_cedula_3_procesada) }}{% endif %}" class="foto-autorizado" alt="Autorizado 3" onerror="this.src='https://via.placeholder.com/100?text=Sin+Foto'">
+                                    {% set foto_aut3 = estudiante.foto_aut_cedula_3 %}
+                                    {% if foto_aut3 %}
+                                        <img src="{% if foto_aut3.startswith(('http', '/9j/', 'iVBOR', 'R0lGOD', 'UklGR')) %}{{ foto_aut3 }}{% else %}{{ url_for('static', filename='uploads/' + foto_aut3.split('/')[-1]) }}{% endif %}" class="foto-autorizado" alt="Autorizado 3" onerror="this.src='https://via.placeholder.com/100?text=Sin+Foto'">
                                     {% else %}
                                         <div class="foto-autorizado bg-light d-flex align-items-center justify-content-center mx-auto"><i class="fas fa-user fa-2x text-muted"></i></div>
                                     {% endif %}
