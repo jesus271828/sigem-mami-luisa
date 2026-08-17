@@ -1665,59 +1665,53 @@ def notas1():
         return redirect(url_for('login'))
 
     tipo_inf = 'notas1'
-    # Limpiamos el rol para evitar espacios o mayúsculas raras
     rol = str(session.get('rol', '')).strip().lower()
-    # Obtenemos el grado asignado
-    grado_usuario = str(session.get('grado') or session.get('grado_asignado') or "").strip()
-
-    print(f"DEBUG: Usuario={session.get('usuario')} | Rol detectado='{rol}' | Grado detectado='{grado_usuario}'")
+    
+    # Buscamos el curso/grado en todas las llaves posibles que se usan al hacer login
+    grado_usuario = str(
+        session.get('curso_asignado') or 
+        session.get('grado_asignado') or 
+        session.get('grado') or 
+        session.get('curso') or ""
+    ).strip()
 
     conexion = get_db_connection()
     is_postgres = DATABASE_URL is not None
     lista_estudiantes = []
 
     try:
-        # --- LÓGICA DE FILTRADO ---
         if is_postgres:
             cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             
             if 'oficina' in rol or 'admin' in rol:
-                # Oficina y Admin ven todo del 1ro al 3ro
                 cur.execute("""
                     SELECT id_estudiante, nombres, apellidos, grado 
                     FROM estudiantes 
                     WHERE grado ILIKE '1%' OR grado ILIKE '2%' OR grado ILIKE '3%'
                     ORDER BY apellidos, nombres ASC
                 """)
-            elif grado_usuario:
-                # El maestro SOLO ve a los de su grado
+            else:
+                # Aquí usa el curso asignado de la tabla (ej. '1ro A') para filtrar exactamente
                 cur.execute("""
                     SELECT id_estudiante, nombres, apellidos, grado 
                     FROM estudiantes 
                     WHERE grado ILIKE %s 
                     ORDER BY apellidos, nombres ASC
-                """, (grado_usuario,))
-            else:
-                # Si no es admin y no tiene grado, no ve nada
-                cur.execute("SELECT id_estudiante, nombres, apellidos, grado FROM estudiantes WHERE 1=0")
+                """, (f"%{grado_usuario}%",))
             
             lista_estudiantes = cur.fetchall()
             cur.close()
-        
         else:
-            # Versión SQLite
             conexion.row_factory = sqlite3.Row
             cur = conexion.cursor()
             if 'oficina' in rol or 'admin' in rol:
                 cur.execute("SELECT id_estudiante, nombres, apellidos, grado FROM estudiantes WHERE grado LIKE '1%' OR grado LIKE '2%' OR grado LIKE '3%' ORDER BY apellidos, nombres ASC")
-            elif grado_usuario:
-                cur.execute("SELECT id_estudiante, nombres, apellidos, grado FROM estudiantes WHERE grado LIKE ? ORDER BY apellidos, nombres ASC", (grado_usuario,))
             else:
-                cur.execute("SELECT id_estudiante, nombres, apellidos, grado FROM estudiantes WHERE 1=0")
+                cur.execute("SELECT id_estudiante, nombres, apellidos, grado FROM estudiantes WHERE grado LIKE ? ORDER BY apellidos, nombres ASC", (f"%{grado_usuario}%",))
             lista_estudiantes = cur.fetchall()
             cur.close()
 
-        # --- SELECCIÓN Y CARGA DE NOTAS ---
+        # Selección y carga de notas
         id_est_sel = request.args.get('id_estudiante') or request.form.get('id_estudiante')
         estudiante = None
         if lista_estudiantes:
@@ -1726,7 +1720,6 @@ def notas1():
             else:
                 estudiante = lista_estudiantes[0]
 
-        # Guardar (POST)
         if request.method == 'POST':
             id_post = request.form.get('id_estudiante')
             cur_p = conexion.conn.cursor() if is_postgres else conexion.cursor()
@@ -1745,7 +1738,6 @@ def notas1():
             cur_p.close()
             return redirect(url_for('notas1', id_estudiante=id_post))
 
-        # Cargar notas
         notas = {}
         if estudiante:
             cur_n = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) if is_postgres else conexion.cursor()
