@@ -1287,6 +1287,43 @@ def buscar_estudiante():
         grado_filtro=grado_filtro
     )
 
+@app.route('/buscar_emergencia', methods=['GET', 'POST'])
+def buscar_emergencia():
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+        
+    estudiante = None
+    busqueda = request.form.get('busqueda', '').strip() if request.method == 'POST' else ''
+    
+    # Obtener contadores para la barra lateral (si los usas)
+    total_estudiantes = 0
+    total_expedientes = 0
+    total_usuarios = 0
+    
+    if busqueda:
+        conexion = get_db_connection()
+        is_postgres = DATABASE_URL is not None
+        
+        try:
+            if is_postgres:
+                cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+                # Buscamos por id exacto o por coincidencia en nombres / apellidos
+                cur.execute("""
+                    SELECT * FROM autorizados 
+                    WHERE id::text = %s OR nombres ILIKE %s OR apellidos ILIKE %s
+                """, (busqueda, f"%{busqueda}%", f"%{busqueda}%"))
+                estudiante = cur.fetchone()
+                cur.close()
+            else:
+                # Por si usas SQLite de respaldo local
+                pass
+        except Exception as e:
+            print(f"Error en búsqueda de emergencia: {e}")
+        finally:
+            conexion.close()
+            
+    return render_template('buscar_emergencia.html', estudiante=estudiante, busqueda=busqueda)
+
 from datetime import datetime
 
 @app.route('/asistencia', methods=['GET', 'POST'])
