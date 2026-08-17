@@ -48,7 +48,9 @@
                         <div class="row">
                             <div class="col-md-3 text-center">
                                 {% if estudiante.foto_estudiante_cedula_procesada %}
-                                    <img src="{% if estudiante.foto_estudiante_cedula_procesada.startswith(('http', 'data:', '/9j/', 'iVBOR', 'R0lGOD', 'UklGR')) %}{{ estudiante.foto_estudiante_cedula_procesada }}{% else %}{{ url_for('static', filename='uploads/' + estudiante.foto_estudiante_cedula_procesada) }}{% endif %}" class="rounded-circle img-thumbnail mb-2" style="width: 120px; height: 120px; object-fit: cover;" alt="Estudiante">
+                                    <img src="{% if estudiante.foto_estudiante_cedula_procesada.startswith(('http', 'data:', '/9j/', 'iVBOR', 'R0lGOD', 'UklGR')) %}{{ estudiante.foto_estudiante_cedula_procesada }}{% else %}{{ url_for('static', filename='uploads/' + estudiante.foto_estudiante_cedula_procesada) }}{% endif %}" 
+                                         class="rounded-circle img-thumbnail mb-2" style="width: 120px; height: 120px; object-fit: cover;" alt="Estudiante"
+                                         onerror="this.onerror=null; this.src='https://via.placeholder.com/120?text=Sin+Foto';">
                                 {% else %}
                                     <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center text-white mx-auto mb-2" style="width: 120px; height: 120px;"><i class="fas fa-user fa-3x"></i></div>
                                 {% endif %}
@@ -114,7 +116,9 @@
                                 <div class="card card-custom h-100 text-center p-3">
                                     <div class="mx-auto mb-2">
                                         {% if fam.foto_proc %}
-                                            <img src="{% if fam.foto_proc.startswith(('http', 'data:', '/9j/', 'iVBOR', 'R0lGOD', 'UklGR')) %}{{ fam.foto_proc }}{% else %}{{ url_for('static', filename='uploads/' + fam.foto_proc) }}{% endif %}" class="foto-autorizado" alt="{{ fam.tipo }}">
+                                            <img src="{% if fam.foto_proc.startswith(('http', 'data:', '/9j/', 'iVBOR', 'R0lGOD', 'UklGR')) %}{{ fam.foto_proc }}{% else %}{{ url_for('static', filename='uploads/' + fam.foto_proc) }}{% endif %}" 
+                                                 class="foto-autorizado" alt="{{ fam.tipo }}"
+                                                 onerror="this.onerror=null; this.src='https://via.placeholder.com/100?text=Sin+Foto';">
                                         {% else %}
                                             <div class="foto-autorizado bg-light d-flex align-items-center justify-content-center mx-auto"><i class="fas fa-user fa-2x text-muted"></i></div>
                                         {% endif %}
