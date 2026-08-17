@@ -1347,33 +1347,41 @@ def buscar_emergencia():
                 
                 if criterio in nombres_est or criterio in apellidos_est or criterio in id_est or criterio_limpio in str(f_dict.get('id_estudiante') or '').lower():
                     
-                    # Función robusta para limpiar rutas de fotos (igual a la funcional)
+                    # Función robusta para limpiar rutas de fotos y evitar valores NaN o basura
                     def limpiar_foto(raw_path):
-                        if not raw_path or str(raw_path).lower() in ['none', 'nan', '', 'null', 'undefined']:
+                        if not raw_path or str(raw_path).lower() in ['none', 'nan', '', 'null', 'undefined', 'n/a']:
                             return ""
                         val = str(raw_path).strip()
                         if val.startswith(('http', 'data:', '/9j/', 'iVBOR', 'R0lGOD', 'UklGR')):
                             return val
                         return os.path.basename(val.replace('\\', '/'))
 
-                    # Asignamos tanto las variables limpias como las estándar para que el HTML no falle
-                    f_est = limpiar_foto(f_dict.get('foto_estudiante_cedula') or f_dict.get('foto_estudiante') or f_dict.get('foto') or f_dict.get('foto_cedula_estudiante'))
-                    f_padre = limpiar_foto(f_dict.get('foto_padre_cedula'))
-                    f_madre = limpiar_foto(f_dict.get('foto_madre_cedula'))
-                    f_tutor = limpiar_foto(f_dict.get('foto_tutor_cedula'))
+                    # 1. Foto del estudiante
+                    raw_est_foto = (
+                        f_dict.get('foto_estudiante') or 
+                        f_dict.get('foto_estudiante_cedula') or 
+                        f_dict.get('foto') or 
+                        f_dict.get('foto_cedula_estudiante')
+                    )
+                    f_dict['foto_estudiante'] = limpiar_foto(raw_est_foto)
 
-                    # Guardamos los valores limpios directamente en las llaves que usa la plantilla
-                    f_dict['foto_estudiante'] = f_est
-                    f_dict['foto_estudiante_cedula'] = f_est
-                    f_dict['foto_padre_cedula'] = f_padre
-                    f_dict['foto_madre_cedula'] = f_madre
-                    f_dict['foto_tutor_cedula'] = f_tutor
+                    # 2. Fotos de padres y tutor
+                    f_dict['foto_padre_cedula'] = limpiar_foto(f_dict.get('foto_padre_cedula'))
+                    f_dict['foto_madre_cedula'] = limpiar_foto(f_dict.get('foto_madre_cedula'))
+                    f_dict['foto_tutor_cedula'] = limpiar_foto(f_dict.get('foto_tutor_cedula'))
 
+                    # 3. Fotos de autorizados (1 al 5)
                     for i in range(1, 6):
-                        f_aut_foto = limpiar_foto(f_dict.get(f'foto_aut_cedula_{i}'))
-                        if not f_aut_foto and i == 1:
-                            f_aut_foto = f_padre or f_madre
-                        f_dict[f'foto_aut_cedula_{i}'] = f_aut_foto
+                        foto_aut = limpiar_foto(f_dict.get(f'foto_aut_cedula_{i}'))
+                        # Si no hay foto específica del autorizado 1, hereda la del padre/madre por defecto si aplica
+                        if not foto_aut and i == 1:
+                            foto_aut = f_dict['foto_padre_cedula'] or f_dict['foto_madre_cedula']
+                        f_dict[f'foto_aut_cedula_{i}'] = foto_aut
+
+                    # Limpiar textos tipo 'NaN' en campos de texto de los tutores o autorizados para que no se vean feos en pantalla
+                    for k, v in f_dict.items():
+                        if v is None or str(v).lower() in ['nan', 'none', 'null']:
+                            f_dict[k] = ''
 
                     estudiante = f_dict
                     break
