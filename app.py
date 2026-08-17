@@ -1665,44 +1665,43 @@ def notas1():
         return redirect(url_for('login'))
 
     tipo_inf = 'notas1'
-    rol = str(session.get('rol', '')).lower()
-    # Obtenemos el grado del maestro desde la sesión
-    grado_usuario = session.get('grado') or session.get('grado_asignado') or ""
+    # Limpiamos el rol para evitar espacios o mayúsculas raras
+    rol = str(session.get('rol', '')).strip().lower()
+    # Obtenemos el grado asignado
+    grado_usuario = str(session.get('grado') or session.get('grado_asignado') or "").strip()
+
+    print(f"DEBUG: Usuario={session.get('usuario')} | Rol detectado='{rol}' | Grado detectado='{grado_usuario}'")
 
     conexion = get_db_connection()
     is_postgres = DATABASE_URL is not None
     lista_estudiantes = []
 
     try:
+        # --- LÓGICA DE FILTRADO ---
         if is_postgres:
             cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             
-            # FILTRO: Si es oficina/admin busca 1ro, 2do, 3ro. Si es maestro, busca su grado.
             if 'oficina' in rol or 'admin' in rol:
+                # Oficina y Admin ven todo del 1ro al 3ro
                 cur.execute("""
                     SELECT id_estudiante, nombres, apellidos, grado 
                     FROM estudiantes 
                     WHERE grado ILIKE '1%' OR grado ILIKE '2%' OR grado ILIKE '3%'
                     ORDER BY apellidos, nombres ASC
                 """)
-            else:
-                # El % es un comodín, busca cualquier grado que contenga el valor del maestro
+            elif grado_usuario:
+                # El maestro SOLO ve a los de su grado
                 cur.execute("""
                     SELECT id_estudiante, nombres, apellidos, grado 
                     FROM estudiantes 
                     WHERE grado ILIKE %s 
                     ORDER BY apellidos, nombres ASC
-                """, (f"%{grado_usuario}%",))
+                """, (grado_usuario,))
+            else:
+                # Si no es admin y no tiene grado, no ve nada
+                cur.execute("SELECT id_estudiante, nombres, apellidos, grado FROM estudiantes WHERE 1=0")
             
             lista_estudiantes = cur.fetchall()
-            
-            # Respaldo en tabla inscripciones si no encuentra en estudiantes
-            if not lista_estudiantes:
-                if 'oficina' in rol or 'admin' in rol:
-                    cur.execute("SELECT id as id_estudiante, nombres, apellidos, grado FROM inscripciones WHERE grado ILIKE '1%' OR grado ILIKE '2%' OR grado ILIKE '3%' ORDER BY apellidos, nombres ASC")
-                else:
-                    cur.execute("SELECT id as id_estudiante, nombres, apellidos, grado FROM inscripciones WHERE grado ILIKE %s ORDER BY apellidos, nombres ASC", (f"%{grado_usuario}%",))
-                lista_estudiantes = cur.fetchall()
             cur.close()
         
         else:
@@ -1711,36 +1710,42 @@ def notas1():
             cur = conexion.cursor()
             if 'oficina' in rol or 'admin' in rol:
                 cur.execute("SELECT id_estudiante, nombres, apellidos, grado FROM estudiantes WHERE grado LIKE '1%' OR grado LIKE '2%' OR grado LIKE '3%' ORDER BY apellidos, nombres ASC")
+            elif grado_usuario:
+                cur.execute("SELECT id_estudiante, nombres, apellidos, grado FROM estudiantes WHERE grado LIKE ? ORDER BY apellidos, nombres ASC", (grado_usuario,))
             else:
-                cur.execute("SELECT id_estudiante, nombres, apellidos, grado FROM estudiantes WHERE grado LIKE ? ORDER BY apellidos, nombres ASC", (f"%{grado_usuario}%",))
+                cur.execute("SELECT id_estudiante, nombres, apellidos, grado FROM estudiantes WHERE 1=0")
             lista_estudiantes = cur.fetchall()
             cur.close()
 
-        # Lógica para seleccionar el estudiante y cargar sus notas
+        # --- SELECCIÓN Y CARGA DE NOTAS ---
         id_est_sel = request.args.get('id_estudiante') or request.form.get('id_estudiante')
         estudiante = None
         if lista_estudiantes:
-            estudiante = next((e for e in lista_estudiantes if str(e['id_estudiante']) == str(id_est_sel)), lista_estudiantes[0])
+            if id_est_sel:
+                estudiante = next((e for e in lista_estudiantes if str(e['id_estudiante']) == str(id_est_sel)), lista_estudiantes[0])
+            else:
+                estudiante = lista_estudiantes[0]
 
+        # Guardar (POST)
         if request.method == 'POST':
             id_post = request.form.get('id_estudiante')
-            cur_post = conexion.conn.cursor() if is_postgres else conexion.cursor()
+            cur_p = conexion.conn.cursor() if is_postgres else conexion.cursor()
             for campo, valor in request.form.items():
                 if campo == 'id_estudiante' or not valor: continue
                 if is_postgres:
-                    cur_post.execute("""
+                    cur_p.execute("""
                         INSERT INTO calificaciones_detalle (id_estudiante, tipo_informe, campo_nombre, valor)
                         VALUES (%s, %s, %s, %s)
                         ON CONFLICT (id_estudiante, tipo_informe, campo_nombre) DO UPDATE SET valor = %s
                     """, (id_post, tipo_inf, campo, valor, valor))
                 else:
-                    cur_post.execute("INSERT OR REPLACE INTO calificaciones_detalle (id_estudiante, tipo_informe, campo_nombre, valor) VALUES (?, ?, ?, ?)", (id_post, tipo_inf, campo, valor))
+                    cur_p.execute("INSERT OR REPLACE INTO calificaciones_detalle (id_estudiante, tipo_informe, campo_nombre, valor) VALUES (?, ?, ?, ?)", (id_post, tipo_inf, campo, valor))
             if is_postgres: conexion.conn.commit()
             else: conexion.commit()
-            cur_post.close()
+            cur_p.close()
             return redirect(url_for('notas1', id_estudiante=id_post))
 
-        # Cargar notas del estudiante
+        # Cargar notas
         notas = {}
         if estudiante:
             cur_n = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) if is_postgres else conexion.cursor()
@@ -1756,7 +1761,7 @@ def notas1():
         return render_template('notas1.html', lista_estudiantes=lista_estudiantes, estudiante=dict(estudiante) if estudiante else None, notas=notas)
 
     except Exception as e:
-        print(f"Error en notas1: {e}")
+        print(f"--- ERROR CRÍTICO EN NOTAS1: {e}")
         return redirect(url_for('menu_notas'))
     
 @app.route('/notas2')
