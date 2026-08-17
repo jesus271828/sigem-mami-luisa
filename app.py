@@ -1296,13 +1296,12 @@ def buscar_emergencia():
     estudiante = None
     is_postgres = DATABASE_URL is not None
     
-    # Contadores para la barra lateral
     total_estudiantes = 0
     total_expedientes = 0
     total_usuarios = 0
 
     try:
-        # Obtener contadores igual que en las otras vistas
+        # Contadores para la barra lateral
         if is_postgres:
             cur_c = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             cur_c.execute("SELECT COUNT(*) as total FROM inscripciones")
@@ -1342,33 +1341,28 @@ def buscar_emergencia():
                 apellidos_est = str(f_dict.get('apellidos') or f_dict.get('estudiante_apellido') or '').lower()
                 id_est = str(f_dict.get('id_estudiante') or f_dict.get('id') or '').lower()
                 
-                # Coincidencia flexible igual a tu módulo exitoso
                 if criterio in nombres_est or criterio in apellidos_est or criterio in id_est or criterio_limpio in str(f_dict.get('id_estudiante') or '').lower():
                     
-                    # Función auxiliar interna para procesar las fotos igual que en tus autorizados
+                    # Función segura para limpiar rutas de fotos y evitar valores NaN
                     def limpiar_foto(raw_path):
-                        if not raw_path or str(raw_path).lower() in ['none', '']:
+                        if not raw_path or str(raw_path).lower() in ['none', 'nan', '', 'null', 'undefined']:
                             return ""
-                        val = str(raw_path)
-                        if val.startswith(('/9j/', 'iVBOR', 'R0lGOD', 'UklGR')):
+                        val = str(raw_path).strip()
+                        if val.startswith(('http', 'data:', '/9j/', 'iVBOR', 'R0lGOD', 'UklGR')):
                             return val
                         return os.path.basename(val.replace('\\', '/'))
 
-                    # Procesar foto del estudiante
-                    raw_est = f_dict.get('foto_estudiante_cedula') or f_dict.get('foto_estudiante') or f_dict.get('foto')
-                    f_dict['foto_estudiante_cedula_procesada'] = limpiar_foto(raw_est)
-
-                    # Procesar fotos de padres y tutores
+                    # Procesar cada foto de forma individual y segura
+                    f_dict['foto_estudiante_cedula_procesada'] = limpiar_foto(f_dict.get('foto_estudiante_cedula') or f_dict.get('foto_estudiante') or f_dict.get('foto'))
                     f_dict['foto_padre_cedula_procesada'] = limpiar_foto(f_dict.get('foto_padre_cedula'))
                     f_dict['foto_madre_cedula_procesada'] = limpiar_foto(f_dict.get('foto_madre_cedula'))
                     f_dict['foto_tutor_cedula_procesada'] = limpiar_foto(f_dict.get('foto_tutor_cedula'))
 
-                    # Procesar fotos de autorizados 1, 2 y 3
                     for i in range(1, 4):
                         f_dict[f'foto_aut_cedula_{i}_procesada'] = limpiar_foto(f_dict.get(f'foto_aut_cedula_{i}'))
 
                     estudiante = f_dict
-                    break # Encontramos al estudiante, detenemos la búsqueda
+                    break
 
     except Exception as e:
         print("--- ERROR EN BUSCAR EMERGENCIA:", e)
