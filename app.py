@@ -1312,12 +1312,14 @@ def buscar_emergencia():
             total_usuarios = cur_c.fetchone()['total']
             cur_c.close()
         else:
-            conexion.execute("SELECT COUNT(*) FROM inscripciones")
-            total_estudiantes = conexion.fetchone()[0]
-            conexion.execute("SELECT COUNT(*) FROM expedientes_viejos")
-            total_expedientes = conexion.fetchone()[0]
-            conexion.execute("SELECT COUNT(*) FROM usuarios")
-            total_usuarios = conexion.fetchone()[0]
+            conexion.row_factory = sqlite3.Row
+            cur_c = conexion.cursor()
+            cur_c.execute("SELECT COUNT(*) FROM inscripciones")
+            total_estudiantes = cur_c.fetchone()[0]
+            cur_c.execute("SELECT COUNT(*) FROM expedientes_viejos")
+            total_expedientes = cur_c.fetchone()[0]
+            cur_c.execute("SELECT COUNT(*) FROM usuarios")
+            total_usuarios = cur_c.fetchone()[0]
 
         busqueda = request.form.get('busqueda', '').strip() if request.method == 'POST' else ''
         
@@ -1331,11 +1333,13 @@ def buscar_emergencia():
                 filas = cur.fetchall()
                 cur.close()
             else:
-                conexion.execute("SELECT * FROM inscripciones")
-                filas = conexion.fetchall()
+                conexion.row_factory = sqlite3.Row
+                cur = conexion.cursor()
+                cur.execute("SELECT * FROM inscripciones")
+                filas = cur.fetchall()
 
             for fila in filas:
-                f_dict = dict(fila) if isinstance(fila, dict) else dict(zip([column[0] for column in conexion.description], fila))
+                f_dict = dict(fila)
                 
                 nombres_est = str(f_dict.get('nombres') or f_dict.get('estudiante_nombre') or '').lower()
                 apellidos_est = str(f_dict.get('apellidos') or f_dict.get('estudiante_apellido') or '').lower()
@@ -1343,7 +1347,7 @@ def buscar_emergencia():
                 
                 if criterio in nombres_est or criterio in apellidos_est or criterio in id_est or criterio_limpio in str(f_dict.get('id_estudiante') or '').lower():
                     
-                    # Función segura para limpiar rutas de fotos y evitar valores NaN
+                    # Función robusta para limpiar rutas de fotos (igual a la funcional)
                     def limpiar_foto(raw_path):
                         if not raw_path or str(raw_path).lower() in ['none', 'nan', '', 'null', 'undefined']:
                             return ""
@@ -1352,14 +1356,24 @@ def buscar_emergencia():
                             return val
                         return os.path.basename(val.replace('\\', '/'))
 
-                    # Procesar cada foto de forma individual y segura
-                    f_dict['foto_estudiante_cedula_procesada'] = limpiar_foto(f_dict.get('foto_estudiante_cedula') or f_dict.get('foto_estudiante') or f_dict.get('foto'))
-                    f_dict['foto_padre_cedula_procesada'] = limpiar_foto(f_dict.get('foto_padre_cedula'))
-                    f_dict['foto_madre_cedula_procesada'] = limpiar_foto(f_dict.get('foto_madre_cedula'))
-                    f_dict['foto_tutor_cedula_procesada'] = limpiar_foto(f_dict.get('foto_tutor_cedula'))
+                    # Asignamos tanto las variables limpias como las estándar para que el HTML no falle
+                    f_est = limpiar_foto(f_dict.get('foto_estudiante_cedula') or f_dict.get('foto_estudiante') or f_dict.get('foto') or f_dict.get('foto_cedula_estudiante'))
+                    f_padre = limpiar_foto(f_dict.get('foto_padre_cedula'))
+                    f_madre = limpiar_foto(f_dict.get('foto_madre_cedula'))
+                    f_tutor = limpiar_foto(f_dict.get('foto_tutor_cedula'))
 
-                    for i in range(1, 4):
-                        f_dict[f'foto_aut_cedula_{i}_procesada'] = limpiar_foto(f_dict.get(f'foto_aut_cedula_{i}'))
+                    # Guardamos los valores limpios directamente en las llaves que usa la plantilla
+                    f_dict['foto_estudiante'] = f_est
+                    f_dict['foto_estudiante_cedula'] = f_est
+                    f_dict['foto_padre_cedula'] = f_padre
+                    f_dict['foto_madre_cedula'] = f_madre
+                    f_dict['foto_tutor_cedula'] = f_tutor
+
+                    for i in range(1, 6):
+                        f_aut_foto = limpiar_foto(f_dict.get(f'foto_aut_cedula_{i}'))
+                        if not f_aut_foto and i == 1:
+                            f_aut_foto = f_padre or f_madre
+                        f_dict[f'foto_aut_cedula_{i}'] = f_aut_foto
 
                     estudiante = f_dict
                     break
