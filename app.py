@@ -1641,84 +1641,79 @@ def notas1():
         return redirect(url_for('login'))
 
     tipo_inf = 'notas1'
-    rol_usuario = session.get('rol', '').lower()
-    grado_maestro = session.get('grado') or session.get('grado_asignado')
+    rol_usuario = str(session.get('rol', '')).lower()
+    grado_usuario = session.get('grado') or session.get('grado_asignado')
 
     conexion = sqlite3.connect('sigem_ml.db')
     conexion.row_factory = sqlite3.Row
     cursor = conexion.cursor()
 
     try:
-        # FILTRO DE ESTUDIANTES SEGÚN ROL
+        # 1. FILTRADO DE ESTUDIANTES
+        # Usamos 'LIKE' o comparación directa para asegurar flexibilidad con los nombres de grados
         if 'oficina' in rol_usuario or 'admin' in rol_usuario:
-            # Oficina ve el Primer Ciclo completo (1ro a 3ro)
-            grados_permitidos = ['1er Grado', '2do Grado', '3er Grado', '1ro', '2do', '3ro', 'Primer Grado', 'Segundo Grado', 'Tercer Grado']
-            placeholders = ','.join(['?'] * len(grados_permitidos))
-            query = f"""
+            # Filtro para Primer Ciclo (1ro, 2do, 3ro)
+            cursor.execute("""
                 SELECT id_estudiante, nombres, apellidos, grado 
                 FROM estudiantes 
-                WHERE grado IN ({placeholders})
+                WHERE grado LIKE '1%' OR grado LIKE '2%' OR grado LIKE '3%'
                 ORDER BY apellidos, nombres ASC
-            """
-            cursor.execute(query, grados_permitidos)
-        elif grado_maestro:
-            # Maestro ve únicamente los estudiantes de su grado asignado
+            """)
+        elif grado_usuario:
+            # Filtro para el grado específico del maestro
             cursor.execute("""
                 SELECT id_estudiante, nombres, apellidos, grado 
                 FROM estudiantes 
                 WHERE grado = ?
                 ORDER BY apellidos, nombres ASC
-            """, (grado_maestro,))
+            """, (grado_usuario,))
         else:
-            # Si por alguna razón no tiene grado ni es oficina, mostramos vacío o alerta
-            cursor.execute("""
-                SELECT id_estudiante, nombres, apellidos, grado 
-                FROM estudiantes WHERE 1=0
-            """)
+            # Fallback si no identifica rol/grado, trae todos para evitar error
+            cursor.execute("SELECT id_estudiante, nombres, apellidos, grado FROM estudiantes ORDER BY apellidos, nombres ASC")
 
         lista_estudiantes = cursor.fetchall()
 
-        if not lista_estudiantes:
-            cursor.close()
-            conexion.close()
-            return render_template('notas1.html', lista_estudiantes=[], estudiante=None, notas={})
-
-        # Selección del estudiante activo
+        # 2. SELECCIÓN DEL ESTUDIANTE
         id_est_sel = request.args.get('id_estudiante') or request.form.get('id_estudiante')
         
         if id_est_sel:
-            estudiante = next((e for e in lista_estudiantes if str(e['id_estudiante']) == str(id_est_sel)), lista_estudiantes[0])
+            estudiante = next((e for e in lista_estudiantes if str(e['id_estudiante']) == str(id_est_sel)), None)
         else:
-            estudiante = lista_estudiantes[0]
+            estudiante = lista_estudiantes[0] if lista_estudiantes else None
 
-        # Número de orden generado por su posición en la lista filtrada
-        indice_en_lista = list(lista_estudiantes).index(estudiante) + 1
-        
-        estudiante_dict = dict(estudiante)
-        estudiante_dict['orden'] = indice_en_lista
+        # Cálculo del número de orden
+        estudiante_dict = None
+        if estudiante:
+            estudiante_dict = dict(estudiante)
+            indice = 0
+            for i, e in enumerate(lista_estudiantes):
+                if str(e['id_estudiante']) == str(estudiante['id_estudiante']):
+                    indice = i + 1
+                    break
+            estudiante_dict['orden'] = indice
 
-        # Guardar datos (POST)
+        # 3. GUARDAR DATOS (POST)
         if request.method == 'POST':
+            id_post = request.form.get('id_estudiante')
             for campo, valor in request.form.items():
-                if campo == 'id_estudiante':
+                if campo == 'id_estudiante' or not valor:
                     continue
                 cursor.execute("""
                     INSERT INTO calificaciones_detalle (id_estudiante, tipo_informe, campo_nombre, valor)
                     VALUES (?, ?, ?, ?)
                     ON CONFLICT(id_estudiante, tipo_informe, campo_nombre) 
                     DO UPDATE SET valor = ?
-                """, (estudiante['id_estudiante'], tipo_inf, campo, valor, valor))
-                
+                """, (id_post, tipo_inf, campo, valor, valor))
             conexion.commit()
-            cursor.close()
-            conexion.close()
-            return redirect(url_for('notas1', id_estudiante=estudiante['id_estudiante']))
+            return redirect(url_for('notas1', id_estudiante=id_post))
 
-        # Cargar notas guardadas previamente (GET) para este estudiante
-        cursor.execute("SELECT campo_nombre, valor FROM calificaciones_detalle WHERE id_estudiante = ? AND tipo_informe = ?", 
-                       (estudiante['id_estudiante'], tipo_inf))
-        resultados = cursor.fetchall()
-        notas = {row['campo_nombre']: row['valor'] for row in resultados}
+        # 4. CARGAR NOTAS (GET)
+        notas = {}
+        if estudiante_dict:
+            cursor.execute("SELECT campo_nombre, valor FROM calificaciones_detalle WHERE id_estudiante = ? AND tipo_informe = ?", 
+                           (estudiante_dict['id_estudiante'], tipo_inf))
+            resultados = cursor.fetchall()
+            notas = {row['campo_nombre']: row['valor'] for row in resultados}
 
         cursor.close()
         conexion.close()
@@ -1729,11 +1724,10 @@ def notas1():
                                notas=notas)
 
     except Exception as e:
-        if conexion:
-            conexion.close()
+        if 'conexion' in locals(): conexion.close()
         print(f"Error en notas1: {e}")
-        return redirect(url_for('index'))
-        
+        return redirect(url_for('menu_notas'))
+    
 @app.route('/notas2')
 def notas2():
     rol = str(session.get('rol', '')).strip().lower()
