@@ -127,15 +127,15 @@
 <div class="row mb-3 align-items-center">
     <div class="col-md-6">
         <label for="id_estudiante" class="font-weight-bold">SELECCIONAR ESTUDIANTE:</label>
-        <select name="id_estudiante" id="id_estudiante" class="form-control" onchange="this.form.submit()">
+        <select name="id_estudiante" id="id_estudiante" class="form-select" onchange="location.href='{{ url_for('notas1') }}?id_estudiante=' + this.value;">
             {% if lista_estudiantes %}
                 {% for est in lista_estudiantes %}
-                    <option value="{{ est.id_estudiante }}" {% if estudiante and estudiante.id_estudiante == est.id_estudiante %}selected{% endif %}>
-                        {{ est.apellidos }}, {{ est.nombres }}
+                    <option value="{{ est.id_estudiante }}" {% if estudiante and estudiante.id_estudiante|string == est.id_estudiante|string %}selected{% endif %}>
+                        {{ est.apellidos }}, {{ est.nombres }} ({{ est.grado }})
                     </option>
                 {% endfor %}
             {% else %}
-                <option value="">No hay estudiantes registrados</option>
+                <option value="" disabled selected>No hay estudiantes registrados</option>
             {% endif %}
         </select>
     </div>

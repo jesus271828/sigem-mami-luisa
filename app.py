@@ -1637,19 +1637,45 @@ from flask import render_template, request, redirect, url_for, session, flash
 
 @app.route('/notas1', methods=['GET', 'POST'])
 def notas1():
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+
     tipo_inf = 'notas1'
-    
+    rol_usuario = session.get('rol', '').lower()
+    grado_maestro = session.get('grado') or session.get('grado_asignado')
+
     conexion = sqlite3.connect('sigem_ml.db')
     conexion.row_factory = sqlite3.Row
     cursor = conexion.cursor()
 
     try:
-        # CONSULTA DIRECTA: Trae absolutamente todos los estudiantes sin filtros restrictivos
-        cursor.execute("""
-            SELECT id_estudiante, nombres, apellidos, grado 
-            FROM estudiantes 
-            ORDER BY apellidos, nombres ASC
-        """)
+        # FILTRO DE ESTUDIANTES SEGÚN ROL
+        if 'oficina' in rol_usuario or 'admin' in rol_usuario:
+            # Oficina ve el Primer Ciclo completo (1ro a 3ro)
+            grados_permitidos = ['1er Grado', '2do Grado', '3er Grado', '1ro', '2do', '3ro', 'Primer Grado', 'Segundo Grado', 'Tercer Grado']
+            placeholders = ','.join(['?'] * len(grados_permitidos))
+            query = f"""
+                SELECT id_estudiante, nombres, apellidos, grado 
+                FROM estudiantes 
+                WHERE grado IN ({placeholders})
+                ORDER BY apellidos, nombres ASC
+            """
+            cursor.execute(query, grados_permitidos)
+        elif grado_maestro:
+            # Maestro ve únicamente los estudiantes de su grado asignado
+            cursor.execute("""
+                SELECT id_estudiante, nombres, apellidos, grado 
+                FROM estudiantes 
+                WHERE grado = ?
+                ORDER BY apellidos, nombres ASC
+            """, (grado_maestro,))
+        else:
+            # Si por alguna razón no tiene grado ni es oficina, mostramos vacío o alerta
+            cursor.execute("""
+                SELECT id_estudiante, nombres, apellidos, grado 
+                FROM estudiantes WHERE 1=0
+            """)
+
         lista_estudiantes = cursor.fetchall()
 
         if not lista_estudiantes:
@@ -1665,7 +1691,7 @@ def notas1():
         else:
             estudiante = lista_estudiantes[0]
 
-        # Número de orden generado por su posición en la lista
+        # Número de orden generado por su posición en la lista filtrada
         indice_en_lista = list(lista_estudiantes).index(estudiante) + 1
         
         estudiante_dict = dict(estudiante)
@@ -1688,7 +1714,7 @@ def notas1():
             conexion.close()
             return redirect(url_for('notas1', id_estudiante=estudiante['id_estudiante']))
 
-        # Cargar notas guardadas (GET)
+        # Cargar notas guardadas previamente (GET) para este estudiante
         cursor.execute("SELECT campo_nombre, valor FROM calificaciones_detalle WHERE id_estudiante = ? AND tipo_informe = ?", 
                        (estudiante['id_estudiante'], tipo_inf))
         resultados = cursor.fetchall()
@@ -1707,7 +1733,7 @@ def notas1():
             conexion.close()
         print(f"Error en notas1: {e}")
         return redirect(url_for('index'))
-    
+        
 @app.route('/notas2')
 def notas2():
     rol = str(session.get('rol', '')).strip().lower()
