@@ -1676,6 +1676,7 @@ def notas1():
         if is_postgres:
             cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             
+            # FILTRADO SEGÚN ROL (Oficina/Admin vs Maestro)
             if 'oficina' in rol_usuario or 'admin' in rol_usuario:
                 cur.execute("""
                     SELECT id_estudiante, nombres, apellidos, grado 
@@ -1687,16 +1688,30 @@ def notas1():
                 cur.execute("""
                     SELECT id_estudiante, nombres, apellidos, grado 
                     FROM estudiantes 
-                    WHERE grado ILIKE %s 
+                    WHERE grado = %s 
                     ORDER BY apellidos, nombres ASC
-                """, (f"%{grado_usuario}%",))
+                """, (grado_usuario,))
             else:
-                cur.execute("SELECT id_estudiante, nombres, apellidos, grado FROM estudiantes ORDER BY apellidos, nombres ASC")
+                cur.execute("SELECT id_estudiante, nombres, apellidos, grado FROM estudiantes WHERE 1=0")
             
             lista_estudiantes = cur.fetchall()
             
+            # Respaldo en tabla inscripciones si no hay en estudiantes
             if not lista_estudiantes:
-                cur.execute("SELECT id as id_estudiante, nombres, apellidos, grado FROM inscripciones ORDER BY apellidos, nombres ASC")
+                if 'oficina' in rol_usuario or 'admin' in rol_usuario:
+                    cur.execute("""
+                        SELECT id as id_estudiante, nombres, apellidos, grado 
+                        FROM inscripciones 
+                        WHERE grado ILIKE '1%' OR grado ILIKE '2%' OR grado ILIKE '3%'
+                        ORDER BY apellidos, nombres ASC
+                    """)
+                elif grado_usuario:
+                    cur.execute("""
+                        SELECT id as id_estudiante, nombres, apellidos, grado 
+                        FROM inscripciones 
+                        WHERE grado = %s 
+                        ORDER BY apellidos, nombres ASC
+                    """, (grado_usuario,))
                 lista_estudiantes = cur.fetchall()
             cur.close()
         else:
@@ -1714,21 +1729,27 @@ def notas1():
                 cur.execute("""
                     SELECT id_estudiante, nombres, apellidos, grado 
                     FROM estudiantes 
-                    WHERE grado LIKE ? 
+                    WHERE grado = ? 
                     ORDER BY apellidos, nombres ASC
-                """, (f"%{grado_usuario}%",))
+                """, (grado_usuario,))
             else:
-                cur.execute("SELECT id_estudiante, nombres, apellidos, grado FROM estudiantes ORDER BY apellidos, nombres ASC")
+                cur.execute("SELECT id_estudiante, nombres, apellidos, grado FROM estudiantes WHERE 1=0")
             
             lista_estudiantes = cur.fetchall()
             
             if not lista_estudiantes:
-                cur.execute("SELECT id_estudiante, nombres, apellidos, grado FROM estudiantes ORDER BY apellidos, nombres ASC")
+                if 'oficina' in rol_usuario or 'admin' in rol_usuario:
+                    cur.execute("SELECT id_estudiante, nombres, apellidos, grado FROM estudiantes WHERE grado LIKE '1%' OR grado LIKE '2%' OR grado LIKE '3%' ORDER BY apellidos, nombres ASC")
+                elif grado_usuario:
+                    cur.execute("SELECT id_estudiante, nombres, apellidos, grado FROM estudiantes WHERE grado = ? ORDER BY apellidos, nombres ASC", (grado_usuario,))
                 lista_estudiantes = cur.fetchall()
                 
-            if not lista_estudiantes:
-                cur.execute("SELECT id as id_estudiante, nombres, apellidos, grado FROM inscripciones ORDER BY apellidos, nombres ASC")
-                lista_estudiantes = cur.fetchall()
+                if not lista_estudiantes:
+                    if 'oficina' in rol_usuario or 'admin' in rol_usuario:
+                        cur.execute("SELECT id as id_estudiante, nombres, apellidos, grado FROM inscripciones WHERE grado LIKE '1%' OR grado LIKE '2%' OR grado LIKE '3%' ORDER BY apellidos, nombres ASC")
+                    elif grado_usuario:
+                        cur.execute("SELECT id as id_estudiante, nombres, apellidos, grado FROM inscripciones WHERE grado = ? ORDER BY apellidos, nombres ASC", (grado_usuario,))
+                    lista_estudiantes = cur.fetchall()
             cur.close()
 
         # Selección del estudiante actual
@@ -1774,7 +1795,7 @@ def notas1():
             cursor_post.close()
             return redirect(url_for('notas1', id_estudiante=id_post))
 
-        # Cargar notas del estudiante seleccionado (CORREGIDO PARA POSTGRES Y SQLITE)
+        # Cargar notas del estudiante seleccionado
         notas = {}
         if estudiante_dict:
             if is_postgres:
