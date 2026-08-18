@@ -14,9 +14,10 @@ class Usuario(db.Model, UserMixin):
 
 # Modelo para los Estudiantes
 class Estudiante(db.Model):
-    __tablename__ = 'estudiantes'  # <-- ¡Aquí está el cambio con la 's' al final!
+    __tablename__ = 'estudiantes'
+    
     id = db.Column(db.Integer, primary_key=True)
-    nombre = db.Column(db.String(100), nullable=False)
+    nombres = db.Column(db.String(100), nullable=False)   # <-- Cambiado de 'nombre' a 'nombres'
     apellido = db.Column(db.String(100), nullable=False)
     grado = db.Column(db.String(50), nullable=False)
 
