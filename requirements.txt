@@ -1,14 +1,10 @@
 Flask
+Flask-SQLAlchemy
 gunicorn
 xhtml2pdf
 psycopg2-binary
-google-genai>=0.3.0
-google-generativeai>=0.8.0
+google-genai
+google-generativeai
 pytesseract
 pillow
-google-generativeai
 google-api-core
-
-Flask
-psycopg2-binary
-google-generativeai
