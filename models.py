@@ -11,6 +11,13 @@ class Usuario(db.Model, UserMixin):
     rol = db.Column(db.String(20), nullable=False)  # 'docente' o 'oficina'
     grado_asignado = db.Column(db.String(50), nullable=True) # Para el autocompletado
 
+# Modelo para los Estudiantes (Necesario para las notas y filtros)
+class Estudiante(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nombre = db.Column(db.String(100), nullable=False)
+    apellido = db.Column(db.String(100), nullable=False)
+    grado = db.Column(db.String(50), nullable=False)
+
 # Modelo para la Planificación
 class Planificacion(db.Model):
     id = db.Column(db.Integer, primary_key=True)
