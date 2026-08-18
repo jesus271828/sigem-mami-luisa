@@ -1674,7 +1674,7 @@ def notas1():
     rol_usuario = str(session.get('rol', '')).strip().lower()
     curso_maestro = str(session.get('curso_asignado', '')).strip()
     
-    if rol_usuario == 'oficina':
+    if rol_usuario == 'admin' or rol_usuario == 'oficina':
         # Oficina ve todos los del primer ciclo ordenados por nombre
         lista_estudiantes = Estudiante.query.filter(
             Estudiante.grado.in_(['Párvulos', '1ro A', '1ro B', '2do A', '2do B', '3ro A', '3ro B'])
