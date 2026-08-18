@@ -128,7 +128,7 @@
         <select id="id_estudiante" class="form-select">
             {% for est in lista_estudiantes %}
                 <option value="{{ est.id_estudiante }}" {% if estudiante and estudiante.id_estudiante|string == est.id_estudiante|string %}selected{% endif %}>
-                    {{ est.apellidos }}, {{ est.nombres }} ({{ est.grado }})
+                    {{ est.nombres }} {{ est.apellidos }} ({{ est.grado }})
                 </option>
             {% endfor %}
         </select>
