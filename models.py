@@ -17,8 +17,8 @@ class Estudiante(db.Model):
     __tablename__ = 'estudiantes'
     
     id = db.Column(db.Integer, primary_key=True)
-    nombres = db.Column(db.String(100), nullable=False)   # <-- Cambiado de 'nombre' a 'nombres'
-    apellido = db.Column(db.String(100), nullable=False)
+    nombres = db.Column(db.String(100), nullable=False)
+    apellidos = db.Column(db.String(100), nullable=False)  # <-- Cambiado de 'apellido' a 'apellidos'
     grado = db.Column(db.String(50), nullable=False)
 
 # Modelo para la Planificación
