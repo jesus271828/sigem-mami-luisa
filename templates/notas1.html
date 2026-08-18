@@ -125,7 +125,8 @@
     <!-- SELECTOR DE ESTUDIANTE -->
     <div class="selector-container">
         <label for="id_estudiante" class="font-weight-bold">SELECCIONAR ESTUDIANTE:</label>
-        <select id="id_estudiante" class="form-select">
+        <select id="id_estudiante" class="form-select" onchange="cambiarEstudiante(this)">
+            <option value="">-- Seleccione un estudiante --</option>
             {% for est in lista_estudiantes %}
                 <option value="{{ est.id_estudiante }}" {% if estudiante and estudiante.id_estudiante|string == est.id_estudiante|string %}selected{% endif %}>
                     {{ est.nombres }} {{ est.apellidos }} ({{ est.grado }})
@@ -378,10 +379,11 @@
     </form>
 
     <script>
-        // Manejador limpio para cambiar de estudiante sin conflictos de sintaxis
-        document.getElementById('id_estudiante').addEventListener('change', function() {
-            window.location.href = "{{ url_for('notas1') }}?id_estudiante=" + this.value;
-        });
+        function cambiarEstudiante(select) {
+            if (select.value) {
+                window.location.href = "{{ url_for('notas1') }}?id_estudiante=" + select.value;
+            }
+        }
 
         function calcular(el) {
             let row = el.closest('tr');
