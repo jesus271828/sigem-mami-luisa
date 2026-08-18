@@ -1,5 +1,6 @@
 Flask
 Flask-SQLAlchemy
+Flask-Login
 gunicorn
 xhtml2pdf
 psycopg2-binary
