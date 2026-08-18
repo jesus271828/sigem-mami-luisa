@@ -5,6 +5,7 @@ db = SQLAlchemy()
 
 # Modelo para los usuarios (Docentes y Oficina)
 class Usuario(db.Model, UserMixin):
+    __tablename__ = 'usuario'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
     password = db.Column(db.String(100), nullable=False)
@@ -13,6 +14,7 @@ class Usuario(db.Model, UserMixin):
 
 # Modelo para los Estudiantes (Necesario para las notas y filtros)
 class Estudiante(db.Model):
+    __tablename__ = 'estudiante'
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100), nullable=False)
     apellido = db.Column(db.String(100), nullable=False)
@@ -20,6 +22,7 @@ class Estudiante(db.Model):
 
 # Modelo para la Planificación
 class Planificacion(db.Model):
+    __tablename__ = 'planificacion'
     id = db.Column(db.Integer, primary_key=True)
     # Identificación
     docente = db.Column(db.String(100), nullable=False)

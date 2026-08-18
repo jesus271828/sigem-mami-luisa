@@ -1,5 +1,5 @@
 import os
-from models import Estudiante
+from models import db, Estudiante, Usuario, Planificacion
 import base64
 import sqlite3
 from flask import Flask, render_template, make_response, request, redirect, url_for, session, flash, send_file
@@ -21,7 +21,14 @@ UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-DATABASE_URL = os.environ.get('DATABASE_URL')
+# Configuración de SQLAlchemy utilizando la variable de entorno o tu URL de Supabase directamente
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL') or 'postgresql://postgres.cfwtrxtncgvqujimcvds:piI4T8inVAPT0n8L@aws-0-ca-central-1.pooler.supabase.com:6543/postgres'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Inicializar SQLAlchemy con la app
+db.init_app(app)
+
+DATABASE_URL = app.config['SQLALCHEMY_DATABASE_URI']
 
 class PostgresCursorWrapper:
     def __init__(self, conn):
@@ -46,7 +53,9 @@ class PostgresCursorWrapper:
     def commit(self):
         return self.conn.commit()
 
-    def close(self):
+    def close(self, commit_changes=False):
+        if commit_changes:
+            self.conn.commit()
         self.cur.close()
         self.conn.close()
 
