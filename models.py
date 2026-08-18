@@ -12,9 +12,9 @@ class Usuario(db.Model, UserMixin):
     rol = db.Column(db.String(20), nullable=False)  # 'docente' o 'oficina'
     grado_asignado = db.Column(db.String(50), nullable=True) # Para el autocompletado
 
-# Modelo para los Estudiantes (Necesario para las notas y filtros)
+# Modelo para los Estudiantes
 class Estudiante(db.Model):
-    __tablename__ = 'estudiante'
+    __tablename__ = 'estudiantes'  # <-- ¡Aquí está el cambio con la 's' al final!
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(100), nullable=False)
     apellido = db.Column(db.String(100), nullable=False)
