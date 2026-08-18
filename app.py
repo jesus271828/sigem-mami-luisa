@@ -1678,13 +1678,13 @@ def notas1():
         # Oficina ve todos los del primer ciclo ordenados por nombre
         lista_estudiantes = Estudiante.query.filter(
             Estudiante.grado.in_(['Párvulos', '1ro A', '1ro B', '2do A', '2do B', '3ro A', '3ro B'])
-        ).order_by(Estudiante.nombre.asc()).all()
+        ).order_by(Estudiante.nombres.asc()).all()
     else:
         # Maestro ve solo su curso asignado ordenado por nombre
         # Usamos .ilike() para evitar problemas de mayúsculas o espacios exactos
         lista_estudiantes = Estudiante.query.filter(
             Estudiante.grado.ilike(f"%{curso_maestro}%")
-        ).order_by(Estudiante.nombre.asc()).all()
+        ).order_by(Estudiante.nombres.asc()).all()
 
     id_estudiante = request.args.get('id_estudiante')
     estudiante = None
