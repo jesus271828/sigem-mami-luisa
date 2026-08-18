@@ -2,21 +2,22 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <title>Informe de Aprendizaje - SIGEM Mami Luisa</title>
     <style>
         @page {
             size: A4 landscape;
-            margin: 0mm; /* Márgenes en 0 para bloquear el espacio de los encabezados del navegador */
+            margin: 0mm;
         }
         *, *::before, *::after { box-sizing: border-box; }
         body { 
             font-family: 'Arial', sans-serif; 
             font-size: 11px; 
             color: #000; 
-            margin: 10mm; /* Margen interno para el contenido de la página */
+            margin: 10mm; 
             padding: 0; 
         }
         
-        /* BARRA DE ACCIONES / BOTONES (No se imprime) */
+        /* BARRA DE ACCIONES / BOTONES */
         .action-bar {
             background: #2c3e50;
             padding: 10px 15px;
@@ -59,13 +60,13 @@
             .action-bar, .selector-container { display: none !important; }
             .salto-pagina { page-break-before: always; }
             body {
-                margin: 8mm; /* Margen seguro al imprimir */
+                margin: 8mm;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
         }
 
-        /* ESTILOS DEL ENCABEZADO */
+        /* ENCABEZADO */
         .header { display: flex; align-items: flex-start; border-bottom: 2px solid #000; margin-bottom: 12px; padding-bottom: 6px; }
         .logo { width: 85px; margin-right: 12px; }
         .header-content { flex-grow: 1; }
@@ -75,29 +76,28 @@
         .info-line { font-size: 10.5px; margin: 2px 0; }
         .info-row-2 { display: flex; justify-content: space-between; margin-top: 3px; }
 
-        /* ESTILOS GENERALES DE TABLAS */
+        /* TABLAS GENERALES */
         table { border-collapse: collapse; width: 100%; border: 2px solid #000; margin-bottom: 10px; }
         th, td { border: 1px solid #000; padding: 5px 3px; text-align: center; vertical-align: middle; font-size: 10.5px; }
         .bold { font-weight: bold; }
         .bg-grey { background-color: #f2f2f2; }
         
-        /* TABLA DATOS ESTUDIANTE */
         #tabla-datos td { text-align: left; padding-left: 6px; }
 
-        /* TABLA CALIFICACIONES */
+        /* CALIFICACIONES */
         #tabla-notas .input-text { border: none; width: 100%; font-size: 11px; text-align: center; outline: none; background: transparent; }
         #tabla-notas .res { font-weight: bold; color: blue; background-color: #e8f0fe; }
         #tabla-notas .area-res { font-weight: bold; color: green; background-color: #e6ffed; }
         #tabla-notas .text-left { text-align: left; padding-left: 6px; }
         #tabla-notas .vertical-text { writing-mode: vertical-rl; transform: rotate(180deg); white-space: nowrap; padding: 6px; }
 
-        /* TABLA ASISTENCIA */
+        /* ASISTENCIA */
         #tabla-asistencia td { height: 32px; padding: 2px; }
         #tabla-asistencia .input-text { border: none; width: 100%; font-size: 10.5px; text-align: center; outline: none; background: transparent; }
         .desc-cell { text-align: left; font-size: 9.5px; line-height: 1.15; padding: 4px !important; }
         .leyenda-cell { text-align: left; font-size: 9.5px; width: 160px; vertical-align: top; padding: 6px !important; }
 
-        /* ESTILOS HOJA DE ATRÁS */
+        /* HOJA TRASERA */
         .salto-pagina { page-break-before: always; margin-top: 30px; }
         .tabla-avances td { height: 40px; vertical-align: top; text-align: left; padding: 4px; }
         .titulo-avances { background-color: #f2f2f2; font-size: 10.5px; font-weight: bold; text-align: left; padding: 5px 8px; border: 1px solid #000; }
@@ -123,29 +123,23 @@
     </div>
 
     <!-- SELECTOR DE ESTUDIANTE -->
-<!-- SECCIÓN DE SELECCIÓN DE ESTUDIANTE -->
-<div class="row mb-3 align-items-center">
-    <div class="col-md-6">
+    <div class="selector-container">
         <label for="id_estudiante" class="font-weight-bold">SELECCIONAR ESTUDIANTE:</label>
-        <select name="id_estudiante" id="id_estudiante" class="form-select" onchange="location.href='{{ url_for('notas1') }}?id_estudiante=' + this.value;">
-            {% if lista_estudiantes %}
-                {% for est in lista_estudiantes %}
-                    <option value="{{ est.id_estudiante }}" {% if estudiante and estudiante.id_estudiante|string == est.id_estudiante|string %}selected{% endif %}>
-                        {{ est.apellidos }}, {{ est.nombres }} ({{ est.grado }})
-                    </option>
-                {% endfor %}
-            {% else %}
-                <option value="" disabled selected>No hay estudiantes registrados</option>
-            {% endif %}
+        <select id="id_estudiante" class="form-select">
+            {% for est in lista_estudiantes %}
+                <option value="{{ est.id_estudiante }}" {% if estudiante and estudiante.id_estudiante|string == est.id_estudiante|string %}selected{% endif %}>
+                    {{ est.apellidos }}, {{ est.nombres }} ({{ est.grado }})
+                </option>
+            {% endfor %}
         </select>
     </div>
-</div>
-    <form id="form-informe" method="POST" action="{{ url_for('notas1') }}">
-        <input type="hidden" name="id_estudiante" value="{{ estudiante.id_estudiante }}">
 
-        <!-- ========================================== -->
-        <!-- PARTE DELANTERA (HOJA DE ADELANTE)          -->
-        <!-- ========================================== -->
+    <form id="form-informe" method="POST" action="{{ url_for('notas1') }}">
+        {% if estudiante %}
+        <input type="hidden" name="id_estudiante" value="{{ estudiante.id_estudiante }}">
+        {% endif %}
+
+        <!-- PARTE DELANTERA -->
         <div class="header">
             <img src="{{ url_for('static', filename='img/logo2.png') }}" class="logo" alt="Logo">
             <div class="header-content">
@@ -173,13 +167,13 @@
         <table id="tabla-datos">
             <tr>
                 <td class="bold" style="width: 8%;">NOMBRE(S):</td>
-                <td style="width: 27%; font-weight: bold; color: #1a73e8;">{{ estudiante.nombres }}</td>
+                <td style="width: 27%; font-weight: bold; color: #1a73e8;">{{ estudiante.nombres if estudiante else '' }}</td>
                 <td class="bold" style="width: 9%;">APELLIDO(S):</td>
-                <td style="width: 27%; font-weight: bold; color: #1a73e8;">{{ estudiante.apellidos }}</td>
+                <td style="width: 27%; font-weight: bold; color: #1a73e8;">{{ estudiante.apellidos if estudiante else '' }}</td>
                 <td class="bold" style="width: 10%;">NO. DE ORDEN:</td>
-                <td style="width: 6%;">{{ estudiante.orden if estudiante.orden else '' }}</td>
+                <td style="width: 6%;">{{ estudiante.orden if estudiante and estudiante.orden else '' }}</td>
                 <td class="bold" style="width: 5%;">ID:</td>
-                <td style="width: 8%;">{{ estudiante.id_estudiante }}</td>
+                <td style="width: 8%;">{{ estudiante.id_estudiante if estudiante else '' }}</td>
             </tr>
         </table>
 
@@ -207,17 +201,26 @@
                 {% for m in ['Lengua Española', 'Matemática', 'Ciencias Sociales', 'Ciencias de la Naturaleza', 'Ed. Física', 'Formación Religiosa', 'Ed. Artística', 'Inglés'] %}
                 <tr>
                     <td class="text-left bold">{{ m }}</td>
-                    <td><input class="input-text c1-p" name="{{ m }}_c1_p1" oninput="calcular(this)"></td><td><input class="input-text c1-p" name="{{ m }}_c1_p2" oninput="calcular(this)"></td>
-                    <td><input class="input-text c1-p" name="{{ m }}_c1_p3" oninput="calcular(this)"></td><td><input class="input-text c1-p" name="{{ m }}_c1_p4" oninput="calcular(this)"></td>
-                    <td><input class="input-text c2-p" name="{{ m }}_c2_p1" oninput="calcular(this)"></td><td><input class="input-text c2-p" name="{{ m }}_c2_p2" oninput="calcular(this)"></td>
-                    <td><input class="input-text c2-p" name="{{ m }}_c2_p3" oninput="calcular(this)"></td><td><input class="input-text c2-p" name="{{ m }}_c2_p4" oninput="calcular(this)"></td>
-                    <td><input class="input-text c3-p" name="{{ m }}_c3_p1" oninput="calcular(this)"></td><td><input class="input-text c3-p" name="{{ m }}_c3_p2" oninput="calcular(this)"></td>
-                    <td><input class="input-text c3-p" name="{{ m }}_c3_p3" oninput="calcular(this)"></td><td><input class="input-text c3-p" name="{{ m }}_c3_p4" oninput="calcular(this)"></td>
-                    <td><input class="input-text res c1-res" name="{{ m }}_c1_res" readonly></td>
-                    <td><input class="input-text res c2-res" name="{{ m }}_c2_res" readonly></td>
-                    <td><input class="input-text res c3-res" name="{{ m }}_c3_res" readonly></td>
-                    <td><input class="input-text area-res" name="{{ m }}_area_res" readonly></td>
-                    <td><input class="input-text" name="{{ m }}_recup"></td>
+                    <td><input class="input-text c1-p" name="{{ m }}_c1_p1" value="{{ notas.get(m + '_c1_p1', '') }}" oninput="calcular(this)"></td>
+                    <td><input class="input-text c1-p" name="{{ m }}_c1_p2" value="{{ notas.get(m + '_c1_p2', '') }}" oninput="calcular(this)"></td>
+                    <td><input class="input-text c1-p" name="{{ m }}_c1_p3" value="{{ notas.get(m + '_c1_p3', '') }}" oninput="calcular(this)"></td>
+                    <td><input class="input-text c1-p" name="{{ m }}_c1_p4" value="{{ notas.get(m + '_c1_p4', '') }}" oninput="calcular(this)"></td>
+                    
+                    <td><input class="input-text c2-p" name="{{ m }}_c2_p1" value="{{ notas.get(m + '_c2_p1', '') }}" oninput="calcular(this)"></td>
+                    <td><input class="input-text c2-p" name="{{ m }}_c2_p2" value="{{ notas.get(m + '_c2_p2', '') }}" oninput="calcular(this)"></td>
+                    <td><input class="input-text c2-p" name="{{ m }}_c2_p3" value="{{ notas.get(m + '_c2_p3', '') }}" oninput="calcular(this)"></td>
+                    <td><input class="input-text c2-p" name="{{ m }}_c2_p4" value="{{ notas.get(m + '_c2_p4', '') }}" oninput="calcular(this)"></td>
+                    
+                    <td><input class="input-text c3-p" name="{{ m }}_c3_p1" value="{{ notas.get(m + '_c3_p1', '') }}" oninput="calcular(this)"></td>
+                    <td><input class="input-text c3-p" name="{{ m }}_c3_p2" value="{{ notas.get(m + '_c3_p2', '') }}" oninput="calcular(this)"></td>
+                    <td><input class="input-text c3-p" name="{{ m }}_c3_p3" value="{{ notas.get(m + '_c3_p3', '') }}" oninput="calcular(this)"></td>
+                    <td><input class="input-text c3-p" name="{{ m }}_c3_p4" value="{{ notas.get(m + '_c3_p4', '') }}" oninput="calcular(this)"></td>
+                    
+                    <td><input class="input-text res c1-res" name="{{ m }}_c1_res" value="{{ notas.get(m + '_c1_res', '') }}" readonly></td>
+                    <td><input class="input-text res c2-res" name="{{ m }}_c2_res" value="{{ notas.get(m + '_c2_res', '') }}" readonly></td>
+                    <td><input class="input-text res c3-res" name="{{ m }}_c3_res" value="{{ notas.get(m + '_c3_res', '') }}" readonly></td>
+                    <td><input class="input-text area-res" name="{{ m }}_area_res" value="{{ notas.get(m + '_area_res', '') }}" readonly></td>
+                    <td><input class="input-text" name="{{ m }}_recup" value="{{ notas.get(m + '_recup', '') }}"></td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -230,13 +233,13 @@
                     <th rowspan="2" style="width: 8%;">Escala numérica</th>
                     <th rowspan="2" style="width: 38%;">DESCRIPCIÓN</th>
                     <th rowspan="2" style="width: 7%;">PERÍODO</th>
-                    <th rowspan="2" style="width: 10%;">ASITENCIA</th>
+                    <th rowspan="2" style="width: 10%;">ASISTENCIA</th>
                     <th rowspan="2" style="width: 10%;">AUSENCIA</th>
                     <th colspan="2" style="width: 15%;">% ANUAL</th>
                     <th rowspan="2" class="leyenda-cell">LEYENDA</th>
                 </tr>
                 <tr>
-                    <th style="width: 7.5%;">ASITENCIA</th>
+                    <th style="width: 7.5%;">ASISTENCIA</th>
                     <th style="width: 7.5%;">AUSENCIA</th>
                 </tr>
             </thead>
@@ -245,7 +248,10 @@
                     <td class="bold">89-100</td>
                     <td class="desc-cell">Evidencia que el estudiante ha alcanzado un desempeño destacado con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
                     <td class="bold">P1</td>
-                    <td><input class="input-text" name="asist_p1"></td><td><input class="input-text" name="aus_p1"></td><td><input class="input-text" name="pct_asist_p1"></td><td><input class="input-text" name="pct_aus_p1"></td>
+                    <td><input class="input-text" name="asist_p1" value="{{ notas.get('asist_p1', '') }}"></td>
+                    <td><input class="input-text" name="aus_p1" value="{{ notas.get('aus_p1', '') }}"></td>
+                    <td><input class="input-text" name="pct_asist_p1" value="{{ notas.get('pct_asist_p1', '') }}"></td>
+                    <td><input class="input-text" name="pct_aus_p1" value="{{ notas.get('pct_aus_p1', '') }}"></td>
                     <td rowspan="4" class="leyenda-cell">
                         (P1) Período 1<br>(P2) Período 2<br>(P3) Período 3<br>(P4) Período 4<br><br>
                         (C1) Competencia 1<br>(C2) Competencia 2<br>(C3) Competencia 3
@@ -255,46 +261,51 @@
                     <td class="bold">77-88</td>
                     <td class="desc-cell">Evidencia que el estudiante ha logrado, en general, los aprendizajes esperados con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
                     <td class="bold">P2</td>
-                    <td><input class="input-text" name="asist_p2"></td><td><input class="input-text" name="aus_p2"></td><td><input class="input-text" name="pct_asist_p2"></td><td><input class="input-text" name="pct_aus_p2"></td>
+                    <td><input class="input-text" name="asist_p2" value="{{ notas.get('asist_p2', '') }}"></td>
+                    <td><input class="input-text" name="aus_p2" value="{{ notas.get('aus_p2', '') }}"></td>
+                    <td><input class="input-text" name="pct_asist_p2" value="{{ notas.get('pct_asist_p2', '') }}"></td>
+                    <td><input class="input-text" name="pct_aus_p2" value="{{ notas.get('pct_aus_p2', '') }}"></td>
                 </tr>
                 <tr>
                     <td class="bold">65 - 76</td>
                     <td class="desc-cell">Evidencia que el estudiante aún se encuentra en proceso con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar, mostrando un logro muy básico.</td>
                     <td class="bold">P3</td>
-                    <td><input class="input-text" name="asist_p3"></td><td><input class="input-text" name="aus_p3"></td><td><input class="input-text" name="pct_asist_p3"></td><td><input class="input-text" name="pct_aus_p3"></td>
+                    <td><input class="input-text" name="asist_p3" value="{{ notas.get('asist_p3', '') }}"></td>
+                    <td><input class="input-text" name="aus_p3" value="{{ notas.get('aus_p3', '') }}"></td>
+                    <td><input class="input-text" name="pct_asist_p3" value="{{ notas.get('pct_asist_p3', '') }}"></td>
+                    <td><input class="input-text" name="pct_aus_p3" value="{{ notas.get('pct_aus_p3', '') }}"></td>
                 </tr>
                 <tr>
                     <td class="bold">Menos de 65</td>
                     <td class="desc-cell">Evidencia que el estudiante ha alcanzado un desempeño insuficiente con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
                     <td class="bold">P4</td>
-                    <td><input class="input-text" name="asist_p4"></td><td><input class="input-text" name="aus_p4"></td><td><input class="input-text" name="pct_asist_p4"></td><td><input class="input-text" name="pct_aus_p4"></td>
+                    <td><input class="input-text" name="asist_p4" value="{{ notas.get('asist_p4', '') }}"></td>
+                    <td><input class="input-text" name="aus_p4" value="{{ notas.get('aus_p4', '') }}"></td>
+                    <td><input class="input-text" name="pct_asist_p4" value="{{ notas.get('pct_asist_p4', '') }}"></td>
+                    <td><input class="input-text" name="pct_aus_p4" value="{{ notas.get('pct_aus_p4', '') }}"></td>
                 </tr>
             </tbody>
         </table>
 
-
-        <!-- ========================================== -->
-        <!-- PARTE TRASERA (HOJA DE ATRÁS)              -->
-        <!-- ========================================== -->
+        <!-- PARTE TRASERA -->
         <div class="salto-pagina"></div>
 
-        <!-- TABLA DE AVANCES E INFORMACIÓN -->
         <table class="tabla-avances">
             <tr>
                 <td class="bold" style="width: 6%; text-align: center;">P1</td>
-                <td><textarea class="input-text-area" name="avance_p1" style="height: 38px;" placeholder="Comentarios del período 1..."></textarea></td>
+                <td><textarea class="input-text-area" name="avance_p1" placeholder="Comentarios del período 1...">{{ notas.get('avance_p1', '') }}</textarea></td>
             </tr>
             <tr>
                 <td class="bold" style="text-align: center;">P2</td>
-                <td><textarea class="input-text-area" name="avance_p2" style="height: 38px;" placeholder="Comentarios del período 2..."></textarea></td>
+                <td><textarea class="input-text-area" name="avance_p2" placeholder="Comentarios del período 2...">{{ notas.get('avance_p2', '') }}</textarea></td>
             </tr>
             <tr>
                 <td class="bold" style="text-align: center;">P3</td>
-                <td><textarea class="input-text-area" name="avance_p3" style="height: 38px;" placeholder="Comentarios del período 3..."></textarea></td>
+                <td><textarea class="input-text-area" name="avance_p3" placeholder="Comentarios del período 3...">{{ notas.get('avance_p3', '') }}</textarea></td>
             </tr>
             <tr>
                 <td class="bold" style="text-align: center;">P4</td>
-                <td><textarea class="input-text-area" name="avance_p4" style="height: 38px;" placeholder="Comentarios del período 4..."></textarea></td>
+                <td><textarea class="input-text-area" name="avance_p4" placeholder="Comentarios del período 4...">{{ notas.get('avance_p4', '') }}</textarea></td>
             </tr>
         </table>
 
@@ -302,7 +313,6 @@
             Información sobre el nivel de avances de los aprendizajes y los apoyos que necesita para la mejora de sus aprendizajes.
         </div>
 
-        <!-- TABLA INFERIOR: FIRMAS DE PADRES Y SITUACIÓN -->
         <table style="width: 100%;">
             <tr>
                 <td style="width: 60%; vertical-align: top; padding: 0;">
@@ -340,22 +350,21 @@
                             <th style="width: 34%;">Repitente</th>
                         </tr>
                         <tr>
-                            <td style="height: 28px;"><input type="checkbox" name="promovido" value="1" style="transform: scale(1.2);"></td>
-                            <td><input type="checkbox" name="aplazado" value="1" style="transform: scale(1.2);"></td>
-                            <td><input type="checkbox" name="repitente" value="1" style="transform: scale(1.2);"></td>
+                            <td style="height: 28px;"><input type="checkbox" name="promovido" value="1" {% if notas.get('promovido') == '1' %}checked{% endif %} style="transform: scale(1.2);"></td>
+                            <td><input type="checkbox" name="aplazado" value="1" {% if notas.get('aplazado') == '1' %}checked{% endif %} style="transform: scale(1.2);"></td>
+                            <td><input type="checkbox" name="repitente" value="1" {% if notas.get('repitente') == '1' %}checked{% endif %} style="transform: scale(1.2);"></td>
                         </tr>
                         <tr>
                             <td colspan="3" class="bg-grey text-left bold" style="font-size: 9.5px; padding: 3px;">Condición final del/de la estudiante</td>
                         </tr>
                         <tr>
-                            <td colspan="3" style="height: 32px;"><input class="input-text" name="condicion_final" style="text-align: center;" placeholder="Escribir condición..."></td>
+                            <td colspan="3" style="height: 32px;"><input class="input-text" name="condicion_final" value="{{ notas.get('condicion_final', '') }}" style="text-align: center;" placeholder="Escribir condición..."></td>
                         </tr>
                     </table>
                 </td>
             </tr>
         </table>
 
-        <!-- PIE DE FIRMAS INSTITUCIONALES -->
         <div class="pie-firmas">
             <div class="linea-firma">
                 <b>{{ docente_nombre }}</b><br>
@@ -368,8 +377,12 @@
         </div>
     </form>
 
-    <!-- SCRIPT DE CÁLCULO Y BOTONES -->
     <script>
+        // Manejador limpio para cambiar de estudiante sin conflictos de sintaxis
+        document.getElementById('id_estudiante').addEventListener('change', function() {
+            window.location.href = "{{ url_for('notas1') }}?id_estudiante=" + this.value;
+        });
+
         function calcular(el) {
             let row = el.closest('tr');
             function aplicarRegla(num) {
