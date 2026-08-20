@@ -181,15 +181,15 @@
 <table id="tabla-notas">
     <thead class="bg-grey">
         <tr>
-            <th rowspan="3" style="width: 18%;">ÁREAS</th>
+            <th rowspan="3" style="width: 18%;">ÁREAS CURRICULARES</th>
             <th colspan="12">COMPETENCIAS FUNDAMENTALES</th>
             <th colspan="3">CALIFICACIÓN FINAL</th>
-            <th rowspan="3" class="vertical-text">POR COMPETENCIA DEL ÁREA</th>
+            <th rowspan="3" class="vertical-text">DEL ÁREA</th>
             <th rowspan="3" class="vertical-text">RECUPERACIÓN</th>
         </tr>
         <tr>
             <th colspan="4">
-                ID ESTUDIANTE: C1<br>
+                C1<br>
                 <span style="font-size: 10px; font-weight: normal;">Comunicativa</span>
             </th>
             <th colspan="4">
@@ -200,42 +200,108 @@
                 C3<br>
                 <span style="font-size: 10px; font-weight: normal;">Ética y Ciudadana; Desarrollo Personal y Espiritual; Ambiental y de la Salud</span>
             </th>
-            <th rowspan="2">C1</th>
-            <th rowspan="2">C2</th>
-            <th rowspan="2">C3</th>
+            <th colspan="3">POR COMPETENCIA</th>
         </tr>
         <tr>
             <th>P1</th><th>P2</th><th>P3</th><th>P4</th>
             <th>P1</th><th>P2</th><th>P3</th><th>P4</th>
             <th>P1</th><th>P2</th><th>P3</th><th>P4</th>
+            <th>C1</th><th>C2</th><th>C3</th>
         </tr>
     </thead>
     <tbody>
-        {% for m in ['Lengua Española', 'Matemática', 'Ciencias Sociales', 'Ciencias de la Naturaleza', 'Educacion Física', 'Formación Religiosa, Humana y Religiosa', 'Educación Artística', 'Inglés'] %}
+        {% for m in ['Lengua Española', 'Matemática', 'Ciencias Sociales', 'Ciencias de la Naturaleza', 'Educacion Física', 'Formación Integral, Humana y Religiosa', 'Educación Artística', 'Inglés'] %}
         <tr>
             <td class="text-left bold">{{ m }}</td>
+            <!-- Competencia 1 (P1 a P4) -->
             <td><input class="input-text c1-p" name="{{ m }}_c1_p1" value="{{ notas.get(m + '_c1_p1', '') }}" oninput="calcular(this)"></td>
             <td><input class="input-text c1-p" name="{{ m }}_c1_p2" value="{{ notas.get(m + '_c1_p2', '') }}" oninput="calcular(this)"></td>
             <td><input class="input-text c1-p" name="{{ m }}_c1_p3" value="{{ notas.get(m + '_c1_p3', '') }}" oninput="calcular(this)"></td>
             <td><input class="input-text c1-p" name="{{ m }}_c1_p4" value="{{ notas.get(m + '_c1_p4', '') }}" oninput="calcular(this)"></td>
             
+            <!-- Competencia 2 (P1 a P4) -->
             <td><input class="input-text c2-p" name="{{ m }}_c2_p1" value="{{ notas.get(m + '_c2_p1', '') }}" oninput="calcular(this)"></td>
             <td><input class="input-text c2-p" name="{{ m }}_c2_p2" value="{{ notas.get(m + '_c2_p2', '') }}" oninput="calcular(this)"></td>
             <td><input class="input-text c2-p" name="{{ m }}_c2_p3" value="{{ notas.get(m + '_c2_p3', '') }}" oninput="calcular(this)"></td>
             <td><input class="input-text c2-p" name="{{ m }}_c2_p4" value="{{ notas.get(m + '_c2_p4', '') }}" oninput="calcular(this)"></td>
             
+            <!-- Competencia 3 (P1 a P4) -->
             <td><input class="input-text c3-p" name="{{ m }}_c3_p1" value="{{ notas.get(m + '_c3_p1', '') }}" oninput="calcular(this)"></td>
             <td><input class="input-text c3-p" name="{{ m }}_c3_p2" value="{{ notas.get(m + '_c3_p2', '') }}" oninput="calcular(this)"></td>
             <td><input class="input-text c3-p" name="{{ m }}_c3_p3" value="{{ notas.get(m + '_c3_p3', '') }}" oninput="calcular(this)"></td>
             <td><input class="input-text c3-p" name="{{ m }}_c3_p4" value="{{ notas.get(m + '_c3_p4', '') }}" oninput="calcular(this)"></td>
             
+            <!-- Calificación Final por Competencia (C1, C2, C3) -->
             <td><input class="input-text res c1-res" name="{{ m }}_c1_res" value="{{ notas.get(m + '_c1_res', '') }}" readonly></td>
             <td><input class="input-text res c2-res" name="{{ m }}_c2_res" value="{{ notas.get(m + '_c2_res', '') }}" readonly></td>
             <td><input class="input-text res c3-res" name="{{ m }}_c3_res" value="{{ notas.get(m + '_c3_res', '') }}" readonly></td>
+            
+            <!-- Del Área y Recuperación -->
             <td><input class="input-text area-res" name="{{ m }}_area_res" value="{{ notas.get(m + '_area_res', '') }}" readonly></td>
             <td><input class="input-text" name="{{ m }}_recup" value="{{ notas.get(m + '_recup', '') }}"></td>
         </tr>
         {% endfor %}
+    </tbody>
+</table>
+
+<!-- TABLA DE ASISTENCIA Y LEYENDA -->
+<table id="tabla-asistencia">
+    <thead class="bg-grey">
+        <tr>
+            <th rowspan="2" style="width: 8%;">Escala numérica</th>
+            <th rowspan="2" style="width: 38%;">DESCRIPCIÓN</th>
+            <th rowspan="2" style="width: 7%;">PERÍODO</th>
+            <th rowspan="2" style="width: 10%;">ASISTENCIA</th>
+            <th rowspan="2" style="width: 10%;">AUSENCIA</th>
+            <th colspan="2" style="width: 15%;">% ANUAL</th>
+            <th rowspan="2" class="leyenda-cell">LEYENDA</th>
+        </tr>
+        <tr>
+            <th style="width: 7.5%;">ASISTENCIA</th>
+            <th style="width: 7.5%;">AUSENCIA</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td class="bold">89-100</td>
+            <td class="desc-cell">Evidencia que el estudiante ha alcanzado un desempeño destacado con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
+            <td class="bold">P1</td>
+            <td><input class="input-text" name="asist_p1" value="{{ notas.get('asist_p1', '') }}"></td>
+            <td><input class="input-text" name="aus_p1" value="{{ notas.get('aus_p1', '') }}"></td>
+            <td><input class="input-text" name="pct_asist_p1" value="{{ notas.get('pct_asist_p1', '') }}"></td>
+            <td><input class="input-text" name="pct_aus_p1" value="{{ notas.get('pct_aus_p1', '') }}"></td>
+            <td rowspan="4" class="leyenda-cell">
+                (P1) Período 1<br>(P2) Período 2<br>(P3) Período 3<br>(P4) Período 4<br><br>
+                (C1) Competencia 1<br>(C2) Competencia 2<br>(C3) Competencia 3
+            </td>
+        </tr>
+        <tr>
+            <td class="bold">77-88</td>
+            <td class="desc-cell">Evidencia que el estudiante ha logrado, en general, los aprendizajes esperados con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
+            <td class="bold">P2</td>
+            <td><input class="input-text" name="asist_p2" value="{{ notas.get('asist_p2', '') }}"></td>
+            <td><input class="input-text" name="aus_p2" value="{{ notas.get('aus_p2', '') }}"></td>
+            <td><input class="input-text" name="pct_asist_p2" value="{{ notas.get('pct_asist_p2', '') }}"></td>
+            <td><input class="input-text" name="pct_aus_p2" value="{{ notas.get('pct_aus_p2', '') }}"></td>
+        </tr>
+        <tr>
+            <td class="bold">65 - 76</td>
+            <td class="desc-cell">Evidencia que el estudiante aún se encuentra en proceso con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar, mostrando un logro muy básico.</td>
+            <td class="bold">P3</td>
+            <td><input class="input-text" name="asist_p3" value="{{ notas.get('asist_p3', '') }}"></td>
+            <td><input class="input-text" name="aus_p3" value="{{ notas.get('aus_p3', '') }}"></td>
+            <td><input class="input-text" name="pct_asist_p3" value="{{ notas.get('pct_asist_p3', '') }}"></td>
+            <td><input class="input-text" name="pct_aus_p3" value="{{ notas.get('pct_aus_p3', '') }}"></td>
+        </tr>
+        <tr>
+            <td class="bold">Menos de 65</td>
+            <td class="desc-cell">Evidencia que el estudiante ha alcanzado un desempeño insuficiente con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
+            <td class="bold">P4</td>
+            <td><input class="input-text" name="asist_p4" value="{{ notas.get('asist_p4', '') }}"></td>
+            <td><input class="input-text" name="aus_p4" value="{{ notas.get('aus_p4', '') }}"></td>
+            <td><input class="input-text" name="pct_asist_p4" value="{{ notas.get('pct_asist_p4', '') }}"></td>
+            <td><input class="input-text" name="pct_aus_p4" value="{{ notas.get('pct_aus_p4', '') }}"></td>
+        </tr>
     </tbody>
 </table>
 
