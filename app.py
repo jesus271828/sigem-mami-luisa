@@ -223,6 +223,15 @@ def init_db():
     conn.commit()
     conn.close()
 
+class CalificacionDetalle(db.Model):
+    __tablename__ = 'calificaciones_detalle'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    id_estudiante = db.Column(db.String, nullable=False)
+    tipo_informe = db.Column(db.String, nullable=False)
+    campo_nombre = db.Column(db.String, nullable=False)
+    valor = db.Column(db.Text)
+
 # Cambia esto:
 # init_db()
 
