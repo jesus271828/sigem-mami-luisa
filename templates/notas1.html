@@ -250,76 +250,25 @@
         <tr>
             <th rowspan="2" style="width: 8%;">Escala numérica</th>
             <th rowspan="2" style="width: 38%;">DESCRIPCIÓN</th>
-            <th rowspan="2" style="width: 7%;">PERÍODO</th>
-            <th rowspan="2" style="width: 10%;">ASISTENCIA</th>
-            <th rowspan="2" style="width: 10%;">AUSENCIA</th>
-            <th colspan="2" style="width: 15%;">% ANUAL</th>
-            <th rowspan="2" class="leyenda-cell">LEYENDA</th>
+            <th colspan="5" style="width: 39%;">RESUMEN DE ASISTENCIA DEL ESTUDIANTE</th>
+            <th rowspan="2" class="leyenda-cell" style="width: 15%;">LEYENDA</th>
         </tr>
         <tr>
-            <th style="width: 7.5%;">ASISTENCIA</th>
-            <th style="width: 7.5%;">AUSENCIA</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td class="bold">89-100</td>
-            <td class="desc-cell">Evidencia que el estudiante ha alcanzado un desempeño destacado con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
-            <td class="bold">P1</td>
-            <td><input class="input-text" name="asist_p1" value="{{ notas.get('asist_p1', '') }}"></td>
-            <td><input class="input-text" name="aus_p1" value="{{ notas.get('aus_p1', '') }}"></td>
-            <td><input class="input-text" name="pct_asist_p1" value="{{ notas.get('pct_asist_p1', '') }}"></td>
-            <td><input class="input-text" name="pct_aus_p1" value="{{ notas.get('pct_aus_p1', '') }}"></td>
-            <td rowspan="4" class="leyenda-cell">
-                (P1) Período 1<br>(P2) Período 2<br>(P3) Período 3<br>(P4) Período 4<br><br>
-                (C1) Competencia 1<br>(C2) Competencia 2<br>(C3) Competencia 3
-            </td>
+            <th style="width: 7%;">PERÍODO</th>
+            <th style="width: 8%;">ASITENCIA</th>
+            <th style="width: 8%;">AUSENCIA</th>
+            <th colspan="2" style="width: 16%;">% ANUAL</th>
         </tr>
         <tr>
-            <td class="bold">77-88</td>
-            <td class="desc-cell">Evidencia que el estudiante ha logrado, en general, los aprendizajes esperados con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
-            <td class="bold">P2</td>
-            <td><input class="input-text" name="asist_p2" value="{{ notas.get('asist_p2', '') }}"></td>
-            <td><input class="input-text" name="aus_p2" value="{{ notas.get('aus_p2', '') }}"></td>
-            <td><input class="input-text" name="pct_asist_p2" value="{{ notas.get('pct_asist_p2', '') }}"></td>
-            <td><input class="input-text" name="pct_aus_p2" value="{{ notas.get('pct_aus_p2', '') }}"></td>
-        </tr>
-        <tr>
-            <td class="bold">65 - 76</td>
-            <td class="desc-cell">Evidencia que el estudiante aún se encuentra en proceso con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar, mostrando un logro muy básico.</td>
-            <td class="bold">P3</td>
-            <td><input class="input-text" name="asist_p3" value="{{ notas.get('asist_p3', '') }}"></td>
-            <td><input class="input-text" name="aus_p3" value="{{ notas.get('aus_p3', '') }}"></td>
-            <td><input class="input-text" name="pct_asist_p3" value="{{ notas.get('pct_asist_p3', '') }}"></td>
-            <td><input class="input-text" name="pct_aus_p3" value="{{ notas.get('pct_aus_p3', '') }}"></td>
-        </tr>
-        <tr>
-            <td class="bold">Menos de 65</td>
-            <td class="desc-cell">Evidencia que el estudiante ha alcanzado un desempeño insuficiente con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
-            <td class="bold">P4</td>
-            <td><input class="input-text" name="asist_p4" value="{{ notas.get('asist_p4', '') }}"></td>
-            <td><input class="input-text" name="aus_p4" value="{{ notas.get('aus_p4', '') }}"></td>
-            <td><input class="input-text" name="pct_asist_p4" value="{{ notas.get('pct_asist_p4', '') }}"></td>
-            <td><input class="input-text" name="pct_aus_p4" value="{{ notas.get('pct_aus_p4', '') }}"></td>
-        </tr>
-    </tbody>
-</table>
-
-<!-- TABLA DE ASISTENCIA Y LEYENDA -->
-<table id="tabla-asistencia">
-    <thead class="bg-grey">
-        <tr>
-            <th rowspan="2" style="width: 8%;">Escala numérica</th>
-            <th rowspan="2" style="width: 38%;">DESCRIPCIÓN</th>
-            <th rowspan="2" style="width: 7%;">PERÍODO</th>
-            <th rowspan="2" style="width: 10%;">ASISTENCIA</th>
-            <th rowspan="2" style="width: 10%;">AUSENCIA</th>
-            <th colspan="2" style="width: 15%;">% ANUAL</th>
-            <th rowspan="2" class="leyenda-cell">LEYENDA</th>
-        </tr>
-        <tr>
-            <th style="width: 7.5%;">ASISTENCIA</th>
-            <th style="width: 7.5%;">AUSENCIA</th>
+            <!-- Fila vacía auxiliar solo para las subcolumnas del % anual si se requiere en tu CSS, o bien se maneja directo -->
+            <th style="display:none;"></th>
+            <th style="display:none;"></th>
+            <th style="display:none;"></th>
+            <th style="display:none;"></th>
+            <th style="display:none;"></th>
+            <th style="width: 8%;">ASITENCIA</th>
+            <th style="width: 8%;">AUSENCIA</th>
+            <th style="display:none;"></th>
         </tr>
     </thead>
     <tbody>
