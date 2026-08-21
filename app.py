@@ -1692,35 +1692,31 @@ def notas1():
             Estudiante.grado.ilike(f"%{curso_maestro}%")
         ).order_by(Estudiante.nombres.asc()).all()
 
-    id_estudiante = request.args.get('id_estudiante')
+    # Obtenemos el id_estudiante tanto por parámetro GET (?id_estudiante=...) como por POST
+    id_estudiante = request.args.get('id_estudiante') or request.form.get('id_estudiante')
     estudiante = None
     notas = {}
 
     if id_estudiante:
-        # 1. Buscamos al estudiante para rellenar los datos de arriba (Nombre, Apellido, Orden, ID)
         estudiante = Estudiante.query.get(id_estudiante)
 
         if request.method == 'POST':
-            # 2. PROCESO DE GUARDADO / ACTUALIZACIÓN EN LA BASE DE DATOS
-            # Recorremos todos los campos enviados desde el formulario HTML
+            # PROCESO DE GUARDADO EN SUPABASE (tabla calificaciones_detalle)
             for campo_nombre, valor in request.form.items():
                 if campo_nombre == 'id_estudiante':
-                    continue  # Ignoramos el ID ya que es la llave de relación
+                    continue
                 
-                # Buscamos si ya existe un registro previo para este estudiante y este campo específico
                 detalle = CalificacionDetalle.query.filter_by(
-                    id_estudiante=id_estudiante, 
+                    id_estudiante=str(id_estudiante), 
                     tipo_informe='notas1', 
                     campo_nombre=campo_nombre
                 ).first()
 
                 if detalle:
-                    # Si ya existe, actualizamos su valor
                     detalle.valor = valor
                 else:
-                    # Si no existe, creamos un nuevo registro
                     nuevo_detalle = CalificacionDetalle(
-                        id_estudiante=id_estudiante,
+                        id_estudiante=str(id_estudiante),
                         tipo_informe='notas1',
                         campo_nombre=campo_nombre,
                         valor=valor
@@ -1728,18 +1724,18 @@ def notas1():
                     db.session.add(nuevo_detalle)
             
             db.session.commit()
-            flash('¡Informe de aprendizaje guardado correctamente!', 'success')
+            flash('¡Informe guardado con éxito!', 'success')
             return redirect(url_for('notas1', id_estudiante=id_estudiante))
 
         else:
-            # 3. PROCESO DE CARGA (GET): Traemos los datos guardados previamente de la BD
+            # PROCESO DE CARGA (GET): Traemos los datos guardados de la BD
             detalles_guardados = CalificacionDetalle.query.filter_by(
-                id_estudiante=id_estudiante, 
+                id_estudiante=str(id_estudiante), 
                 tipo_informe='notas1'
             ).all()
             
-            # Convertimos la lista de la BD en un diccionario fácil de leer para el HTML: {'nombre_campo': 'valor'}
-            notas = {d.campo_nombre: d.valor for d in detalles_guardados}
+            # Creamos un diccionario con los datos: {'campo': 'valor'}
+            notas = {d.campo_nombre: d.valor for d in det_guardados if hasattr(d, 'campo_nombre')} # O usa d.campo_nombre directamente
 
     return render_template('notas1.html', 
                            lista_estudiantes=lista_estudiantes, 
