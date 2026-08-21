@@ -84,7 +84,7 @@
         
         #tabla-datos td { text-align: left; padding: 5px 6px; font-size: 11px; }
 
-        /* CALIFICACIONES - Altura distribuida para ocupar más espacio vertical */
+        /* CALIFICACIONES */
         #tabla-notas th { padding: 4px 3px; }
         #tabla-notas td { padding: 3px; height: 28px; }
         #tabla-notas .input-text { border: none; width: 100%; font-size: 12px; text-align: center; outline: none; background: transparent; }
@@ -93,11 +93,19 @@
         #tabla-notas .text-left { text-align: left; padding-left: 6px; }
         #tabla-notas .vertical-text { writing-mode: vertical-rl; transform: rotate(180deg); white-space: nowrap; padding: 4px; font-size: 10.5px; }
 
-        /* ASISTENCIA - Altura ampliada para llenar el resto de la página */
+        /* ASISTENCIA */
         #tabla-asistencia td { height: 34px; padding: 4px; }
         #tabla-asistencia .input-text { border: none; width: 100%; font-size: 11px; text-align: center; outline: none; background: transparent; }
         .desc-cell { text-align: left; font-size: 10px; line-height: 1.25; padding: 4px 6px !important; }
         .leyenda-cell { text-align: left; font-size: 10px; width: 165px; vertical-align: top; padding: 6px 8px !important; line-height: 1.3; }
+
+        /* PARTE TRASERA */
+        .salto-pagina { page-break-before: always; margin-top: 15px; }
+        .tabla-avances td { height: 48px; vertical-align: middle; text-align: left; padding: 4px 6px; }
+        .titulo-avances { background-color: #f2f2f2; font-size: 11.5px; font-weight: bold; text-align: left; padding: 6px 10px; border: 2px solid #000; border-top: none; }
+        .input-text-area { border: none; width: 100%; height: 40px; font-size: 11px; outline: none; background: transparent; resize: none; font-family: 'Arial', sans-serif; }
+        .pie-firmas { display: flex; justify-content: space-between; margin-top: 35px; padding: 0 40px; }
+        .linea-firma { width: 300px; text-align: center; border-top: 1px solid #000; padding-top: 6px; font-size: 11.5px; }
 
         .selector-container { margin-bottom: 8px; background: #f8f9fa; padding: 8px; border: 1px solid #ccc; display: flex; align-items: center; gap: 10px; border-radius: 4px; }
     </style>
@@ -207,30 +215,25 @@
                 {% for m in ['Lengua Española', 'Matemática', 'Ciencias Sociales', 'Ciencias de la Naturaleza', 'Educacion Física', 'Formación Integral, Humana y Religiosa', 'Educación Artística', 'Inglés'] %}
                 <tr>
                     <td class="text-left bold">{{ m }}</td>
-                    <!-- Competencia 1 (P1 a P4) -->
                     <td><input class="input-text c1-p" name="{{ m }}_c1_p1" value="{{ notas.get(m + '_c1_p1', '') }}" oninput="calcular(this)"></td>
                     <td><input class="input-text c1-p" name="{{ m }}_c1_p2" value="{{ notas.get(m + '_c1_p2', '') }}" oninput="calcular(this)"></td>
                     <td><input class="input-text c1-p" name="{{ m }}_c1_p3" value="{{ notas.get(m + '_c1_p3', '') }}" oninput="calcular(this)"></td>
                     <td><input class="input-text c1-p" name="{{ m }}_c1_p4" value="{{ notas.get(m + '_c1_p4', '') }}" oninput="calcular(this)"></td>
                     
-                    <!-- Competencia 2 (P1 a P4) -->
                     <td><input class="input-text c2-p" name="{{ m }}_c2_p1" value="{{ notas.get(m + '_c2_p1', '') }}" oninput="calcular(this)"></td>
                     <td><input class="input-text c2-p" name="{{ m }}_c2_p2" value="{{ notas.get(m + '_c2_p2', '') }}" oninput="calcular(this)"></td>
                     <td><input class="input-text c2-p" name="{{ m }}_c2_p3" value="{{ notas.get(m + '_c2_p3', '') }}" oninput="calcular(this)"></td>
                     <td><input class="input-text c2-p" name="{{ m }}_c2_p4" value="{{ notas.get(m + '_c2_p4', '') }}" oninput="calcular(this)"></td>
                     
-                    <!-- Competencia 3 (P1 a P4) -->
                     <td><input class="input-text c3-p" name="{{ m }}_c3_p1" value="{{ notas.get(m + '_c3_p1', '') }}" oninput="calcular(this)"></td>
                     <td><input class="input-text c3-p" name="{{ m }}_c3_p2" value="{{ notas.get(m + '_c3_p2', '') }}" oninput="calcular(this)"></td>
                     <td><input class="input-text c3-p" name="{{ m }}_c3_p3" value="{{ notas.get(m + '_c3_p3', '') }}" oninput="calcular(this)"></td>
                     <td><input class="input-text c3-p" name="{{ m }}_c3_p4" value="{{ notas.get(m + '_c3_p4', '') }}" oninput="calcular(this)"></td>
                     
-                    <!-- Calificación Final por Competencia (C1, C2, C3) -->
                     <td><input class="input-text res c1-res" name="{{ m }}_c1_res" value="{{ notas.get(m + '_c1_res', '') }}" readonly></td>
                     <td><input class="input-text res c2-res" name="{{ m }}_c2_res" value="{{ notas.get(m + '_c2_res', '') }}" readonly></td>
                     <td><input class="input-text res c3-res" name="{{ m }}_c3_res" value="{{ notas.get(m + '_c3_res', '') }}" readonly></td>
                     
-                    <!-- Del Área y Recuperación -->
                     <td><input class="input-text area-res" name="{{ m }}_area_res" value="{{ notas.get(m + '_area_res', '') }}" readonly></td>
                     <td><input class="input-text" name="{{ m }}_recup" value="{{ notas.get(m + '_recup', '') }}"></td>
                 </tr>
@@ -298,8 +301,6 @@
                 </tr>
             </tbody>
         </table>
-    </form>
-</body>
 
         <!-- PARTE TRASERA -->
         <div class="salto-pagina"></div>
@@ -323,38 +324,38 @@
             </tr>
         </table>
 
-        <div class="titulo-avances" style="margin-top: -8px; margin-bottom: 10px; border: 2px solid #000; border-top: none;">
+        <div class="titulo-avances" style="margin-top: -8px; margin-bottom: 8px;">
             Información sobre el nivel de avances de los aprendizajes y los apoyos que necesita para la mejora de sus aprendizajes.
         </div>
 
-        <table style="width: 100%;">
+        <table style="width: 100%; margin-bottom: 0;">
             <tr>
-                <td style="width: 60%; vertical-align: top; padding: 0;">
-                    <table>
+                <td style="width: 58%; vertical-align: top; padding: 0;">
+                    <table style="margin-bottom: 0;">
                         <tr class="bg-grey">
                             <th style="width: 45%;">Períodos de reportes de calificaciones</th>
                             <th style="width: 55%;">FIRMA DEL PADRE, MADRE O TUTOR</th>
                         </tr>
                         <tr>
                             <td class="text-left bold">Septiembre – Octubre</td>
-                            <td style="height: 28px;"></td>
+                            <td style="height: 25px;"></td>
                         </tr>
                         <tr>
                             <td class="text-left bold">Noviembre – Diciembre – Enero</td>
-                            <td style="height: 28px;"></td>
+                            <td style="height: 25px;"></td>
                         </tr>
                         <tr>
                             <td class="text-left bold">Febrero – Marzo</td>
-                            <td style="height: 28px;"></td>
+                            <td style="height: 25px;"></td>
                         </tr>
                         <tr>
                             <td class="text-left bold">Abril – Mayo – Junio</td>
-                            <td style="height: 28px;"></td>
+                            <td style="height: 25px;"></td>
                         </tr>
                     </table>
                 </td>
-                <td style="width: 40%; vertical-align: top; padding: 0; padding-left: 10px;">
-                    <table>
+                <td style="width: 42%; vertical-align: top; padding: 0; padding-left: 8px;">
+                    <table style="margin-bottom: 0;">
                         <tr class="bg-grey">
                             <th colspan="3">SITUACION DEL/DE LA ESTUDIANTE</th>
                         </tr>
@@ -364,15 +365,15 @@
                             <th style="width: 34%;">Repitente</th>
                         </tr>
                         <tr>
-                            <td style="height: 28px;"><input type="checkbox" name="promovido" value="1" {% if notas.get('promovido') == '1' %}checked{% endif %} style="transform: scale(1.2);"></td>
-                            <td><input type="checkbox" name="aplazado" value="1" {% if notas.get('aplazado') == '1' %}checked{% endif %} style="transform: scale(1.2);"></td>
-                            <td><input type="checkbox" name="repitente" value="1" {% if notas.get('repitente') == '1' %}checked{% endif %} style="transform: scale(1.2);"></td>
+                            <td style="height: 25px;"><input type="checkbox" name="promovido" value="1" {% if notas.get('promovido') == '1' %}checked{% endif %} style="transform: scale(1.1);"></td>
+                            <td><input type="checkbox" name="aplazado" value="1" {% if notas.get('aplazado') == '1' %}checked{% endif %} style="transform: scale(1.1);"></td>
+                            <td><input type="checkbox" name="repitente" value="1" {% if notas.get('repitente') == '1' %}checked{% endif %} style="transform: scale(1.1);"></td>
                         </tr>
                         <tr>
-                            <td colspan="3" class="bg-grey text-left bold" style="font-size: 9.5px; padding: 3px;">Condición final del/de la estudiante</td>
+                            <td colspan="3" class="bg-grey text-left bold" style="font-size: 9.5px; padding: 2px 4px;">Condición final del/de la estudiante</td>
                         </tr>
                         <tr>
-                            <td colspan="3" style="height: 32px;"><input class="input-text" name="condicion_final" value="{{ notas.get('condicion_final', '') }}" style="text-align: center;" placeholder="Escribir condición..."></td>
+                            <td colspan="3" style="height: 28px;"><input class="input-text" name="condicion_final" value="{{ notas.get('condicion_final', '') }}" style="text-align: center;" placeholder="Escribir condición..."></td>
                         </tr>
                     </table>
                 </td>
