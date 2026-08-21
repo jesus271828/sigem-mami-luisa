@@ -6,14 +6,14 @@
     <style>
         @page {
             size: A4 landscape;
-            margin: 0mm;
+            margin: 10mm;
         }
         *, *::before, *::after { box-sizing: border-box; }
         body { 
             font-family: 'Arial', sans-serif; 
-            font-size: 11px; 
+            font-size: 13px; 
             color: #000; 
-            margin: 10mm; 
+            margin: 0; 
             padding: 0; 
         }
         
@@ -35,7 +35,7 @@
         }
         .btn {
             padding: 8px 14px;
-            font-size: 12px;
+            font-size: 13px;
             font-weight: bold;
             border: none;
             border-radius: 4px;
@@ -60,50 +60,50 @@
             .action-bar, .selector-container { display: none !important; }
             .salto-pagina { page-break-before: always; }
             body {
-                margin: 8mm;
+                margin: 0;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
         }
 
         /* ENCABEZADO */
-        .header { display: flex; align-items: flex-start; border-bottom: 2px solid #000; margin-bottom: 12px; padding-bottom: 6px; }
-        .logo { width: 85px; margin-right: 12px; }
+        .header { display: flex; align-items: flex-start; border-bottom: 2px solid #000; margin-bottom: 10px; padding-bottom: 6px; }
+        .logo { width: 95px; margin-right: 15px; }
         .header-content { flex-grow: 1; }
         .header-row-1 { display: flex; justify-content: space-between; align-items: baseline; }
-        .title-school { font-size: 18px; font-weight: bold; color: #5b739e; margin: 0; font-family: 'Times New Roman', serif; }
-        .lema { font-size: 12px; font-style: italic; color: #b87a42; font-family: 'Times New Roman', serif; font-weight: normal; }
-        .info-line { font-size: 10.5px; margin: 2px 0; }
+        .title-school { font-size: 21px; font-weight: bold; color: #5b739e; margin: 0; font-family: 'Times New Roman', serif; }
+        .lema { font-size: 13px; font-style: italic; color: #b87a42; font-family: 'Times New Roman', serif; font-weight: normal; }
+        .info-line { font-size: 12px; margin: 3px 0; }
         .info-row-2 { display: flex; justify-content: space-between; margin-top: 3px; }
 
         /* TABLAS GENERALES */
         table { border-collapse: collapse; width: 100%; border: 2px solid #000; margin-bottom: 10px; }
-        th, td { border: 1px solid #000; padding: 5px 3px; text-align: center; vertical-align: middle; font-size: 10.5px; }
+        th, td { border: 1px solid #000; padding: 6px 4px; text-align: center; vertical-align: middle; font-size: 12px; }
         .bold { font-weight: bold; }
         .bg-grey { background-color: #f2f2f2; }
         
         #tabla-datos td { text-align: left; padding-left: 6px; }
 
         /* CALIFICACIONES */
-        #tabla-notas .input-text { border: none; width: 100%; font-size: 11px; text-align: center; outline: none; background: transparent; }
+        #tabla-notas .input-text { border: none; width: 100%; font-size: 13px; text-align: center; outline: none; background: transparent; }
         #tabla-notas .res { font-weight: bold; color: blue; background-color: #e8f0fe; }
         #tabla-notas .area-res { font-weight: bold; color: green; background-color: #e6ffed; }
         #tabla-notas .text-left { text-align: left; padding-left: 6px; }
-        #tabla-notas .vertical-text { writing-mode: vertical-rl; transform: rotate(180deg); white-space: nowrap; padding: 6px; }
+        #tabla-notas .vertical-text { writing-mode: vertical-rl; transform: rotate(180deg); white-space: nowrap; padding: 6px; font-size: 11.5px; }
 
         /* ASISTENCIA */
-        #tabla-asistencia td { height: 32px; padding: 2px; }
-        #tabla-asistencia .input-text { border: none; width: 100%; font-size: 10.5px; text-align: center; outline: none; background: transparent; }
-        .desc-cell { text-align: left; font-size: 9.5px; line-height: 1.15; padding: 4px !important; }
-        .leyenda-cell { text-align: left; font-size: 9.5px; width: 160px; vertical-align: top; padding: 6px !important; }
+        #tabla-asistencia td { height: 36px; padding: 3px; }
+        #tabla-asistencia .input-text { border: none; width: 100%; font-size: 12px; text-align: center; outline: none; background: transparent; }
+        .desc-cell { text-align: left; font-size: 11px; line-height: 1.2; padding: 5px !important; }
+        .leyenda-cell { text-align: left; font-size: 11px; width: 170px; vertical-align: top; padding: 8px !important; }
 
         /* HOJA TRASERA */
         .salto-pagina { page-break-before: always; margin-top: 30px; }
-        .tabla-avances td { height: 40px; vertical-align: top; text-align: left; padding: 4px; }
-        .titulo-avances { background-color: #f2f2f2; font-size: 10.5px; font-weight: bold; text-align: left; padding: 5px 8px; border: 1px solid #000; }
-        .input-text-area { border: none; width: 100%; font-size: 10.5px; outline: none; background: transparent; resize: none; font-family: 'Arial', sans-serif; }
-        .pie-firmas { display: flex; justify-content: space-between; margin-top: 45px; padding: 0 30px; }
-        .linea-firma { width: 280px; text-align: center; border-top: 1px solid #000; padding-top: 4px; font-size: 10.5px; }
+        .tabla-avances td { height: 45px; vertical-align: top; text-align: left; padding: 6px; }
+        .titulo-avances { background-color: #f2f2f2; font-size: 12px; font-weight: bold; text-align: left; padding: 6px 10px; border: 1px solid #000; }
+        .input-text-area { border: none; width: 100%; font-size: 12px; outline: none; background: transparent; resize: none; font-family: 'Arial', sans-serif; }
+        .pie-firmas { display: flex; justify-content: space-between; margin-top: 50px; padding: 0 40px; }
+        .linea-firma { width: 300px; text-align: center; border-top: 1px solid #000; padding-top: 6px; font-size: 12px; }
 
         .selector-container { margin-bottom: 10px; background: #f8f9fa; padding: 8px; border: 1px solid #ccc; display: flex; align-items: center; gap: 10px; border-radius: 4px; }
     </style>
@@ -172,7 +172,7 @@
                 <td style="width: 27%; font-weight: bold; color: #1a73e8;">{{ estudiante.apellidos if estudiante else '' }}</td>
                 <td class="bold" style="width: 10%;">NO. DE ORDEN:</td>
                 <td style="width: 6%;">{{ estudiante.orden if estudiante and estudiante.orden else '' }}</td>
-                <td class="bold" style="width: 5%;">ID:</td>
+                <td class="bold" style="width: 5%;">ID ESTUDIANTE:</td>
                 <td style="width: 8%;">{{ estudiante.id_estudiante if estudiante else '' }}</td>
             </tr>
         </table>
