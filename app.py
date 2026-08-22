@@ -1675,6 +1675,8 @@ def generar_pdf(id_estudiante):
 def menu_notas():
     return render_template('menu_notas.html')
 
+from models import db, Estudiante, Notas1
+
 @app.route('/notas1', methods=['GET', 'POST'])
 def notas1():
     if 'usuario' not in session:
@@ -1683,16 +1685,26 @@ def notas1():
     rol_usuario = str(session.get('rol', '')).strip().lower()
     curso_maestro = str(session.get('curso_asignado', '')).strip()
     
+    # Recibimos el tipo de orden desde la URL ('nombre' o 'orden')
+    tipo_orden = request.args.get('orden', 'nombre')
+    
+    # Definir criterio de ordenamiento para el listado de oficina/admin
+    if tipo_orden == 'orden' and hasattr(Estudiante, 'orden'):
+        criterio_sql = Estudiante.orden.asc()
+    else:
+        criterio_sql = Estudiante.nombres.asc()
+
+    # Filtrar estudiantes según el rol del usuario
     if rol_usuario == 'admin' or rol_usuario == 'oficina':
         lista_estudiantes = Estudiante.query.filter(
             Estudiante.grado.in_(['Párvulos', '1ro A', '1ro B', '2do A', '2do B', '3ro A', '3ro B'])
-        ).order_by(Estudiante.nombres.asc()).all()
+        ).order_by(criterio_sql).all()
     else:
         lista_estudiantes = Estudiante.query.filter(
             Estudiante.grado.ilike(f"%{curso_maestro}%")
-        ).order_by(Estudiante.nombres.asc()).all()
+        ).order_by(criterio_sql).all()
 
-    # Obtenemos el id_estudiante tanto por parámetro GET (?id_estudiante=...) como por POST
+    # Obtener el id_estudiante seleccionado
     id_estudiante = request.args.get('id_estudiante') or request.form.get('id_estudiante')
     estudiante = None
     notas = {}
@@ -1701,46 +1713,43 @@ def notas1():
         estudiante = Estudiante.query.get(id_estudiante)
 
         if request.method == 'POST':
-            # PROCESO DE GUARDADO EN SUPABASE (tabla calificaciones_detalle)
-            for campo_nombre, valor in request.form.items():
-                if campo_nombre == 'id_estudiante':
-                    continue
-                
-                detalle = CalificacionDetalle.query.filter_by(
-                    id_estudiante=str(id_estudiante), 
-                    tipo_informe='notas1', 
-                    campo_nombre=campo_nombre
-                ).first()
+            # Empaquetamos todos los datos del formulario en un diccionario JSON
+            form_data = dict(request.form)
+            if 'id_estudiante' in form_data:
+                form_data.pop('id_estudiante')
 
-                if detalle:
-                    detalle.valor = valor
-                else:
-                    nuevo_detalle = CalificacionDetalle(
-                        id_estudiante=str(id_estudiante),
-                        tipo_informe='notas1',
-                        campo_nombre=campo_nombre,
-                        valor=valor
-                    )
-                    db.session.add(nuevo_detalle)
+            # Buscamos si ya existe un registro en la tabla 'notas1' para este estudiante
+            registro_notas = Notas1.query.filter_by(id_estudiante=str(id_estudiante)).first()
+
+            if registro_notas:
+                # Si ya existe, actualizamos los datos (Evita crear otro registro)
+                registro_notas.datos_formulario = json.dumps(form_data)
+            else:
+                # Si no existe, creamos la fila por primera vez
+                nuevo_registro = Notas1(
+                    id_estudiante=str(id_estudiante),
+                    datos_formulario=json.dumps(form_data)
+                )
+                db.session.add(nuevo_registro)
             
             db.session.commit()
             flash('¡Informe guardado con éxito!', 'success')
-            return redirect(url_for('notas1', id_estudiante=id_estudiante))
+            return redirect(url_for('notas1', id_estudiante=id_estudiante, orden=tipo_orden))
 
         else:
-            # PROCESO DE CARGA (GET): Traemos los datos guardados de la BD
-            detalles_guardados = CalificacionDetalle.query.filter_by(
-                id_estudiante=str(id_estudiante), 
-                tipo_informe='notas1'
-            ).all()
-            
-            # Creamos un diccionario con los datos: {'campo': 'valor'}
-            notas = {d.campo_nombre: d.valor for d in det_guardados if hasattr(d, 'campo_nombre')} # O usa d.campo_nombre directamente
+            # CARGA DE DATOS (GET): Buscamos los datos guardados en la tabla 'notas1'
+            registro_notas = Notas1.query.filter_by(id_estudiante=str(id_estudiante)).first()
+            if registro_notas and registro_notas.datos_formulario:
+                try:
+                    notas = json.loads(registro_notas.datos_formulario)
+                except:
+                    notas = {}
 
     return render_template('notas1.html', 
                            lista_estudiantes=lista_estudiantes, 
                            estudiante=estudiante, 
-                           notas=notas)
+                           notas=notas,
+                           tipo_orden=tipo_orden)
 
 @app.route('/notas2')
 def notas2():
