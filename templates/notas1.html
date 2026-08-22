@@ -170,15 +170,21 @@ HTML
 
 <!-- TABLA DATOS ESTUDIANTE -->
         <table id="tabla-datos">
+            <style>
+                #tabla-datos td {
+                    padding: 2px 4px !important; /* Reduce el ancho/alto vertical de la celda */
+                    font-size: 9.5px;
+                }
+            </style>
             <tr>
-                <td class="bold" style="width: 7%; font-size: 9.5px;">NOMBRE(S):</td>
-                <td style="width: 28%; font-weight: bold; color: #1a73e8; font-size: 9.5px;">{{ estudiante.nombres if estudiante else '' }}</td>
-                <td class="bold" style="width: 8%; font-size: 9.5px;">APELLIDO(S):</td>
-                <td style="width: 28%; font-weight: bold; color: #1a73e8; font-size: 9.5px;">{{ estudiante.apellidos if estudiante else '' }}</td>
-                <td class="bold" style="width: 9%; font-size: 9.5px;">NO. DE ORDEN:</td>
-                <td style="width: 5%; font-size: 9.5px;">{{ estudiante.orden if estudiante and estudiante.orden else '01' }}</td>
-                <td class="bold" style="width: 8%; font-size: 9.5px;">ID ESTUDIANTE:</td>
-                <td style="width: 15%; font-weight: bold; font-size: 9.5px;">{{ estudiante.id_estudiante if estudiante else '' }}</td>
+                <td class="bold" style="width: 7%;">NOMBRE(S):</td>
+                <td style="width: 28%; font-weight: bold; color: #1a73e8;">{{ estudiante.nombres if estudiante else '' }}</td>
+                <td class="bold" style="width: 8%;">APELLIDO(S):</td>
+                <td style="width: 28%; font-weight: bold; color: #1a73e8;">{{ estudiante.apellidos if estudiante else '' }}</td>
+                <td class="bold" style="width: 9%;">NO. DE ORDEN:</td>
+                <td style="width: 5%;">{{ estudiante.orden if estudiante and estudiante.orden else '01' }}</td>
+                <td class="bold" style="width: 8%;">ID ESTUDIANTE:</td>
+                <td style="width: 15%; font-weight: bold;">{{ estudiante.id_estudiante if estudiante else '' }}</td>
             </tr>
         </table>
 
