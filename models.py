@@ -19,8 +19,9 @@ class Estudiante(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     nombres = db.Column(db.String(100), nullable=False)
-    apellidos = db.Column(db.String(100), nullable=False)  # <-- Cambiado de 'apellido' a 'apellidos'
+    apellidos = db.Column(db.String(100), nullable=False)
     grado = db.Column(db.String(50), nullable=False)
+    orden = db.Column(db.String(10), nullable=True) # <-- Agregamos esta línea para el número de orden
 
 
 # Modelo para la Planificación
