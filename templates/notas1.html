@@ -194,10 +194,10 @@
         }
     </script>
 
-    <form id="form-informe" method="POST" action="{{ url_for('notas1', id_estudiante=estudiante.id_estudiante if estudiante else '') }}">
-         {% if estudiante %}
-         <input type="hidden" name="id_estudiante" value="{{ estudiante.id_estudiante }}">
-         {% endif %}
+<form id="form-informe" method="POST" action="{{ url_for('notas1', id_estudiante=estudiante.id if estudiante else '') }}">
+    {% if estudiante %}
+    <input type="hidden" name="id_estudiante" value="{{ estudiante.id }}">
+    {% endif %}
 
         <!-- ================= PÁGINA 1: DELANTERA ================= -->
         <div class="pagina-completa">
