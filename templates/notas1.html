@@ -171,19 +171,29 @@
         </div>
     </div>
 
-    <!-- SELECTOR DE ESTUDIANTE -->
+<!-- SELECTOR DE ESTUDIANTE -->
     <div class="selector-container">
         <label for="id_estudiante" class="font-weight-bold">SELECCIONAR ESTUDIANTE:</label>
         <select id="id_estudiante" class="form-select" onchange="cambiarEstudiante(this)">
             <option value="">-- Seleccione un estudiante --</option>
             {% for est in lista_estudiantes %}
-                <option value="{{ est.id_estudiante }}" {% if estudiante and estudiante.id_estudiante|string == est.id_estudiante|string %}selected{% endif %}>
+                <option value="{{ est.id }}" {% if estudiante and estudiante.id|string == est.id|string %}selected{% endif %}>
                     {{ est.nombres }} {{ est.apellidos }} ({{ est.grado }})
                 </option>
             {% endfor %}
         </select>
     </div>
 
+    <script>
+        function cambiarEstudiante(selectElement) {
+            var idEstudiante = selectElement.value;
+            if (idEstudiante) {
+                // Redirige a la misma ruta pasando el ID seleccionado por GET
+                window.location.href = "{{ url_for('notas1') }}?id_estudiante=" + idEstudiante;
+            }
+        }
+    </script>
+    
     <form id="form-informe" method="POST" action="{{ url_for('notas1', id_estudiante=estudiante.id_estudiante if estudiante else '') }}">
          {% if estudiante %}
          <input type="hidden" name="id_estudiante" value="{{ estudiante.id_estudiante }}">
