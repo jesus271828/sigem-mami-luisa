@@ -6,12 +6,12 @@
     <style>
         @page {
             size: A4 landscape;
-            margin: 8mm;
+            margin: 6mm;
         }
         *, *::before, *::after { box-sizing: border-box; }
         body { 
             font-family: 'Arial', sans-serif; 
-            font-size: 12px; 
+            font-size: 11px; 
             color: #000; 
             margin: 0; 
             padding: 0; 
@@ -20,11 +20,11 @@
         /* BARRA DE ACCIONES / BOTONES */
         .action-bar {
             background: #2c3e50;
-            padding: 10px 15px;
+            padding: 8px 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             border-radius: 6px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
@@ -34,8 +34,8 @@
             align-items: center;
         }
         .btn {
-            padding: 8px 14px;
-            font-size: 13px;
+            padding: 6px 12px;
+            font-size: 12px;
             font-weight: bold;
             border: none;
             border-radius: 4px;
@@ -67,47 +67,49 @@
         }
 
         /* ENCABEZADO */
-        .header { display: flex; align-items: flex-start; border-bottom: 2px solid #000; margin-bottom: 8px; padding-bottom: 5px; }
-        .logo { width: 85px; margin-right: 12px; }
+        .header { display: flex; align-items: flex-start; border-bottom: 2px solid #000; margin-bottom: 6px; padding-bottom: 4px; }
+        .logo { width: 75px; margin-right: 10px; }
         .header-content { flex-grow: 1; }
         .header-row-1 { display: flex; justify-content: space-between; align-items: baseline; }
-        .title-school { font-size: 20px; font-weight: bold; color: #5b739e; margin: 0; font-family: 'Times New Roman', serif; }
-        .lema { font-size: 12px; font-style: italic; color: #b87a42; font-family: 'Times New Roman', serif; font-weight: normal; }
-        .info-line { font-size: 11px; margin: 2px 0; }
-        .info-row-2 { display: flex; justify-content: space-between; margin-top: 3px; }
+        .title-school { font-size: 18px; font-weight: bold; color: #5b739e; margin: 0; font-family: 'Times New Roman', serif; }
+        .lema { font-size: 11px; font-style: italic; color: #b87a42; font-family: 'Times New Roman', serif; font-weight: normal; }
+        .info-line { font-size: 10.5px; margin: 1px 0; }
+        .info-row-2 { display: flex; justify-content: space-between; margin-top: 2px; }
 
         /* TABLAS GENERALES */
-        table { border-collapse: collapse; width: 100%; border: 2px solid #000; margin-bottom: 8px; }
-        th, td { border: 1px solid #000; padding: 4px 3px; text-align: center; vertical-align: middle; font-size: 11px; }
+        table { border-collapse: collapse; width: 100%; border: 2px solid #000; margin-bottom: 6px; table-layout: fixed; }
+        th, td { border: 1px solid #000; padding: 3px 2px; text-align: center; vertical-align: middle; font-size: 10.5px; overflow: hidden; }
         .bold { font-weight: bold; }
         .bg-grey { background-color: #f2f2f2; }
         
-        #tabla-datos td { text-align: left; padding: 5px 6px; font-size: 11px; }
+        #tabla-datos td { text-align: left; padding: 4px 5px; font-size: 10.5px; }
 
         /* CALIFICACIONES */
-        #tabla-notas th { padding: 4px 3px; }
-        #tabla-notas td { padding: 3px; height: 28px; }
-        #tabla-notas .input-text { border: none; width: 100%; font-size: 12px; text-align: center; outline: none; background: transparent; }
+        #tabla-notas th { padding: 3px 2px; font-size: 10px; }
+        #tabla-notas td { padding: 2px; height: 24px; }
+        #tabla-notas .input-text { border: none; width: 100%; font-size: 11px; text-align: center; outline: none; background: transparent; }
         #tabla-notas .res { font-weight: bold; color: blue; background-color: #e8f0fe; }
         #tabla-notas .area-res { font-weight: bold; color: green; background-color: #e6ffed; }
-        #tabla-notas .text-left { text-align: left; padding-left: 6px; }
-        #tabla-notas .vertical-text { writing-mode: vertical-rl; transform: rotate(180deg); white-space: nowrap; padding: 4px; font-size: 10.5px; }
+        #tabla-notas .text-left { text-align: left; padding-left: 5px; }
+        
+        /* Corrección para los textos verticales largos para que no rompan la tabla */
+        #tabla-notas .vertical-text { 
+            writing-mode: vertical-rl; 
+            transform: rotate(180deg); 
+            white-space: nowrap; 
+            padding: 2px; 
+            font-size: 9.5px; 
+            height: 80px;
+            text-align: center;
+        }
 
         /* ASISTENCIA */
-        #tabla-asistencia td { height: 34px; padding: 4px; }
-        #tabla-asistencia .input-text { border: none; width: 100%; font-size: 11px; text-align: center; outline: none; background: transparent; }
-        .desc-cell { text-align: left; font-size: 10px; line-height: 1.25; padding: 4px 6px !important; }
-        .leyenda-cell { text-align: left; font-size: 10px; width: 165px; vertical-align: top; padding: 6px 8px !important; line-height: 1.3; }
+        #tabla-asistencia td { height: 30px; padding: 3px; }
+        #tabla-asistencia .input-text { border: none; width: 100%; font-size: 10.5px; text-align: center; outline: none; background: transparent; }
+        .desc-cell { text-align: left; font-size: 9.5px; line-height: 1.2; padding: 4px 5px !important; }
+        .leyenda-cell { text-align: left; font-size: 9.5px; width: 140px; vertical-align: top; padding: 5px 6px !important; line-height: 1.2; }
 
-        /* PARTE TRASERA */
-        .salto-pagina { page-break-before: always; margin-top: 15px; }
-        .tabla-avances td { height: 48px; vertical-align: middle; text-align: left; padding: 4px 6px; }
-        .titulo-avances { background-color: #f2f2f2; font-size: 11.5px; font-weight: bold; text-align: left; padding: 6px 10px; border: 2px solid #000; border-top: none; }
-        .input-text-area { border: none; width: 100%; height: 40px; font-size: 11px; outline: none; background: transparent; resize: none; font-family: 'Arial', sans-serif; }
-        .pie-firmas { display: flex; justify-content: space-between; margin-top: 90px; padding: 0 40px; }
-        .linea-firma { width: 300px; text-align: center; border-top: 1px solid #000; padding-top: 6px; font-size: 11.5px; }
-
-        .selector-container { margin-bottom: 8px; background: #f8f9fa; padding: 8px; border: 1px solid #ccc; display: flex; align-items: center; gap: 10px; border-radius: 4px; }
+        .selector-container { margin-bottom: 6px; background: #f8f9fa; padding: 6px; border: 1px solid #ccc; display: flex; align-items: center; gap: 10px; border-radius: 4px; }
     </style>
 </head>
 <body>
@@ -137,10 +139,10 @@
         </select>
     </div>
 
-    <form id="form-informe" method="POST" action="{{ url_for('notas1') }}">
-        {% if estudiante %}
-        <input type="hidden" name="id_estudiante" value="{{ estudiante.id_estudiante }}">
-        {% endif %}
+    <form id="form-informe" method="POST" action="{{ url_for('notas1', id_estudiante=estudiante.id_estudiante if estudiante else '') }}">
+         {% if estudiante %}
+         <input type="hidden" name="id_estudiante" value="{{ estudiante.id_estudiante }}">
+         {% endif %}
 
         <!-- PARTE DELANTERA -->
         <div class="header">
@@ -183,24 +185,24 @@
         <table id="tabla-notas">
             <thead class="bg-grey">
                 <tr>
-                    <th rowspan="3" style="width: 18%;">ÁREAS CURRICULARES</th>
+                    <th rowspan="3" style="width: 16%;">ÁREAS CURRICULARES</th>
                     <th colspan="12">COMPETENCIAS FUNDAMENTALES</th>
                     <th colspan="3">CALIFICACIÓN FINAL</th>
-                    <th rowspan="3" class="vertical-text">DEL ÁREA</th>
-                    <th rowspan="3" class="vertical-text">RECUPERACIÓN</th>
+                    <th rowspan="3" style="width: 3.5%;" class="vertical-text">DEL ÁREA</th>
+                    <th rowspan="3" style="width: 4.5%;" class="vertical-text">RECUPERACIÓN</th>
                 </tr>
                 <tr>
                     <th colspan="4">
                         C1<br>
-                        <span style="font-size: 10px; font-weight: normal;">Comunicativa</span>
+                        <span style="font-size: 9px; font-weight: normal;">Comunicativa</span>
                     </th>
                     <th colspan="4">
                         C2<br>
-                        <span style="font-size: 10px; font-weight: normal;">Pensamiento Lógico Creativo y Crítico; Resolución de Problemas; Científica y Tecnológica</span>
+                        <span style="font-size: 9px; font-weight: normal;">Pensamiento Lógico...</span>
                     </th>
                     <th colspan="4">
                         C3<br>
-                        <span style="font-size: 10px; font-weight: normal;">Ética y Ciudadana; Desarrollo Personal y Espiritual; Ambiental y de la Salud</span>
+                        <span style="font-size: 9px; font-weight: normal;">Ética y Ciudadana...</span>
                     </th>
                     <th colspan="3">POR COMPETENCIA</th>
                 </tr>
@@ -252,9 +254,9 @@
                 </tr>
                 <tr>
                     <th style="width: 7%;">PERÍODO</th>
-                    <th style="width: 8%;">ASITENCIA</th>
+                    <th style="width: 8%;">ASISTENCIA</th>
                     <th style="width: 8%;">AUSENCIA</th>
-                    <th style="width: 8%;">% ANUAL ASITENCIA</th>
+                    <th style="width: 8%;">% ANUAL ASISTENCIA</th>
                     <th style="width: 8%;">% ANUAL AUSENCIA</th>
                 </tr>
             </thead>
@@ -268,7 +270,7 @@
                     <td><input class="input-text" name="pct_asist_p1" value="{{ notas.get('pct_asist_p1', '') }}"></td>
                     <td><input class="input-text" name="pct_aus_p1" value="{{ notas.get('pct_aus_p1', '') }}"></td>
                     <td rowspan="4" class="leyenda-cell">
-                        (P1) Período 1<br>(P2) Período 2<br>(P3) Período 3<br>(P4) Período 4<br><br>
+                        (P1) Período 1<br>(P2) Período 2<br>(P3) Período 3<br>(P4) Período 4<br>
                         (C1) Competencia 1<br>(C2) Competencia 2<br>(C3) Competencia 3
                     </td>
                 </tr>
