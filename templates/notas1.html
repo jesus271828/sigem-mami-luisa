@@ -168,17 +168,17 @@ HTML
             </div>
         </div>
 
-        <!-- TABLA DATOS ESTUDIANTE -->
+<!-- TABLA DATOS ESTUDIANTE -->
         <table id="tabla-datos">
             <tr>
-                <td class="bold" style="width: 8%;">NOMBRE(S):</td>
-                <td style="width: 27%; font-weight: bold; color: #1a73e8;">{{ estudiante.nombres if estudiante else '' }}</td>
-                <td class="bold" style="width: 9%;">APELLIDO(S):</td>
-                <td style="width: 27%; font-weight: bold; color: #1a73e8;">{{ estudiante.apellidos if estudiante else '' }}</td>
-                <td class="bold" style="width: 10%;">NO. DE ORDEN:</td>
-                <td style="width: 6%;">{{ estudiante.orden if estudiante and estudiante.orden else '01' }}</td>
-                <td class="bold" style="width: 5%;">ID ESTUDIANTE:</td>
-                <td style="width: 8%;">{{ estudiante.id_estudiante if estudiante else '' }}</td>
+                <td class="bold" style="width: 7%; font-size: 10px;">NOMBRE(S):</td>
+                <td style="width: 28%; font-weight: bold; color: #1a73e8; font-size: 10.5px;">{{ estudiante.nombres if estudiante else '' }}</td>
+                <td class="bold" style="width: 8%; font-size: 10px;">APELLIDO(S):</td>
+                <td style="width: 28%; font-weight: bold; color: #1a73e8; font-size: 10.5px;">{{ estudiante.apellidos if estudiante else '' }}</td>
+                <td class="bold" style="width: 9%; font-size: 10px;">NO. DE ORDEN:</td>
+                <td style="width: 5%; font-size: 10.5px;">{{ estudiante.orden if estudiante and estudiante.orden else '01' }}</td>
+                <td class="bold" style="width: 8%; font-size: 9.5px; padding: 2px 1px;">ID ESTUDIANTE:</td>
+                <td style="width: 15%; font-size: 10px; font-weight: bold;">{{ estudiante.id_estudiante if estudiante else '' }}</td>
             </tr>
         </table>
 
