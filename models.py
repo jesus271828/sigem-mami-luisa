@@ -12,17 +12,17 @@ class Usuario(db.Model, UserMixin):
     rol = db.Column(db.String(20), nullable=False)  # 'docente' o 'oficina'
     grado_asignado = db.Column(db.String(50), nullable=True) # Para el autocompletado
 
-# Modelo para los Estudiantes
-import json
 
-# Modelo para la tabla notas1 (un registro único por estudiante)
-class Notas1(db.Model):
-    __tablename__ = 'notas1'
+# Modelo para los Estudiantes
+class Estudiante(db.Model):
+    __tablename__ = 'estudiantes'
     
     id = db.Column(db.Integer, primary_key=True)
-    id_estudiante = db.Column(db.String(50), unique=True, nullable=False)  # Llave única para evitar duplicados
-    datos_formulario = db.Column(db.Text, nullable=True)  # Almacena todos los campos en formato JSON
-    
+    nombres = db.Column(db.String(100), nullable=False)
+    apellidos = db.Column(db.String(100), nullable=False)  # <-- Cambiado de 'apellido' a 'apellidos'
+    grado = db.Column(db.String(50), nullable=False)
+
+
 # Modelo para la Planificación
 class Planificacion(db.Model):
     __tablename__ = 'planificacion'
@@ -47,3 +47,12 @@ class Planificacion(db.Model):
     duracion = db.Column(db.Integer)
     f_inicio = db.Column(db.String(20))
     f_cierre = db.Column(db.String(20))
+
+
+# Modelo para la tabla notas1 (un registro único por estudiante para evitar duplicados)
+class Notas1(db.Model):
+    __tablename__ = 'notas1'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    id_estudiante = db.Column(db.String(50), unique=True, nullable=False)  # Llave única por estudiante
+    datos_formulario = db.Column(db.Text, nullable=True)  # Almacena los campos del formulario en formato JSON
