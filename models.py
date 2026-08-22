@@ -13,7 +13,6 @@ class Usuario(db.Model, UserMixin):
     grado_asignado = db.Column(db.String(50), nullable=True) # Para el autocompletado
 
 
-# Modelo para los Estudiantes
 class Estudiante(db.Model):
     __tablename__ = 'estudiantes'
     
@@ -21,7 +20,7 @@ class Estudiante(db.Model):
     nombres = db.Column(db.String(100), nullable=False)
     apellidos = db.Column(db.String(100), nullable=False)
     grado = db.Column(db.String(50), nullable=False)
-    orden = db.Column(db.String(10), nullable=True) # <-- Agregamos esta línea para el número de orden
+    numero_orden = db.Column(db.String(10), nullable=True) # <-- Coincide con tu base de datos
 
 
 # Modelo para la Planificación

@@ -193,7 +193,7 @@
             }
         }
     </script>
-    
+
     <form id="form-informe" method="POST" action="{{ url_for('notas1', id_estudiante=estudiante.id_estudiante if estudiante else '') }}">
          {% if estudiante %}
          <input type="hidden" name="id_estudiante" value="{{ estudiante.id_estudiante }}">
@@ -225,18 +225,23 @@
                 </div>
 
                 <!-- TABLA DATOS ESTUDIANTE -->
-                <table id="tabla-datos">
-                    <tr>
-                        <td class="bold" style="width: 7%;">NOMBRE(S):</td>
-                        <td style="width: 28%; font-weight: bold; color: #1a73e8;">{{ estudiante.nombres if estudiante else '' }}</td>
-                        <td class="bold" style="width: 8%;">APELLIDO(S):</td>
-                        <td style="width: 28%; font-weight: bold; color: #1a73e8;">{{ estudiante.apellidos if estudiante else '' }}</td>
-                        <td class="bold" style="width: 9%;">NO. DE ORDEN:</td>
-                        <td style="width: 5%;">{{ estudiante.orden if estudiante and estudiante.orden else '01' }}</td>
-                        <td class="bold" style="width: 8%;">ID ESTUDIANTE:</td>
-                        <td style="width: 15%; font-weight: bold;">{{ estudiante.id_estudiante if estudiante else '' }}</td>
-                    </tr>
-                </table>
+<table id="tabla-datos">
+    <tr>
+        <td class="bold" style="width: 7%;">NOMBRE(S):</td>
+        <td style="width: 28%; font-weight: bold; color: #1a73e8;">{{ estudiante.nombres if estudiante else '' }}</td>
+        
+        <td class="bold" style="width: 8%;">APELLIDO(S):</td>
+        <td style="width: 28%; font-weight: bold; color: #1a73e8;">{{ estudiante.apellidos if estudiante else '' }}</td>
+        
+        <td class="bold" style="width: 9%;">NO. DE ORDEN:</td>
+        <!-- Llamamos a numero_orden -->
+        <td style="width: 5%;">{{ estudiante.numero_orden if estudiante and estudiante.numero_orden else '' }}</td>
+        
+        <td class="bold" style="width: 8%;">ID ESTUDIANTE:</td>
+        <!-- Muestra el ID único -->
+        <td style="width: 15%; font-weight: bold;">{{ estudiante.id if estudiante else '' }}</td>
+    </tr>
+</table>
 
                 <!-- TABLA CALIFICACIONES -->
                 <table id="tabla-notas">
