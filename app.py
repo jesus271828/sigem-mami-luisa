@@ -1689,8 +1689,8 @@ def notas1():
     tipo_orden = request.args.get('orden', 'nombre')
     
     # Criterio de ordenamiento para el listado
-    if tipo_orden == 'orden' and hasattr(Estudiante, 'orden'):
-        criterio_sql = Estudiante.orden.asc()
+    if tipo_orden == 'orden' and hasattr(Estudiante, 'numero_orden'):
+        criterio_sql = Estudiante.numero_orden.asc()
     else:
         criterio_sql = Estudiante.nombres.asc()
 
