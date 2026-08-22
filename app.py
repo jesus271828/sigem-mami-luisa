@@ -1675,7 +1675,7 @@ def generar_pdf(id_estudiante):
 def menu_notas():
     return render_template('menu_notas.html')
 
-from models import db, Estudiante, Notas1
+import json
 
 @app.route('/notas1', methods=['GET', 'POST'])
 def notas1():
@@ -1685,16 +1685,16 @@ def notas1():
     rol_usuario = str(session.get('rol', '')).strip().lower()
     curso_maestro = str(session.get('curso_asignado', '')).strip()
     
-    # Recibimos el tipo de orden desde la URL ('nombre' o 'orden')
+    # Recibir el tipo de orden desde la URL ('nombre' o 'orden')
     tipo_orden = request.args.get('orden', 'nombre')
     
-    # Definir criterio de ordenamiento para el listado de oficina/admin
+    # Criterio de ordenamiento para el listado
     if tipo_orden == 'orden' and hasattr(Estudiante, 'orden'):
         criterio_sql = Estudiante.orden.asc()
     else:
         criterio_sql = Estudiante.nombres.asc()
 
-    # Filtrar estudiantes según el rol del usuario
+    # Filtrar estudiantes según el rol
     if rol_usuario == 'admin' or rol_usuario == 'oficina':
         lista_estudiantes = Estudiante.query.filter(
             Estudiante.grado.in_(['Párvulos', '1ro A', '1ro B', '2do A', '2do B', '3ro A', '3ro B'])
@@ -1704,7 +1704,6 @@ def notas1():
             Estudiante.grado.ilike(f"%{curso_maestro}%")
         ).order_by(criterio_sql).all()
 
-    # Obtener el id_estudiante seleccionado
     id_estudiante = request.args.get('id_estudiante') or request.form.get('id_estudiante')
     estudiante = None
     notas = {}
@@ -1713,19 +1712,17 @@ def notas1():
         estudiante = Estudiante.query.get(id_estudiante)
 
         if request.method == 'POST':
-            # Empaquetamos todos los datos del formulario en un diccionario JSON
+            # Empaquetamos los datos del formulario en JSON
             form_data = dict(request.form)
             if 'id_estudiante' in form_data:
                 form_data.pop('id_estudiante')
 
-            # Buscamos si ya existe un registro en la tabla 'notas1' para este estudiante
+            # Buscamos si ya existe el registro para actualizarlo en lugar de duplicar
             registro_notas = Notas1.query.filter_by(id_estudiante=str(id_estudiante)).first()
 
             if registro_notas:
-                # Si ya existe, actualizamos los datos (Evita crear otro registro)
                 registro_notas.datos_formulario = json.dumps(form_data)
             else:
-                # Si no existe, creamos la fila por primera vez
                 nuevo_registro = Notas1(
                     id_estudiante=str(id_estudiante),
                     datos_formulario=json.dumps(form_data)
@@ -1737,7 +1734,7 @@ def notas1():
             return redirect(url_for('notas1', id_estudiante=id_estudiante, orden=tipo_orden))
 
         else:
-            # CARGA DE DATOS (GET): Buscamos los datos guardados en la tabla 'notas1'
+            # Carga de datos guardados (GET)
             registro_notas = Notas1.query.filter_by(id_estudiante=str(id_estudiante)).first()
             if registro_notas and registro_notas.datos_formulario:
                 try:
