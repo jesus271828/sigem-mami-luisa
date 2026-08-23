@@ -1,5 +1,5 @@
 import os
-from models import db, Estudiante, Usuario, Planificacion, Notas1
+from models import db, Estudiante, Usuario, Planificacion, Notas1, notas2, Notas3, Notas4, Notas5, Notas6, Notas7, Notas8, Notas9, Notas10, Notas11, Notas12, Notas13, Notas14, Notas15
 import base64
 import sqlite3
 from flask import Flask, render_template, make_response, request, redirect, url_for, session, flash, send_file
@@ -1758,24 +1758,67 @@ def notas1():
                            grado_activo=grado_activo,
                            docente_nombre=docente_guardado)
 
-@app.route('/notas2', methods=['GET', 'POST'])
-def notas2():
-    # Asegúrate de consultar la tabla de estudiantes correctamente
-    lista_estudiantes = Estudiante.query.all() # O la consulta que uses para obtenerlos
-    
-    estudiante = None
-    datos_guardados = {}
-    id_estudiante = request.args.get('id_estudiante') or request.form.get('id_estudiante')
-    
-    if id_estudiante:
-        estudiante = Estudiante.query.get(id_estudiante)
-        # Lógica para cargar las notas/datos guardados...
+from flask import Blueprint, render_template, request, redirect, url_for, flash
+from models import db, Estudiante, Nota2
 
-    return render_template('notas2.html', 
-                           lista_estudiantes=lista_estudiantes, 
-                           estudiante=estudiante, 
-                           datos_guardados=datos_guardados,
-                           docente_nombre="Tu Nombre Aquí")
+notas2_bp = Blueprint('notas2', __name__)
+
+@notas2_bp.route('/notas2', methods=['GET', 'POST'])
+def gestionar_notas2():
+    estudiantes = Estudiante.query.order_by(Estudiante.nombre).all()
+    
+    estudiante_id = request.args.get('estudiante_id') or request.form.get('estudiante_id')
+    estudiante_seleccionado = None
+    notas_estudiante = {}
+
+    if estudiante_id:
+        estudiante_seleccionado = Estudiante.query.get(estudiante_id)
+        # Buscar el registro JSON asociado al estudiante
+        registro_nota = Nota2.query.filter_by(estudiante_id=estudiante_id).first()
+        
+        if registro_nota and registro_nota.datos_notas:
+            notas_estudiante = registro_nota.datos_notas
+
+    if request.method == 'POST':
+        id_est = request.form.get('estudiante_id')
+        
+        # Supongamos que recibes los datos organizados desde un formulario dinámico o JSON enviado por fetch
+        # Estructura esperada de ejemplo para las calificaciones enviadas
+        # request.form maneja campos como asignatura_Matematicas_p1, etc., o puedes recibir un JSON limpio vía API.
+        
+        # Buscamos si ya tiene un registro guardado
+        registro_nota = Nota2.query.filter_by(estudiante_id=id_est).first()
+        
+        # Construimos o actualizamos el diccionario JSON con la información del formulario
+        # (Esto puede variar según cómo diseñes los inputs de tu tabla HTML)
+        nuevos_datos = {}
+        
+        # Ejemplo procesando asignaturas comunes dinámicamente desde el form:
+        asignaturas = ['Matematicas', 'Espanol', 'Sociales', 'Naturales'] 
+        for asig in asignaturas:
+            nuevos_datos[asig] = {
+                'p1': request.form.get(f'{asig}_p1', 0),
+                'p2': request.form.get(f'{asig}_p2', 0),
+                'p3': request.form.get(f'{asig}_p3', 0),
+                'p4': request.form.get(f'{asig}_p4', 0)
+            }
+
+        if registro_nota:
+            registro_nota.datos_notas = nuevos_datos
+        else:
+            registro_nota = Nota2(estudiante_id=id_est, datos_notas=nuevos_datos)
+            db.session.add(registro_nota)
+            
+        db.session.commit()
+        flash('¡Información de notas guardada exitosamente!', 'success')
+        return redirect(url_for('notas2.gestionar_notas2', estudiante_id=id_est))
+
+    return render_template(
+        'notas2.html', 
+        estudiantes=estudiantes, 
+        estudiante=estudiante_seleccionado, 
+        notas=notas_estudiante
+    )
 
 @app.route('/planificacion')
 def planificacion():

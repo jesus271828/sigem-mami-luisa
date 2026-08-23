@@ -57,10 +57,14 @@ class Notas1(db.Model):
     id_estudiante = db.Column(db.String(50), unique=True, nullable=False)  # Llave única por estudiante
     datos_formulario = db.Column(db.Text, nullable=True)  # Almacena los campos del formulario en formato JSON
 
-# Modelo para la tabla notas2 (un registro único por estudiante para evitar duplicados)
-class Notas2(db.Model):
-    __tablename__ = 'notas2'
-    
+from flask_sqlalchemy import SQLAlchemy
+
+db = SQLAlchemy()
+
+class Nota2(db.Model):
+    __tablename__ = 'nota2'
     id = db.Column(db.Integer, primary_key=True)
-    id_estudiante = db.Column(db.String(50), unique=True, nullable=False)  # Llave única por estudiante
-    datos_formulario = db.Column(db.Text, nullable=True)  # Almacena los campos del formulario en formato JSON
+    estudiante_id = db.Column(db.Integer, db.ForeignKey('estudiante.id'), nullable=False, unique=True)
+    # Aquí guardaremos toda la estructura de notas en formato JSON
+    # Ejemplo: {"Matemáticas": {"p1": 90, "p2": 85}, "Español": {"p1": 88, "p2": 92}}
+    datos_notas = db.Column(db.JSON, nullable=False, default=dict)
