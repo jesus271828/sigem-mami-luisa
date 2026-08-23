@@ -173,18 +173,29 @@
         </div>
     </div>
 
-    <!-- MENSAJES FLASH DE ALERTA -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <div style="margin-bottom: 10px;">
-                {% for category, message in messages %}
-                    <div style="background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; padding: 10px; border-radius: 4px; text-align: center; font-weight: bold;">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            </div>
-        {% endif %}
-    {% endwith %}
+<!-- MENSAJES FLASH DE ALERTA -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div id="flash-alert" style="margin-bottom: 10px;">
+            {% for category, message in messages %}
+                <div style="background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; padding: 10px; border-radius: 4px; text-align: center; font-weight: bold;">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+        <script>
+            // Desaparecer la alerta automáticamente después de 4 segundos
+            setTimeout(function() {
+                var alerta = document.getElementById('flash-alert');
+                if (alerta) {
+                    alerta.style.transition = 'opacity 0.5s ease';
+                    alerta.style.opacity = '0';
+                    setTimeout(function() { alerta.remove(); }, 500);
+                }
+            }, 4000);
+        </script>
+    {% endif %}
+{% endwith %}
 
     <!-- SELECTOR DE ESTUDIANTE -->
     <div class="selector-container">

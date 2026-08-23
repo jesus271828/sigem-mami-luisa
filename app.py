@@ -1738,7 +1738,7 @@ def notas1():
         db.session.commit()
         flash('¡Informe guardado con éxito!', 'success')
         # Redirigir limpiando el id_estudiante para que el formulario quede en blanco
-        return redirect(url_for('notas1', orden=tipo_orden))
+        return redirect(url_for('notas1', id_estudiante=id_estudiante, orden=tipo_orden))
 
     else:
         registro_notas = Notas1.query.filter_by(id_estudiante=str(id_estudiante)).first()
