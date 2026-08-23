@@ -1760,21 +1760,59 @@ def notas1():
 
 
 
-from flask import render_template, request
-from models import Estudiante, Nota2
-
 @app.route('/notas2', methods=['GET', 'POST'])
 def notas2():
-    estudiantes = Estudiante.query.order_by(Estudiante.nombre).all()
+    # Ordenamos por 'nombres' tal como lo tiene tu modelo de Estudiante
+    estudiantes = Estudiante.query.order_by(Estudiante.nombres).all()
+    
     estudiante_id = request.args.get('estudiante_id') or request.form.get('estudiante_id')
     estudiante_seleccionado = None
     notas_estudiante = {}
 
     if estudiante_id:
         estudiante_seleccionado = Estudiante.query.get(estudiante_id)
-        registro = Nota2.query.filter_by(estudiante_id=estudiante_id).first()
-        if registro and registro.datos_notas:
-            notas_estudiante = registro.datos_notas
+        # Consultamos los registros de notas asociados a este estudiante en la tabla nota2
+        registros_notas = Nota2.query.filter_by(estudiante_id=estudiante_id).all()
+        
+        # Organizamos las notas en un diccionario por asignatura/competencia
+        for n in registros_notas:
+            notas_estudiante[n.asignatura_o_competencia] = {
+                'p1': n.periodo_1,
+                'p2': n.periodo_2,
+                'p3': n.periodo_3,
+                'p4': n.periodo_4
+            }
+
+    if request.method == 'POST':
+        id_est = request.form.get('estudiante_id')
+        asignatura = request.form.get('asignatura')
+        p1 = request.form.get('periodo_1', 0)
+        p2 = request.form.get('periodo_2', 0)
+        p3 = request.form.get('periodo_3', 0)
+        p4 = request.form.get('periodo_4', 0)
+        
+        # Buscar si ya existe el registro para esa asignatura o crearlo nuevo
+        nota_obj = Nota2.query.filter_by(estudiante_id=id_est, asignatura_o_competencia=asignatura).first()
+        
+        if nota_obj:
+            nota_obj.periodo_1 = p1
+            nota_obj.periodo_2 = p2
+            nota_obj.periodo_3 = p3
+            nota_obj.periodo_4 = p4
+        else:
+            nueva_nota = Nota2(
+                estudiante_id=id_est,
+                asignatura_o_competencia=asignatura,
+                periodo_1=p1,
+                periodo_2=p2,
+                periodo_3=p3,
+                periodo_4=p4
+            )
+            db.session.add(nueva_nota)
+            
+        db.session.commit()
+        flash('Calificaciones de Notas2 guardadas correctamente.', 'success')
+        return redirect(url_for('notas2', estudiante_id=id_est))
 
     return render_template(
         'notas2.html', 

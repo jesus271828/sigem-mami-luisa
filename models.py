@@ -64,7 +64,9 @@ db = SQLAlchemy()
 class Nota2(db.Model):
     __tablename__ = 'nota2'
     id = db.Column(db.Integer, primary_key=True)
-    estudiante_id = db.Column(db.Integer, db.ForeignKey('estudiante.id'), nullable=False, unique=True)
-    # Aquí guardaremos toda la estructura de notas en formato JSON
-    # Ejemplo: {"Matemáticas": {"p1": 90, "p2": 85}, "Español": {"p1": 88, "p2": 92}}
-    datos_notas = db.Column(db.JSON, nullable=False, default=dict)
+    estudiante_id = db.Column(db.Integer, db.ForeignKey('estudiante.id'), nullable=False)
+    asignatura_o_competencia = db.Column(db.String(100), nullable=False)
+    periodo_1 = db.Column(db.Float, default=0.0)
+    periodo_2 = db.Column(db.Float, default=0.0)
+    periodo_3 = db.Column(db.Float, default=0.0)
+    periodo_4 = db.Column(db.Float, default=0.0)
