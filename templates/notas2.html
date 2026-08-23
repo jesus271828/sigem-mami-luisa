@@ -47,11 +47,11 @@
             align-items: center;
         }
 
-        /* PLANILLA INFORME */
+        /* PLANILLA OFICIAL */
         .planilla-box {
             background: #fff;
             border: 1px solid #000;
-            padding: 10px;
+            padding: 8px;
         }
         table {
             border-collapse: collapse;
@@ -59,15 +59,15 @@
         }
         th, td {
             border: 1px solid #000;
-            padding: 3px;
+            padding: 2px 4px;
             text-align: center;
-            font-size: 9.5px;
+            font-size: 9px;
         }
         input[type="text"] {
             width: 100%;
             border: none;
             text-align: center;
-            font-size: 9.5px;
+            font-size: 9px;
             background: transparent;
         }
         input[type="text"]:focus {
@@ -97,7 +97,7 @@
             <select name="id_estudiante" id="id_estudiante" onchange="this.form.submit()" style="padding: 4px; font-size: 11px; flex-grow: 1; border: 1px solid #000; background: #fff;">
                 <option value="" disabled {% if not estudiante %}selected{% endif %}>-- Seleccione un estudiante --</option>
                 {% for est in lista_estudiantes %}
-                    <option value="{{ est.id_estudiante }}" {% if estudiante and est.id_estudiante|string == est.id_estudiante|string %}selected{% endif %}>
+                    <option value="{{ est.id_estudiante }}" {% if estudiante and estudiante.id_estudiante|string == est.id_estudiante|string %}selected{% endif %}>
                         {{ est.nombres }} {{ est.apellidos }} — (Grado: {{ est.grado }})
                     </option>
                 {% endfor %}
@@ -109,18 +109,18 @@
     <form id="form-notas" method="POST" action="{{ url_for('guardar_notas') }}">
         <input type="hidden" name="id_estudiante" value="{{ estudiante.id_estudiante }}">
         
-        <!-- CONTENEDOR PRINCIPAL DEL INFORME DE APRENDIZAJE -->
+        <!-- CONTENEDOR PRINCIPAL DEL INFORME -->
         <div class="planilla-box">
             
             <!-- ENCABEZADO INSTITUCIONAL -->
-            <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 5px; margin-bottom: 6px;">
+            <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 4px; margin-bottom: 6px;">
                 <div>
-                    <h2 style="margin: 0; font-size: 15px; color: #1a237e;">Centro Educativo Mami Luisa <span style="font-size: 10px; font-weight: normal; color: #555;">S.R.L</span></h2>
-                    <p style="margin: 2px 0; font-size: 8.5px; font-style: italic; color: #c2185b;">"Educando con amor para un mundo mejor"</p>
-                    <p style="margin: 2px 0; font-size: 8.5px;"><b>Dirección:</b> C/ Castillo Márquez #52, La Romana, Centro Ciudad. <b>Teléfono:</b> 809-550-7585 / 809-710-3395</p>
-                    <p style="margin: 2px 0; font-size: 8.5px;"><b>Regional:</b> 05 San Pedro de Macorís. <b>Distrito:</b> 05-01 La Romana. <b>Código:</b> 07121</p>
+                    <h2 style="margin: 0; font-size: 14px; color: #1a237e;">Centro Educativo Mami Luisa <span style="font-size: 10px; font-weight: normal; color: #555;">S.R.L</span></h2>
+                    <p style="margin: 2px 0; font-size: 8px; font-style: italic; color: #c2185b;">"Educando con amor para un mundo mejor"</p>
+                    <p style="margin: 2px 0; font-size: 8px;"><b>Dirección:</b> C/ Castillo Márquez #52, La Romana, Centro Ciudad. <b>Teléfono:</b> 809-550-7585 / 809-710-3395</p>
+                    <p style="margin: 2px 0; font-size: 8px;"><b>Regional:</b> 05 San Pedro de Macorís. <b>Distrito:</b> 05-01 La Romana. <b>Código:</b> 07121</p>
                 </div>
-                <div style="text-align: right; font-size: 9.5px;">
+                <div style="text-align: right; font-size: 9px;">
                     <p style="margin: 2px 0;"><b>INFORME DE APRENDIZAJE.</b></p>
                     <p style="margin: 2px 0;"><b>Año Escolar:</b> 2025-2026 / Jornada Regular.</p>
                     <p style="margin: 2px 0;"><b>DOCENTE:</b> Alondra Sánchez Louis</p>
@@ -129,32 +129,32 @@
             </div>
 
             <!-- DATOS DEL ESTUDIANTE -->
-            <div style="display: flex; border: 1px solid #000; margin-bottom: 6px; background: #f9f9f9; padding: 4px; font-size: 10px;">
-                <div style="flex: 2; border-right: 1px solid #000; padding-right: 5px;">
+            <div style="display: flex; border: 1px solid #000; margin-bottom: 6px; background: #f9f9f9; padding: 3px; font-size: 9.5px;">
+                <div style="flex: 2; border-right: 1px solid #000; padding-right: 4px;">
                     <b>NOMBRE(S):</b> {{ estudiante.nombres }}
                 </div>
-                <div style="flex: 2; border-right: 1px solid #000; padding-left: 5px; padding-right: 5px;">
+                <div style="flex: 2; border-right: 1px solid #000; padding-left: 4px; padding-right: 4px;">
                     <b>APELLIDO(S):</b> {{ estudiante.apellidos }}
                 </div>
-                <div style="flex: 1; border-right: 1px solid #000; padding-left: 5px; padding-right: 5px; text-align: center;">
+                <div style="flex: 1; border-right: 1px solid #000; padding-left: 4px; padding-right: 4px; text-align: center;">
                     <b>NO. DE ORDEN:</b> {{ estudiante.no_orden|default('01') }}
                 </div>
-                <div style="flex: 1; padding-left: 5px; text-align: center;">
+                <div style="flex: 1; padding-left: 4px; text-align: center;">
                     <b>ID ESTUDIANTE:</b> {{ estudiante.id_estudiante }}
                 </div>
             </div>
 
-            <!-- TABLA DE CALIFICACIONES -->
-            <table style="margin-bottom: 8px;">
+            <!-- TABLA DE CALIFICACIONES PRINCIPAL -->
+            <table style="margin-bottom: 6px;">
                 <thead>
                     <tr style="background: #e2e8f0;">
-                        <th rowspan="2" style="width: 16%;">ÁREAS CURRICULARES</th>
+                        <th rowspan="2" style="width: 15%;">ÁREAS CURRICULARES</th>
                         <th colspan="8">C1<br>Comunicativa</th>
                         <th colspan="8">C2<br>Pensamiento Lógico Creativo y Crítico; Resolución de Problemas; Científica y Tecnológica</th>
                         <th colspan="8">C3<br>Ética y Ciudadana; Desarrollo Personal y Espiritual; Ambiental y de la Salud</th>
                         <th colspan="3">CALIFICACIÓN FINAL</th>
                     </tr>
-                    <tr style="background: #f1f5f9; font-size: 8.5px;">
+                    <tr style="background: #f1f5f9; font-size: 8px;">
                         <!-- C1 -->
                         <th>P1</th><th>RP1</th><th>P2</th><th>RP2</th><th>P3</th><th>RP3</th><th>P4</th><th>RP4</th>
                         <!-- C2 -->
@@ -170,52 +170,52 @@
                     {% for area in areas %}
                     <tr>
                         <td style="text-align: left; font-weight: bold; padding-left: 4px;">{{ area }}</td>
-                        <!-- 8 celdas C1 -->
-                        {% for i in range(8) %}<td><input type="text" name="area_{{ loop.index0 }}_c1_{{ i }}" autocomplete="off"></td>{% endfor %}
-                        <!-- 8 celdas C2 -->
-                        {% for i in range(8) %}<td><input type="text" name="area_{{ loop.index0 }}_c2_{{ i }}" autocomplete="off"></td>{% endfor %}
-                        <!-- 8 celdas C3 -->
-                        {% for i in range(8) %}<td><input type="text" name="area_{{ loop.index0 }}_c3_{{ i }}" autocomplete="off"></td>{% endfor %}
-                        <!-- 3 celdas Finales -->
-                        <td><input type="text" name="area_{{ loop.index0 }}_fin_1"></td>
-                        <td><input type="text" name="area_{{ loop.index0 }}_fin_2"></td>
-                        <td><input type="text" name="area_{{ loop.index0 }}_fin_3"></td>
+                        <!-- C1 (8 celdas) -->
+                        {% for i in range(8) %}<td><input type="text" name="not_{{ loop.index0 }}_c1_{{ i }}" autocomplete="off"></td>{% endfor %}
+                        <!-- C2 (8 celdas) -->
+                        {% for i in range(8) %}<td><input type="text" name="not_{{ loop.index0 }}_c2_{{ i }}" autocomplete="off"></td>{% endfor %}
+                        <!-- C3 (8 celdas) -->
+                        {% for i in range(8) %}<td><input type="text" name="not_{{ loop.index0 }}_c3_{{ i }}" autocomplete="off"></td>{% endfor %}
+                        <!-- Finales (3 celdas) -->
+                        <td><input type="text" name="not_{{ loop.index0 }}_fin_1"></td>
+                        <td><input type="text" name="not_{{ loop.index0 }}_fin_2"></td>
+                        <td><input type="text" name="not_{{ loop.index0 }}_fin_3"></td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
 
             <!-- SECCIÓN INFERIOR: ESCALA Y ASISTENCIA -->
-            <div style="display: flex; gap: 8px;">
-                <!-- Tabla de Escala -->
-                <table style="width: 44%; font-size: 8.5px;">
+            <div style="display: flex; gap: 6px;">
+                <!-- Tabla de Escala Numérica -->
+                <table style="width: 44%; font-size: 8px;">
                     <tr style="background: #e2e8f0; text-align: center;">
-                        <th style="width: 18%;">Escala Numérica</th>
+                        <th style="width: 20%;">Escala Numérica</th>
                         <th>DESCRIPCION</th>
                     </tr>
                     <tr>
                         <td style="font-weight: bold; text-align: center;">89-100</td>
-                        <td style="text-align: left; padding: 3px;">Evidencia que el estudiante ha alcanzado un desempeño destacado con relación a los aspectos evaluados de las competencias.</td>
+                        <td style="text-align: left; padding: 2px;">Evidencia que el estudiante ha alcanzado un desempeño destacado con relación a los aspectos evaluados.</td>
                     </tr>
                     <tr>
                         <td style="font-weight: bold; text-align: center;">77-88</td>
-                        <td style="text-align: left; padding: 3px;">Evidencia que el estudiante ha logrado, en general, los aprendizajes esperados con relación a los aspectos evaluados.</td>
+                        <td style="text-align: left; padding: 2px;">Evidencia que el estudiante ha logrado, en general, los aprendizajes esperados.</td>
                     </tr>
                     <tr>
                         <td style="font-weight: bold; text-align: center;">65-76</td>
-                        <td style="text-align: left; padding: 3px;">Evidencia que el estudiante aún se encuentra en proceso con relación a los aspectos evaluados, mostrando un logro muy básico.</td>
+                        <td style="text-align: left; padding: 2px;">Evidencia que el estudiante aún se encuentra en proceso, mostrando un logro muy básico.</td>
                     </tr>
                     <tr>
                         <td style="font-weight: bold; text-align: center;">Menos de 65</td>
-                        <td style="text-align: left; padding: 3px;">Evidencia que el estudiante no ha alcanzado el desempeño requerido, mostrando un resultado insuficiente.</td>
+                        <td style="text-align: left; padding: 2px;">Evidencia que el estudiante no ha alcanzado el desempeño requerido (insuficiente).</td>
                     </tr>
                 </table>
 
                 <!-- Tabla de Asistencia y Leyenda -->
-                <div style="width: 56%; display: flex; flex-direction: column; gap: 5px;">
-                    <table style="font-size: 8.5px;">
+                <div style="width: 56%; display: flex; flex-direction: column; gap: 4px;">
+                    <table style="font-size: 8px;">
                         <tr style="background: #e2e8f0;">
-                            <th rowspan="2" style="width: 15%;">PERÍODO</th>
+                            <th rowspan="2" style="width: 14%;">PERÍODO</th>
                             <th colspan="2">RESUMEN DE ASISTENCIA DEL/LA ESTUDIANTE</th>
                             <th colspan="2">% ANUAL</th>
                         </tr>
@@ -237,7 +237,7 @@
                         <tr><td><b>P4</b></td><td><input type="text" name="asist_p4"></td><td><input type="text" name="aus_p4"></td></tr>
                     </table>
 
-                    <div style="font-size: 8px; border: 1px solid #000; padding: 4px; background: #fafafa; line-height: 1.2;">
+                    <div style="font-size: 7.5px; border: 1px solid #000; padding: 3px; background: #fafafa; line-height: 1.1;">
                         <b>LEYENDA:</b> (P1) Período 1 | (P2) Período 2 | (P3) Período 3 | (P4) Período 4<br>
                         (RP1-RP4) Recuperación Pedagógica | (C1-C3) Competencias Fundamentales
                     </div>
@@ -248,7 +248,7 @@
     </form>
     {% else %}
         <div style="background: #fff; border: 1px solid #cbd5e1; padding: 30px; text-align: center; border-radius: 4px; color: #64748b;">
-            👆 <b>Seleccione un estudiante en el menú desplegable superior para cargar y editar su informe de aprendizaje.</b>
+            👆 <b>Seleccione un estudiante en el menú superior para desplegar su informe de aprendizaje.</b>
         </div>
     {% endif %}
 
