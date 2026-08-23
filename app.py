@@ -1,8 +1,8 @@
 import os
-from models import db, Estudiante, Usuario, Planificacion, Notas1, notas2, Notas3, Notas4, Notas5, Notas6, Notas7, Notas8, Notas9, Notas10, Notas11, Notas12, Notas13, Notas14, Notas15
+from models import db, Estudiante, Usuario, Planificacion, Notas1, Nota2
 import base64
 import sqlite3
-from flask import Flask, render_template, make_response, request, redirect, url_for, session, flash, send_file
+from flask import Flask, render_template, make_response, request, redirect, url_for, session, flash, send_file, Blueprint
 from xhtml2pdf import pisa
 from werkzeug.utils import secure_filename
 import psycopg2
@@ -1758,8 +1758,7 @@ def notas1():
                            grado_activo=grado_activo,
                            docente_nombre=docente_guardado)
 
-from flask import Blueprint, render_template, request, redirect, url_for, flash
-from models import db, Estudiante, Nota2
+
 
 notas2_bp = Blueprint('notas2', __name__)
 
