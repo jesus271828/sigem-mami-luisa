@@ -1735,19 +1735,20 @@ def notas1():
                 )
                 db.session.add(nuevo_registro)
             
-        db.session.commit()
-        flash('¡Informe guardado con éxito!', 'success')
-        # Redirigir limpiando el id_estudiante para que el formulario quede en blanco
-        return redirect(url_for('notas1', id_estudiante=id_estudiante, orden=tipo_orden))
+            db.session.commit()
+            flash('¡Informe guardado con éxito!', 'success')
+            # CORRECCIÓN: Redirigimos manteniendo el id_estudiante y orden actual sin generar bucles
+            return redirect(url_for('notas1', id_estudiante=id_estudiante, orden=tipo_orden))
 
-    else:
-        registro_notas = Notas1.query.filter_by(id_estudiante=str(id_estudiante)).first()
-        if registro_notas and registro_notas.datos_formulario:
-            try:
-                notas = json.loads(registro_notas.datos_formulario)
-                docente_guardado = notas.get('_docente_registro', nombre_docente_actual)
-            except:
-                notas = {}
+        # Si es GET y tenemos un estudiante seleccionado, cargamos sus notas guardadas
+        else:
+            registro_notas = Notas1.query.filter_by(id_estudiante=str(id_estudiante)).first()
+            if registro_notas and registro_notas.datos_formulario:
+                try:
+                    notas = json.loads(registro_notas.datos_formulario)
+                    docente_guardado = notas.get('_docente_registro', nombre_docente_actual)
+                except:
+                    notas = {}
 
     return render_template('notas1.html', 
                            lista_estudiantes=lista_estudiantes, 
