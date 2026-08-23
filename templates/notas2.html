@@ -2,37 +2,27 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <title>Informe de Aprendizaje - SIGEM Mami Luisa</title>
     <style>
-        @page {
-            size: letter landscape;
-            margin: 5mm;
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 5px;
+            background-color: #f4f6f9;
+            color: #000;
+            font-size: 11px;
         }
-        *, *::before, *::after { box-sizing: border-box; }
-        body { 
-            font-family: 'Arial', sans-serif; 
-            font-size: 10px; 
-            color: #000; 
-            margin: 0; 
-            padding: 0; 
-        }
-        
-        /* BARRA DE ACCIONES / BOTONES (No se imprime) */
-        .action-bar {
-            background: #2c3e50;
-            padding: 8px 15px;
+        /* BARRA SUPERIOR DE BOTONES */
+        .top-bar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px;
-            border-radius: 6px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            background: #1e293b;
+            padding: 8px 12px;
+            border-radius: 4px;
+            margin-bottom: 8px;
         }
-        .action-bar .left-group, .action-bar .right-group {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-        .btn {
+        .top-bar a, .top-bar button {
             padding: 6px 12px;
             font-size: 11px;
             font-weight: bold;
@@ -40,382 +30,227 @@
             border-radius: 4px;
             cursor: pointer;
             text-decoration: none;
-            display: inline-flex;
+        }
+        .btn-salir { background: #334155; color: #fff; }
+        .btn-borrar { background: #f59e0b; color: #fff; }
+        .btn-guardar { background: #10b981; color: #fff; }
+        .btn-pdf { background: #ef4444; color: #fff; }
+
+        /* CONTENEDOR SELECTOR */
+        .selector-container {
+            background: #fff;
+            border: 1px solid #cbd5e1;
+            padding: 8px;
+            margin-bottom: 8px;
+            border-radius: 4px;
+            display: flex;
             align-items: center;
-            gap: 5px;
-            color: #fff;
-            transition: background 0.2s;
-        }
-        .btn-pdf { background-color: #e74c3c; }
-        .btn-pdf:hover { background-color: #c0392b; }
-        .btn-save { background-color: #27ae60; }
-        .btn-save:hover { background-color: #219653; }
-        .btn-clear { background-color: #f39c12; }
-        .btn-clear:hover { background-color: #d68910; }
-        .btn-menu { background-color: #34495e; border: 1px solid #7f8c8d; }
-        .btn-menu:hover { background-color: #2c3e50; }
-
-        @media print {
-            .action-bar, .selector-container { display: none !important; }
-            .salto-pagina { page-break-before: always; }
-            body {
-                margin: 0;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
         }
 
-        /* ESTILOS DEL ENCABEZADO */
-        .header { display: flex; align-items: flex-start; border-bottom: 2px solid #000; margin-bottom: 6px; padding-bottom: 4px; }
-        .logo { width: 70px; margin-right: 8px; }
-        .header-content { flex-grow: 1; }
-        .header-row-1 { display: flex; justify-content: space-between; align-items: baseline; }
-        .title-school { font-size: 16px; font-weight: bold; color: #5b739e; margin: 0; font-family: 'Times New Roman', serif; }
-        .lema { font-size: 11px; font-style: italic; color: #b87a42; font-family: 'Times New Roman', serif; font-weight: normal; }
-        .info-line { font-size: 9.5px; margin: 1px 0; }
-        .info-row-2 { display: flex; justify-content: space-between; margin-top: 2px; }
-
-        /* ESTILOS GENERALES DE TABLAS */
-        table { border-collapse: collapse; width: 100%; border: 2px solid #000; margin-bottom: 6px; }
-        th, td { border: 1px solid #000; padding: 3px 2px; text-align: center; vertical-align: middle; font-size: 9.5px; }
-        .bold { font-weight: bold; }
-        .bg-grey { background-color: #f2f2f2; }
-        
-        /* TABLA DATOS ESTUDIANTE */
-        #tabla-datos td { text-align: left; padding-left: 6px; height: 22px; }
-
-        /* TABLA CALIFICACIONES NOTAS 2 */
-        #tabla-notas th { font-size: 9px; padding: 2px; }
-        #tabla-notas td { height: 20px; }
-        #tabla-notas .input-text { border: none; width: 100%; font-size: 9.5px; text-align: center; outline: none; background: transparent; }
-        #tabla-notas .res { font-weight: bold; color: blue; background-color: #e8f0fe; }
-        #tabla-notas .area-res { font-weight: bold; color: green; background-color: #e6ffed; }
-        #tabla-notas .text-left { text-align: left; padding-left: 4px; }
-        .vertical-text { writing-mode: vertical-rl; transform: rotate(180deg); white-space: nowrap; padding: 2px; font-size: 9px; }
-
-        /* TABLA ASISTENCIA Y LEYENDA */
-        #tabla-asistencia th { font-size: 9px; padding: 2px; }
-        #tabla-asistencia td { height: 20px; padding: 2px; }
-        #tabla-asistencia .input-text { border: none; width: 100%; font-size: 9.5px; text-align: center; outline: none; background: transparent; }
-        .desc-cell { text-align: left; font-size: 8.5px; line-height: 1.05; padding: 3px 4px !important; }
-        .leyenda-cell { text-align: left; font-size: 8.5px; width: 165px; vertical-align: top; padding: 4px 6px !important; line-height: 1.15; }
-
-        /* ESTILOS HOJA DE ATRÁS / SEGUNDA PARTE */
-        .salto-pagina { page-break-before: always; margin-top: 20px; }
-        .tabla-avances td { height: 32px; vertical-align: top; text-align: left; padding: 4px; }
-        .titulo-avances { background-color: #f2f2f2; font-size: 9.5px; font-weight: bold; text-align: left; padding: 5px 8px; border: 1px solid #000; }
-        .input-text-area { border: none; width: 100%; font-size: 9.5px; outline: none; background: transparent; resize: none; font-family: 'Arial', sans-serif; }
-        .pie-firmas { display: flex; justify-content: space-between; margin-top: 35px; padding: 0 30px; }
-        .linea-firma { width: 280px; text-align: center; border-top: 1px solid #000; padding-top: 4px; font-size: 9.5px; }
-
-        .selector-container { margin-bottom: 8px; background: #f8f9fa; padding: 6px 10px; border: 1px solid #ccc; display: flex; align-items: center; gap: 10px; border-radius: 4px; }
+        /* PLANILLA INFORME */
+        .planilla-box {
+            background: #fff;
+            border: 1px solid #000;
+            padding: 10px;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #000;
+            padding: 3px;
+            text-align: center;
+            font-size: 9.5px;
+        }
+        input[type="text"] {
+            width: 100%;
+            border: none;
+            text-align: center;
+            font-size: 9.5px;
+            background: transparent;
+        }
+        input[type="text"]:focus {
+            outline: 1px solid #3b82f6;
+            background: #eff6ff;
+        }
     </style>
 </head>
 <body>
 
-    <!-- BARRA DE ACCIÓN SUPERIOR -->
-    <div class="action-bar">
-        <div class="left-group">
-            <a href="{{ url_for('menu_notas') }}" class="btn btn-menu">⬅ Salir al Menú de Notas</a>
-            <button type="button" class="btn btn-clear" onclick="limpiarFormulario()">🧹 Borrar Datos</button>
+    <!-- BARRA DE ACCESOS SUPERIOR -->
+    <div class="top-bar">
+        <div>
+            <a href="{{ url_for('index') }}" class="btn-salir">⬅ Salir al Menú de Notas</a>
+            <button type="button" class="btn-borrar" onclick="document.querySelectorAll('input[type=text]').forEach(i => i.value = '');">🧹 Borrar Datos</button>
         </div>
-        <div class="right-group">
-            <button type="submit" form="form-informe" class="btn btn-save">💾 Guardar Cambios</button>
-            <button type="button" class="btn btn-pdf" onclick="window.print()">🖨️ Generar PDF</button>
+        <div>
+            <button type="submit" form="form-notas" class="btn-guardar">💾 Guardar Cambios</button>
+            <a href="{{ url_for('generar_pdf_notas', id_estudiante=estudiante.id_estudiante) if estudiante else '#' }}" class="btn-pdf">📄 Generar PDF</a>
         </div>
     </div>
 
-    <!-- SELECTOR DE ESTUDIANTE (Solo 4to a 6to Grado) -->
+    <!-- SELECTOR DE ESTUDIANTE -->
     <div class="selector-container">
         <form method="GET" action="{{ url_for('notas2') }}" style="display: flex; align-items: center; width: 100%; gap: 10px; margin: 0;">
-            <label for="id_estudiante" class="bold">SELECCIONAR ESTUDIANTE (4° a 6°):</label>
+            <label for="id_estudiante" style="font-weight: bold;">SELECCIONAR ESTUDIANTE:</label>
             <select name="id_estudiante" id="id_estudiante" onchange="this.form.submit()" style="padding: 4px; font-size: 11px; flex-grow: 1; border: 1px solid #000; background: #fff;">
+                <option value="" disabled {% if not estudiante %}selected{% endif %}>-- Seleccione un estudiante --</option>
                 {% for est in lista_estudiantes %}
-                    {% if est.grado in [4, 5, 6] or '4' in est.grado|string or '5' in est.grado|string or '6' in est.grado|string %}
-                    <option value="{{ est.id_estudiante }}" {% if estudiante and est.id_estudiante|string == estudiante.id_estudiante|string %}selected{% endif %}>
-                        {{ est.nombres }} {{ est.apellidos }} — (Grado: {{ est.grado }}) (ID: {{ est.id_estudiante }})
+                    <option value="{{ est.id_estudiante }}" {% if estudiante and est.id_estudiante|string == est.id_estudiante|string %}selected{% endif %}>
+                        {{ est.nombres }} {{ est.apellidos }} — (Grado: {{ est.grado }})
                     </option>
-                    {% endif %}
                 {% endfor %}
             </select>
         </form>
     </div>
 
     {% if estudiante %}
-    <form id="form-informe" method="POST" action="{{ url_for('notas2') }}">
+    <form id="form-notas" method="POST" action="{{ url_for('guardar_notas') }}">
         <input type="hidden" name="id_estudiante" value="{{ estudiante.id_estudiante }}">
-
-        <!-- ENCABEZADO INSTITUCIONAL -->
-        <div class="header">
-            <img src="{{ url_for('static', filename='img/logo2.png') }}" class="logo" alt="Logo">
-            <div class="header-content">
-                <div class="header-row-1">
-                    <span class="title-school">Centro Educativo Mami Luisa S.R.L</span>
-                    <span class="lema">"Educando con amor para un mundo mejor"</span>
+        
+        <!-- CONTENEDOR PRINCIPAL DEL INFORME DE APRENDIZAJE -->
+        <div class="planilla-box">
+            
+            <!-- ENCABEZADO INSTITUCIONAL -->
+            <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #000; padding-bottom: 5px; margin-bottom: 6px;">
+                <div>
+                    <h2 style="margin: 0; font-size: 15px; color: #1a237e;">Centro Educativo Mami Luisa <span style="font-size: 10px; font-weight: normal; color: #555;">S.R.L</span></h2>
+                    <p style="margin: 2px 0; font-size: 8.5px; font-style: italic; color: #c2185b;">"Educando con amor para un mundo mejor"</p>
+                    <p style="margin: 2px 0; font-size: 8.5px;"><b>Dirección:</b> C/ Castillo Márquez #52, La Romana, Centro Ciudad. <b>Teléfono:</b> 809-550-7585 / 809-710-3395</p>
+                    <p style="margin: 2px 0; font-size: 8.5px;"><b>Regional:</b> 05 San Pedro de Macorís. <b>Distrito:</b> 05-01 La Romana. <b>Código:</b> 07121</p>
                 </div>
-                <div class="info-line">
-                    <b>Dirección:</b> C/Castillo Márquez #53. La Romana, Centro Ciudad. <b>Teléfono:</b> 809-550-7385 / 809-710-3395. <b>Regional de Educación:</b> 05 San Pedro de Macorís. <b>Distrito Educativo:</b> 05-03 La Romana. <b>Código:</b> 07121
-                </div>
-                <div class="info-row-2 info-line" style="font-weight: bold;">
-                    <span>INFORME DE APRENDIZAJE. Segundo Ciclo del Nivel Primario (Grado: {{ estudiante.grado }}).</span>
-                    <span>DOCENTE: {{ docente_nombre }}</span>
-                </div>
-                <div class="info-line" style="color: #444;">
-                    Año Escolar 2025-2026 / Jornada Escolar Regular. &nbsp;&nbsp;&nbsp;&nbsp; Tanda Matutina.
+                <div style="text-align: right; font-size: 9.5px;">
+                    <p style="margin: 2px 0;"><b>INFORME DE APRENDIZAJE.</b></p>
+                    <p style="margin: 2px 0;"><b>Año Escolar:</b> 2025-2026 / Jornada Regular.</p>
+                    <p style="margin: 2px 0;"><b>DOCENTE:</b> Alondra Sánchez Louis</p>
+                    <p style="margin: 2px 0;"><b>Grado:</b> {{ estudiante.grado }} | <b>Tanda:</b> Matutina</p>
                 </div>
             </div>
-        </div>
 
-        <!-- TABLA DATOS ESTUDIANTE -->
-        <table id="tabla-datos">
-            <tr>
-                <td class="bold" style="width: 8%;">NOMBRE(S):</td>
-                <td style="width: 27%; font-weight: bold; color: #1a73e8;">{{ estudiante.nombres }}</td>
-                <td class="bold" style="width: 9%;">APELLIDO(S):</td>
-                <td style="width: 27%; font-weight: bold; color: #1a73e8;">{{ estudiante.apellidos }}</td>
-                <td class="bold" style="width: 10%;">NO. DE ORDEN:</td>
-                <td style="width: 6%;">{{ estudiante.orden if estudiante.orden else '' }}</td>
-                <td class="bold" style="width: 7%;">ID ESTUDIANTE:</td>
-                <td style="width: 6%;">{{ estudiante.id_estudiante }}</td>
-            </tr>
-        </table>
+            <!-- DATOS DEL ESTUDIANTE -->
+            <div style="display: flex; border: 1px solid #000; margin-bottom: 6px; background: #f9f9f9; padding: 4px; font-size: 10px;">
+                <div style="flex: 2; border-right: 1px solid #000; padding-right: 5px;">
+                    <b>NOMBRE(S):</b> {{ estudiante.nombres }}
+                </div>
+                <div style="flex: 2; border-right: 1px solid #000; padding-left: 5px; padding-right: 5px;">
+                    <b>APELLIDO(S):</b> {{ estudiante.apellidos }}
+                </div>
+                <div style="flex: 1; border-right: 1px solid #000; padding-left: 5px; padding-right: 5px; text-align: center;">
+                    <b>NO. DE ORDEN:</b> {{ estudiante.no_orden|default('01') }}
+                </div>
+                <div style="flex: 1; padding-left: 5px; text-align: center;">
+                    <b>ID ESTUDIANTE:</b> {{ estudiante.id_estudiante }}
+                </div>
+            </div>
 
-        <!-- TABLA CALIFICACIONES NOTAS 2 -->
-        <table id="tabla-notas">
-            <thead class="bg-grey">
-                <tr>
-                    <th rowspan="2" style="width: 16%;">ÁREAS CURRICULARES</th>
-                    <th colspan="8">C1<br>Comunicativa</th>
-                    <th colspan="8">C2<br>Pensamiento Lógico Creativo y Crítico; Resolución de Problemas; Científica y Tecnológica</th>
-                    <th colspan="8">C3<br>Ética y Ciudadana; Desarrollo Personal y Espiritual; Ambiental y de la Salud</th>
-                    <th colspan="3">POR COMPETENCIA</th>
-                    <th rowspan="2" class="vertical-text">DEL ÁREA</th>
-                    <th rowspan="2" class="vertical-text">RECUPERACIÓN</th>
-                    <th rowspan="2" class="vertical-text">RECUPERACIÓN ESPECIAL</th>
-                </tr>
-                <tr>
-                    <!-- C1 -->
-                    <th>P1</th><th>RP1</th><th>P2</th><th>RP2</th><th>P3</th><th>RP3</th><th>P4</th><th>RP4</th>
-                    <!-- C2 -->
-                    <th>P1</th><th>RP1</th><th>P2</th><th>RP2</th><th>P3</th><th>RP3</th><th>P4</th><th>RP4</th>
-                    <!-- C3 -->
-                    <th>P1</th><th>RP1</th><th>P2</th><th>RP2</th><th>P3</th><th>RP3</th><th>P4</th><th>RP4</th>
-                    <!-- Por Competencia -->
-                    <th>C1</th><th>C2</th><th>C3</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for m in ['Lengua Española', 'Matemática', 'Ciencias Sociales', 'Ciencias de la Naturaleza', 'Formación Integral, Humana y Religiosa', 'Educación Artística', 'Lenguas Extranjeras (Inglés)', 'Educación Física'] %}
-                <tr>
-                    <td class="text-left bold" style="font-size: 9px;">{{ m }}</td>
-                    <!-- C1 inputs -->
-                    <td><input class="input-text c1-p" name="{{ m }}_c1_p1" value="{{ datos_guardados.get(m ~ '_c1_p1', '') }}"></td>
-                    <td><input class="input-text" name="{{ m }}_c1_rp1" value="{{ datos_guardados.get(m ~ '_c1_rp1', '') }}"></td>
-                    <td><input class="input-text c1-p" name="{{ m }}_c1_p2" value="{{ datos_guardados.get(m ~ '_c1_p2', '') }}"></td>
-                    <td><input class="input-text" name="{{ m }}_c1_rp2" value="{{ datos_guardados.get(m ~ '_c1_rp2', '') }}"></td>
-                    <td><input class="input-text c1-p" name="{{ m }}_c1_p3" value="{{ datos_guardados.get(m ~ '_c1_p3', '') }}"></td>
-                    <td><input class="input-text" name="{{ m }}_c1_rp3" value="{{ datos_guardados.get(m ~ '_c1_rp3', '') }}"></td>
-                    <td><input class="input-text c1-p" name="{{ m }}_c1_p4" value="{{ datos_guardados.get(m ~ '_c1_p4', '') }}"></td>
-                    <td><input class="input-text" name="{{ m }}_c1_rp4" value="{{ datos_guardados.get(m ~ '_c1_rp4', '') }}"></td>
-                    <!-- C2 inputs -->
-                    <td><input class="input-text c2-p" name="{{ m }}_c2_p1" value="{{ datos_guardados.get(m ~ '_c2_p1', '') }}"></td>
-                    <td><input class="input-text" name="{{ m }}_c2_rp1" value="{{ datos_guardados.get(m ~ '_c2_rp1', '') }}"></td>
-                    <td><input class="input-text c2-p" name="{{ m }}_c2_p2" value="{{ datos_guardados.get(m ~ '_c2_p2', '') }}"></td>
-                    <td><input class="input-text" name="{{ m }}_c2_rp2" value="{{ datos_guardados.get(m ~ '_c2_rp2', '') }}"></td>
-                    <td><input class="input-text c2-p" name="{{ m }}_c2_p3" value="{{ datos_guardados.get(m ~ '_c2_p3', '') }}"></td>
-                    <td><input class="input-text" name="{{ m }}_c2_rp3" value="{{ datos_guardados.get(m ~ '_c2_rp3', '') }}"></td>
-                    <td><input class="input-text c2-p" name="{{ m }}_c2_p4" value="{{ datos_guardados.get(m ~ '_c2_p4', '') }}"></td>
-                    <td><input class="input-text" name="{{ m }}_c2_rp4" value="{{ datos_guardados.get(m ~ '_c2_rp4', '') }}"></td>
-                    <!-- C3 inputs -->
-                    <td><input class="input-text c3-p" name="{{ m }}_c3_p1" value="{{ datos_guardados.get(m ~ '_c3_p1', '') }}"></td>
-                    <td><input class="input-text" name="{{ m }}_c3_rp1" value="{{ datos_guardados.get(m ~ '_c3_rp1', '') }}"></td>
-                    <td><input class="input-text c3-p" name="{{ m }}_c3_p2" value="{{ datos_guardados.get(m ~ '_c3_p2', '') }}"></td>
-                    <td><input class="input-text" name="{{ m }}_c3_rp2" value="{{ datos_guardados.get(m ~ '_c3_rp2', '') }}"></td>
-                    <td><input class="input-text c3-p" name="{{ m }}_c3_p3" value="{{ datos_guardados.get(m ~ '_c3_p3', '') }}"></td>
-                    <td><input class="input-text" name="{{ m }}_c3_rp3" value="{{ datos_guardados.get(m ~ '_c3_rp3', '') }}"></td>
-                    <td><input class="input-text c3-p" name="{{ m }}_c3_p4" value="{{ datos_guardados.get(m ~ '_c3_p4', '') }}"></td>
-                    <td><input class="input-text" name="{{ m }}_c3_rp4" value="{{ datos_guardados.get(m ~ '_c3_rp4', '') }}"></td>
-                    <!-- Por Competencia / Resultados -->
-                    <td><input class="input-text res" name="{{ m }}_c1_res" value="{{ datos_guardados.get(m ~ '_c1_res', '') }}" readonly></td>
-                    <td><input class="input-text res" name="{{ m }}_c2_res" value="{{ datos_guardados.get(m ~ '_c2_res', '') }}" readonly></td>
-                    <td><input class="input-text res" name="{{ m }}_c3_res" value="{{ datos_guardados.get(m ~ '_c3_res', '') }}" readonly></td>
-                    <!-- Del área y recuperaciones -->
-                    <td><input class="input-text area-res" name="{{ m }}_area_res" value="{{ datos_guardados.get(m ~ '_area_res', '') }}" readonly></td>
-                    <td><input class="input-text" name="{{ m }}_recup" value="{{ datos_guardados.get(m ~ '_recup', '') }}"></td>
-                    <td><input class="input-text" name="{{ m }}_recup_especial" value="{{ datos_guardados.get(m ~ '_recup_especial', '') }}"></td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+            <!-- TABLA DE CALIFICACIONES -->
+            <table style="margin-bottom: 8px;">
+                <thead>
+                    <tr style="background: #e2e8f0;">
+                        <th rowspan="2" style="width: 16%;">ÁREAS CURRICULARES</th>
+                        <th colspan="8">C1<br>Comunicativa</th>
+                        <th colspan="8">C2<br>Pensamiento Lógico Creativo y Crítico; Resolución de Problemas; Científica y Tecnológica</th>
+                        <th colspan="8">C3<br>Ética y Ciudadana; Desarrollo Personal y Espiritual; Ambiental y de la Salud</th>
+                        <th colspan="3">CALIFICACIÓN FINAL</th>
+                    </tr>
+                    <tr style="background: #f1f5f9; font-size: 8.5px;">
+                        <!-- C1 -->
+                        <th>P1</th><th>RP1</th><th>P2</th><th>RP2</th><th>P3</th><th>RP3</th><th>P4</th><th>RP4</th>
+                        <!-- C2 -->
+                        <th>P1</th><th>RP1</th><th>P2</th><th>RP2</th><th>P3</th><th>RP3</th><th>P4</th><th>RP4</th>
+                        <!-- C3 -->
+                        <th>P1</th><th>RP1</th><th>P2</th><th>RP2</th><th>P3</th><th>RP3</th><th>P4</th><th>RP4</th>
+                        <!-- Final -->
+                        <th>C1</th><th>C2</th><th>C3</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% set areas = ['Lengua Española', 'Matemática', 'Ciencias Sociales', 'Ciencias de la Naturaleza', 'Formación Integral, Humana y Religiosa', 'Educación Artística', 'Lenguas Extranjeras (Inglés)', 'Educación Física'] %}
+                    {% for area in areas %}
+                    <tr>
+                        <td style="text-align: left; font-weight: bold; padding-left: 4px;">{{ area }}</td>
+                        <!-- 8 celdas C1 -->
+                        {% for i in range(8) %}<td><input type="text" name="area_{{ loop.index0 }}_c1_{{ i }}" autocomplete="off"></td>{% endfor %}
+                        <!-- 8 celdas C2 -->
+                        {% for i in range(8) %}<td><input type="text" name="area_{{ loop.index0 }}_c2_{{ i }}" autocomplete="off"></td>{% endfor %}
+                        <!-- 8 celdas C3 -->
+                        {% for i in range(8) %}<td><input type="text" name="area_{{ loop.index0 }}_c3_{{ i }}" autocomplete="off"></td>{% endfor %}
+                        <!-- 3 celdas Finales -->
+                        <td><input type="text" name="area_{{ loop.index0 }}_fin_1"></td>
+                        <td><input type="text" name="area_{{ loop.index0 }}_fin_2"></td>
+                        <td><input type="text" name="area_{{ loop.index0 }}_fin_3"></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
 
-        <!-- TABLA DE ASISTENCIA, ESCALA Y LEYENDA -->
-        <table id="tabla-asistencia">
-            <thead class="bg-grey">
-                <tr>
-                    <th style="width: 8%;">Escala Numérica</th>
-                    <th style="width: 38%;">DESCRIPCIÓN</th>
-                    <th colspan="5" style="width: 37%;">RESUMEN DE ASISTENCIA DEL/LA ESTUDIANTE</th>
-                    <th rowspan="2" class="leyenda-cell">LEYENDA</th>
-                </tr>
-                <tr>
-                    <th class="bg-grey">PERÍODO</th>
-                    <th class="bg-grey">RESUMEN DE ASISTENCIA</th>
-                    <th style="width: 8%;">PERÍODO</th>
-                    <th style="width: 10%;">ASISTENCIA</th>
-                    <th style="width: 10%;">AUSENCIA</th>
-                    <th colspan="2" style="width: 9%;">% ANUAL<br>Asist. / Aus.</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td class="bold">89-100</td>
-                    <td class="desc-cell">Evidencia que el estudiante ha alcanzado un desempeño destacado con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
-                    <td class="bold">P1</td>
-                    <td><input class="input-text" name="asist_p1" value="{{ datos_guardados.get('asist_p1', '') }}"></td>
-                    <td><input class="input-text" name="aus_p1" value="{{ datos_guardados.get('aus_p1', '') }}"></td>
-                    <td rowspan="4"><input class="input-text" name="pct_asist" value="{{ datos_guardados.get('pct_asist', '') }}"></td>
-                    <td rowspan="4"><input class="input-text" name="pct_aus" value="{{ datos_guardados.get('pct_aus', '') }}"></td>
-                    <td rowspan="4" class="leyenda-cell">
-                        <b>(P1)</b> Período 1<br>
-                        <b>(P2)</b> Período 2<br>
-                        <b>(P3)</b> Período 3<br>
-                        <b>(P4)</b> Período 4<br><br>
-                        <b>(RP1)</b> Recuperación Pedagógica 1<br>
-                        <b>(RP2)</b> Recuperación Pedagógica 2<br>
-                        <b>(RP3)</b> Recuperación Pedagógica 3<br>
-                        <b>(RP4)</b> Recuperación Pedagógica 4<br><br>
-                        <b>(C1)</b> Competencia 1<br>
-                        <b>(C2)</b> Competencia 2<br>
-                        <b>(C3)</b> Competencia 3
-                    </td>
-                </tr>
-                <tr>
-                    <td class="bold">77-88</td>
-                    <td class="desc-cell">Evidencia que el estudiante ha logrado, en general, los aprendizajes esperados con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
-                    <td class="bold">P2</td>
-                    <td><input class="input-text" name="asist_p2" value="{{ datos_guardados.get('asist_p2', '') }}"></td>
-                    <td><input class="input-text" name="aus_p2" value="{{ datos_guardados.get('aus_p2', '') }}"></td>
-                </tr>
-                <tr>
-                    <td class="bold">65 - 76</td>
-                    <td class="desc-cell">Evidencia que el estudiante aún se encuentra en proceso con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar, mostrando un logro muy básico.</td>
-                    <td class="bold">P3</td>
-                    <td><input class="input-text" name="asist_p3" value="{{ datos_guardados.get('asist_p3', '') }}"></td>
-                    <td><input class="input-text" name="aus_p3" value="{{ datos_guardados.get('aus_p3', '') }}"></td>
-                </tr>
-                <tr>
-                    <td class="bold">Menos de 65</td>
-                    <td class="desc-cell">Evidencia que el estudiante ha alcanzado un desempeño insuficiente con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
-                    <td class="bold">P4</td>
-                    <td><input class="input-text" name="asist_p4" value="{{ datos_guardados.get('asist_p4', '') }}"></td>
-                    <td><input class="input-text" name="aus_p4" value="{{ datos_guardados.get('aus_p4', '') }}"></td>
-                </tr>
-            </tbody>
-        </table>
+            <!-- SECCIÓN INFERIOR: ESCALA Y ASISTENCIA -->
+            <div style="display: flex; gap: 8px;">
+                <!-- Tabla de Escala -->
+                <table style="width: 44%; font-size: 8.5px;">
+                    <tr style="background: #e2e8f0; text-align: center;">
+                        <th style="width: 18%;">Escala Numérica</th>
+                        <th>DESCRIPCION</th>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: bold; text-align: center;">89-100</td>
+                        <td style="text-align: left; padding: 3px;">Evidencia que el estudiante ha alcanzado un desempeño destacado con relación a los aspectos evaluados de las competencias.</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: bold; text-align: center;">77-88</td>
+                        <td style="text-align: left; padding: 3px;">Evidencia que el estudiante ha logrado, en general, los aprendizajes esperados con relación a los aspectos evaluados.</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: bold; text-align: center;">65-76</td>
+                        <td style="text-align: left; padding: 3px;">Evidencia que el estudiante aún se encuentra en proceso con relación a los aspectos evaluados, mostrando un logro muy básico.</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: bold; text-align: center;">Menos de 65</td>
+                        <td style="text-align: left; padding: 3px;">Evidencia que el estudiante no ha alcanzado el desempeño requerido, mostrando un resultado insuficiente.</td>
+                    </tr>
+                </table>
 
-        <!-- ========================================== -->
-        <!-- PARTE TRASERA (HOJA DE ATRÁS)              -->
-        <!-- ========================================== -->
-        <div class="salto-pagina"></div>
-
-        <!-- TABLA DE AVANCES E INFORMACIÓN -->
-        <table class="tabla-avances">
-            <tr>
-                <td class="bold" style="width: 6%; text-align: center;">P1</td>
-                <td><textarea class="input-text-area" name="avance_p1" style="height: 32px;" placeholder="Comentarios del período 1...">{{ datos_guardados.get('avance_p1', '') }}</textarea></td>
-            </tr>
-            <tr>
-                <td class="bold" style="text-align: center;">P2</td>
-                <td><textarea class="input-text-area" name="avance_p2" style="height: 32px;" placeholder="Comentarios del período 2...">{{ datos_guardados.get('avance_p2', '') }}</textarea></td>
-            </tr>
-            <tr>
-                <td class="bold" style="text-align: center;">P3</td>
-                <td><textarea class="input-text-area" name="avance_p3" style="height: 32px;" placeholder="Comentarios del período 3...">{{ datos_guardados.get('avance_p3', '') }}</textarea></td>
-            </tr>
-            <tr>
-                <td class="bold" style="text-align: center;">P4</td>
-                <td><textarea class="input-text-area" name="avance_p4" style="height: 32px;" placeholder="Comentarios del período 4...">{{ datos_guardados.get('avance_p4', '') }}</textarea></td>
-            </tr>
-        </table>
-
-        <div class="titulo-avances" style="margin-top: -6px; margin-bottom: 6px; border: 2px solid #000; border-top: none;">
-            Información sobre el nivel de avances de los aprendizajes y los apoyos que necesita para la mejora de sus aprendizajes.
-        </div>
-
-        <!-- TABLA INFERIOR: FIRMAS DE PADRES Y SITUACIÓN -->
-        <table style="width: 100%;">
-            <tr>
-                <td style="width: 60%; vertical-align: top; padding: 0;">
-                    <table>
-                        <tr class="bg-grey">
-                            <th style="width: 45%;">Períodos de reportes de calificaciones</th>
-                            <th style="width: 55%;">FIRMA DEL PADRE, MADRE O TUTOR</th>
+                <!-- Tabla de Asistencia y Leyenda -->
+                <div style="width: 56%; display: flex; flex-direction: column; gap: 5px;">
+                    <table style="font-size: 8.5px;">
+                        <tr style="background: #e2e8f0;">
+                            <th rowspan="2" style="width: 15%;">PERÍODO</th>
+                            <th colspan="2">RESUMEN DE ASISTENCIA DEL/LA ESTUDIANTE</th>
+                            <th colspan="2">% ANUAL</th>
+                        </tr>
+                        <tr style="background: #f1f5f9;">
+                            <th>ASISTENCIA</th>
+                            <th>AUSENCIA</th>
+                            <th>ASISTENCIA</th>
+                            <th>AUSENCIA</th>
                         </tr>
                         <tr>
-                            <td class="text-left bold">Septiembre – Octubre</td>
-                            <td style="height: 24px;"></td>
+                            <td><b>P1</b></td>
+                            <td><input type="text" name="asist_p1"></td>
+                            <td><input type="text" name="aus_p1"></td>
+                            <td rowspan="4"><input type="text" name="porc_asist_anual"></td>
+                            <td rowspan="4"><input type="text" name="porc_aus_anual"></td>
                         </tr>
-                        <tr>
-                            <td class="text-left bold">Noviembre – Diciembre – Enero</td>
-                            <td style="height: 24px;"></td>
-                        </tr>
-                        <tr>
-                            <td class="text-left bold">Febrero – Marzo</td>
-                            <td style="height: 24px;"></td>
-                        </tr>
-                        <tr>
-                            <td class="text-left bold">Abril – Mayo – Junio</td>
-                            <td style="height: 24px;"></td>
-                        </tr>
+                        <tr><td><b>P2</b></td><td><input type="text" name="asist_p2"></td><td><input type="text" name="aus_p2"></td></tr>
+                        <tr><td><b>P3</b></td><td><input type="text" name="asist_p3"></td><td><input type="text" name="aus_p3"></td></tr>
+                        <tr><td><b>P4</b></td><td><input type="text" name="asist_p4"></td><td><input type="text" name="aus_p4"></td></tr>
                     </table>
-                </td>
-                <td style="width: 40%; vertical-align: top; padding: 0; padding-left: 8px;">
-                    <table>
-                        <tr class="bg-grey">
-                            <th colspan="3">SITUACION DEL/DE LA ESTUDIANTE</th>
-                        </tr>
-                        <tr class="bg-grey" style="font-size: 8.5px;">
-                            <th style="width: 33%;">Promovido/a</th>
-                            <th style="width: 33%;">Aplazado/a</th>
-                            <th style="width: 34%;">Repitente</th>
-                        </tr>
-                        <tr>
-                            <td style="height: 24px;"><input type="checkbox" name="promovido" value="1" {% if datos_guardados.get('promovido') == '1' %}checked{% endif %} style="transform: scale(1.1);"></td>
-                            <td><input type="checkbox" name="aplazado" value="1" {% if datos_guardados.get('aplazado') == '1' %}checked{% endif %} style="transform: scale(1.1);"></td>
-                            <td><input type="checkbox" name="repitente" value="1" {% if datos_guardados.get('repitente') == '1' %}checked{% endif %} style="transform: scale(1.1);"></td>
-                        </tr>
-                        <tr>
-                            <td colspan="3" class="bg-grey text-left bold" style="font-size: 8.5px; padding: 3px;">Condición final del/de la estudiante</td>
-                        </tr>
-                        <tr>
-                            <td colspan="3" style="height: 26px;"><input class="input-text" name="condicion_final" value="{{ datos_guardados.get('condicion_final', '') }}" style="text-align: center;" placeholder="Escribir condición..."></td>
-                        </tr>
-                    </table>
-                </td>
-            </tr>
-        </table>
 
-        <!-- PIE DE FIRMAS INSTITUCIONALES -->
-        <div class="pie-firmas">
-            <div class="linea-firma">
-                <b>{{ docente_nombre }}</b><br>
-                (Docente titular del grado)
+                    <div style="font-size: 8px; border: 1px solid #000; padding: 4px; background: #fafafa; line-height: 1.2;">
+                        <b>LEYENDA:</b> (P1) Período 1 | (P2) Período 2 | (P3) Período 3 | (P4) Período 4<br>
+                        (RP1-RP4) Recuperación Pedagógica | (C1-C3) Competencias Fundamentales
+                    </div>
+                </div>
             </div>
-            <div class="linea-firma">
-                <b>Licda. María Teresa Herrera Romero</b><br>
-                (Directora)
-            </div>
+
         </div>
     </form>
+    {% else %}
+        <div style="background: #fff; border: 1px solid #cbd5e1; padding: 30px; text-align: center; border-radius: 4px; color: #64748b;">
+            👆 <b>Seleccione un estudiante en el menú desplegable superior para cargar y editar su informe de aprendizaje.</b>
+        </div>
     {% endif %}
 
-    <!-- SCRIPT DE BOTONES -->
-    <script>
-        function limpiarFormulario() {
-            if (confirm("¿Estás seguro de que deseas limpiar todos los campos ingresados en este informe?")) {
-                document.getElementById('form-informe').reset();
-            }
-        }
-    </script>
 </body>
 </html>
