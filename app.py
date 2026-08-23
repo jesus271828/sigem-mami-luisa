@@ -1758,14 +1758,24 @@ def notas1():
                            grado_activo=grado_activo,
                            docente_nombre=docente_guardado)
 
-@app.route('/notas2')
+@app.route('/notas2', methods=['GET', 'POST'])
 def notas2():
-    rol = str(session.get('rol', '')).strip().lower()
-    curso = str(session.get('curso_asignado', '')).strip().lower()
-    if rol in ['admin', 'oficina'] or curso.startswith('4') or curso.startswith('5') or curso.startswith('6'):
-        return render_template('notas2.html', estudiante=None)
-    flash('Acceso denegado.', 'danger')
-    return redirect(url_for('menu_notas'))
+    # Asegúrate de consultar la tabla de estudiantes correctamente
+    lista_estudiantes = Estudiante.query.all() # O la consulta que uses para obtenerlos
+    
+    estudiante = None
+    datos_guardados = {}
+    id_estudiante = request.args.get('id_estudiante') or request.form.get('id_estudiante')
+    
+    if id_estudiante:
+        estudiante = Estudiante.query.get(id_estudiante)
+        # Lógica para cargar las notas/datos guardados...
+
+    return render_template('notas2.html', 
+                           lista_estudiantes=lista_estudiantes, 
+                           estudiante=estudiante, 
+                           datos_guardados=datos_guardados,
+                           docente_nombre="Tu Nombre Aquí")
 
 @app.route('/planificacion')
 def planificacion():
