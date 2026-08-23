@@ -1684,40 +1684,46 @@ def notas1():
     
     rol_usuario = str(session.get('rol', '')).strip().lower()
     curso_maestro = str(session.get('curso_asignado', '')).strip()
+    nombre_docente_actual = session.get('nombre_completo') or session.get('usuario', 'Docente Titular')
     
-    # Recibir el tipo de orden desde la URL ('nombre' o 'orden')
+    # Recibir el tipo de orden ('nombre', 'orden' o 'grado')
     tipo_orden = request.args.get('orden', 'nombre')
     
-    # Criterio de ordenamiento para el listado
-    if tipo_orden == 'orden' and hasattr(Estudiante, 'numero_orden'):
-        criterio_sql = Estudiante.numero_orden.asc()
+    # Criterio de ordenamiento SQL dinámico
+    if tipo_orden == 'grado' and hasattr(Estudiante, 'grado'):
+        criterio_sql = [Estudiante.grado.asc(), Estudiante.nombres.asc()]
+    elif tipo_orden == 'orden' and hasattr(Estudiante, 'numero_orden'):
+        criterio_sql = [Estudiante.numero_orden.asc()]
     else:
-        criterio_sql = Estudiante.nombres.asc()
+        criterio_sql = [Estudiante.nombres.asc()]
 
     # Filtrar estudiantes según el rol
     if rol_usuario == 'admin' or rol_usuario == 'oficina':
         lista_estudiantes = Estudiante.query.filter(
             Estudiante.grado.in_(['Párvulos', '1ro A', '1ro B', '2do A', '2do B', '3ro A', '3ro B'])
-        ).order_by(criterio_sql).all()
+        ).order_by(*criterio_sql).all()
+        grado_activo = "Primer Grado del Nivel Primario, Sección A"
     else:
         lista_estudiantes = Estudiante.query.filter(
             Estudiante.grado.ilike(f"%{curso_maestro}%")
-        ).order_by(criterio_sql).all()
+        ).order_by(*criterio_sql).all()
+        grado_activo = f"Grado: {curso_maestro}"
 
     id_estudiante = request.args.get('id_estudiante') or request.form.get('id_estudiante')
     estudiante = None
     notas = {}
+    docente_guardado = nombre_docente_actual
 
     if id_estudiante:
         estudiante = Estudiante.query.get(id_estudiante)
 
         if request.method == 'POST':
-            # Empaquetamos los datos del formulario en JSON
             form_data = dict(request.form)
             if 'id_estudiante' in form_data:
                 form_data.pop('id_estudiante')
+            
+            form_data['_docente_registro'] = nombre_docente_actual
 
-            # Buscamos si ya existe el registro para actualizarlo en lugar de duplicar
             registro_notas = Notas1.query.filter_by(id_estudiante=str(id_estudiante)).first()
 
             if registro_notas:
@@ -1734,11 +1740,11 @@ def notas1():
             return redirect(url_for('notas1', id_estudiante=id_estudiante, orden=tipo_orden))
 
         else:
-            # Carga de datos guardados (GET)
             registro_notas = Notas1.query.filter_by(id_estudiante=str(id_estudiante)).first()
             if registro_notas and registro_notas.datos_formulario:
                 try:
                     notas = json.loads(registro_notas.datos_formulario)
+                    docente_guardado = notas.get('_docente_registro', nombre_docente_actual)
                 except:
                     notas = {}
 
@@ -1746,7 +1752,9 @@ def notas1():
                            lista_estudiantes=lista_estudiantes, 
                            estudiante=estudiante, 
                            notas=notas,
-                           tipo_orden=tipo_orden)
+                           tipo_orden=tipo_orden,
+                           grado_activo=grado_activo,
+                           docente_nombre=docente_guardado)
 
 @app.route('/notas2')
 def notas2():

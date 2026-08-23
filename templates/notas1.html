@@ -57,6 +57,7 @@
         .btn-save { background-color: #27ae60; }
         .btn-clear { background-color: #f39c12; }
         .btn-menu { background-color: #34495e; border: 1px solid #7f8c8d; }
+        .btn-list { background-color: #2980b9; }
 
         @media print {
             .action-bar, .selector-container { display: none !important; }
@@ -162,23 +163,24 @@
     <!-- BARRA DE ACCIÓN SUPERIOR -->
     <div class="action-bar">
         <div class="left-group">
-            <a href="{{ url_for('menu_notas') }}" class="btn btn-menu">⬅ Salir al Menú de Notas</a>
-            <button type="button" class="btn btn-clear" onclick="limpiarFormulario()">🧹 Borrar Datos</button>
+            <a href="{{ url_for('menu_notas') }}" class="btn btn-menu">⬅ Menú</a>
+            <a href="{{ url_for('lista_estudiantes') }}" class="btn btn-list">👥 Lista</a>
+            <button type="button" class="btn btn-clear" onclick="limpiarFormulario()">🧹 Borrar</button>
         </div>
         <div class="right-group">
-            <button type="submit" form="form-informe" class="btn btn-save">💾 Guardar Cambios</button>
-            <button type="button" class="btn btn-pdf" onclick="window.print()">🖨️ Generar PDF</button>
+            <button type="submit" form="form-informe" class="btn btn-save">💾 Guardar</button>
+            <button type="button" class="btn btn-pdf" onclick="window.print()">🖨️ PDF</button>
         </div>
     </div>
 
-<!-- SELECTOR DE ESTUDIANTE -->
+    <!-- SELECTOR DE ESTUDIANTE -->
     <div class="selector-container">
         <label for="id_estudiante" class="font-weight-bold">SELECCIONAR ESTUDIANTE:</label>
         <select id="id_estudiante" class="form-select" onchange="cambiarEstudiante(this)">
             <option value="">-- Seleccione un estudiante --</option>
             {% for est in lista_estudiantes %}
                 <option value="{{ est.id }}" {% if estudiante and estudiante.id|string == est.id|string %}selected{% endif %}>
-                    {{ est.nombres }} {{ est.apellidos }} ({{ est.grado }})
+                    No. {{ est.numero_orden if est.numero_orden else 'S/N' }} - {{ est.nombres }} {{ est.apellidos }} ({{ est.grado }})
                 </option>
             {% endfor %}
         </select>
@@ -188,7 +190,6 @@
         function cambiarEstudiante(selectElement) {
             var idEstudiante = selectElement.value;
             if (idEstudiante) {
-                // Redirige a la misma ruta pasando el ID seleccionado por GET
                 window.location.href = "{{ url_for('notas1') }}?id_estudiante=" + idEstudiante;
             }
         }
@@ -225,23 +226,21 @@
                 </div>
 
                 <!-- TABLA DATOS ESTUDIANTE -->
-<table id="tabla-datos">
-    <tr>
-        <td class="bold" style="width: 7%;">NOMBRE(S):</td>
-        <td style="width: 28%; font-weight: bold; color: #1a73e8;">{{ estudiante.nombres if estudiante else '' }}</td>
-        
-        <td class="bold" style="width: 8%;">APELLIDO(S):</td>
-        <td style="width: 28%; font-weight: bold; color: #1a73e8;">{{ estudiante.apellidos if estudiante else '' }}</td>
-        
-        <td class="bold" style="width: 9%;">NO. DE ORDEN:</td>
-        <!-- Llamamos a numero_orden -->
-        <td style="width: 5%;">{{ estudiante.numero_orden if estudiante and estudiante.numero_orden else '' }}</td>
-        
-        <td class="bold" style="width: 8%;">ID ESTUDIANTE:</td>
-        <!-- Muestra el ID único -->
-        <td style="width: 15%; font-weight: bold;">{{ estudiante.id if estudiante else '' }}</td>
-    </tr>
-</table>
+                <table id="tabla-datos">
+                    <tr>
+                        <td class="bold" style="width: 7%;">NOMBRE(S):</td>
+                        <td style="width: 28%; font-weight: bold; color: #1a73e8;">{{ estudiante.nombres if estudiante else '' }}</td>
+                        
+                        <td class="bold" style="width: 8%;">APELLIDO(S):</td>
+                        <td style="width: 28%; font-weight: bold; color: #1a73e8;">{{ estudiante.apellidos if estudiante else '' }}</td>
+                        
+                        <td class="bold" style="width: 9%;">NO. DE ORDEN:</td>
+                        <td style="width: 5%;">{{ estudiante.numero_orden if estudiante and estudiante.numero_orden else '' }}</td>
+                        
+                        <td class="bold" style="width: 8%;">ID ESTUDIANTE:</td>
+                        <td style="width: 15%; font-weight: bold;">{{ estudiante.id if estudiante else '' }}</td>
+                    </tr>
+                </table>
 
                 <!-- TABLA CALIFICACIONES -->
                 <table id="tabla-notas">
@@ -306,7 +305,7 @@
                 </table>
             </div>
 
-            <!-- TABLA DE ASISTENCIA Y LEYENDA (Expandida abajo) -->
+            <!-- TABLA DE ASISTENCIA Y LEYENDA -->
             <div>
                 <table id="tabla-asistencia" style="margin-bottom: 0;">
                     <thead class="bg-grey">
@@ -466,12 +465,6 @@
     </form>
 
     <script>
-        function cambiarEstudiante(select) {
-            if (select.value) {
-                window.location.href = "{{ url_for('notas1') }}?id_estudiante=" + select.value;
-            }
-        }
-
         function calcular(el) {
             let row = el.closest('tr');
             function aplicarRegla(num) {
