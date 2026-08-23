@@ -4,15 +4,15 @@
     <meta charset="UTF-8">
     <style>
         @page {
-            size: A4 landscape;
-            margin: 0mm;
+            size: letter landscape;
+            margin: 5mm;
         }
         *, *::before, *::after { box-sizing: border-box; }
         body { 
             font-family: 'Arial', sans-serif; 
             font-size: 10px; 
             color: #000; 
-            margin: 6mm; 
+            margin: 0; 
             padding: 0; 
         }
         
@@ -59,7 +59,7 @@
             .action-bar, .selector-container { display: none !important; }
             .salto-pagina { page-break-before: always; }
             body {
-                margin: 5mm;
+                margin: 0;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
@@ -125,20 +125,23 @@
         </div>
     </div>
 
-    <!-- SELECTOR DE ESTUDIANTE -->
+    <!-- SELECTOR DE ESTUDIANTE (Solo 4to a 6to Grado) -->
     <div class="selector-container">
         <form method="GET" action="{{ url_for('notas2') }}" style="display: flex; align-items: center; width: 100%; gap: 10px; margin: 0;">
-            <label for="id_estudiante" class="bold">SELECCIONAR ESTUDIANTE:</label>
+            <label for="id_estudiante" class="bold">SELECCIONAR ESTUDIANTE (4° a 6°):</label>
             <select name="id_estudiante" id="id_estudiante" onchange="this.form.submit()" style="padding: 4px; font-size: 11px; flex-grow: 1; border: 1px solid #000; background: #fff;">
                 {% for est in lista_estudiantes %}
-                    <option value="{{ est.id_estudiante }}" {% if est.id_estudiante|string == estudiante.id_estudiante|string %}selected{% endif %}>
-                        {{ est.nombres }} {{ est.apellidos }} — (ID: {{ est.id_estudiante }})
+                    {% if est.grado in [4, 5, 6] or '4' in est.grado|string or '5' in est.grado|string or '6' in est.grado|string %}
+                    <option value="{{ est.id_estudiante }}" {% if estudiante and est.id_estudiante|string == estudiante.id_estudiante|string %}selected{% endif %}>
+                        {{ est.nombres }} {{ est.apellidos }} — (Grado: {{ est.grado }}) (ID: {{ est.id_estudiante }})
                     </option>
+                    {% endif %}
                 {% endfor %}
             </select>
         </form>
     </div>
 
+    {% if estudiante %}
     <form id="form-informe" method="POST" action="{{ url_for('notas2') }}">
         <input type="hidden" name="id_estudiante" value="{{ estudiante.id_estudiante }}">
 
@@ -154,7 +157,7 @@
                     <b>Dirección:</b> C/Castillo Márquez #53. La Romana, Centro Ciudad. <b>Teléfono:</b> 809-550-7385 / 809-710-3395. <b>Regional de Educación:</b> 05 San Pedro de Macorís. <b>Distrito Educativo:</b> 05-03 La Romana. <b>Código:</b> 07121
                 </div>
                 <div class="info-row-2 info-line" style="font-weight: bold;">
-                    <span>INFORME DE APRENDIZAJE. Cuarto Grado del Nivel Primario, Sección A.</span>
+                    <span>INFORME DE APRENDIZAJE. Segundo Ciclo del Nivel Primario (Grado: {{ estudiante.grado }}).</span>
                     <span>DOCENTE: {{ docente_nombre }}</span>
                 </div>
                 <div class="info-line" style="color: #444;">
@@ -172,12 +175,12 @@
                 <td style="width: 27%; font-weight: bold; color: #1a73e8;">{{ estudiante.apellidos }}</td>
                 <td class="bold" style="width: 10%;">NO. DE ORDEN:</td>
                 <td style="width: 6%;">{{ estudiante.orden if estudiante.orden else '' }}</td>
-                <td class="bold" style="width: 7%;">ID ESTUDENATE:</td>
+                <td class="bold" style="width: 7%;">ID ESTUDIANTE:</td>
                 <td style="width: 6%;">{{ estudiante.id_estudiante }}</td>
             </tr>
         </table>
 
-        <!-- TABLA CALIFICACIONES NOTAS 2 (CON COMPETENCIAS C1, C2, C3 Y RECUPERACIONES) -->
+        <!-- TABLA CALIFICACIONES NOTAS 2 -->
         <table id="tabla-notas">
             <thead class="bg-grey">
                 <tr>
@@ -206,28 +209,40 @@
                 <tr>
                     <td class="text-left bold" style="font-size: 9px;">{{ m }}</td>
                     <!-- C1 inputs -->
-                    <td><input class="input-text c1-p" name="{{ m }}_c1_p1"></td><td><input class="input-text" name="{{ m }}_c1_rp1"></td>
-                    <td><input class="input-text c1-p" name="{{ m }}_c1_p2"></td><td><input class="input-text" name="{{ m }}_c1_rp2"></td>
-                    <td><input class="input-text c1-p" name="{{ m }}_c1_p3"></td><td><input class="input-text" name="{{ m }}_c1_rp3"></td>
-                    <td><input class="input-text c1-p" name="{{ m }}_c1_p4"></td><td><input class="input-text" name="{{ m }}_c1_rp4"></td>
+                    <td><input class="input-text c1-p" name="{{ m }}_c1_p1" value="{{ datos_guardados.get(m ~ '_c1_p1', '') }}"></td>
+                    <td><input class="input-text" name="{{ m }}_c1_rp1" value="{{ datos_guardados.get(m ~ '_c1_rp1', '') }}"></td>
+                    <td><input class="input-text c1-p" name="{{ m }}_c1_p2" value="{{ datos_guardados.get(m ~ '_c1_p2', '') }}"></td>
+                    <td><input class="input-text" name="{{ m }}_c1_rp2" value="{{ datos_guardados.get(m ~ '_c1_rp2', '') }}"></td>
+                    <td><input class="input-text c1-p" name="{{ m }}_c1_p3" value="{{ datos_guardados.get(m ~ '_c1_p3', '') }}"></td>
+                    <td><input class="input-text" name="{{ m }}_c1_rp3" value="{{ datos_guardados.get(m ~ '_c1_rp3', '') }}"></td>
+                    <td><input class="input-text c1-p" name="{{ m }}_c1_p4" value="{{ datos_guardados.get(m ~ '_c1_p4', '') }}"></td>
+                    <td><input class="input-text" name="{{ m }}_c1_rp4" value="{{ datos_guardados.get(m ~ '_c1_rp4', '') }}"></td>
                     <!-- C2 inputs -->
-                    <td><input class="input-text c2-p" name="{{ m }}_c2_p1"></td><td><input class="input-text" name="{{ m }}_c2_rp1"></td>
-                    <td><input class="input-text c2-p" name="{{ m }}_c2_p2"></td><td><input class="input-text" name="{{ m }}_c2_rp2"></td>
-                    <td><input class="input-text c2-p" name="{{ m }}_c2_p3"></td><td><input class="input-text" name="{{ m }}_c2_rp3"></td>
-                    <td><input class="input-text c2-p" name="{{ m }}_c2_p4"></td><td><input class="input-text" name="{{ m }}_c2_rp4"></td>
+                    <td><input class="input-text c2-p" name="{{ m }}_c2_p1" value="{{ datos_guardados.get(m ~ '_c2_p1', '') }}"></td>
+                    <td><input class="input-text" name="{{ m }}_c2_rp1" value="{{ datos_guardados.get(m ~ '_c2_rp1', '') }}"></td>
+                    <td><input class="input-text c2-p" name="{{ m }}_c2_p2" value="{{ datos_guardados.get(m ~ '_c2_p2', '') }}"></td>
+                    <td><input class="input-text" name="{{ m }}_c2_rp2" value="{{ datos_guardados.get(m ~ '_c2_rp2', '') }}"></td>
+                    <td><input class="input-text c2-p" name="{{ m }}_c2_p3" value="{{ datos_guardados.get(m ~ '_c2_p3', '') }}"></td>
+                    <td><input class="input-text" name="{{ m }}_c2_rp3" value="{{ datos_guardados.get(m ~ '_c2_rp3', '') }}"></td>
+                    <td><input class="input-text c2-p" name="{{ m }}_c2_p4" value="{{ datos_guardados.get(m ~ '_c2_p4', '') }}"></td>
+                    <td><input class="input-text" name="{{ m }}_c2_rp4" value="{{ datos_guardados.get(m ~ '_c2_rp4', '') }}"></td>
                     <!-- C3 inputs -->
-                    <td><input class="input-text c3-p" name="{{ m }}_c3_p1"></td><td><input class="input-text" name="{{ m }}_c3_rp1"></td>
-                    <td><input class="input-text c3-p" name="{{ m }}_c3_p2"></td><td><input class="input-text" name="{{ m }}_c3_rp2"></td>
-                    <td><input class="input-text c3-p" name="{{ m }}_c3_p3"></td><td><input class="input-text" name="{{ m }}_c3_rp3"></td>
-                    <td><input class="input-text c3-p" name="{{ m }}_c3_p4"></td><td><input class="input-text" name="{{ m }}_c3_rp4"></td>
+                    <td><input class="input-text c3-p" name="{{ m }}_c3_p1" value="{{ datos_guardados.get(m ~ '_c3_p1', '') }}"></td>
+                    <td><input class="input-text" name="{{ m }}_c3_rp1" value="{{ datos_guardados.get(m ~ '_c3_rp1', '') }}"></td>
+                    <td><input class="input-text c3-p" name="{{ m }}_c3_p2" value="{{ datos_guardados.get(m ~ '_c3_p2', '') }}"></td>
+                    <td><input class="input-text" name="{{ m }}_c3_rp2" value="{{ datos_guardados.get(m ~ '_c3_rp2', '') }}"></td>
+                    <td><input class="input-text c3-p" name="{{ m }}_c3_p3" value="{{ datos_guardados.get(m ~ '_c3_p3', '') }}"></td>
+                    <td><input class="input-text" name="{{ m }}_c3_rp3" value="{{ datos_guardados.get(m ~ '_c3_rp3', '') }}"></td>
+                    <td><input class="input-text c3-p" name="{{ m }}_c3_p4" value="{{ datos_guardados.get(m ~ '_c3_p4', '') }}"></td>
+                    <td><input class="input-text" name="{{ m }}_c3_rp4" value="{{ datos_guardados.get(m ~ '_c3_rp4', '') }}"></td>
                     <!-- Por Competencia / Resultados -->
-                    <td><input class="input-text res" name="{{ m }}_c1_res" readonly></td>
-                    <td><input class="input-text res" name="{{ m }}_c2_res" readonly></td>
-                    <td><input class="input-text res" name="{{ m }}_c3_res" readonly></td>
+                    <td><input class="input-text res" name="{{ m }}_c1_res" value="{{ datos_guardados.get(m ~ '_c1_res', '') }}" readonly></td>
+                    <td><input class="input-text res" name="{{ m }}_c2_res" value="{{ datos_guardados.get(m ~ '_c2_res', '') }}" readonly></td>
+                    <td><input class="input-text res" name="{{ m }}_c3_res" value="{{ datos_guardados.get(m ~ '_c3_res', '') }}" readonly></td>
                     <!-- Del área y recuperaciones -->
-                    <td><input class="input-text area-res" name="{{ m }}_area_res" readonly></td>
-                    <td><input class="input-text" name="{{ m }}_recup"></td>
-                    <td><input class="input-text" name="{{ m }}_recup_especial"></td>
+                    <td><input class="input-text area-res" name="{{ m }}_area_res" value="{{ datos_guardados.get(m ~ '_area_res', '') }}" readonly></td>
+                    <td><input class="input-text" name="{{ m }}_recup" value="{{ datos_guardados.get(m ~ '_recup', '') }}"></td>
+                    <td><input class="input-text" name="{{ m }}_recup_especial" value="{{ datos_guardados.get(m ~ '_recup_especial', '') }}"></td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -256,8 +271,10 @@
                     <td class="bold">89-100</td>
                     <td class="desc-cell">Evidencia que el estudiante ha alcanzado un desempeño destacado con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
                     <td class="bold">P1</td>
-                    <td><input class="input-text" name="asist_p1"></td><td><input class="input-text" name="aus_p1"></td>
-                    <td rowspan="4"><input class="input-text" name="pct_asist"></td><td rowspan="4"><input class="input-text" name="pct_aus"></td>
+                    <td><input class="input-text" name="asist_p1" value="{{ datos_guardados.get('asist_p1', '') }}"></td>
+                    <td><input class="input-text" name="aus_p1" value="{{ datos_guardados.get('aus_p1', '') }}"></td>
+                    <td rowspan="4"><input class="input-text" name="pct_asist" value="{{ datos_guardados.get('pct_asist', '') }}"></td>
+                    <td rowspan="4"><input class="input-text" name="pct_aus" value="{{ datos_guardados.get('pct_aus', '') }}"></td>
                     <td rowspan="4" class="leyenda-cell">
                         <b>(P1)</b> Período 1<br>
                         <b>(P2)</b> Período 2<br>
@@ -276,19 +293,22 @@
                     <td class="bold">77-88</td>
                     <td class="desc-cell">Evidencia que el estudiante ha logrado, en general, los aprendizajes esperados con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
                     <td class="bold">P2</td>
-                    <td><input class="input-text" name="asist_p2"></td><td><input class="input-text" name="aus_p2"></td>
+                    <td><input class="input-text" name="asist_p2" value="{{ datos_guardados.get('asist_p2', '') }}"></td>
+                    <td><input class="input-text" name="aus_p2" value="{{ datos_guardados.get('aus_p2', '') }}"></td>
                 </tr>
                 <tr>
                     <td class="bold">65 - 76</td>
                     <td class="desc-cell">Evidencia que el estudiante aún se encuentra en proceso con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar, mostrando un logro muy básico.</td>
                     <td class="bold">P3</td>
-                    <td><input class="input-text" name="asist_p3"></td><td><input class="input-text" name="aus_p3"></td>
+                    <td><input class="input-text" name="asist_p3" value="{{ datos_guardados.get('asist_p3', '') }}"></td>
+                    <td><input class="input-text" name="aus_p3" value="{{ datos_guardados.get('aus_p3', '') }}"></td>
                 </tr>
                 <tr>
                     <td class="bold">Menos de 65</td>
                     <td class="desc-cell">Evidencia que el estudiante ha alcanzado un desempeño insuficiente con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
                     <td class="bold">P4</td>
-                    <td><input class="input-text" name="asist_p4"></td><td><input class="input-text" name="aus_p4"></td>
+                    <td><input class="input-text" name="asist_p4" value="{{ datos_guardados.get('asist_p4', '') }}"></td>
+                    <td><input class="input-text" name="aus_p4" value="{{ datos_guardados.get('aus_p4', '') }}"></td>
                 </tr>
             </tbody>
         </table>
@@ -302,19 +322,19 @@
         <table class="tabla-avances">
             <tr>
                 <td class="bold" style="width: 6%; text-align: center;">P1</td>
-                <td><textarea class="input-text-area" name="avance_p1" style="height: 32px;" placeholder="Comentarios del período 1..."></textarea></td>
+                <td><textarea class="input-text-area" name="avance_p1" style="height: 32px;" placeholder="Comentarios del período 1...">{{ datos_guardados.get('avance_p1', '') }}</textarea></td>
             </tr>
             <tr>
                 <td class="bold" style="text-align: center;">P2</td>
-                <td><textarea class="input-text-area" name="avance_p2" style="height: 32px;" placeholder="Comentarios del período 2..."></textarea></td>
+                <td><textarea class="input-text-area" name="avance_p2" style="height: 32px;" placeholder="Comentarios del período 2...">{{ datos_guardados.get('avance_p2', '') }}</textarea></td>
             </tr>
             <tr>
                 <td class="bold" style="text-align: center;">P3</td>
-                <td><textarea class="input-text-area" name="avance_p3" style="height: 32px;" placeholder="Comentarios del período 3..."></textarea></td>
+                <td><textarea class="input-text-area" name="avance_p3" style="height: 32px;" placeholder="Comentarios del período 3...">{{ datos_guardados.get('avance_p3', '') }}</textarea></td>
             </tr>
             <tr>
                 <td class="bold" style="text-align: center;">P4</td>
-                <td><textarea class="input-text-area" name="avance_p4" style="height: 32px;" placeholder="Comentarios del período 4..."></textarea></td>
+                <td><textarea class="input-text-area" name="avance_p4" style="height: 32px;" placeholder="Comentarios del período 4...">{{ datos_guardados.get('avance_p4', '') }}</textarea></td>
             </tr>
         </table>
 
@@ -360,15 +380,15 @@
                             <th style="width: 34%;">Repitente</th>
                         </tr>
                         <tr>
-                            <td style="height: 24px;"><input type="checkbox" name="promovido" value="1" style="transform: scale(1.1);"></td>
-                            <td><input type="checkbox" name="aplazado" value="1" style="transform: scale(1.1);"></td>
-                            <td><input type="checkbox" name="repitente" value="1" style="transform: scale(1.1);"></td>
+                            <td style="height: 24px;"><input type="checkbox" name="promovido" value="1" {% if datos_guardados.get('promovido') == '1' %}checked{% endif %} style="transform: scale(1.1);"></td>
+                            <td><input type="checkbox" name="aplazado" value="1" {% if datos_guardados.get('aplazado') == '1' %}checked{% endif %} style="transform: scale(1.1);"></td>
+                            <td><input type="checkbox" name="repitente" value="1" {% if datos_guardados.get('repitente') == '1' %}checked{% endif %} style="transform: scale(1.1);"></td>
                         </tr>
                         <tr>
                             <td colspan="3" class="bg-grey text-left bold" style="font-size: 8.5px; padding: 3px;">Condición final del/de la estudiante</td>
                         </tr>
                         <tr>
-                            <td colspan="3" style="height: 26px;"><input class="input-text" name="condicion_final" style="text-align: center;" placeholder="Escribir condición..."></td>
+                            <td colspan="3" style="height: 26px;"><input class="input-text" name="condicion_final" value="{{ datos_guardados.get('condicion_final', '') }}" style="text-align: center;" placeholder="Escribir condición..."></td>
                         </tr>
                     </table>
                 </td>
@@ -387,6 +407,7 @@
             </div>
         </div>
     </form>
+    {% endif %}
 
     <!-- SCRIPT DE BOTONES -->
     <script>
