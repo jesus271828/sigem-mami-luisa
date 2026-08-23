@@ -178,9 +178,9 @@
         <label for="id_estudiante" class="font-weight-bold">SELECCIONAR ESTUDIANTE:</label>
         <select id="id_estudiante" class="form-select" onchange="cambiarEstudiante(this)">
             <option value="">-- Seleccione un estudiante --</option>
-            {% for est in lista_estudiantes %}
+                {% for est in lista_estudiantes %}
                 <option value="{{ est.id }}" {% if estudiante and estudiante.id|string == est.id|string %}selected{% endif %}>
-                    No. {{ est.numero_orden if est.numero_orden else 'S/N' }} - {{ est.nombres }} {{ est.apellidos }} ({{ est.grado }})
+                    No. {{ loop.index }} - {{ est.nombres }} {{ est.apellidos }} ({{ est.grado }})
                 </option>
             {% endfor %}
         </select>
