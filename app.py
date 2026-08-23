@@ -1760,57 +1760,21 @@ def notas1():
 
 
 
-notas2_bp = Blueprint('notas2', __name__)
+from flask import render_template, request
+from models import Estudiante, Nota2
 
-@notas2_bp.route('/notas2', methods=['GET', 'POST'])
-def gestionar_notas2():
+@app.route('/notas2', methods=['GET', 'POST'])
+def notas2():
     estudiantes = Estudiante.query.order_by(Estudiante.nombre).all()
-    
     estudiante_id = request.args.get('estudiante_id') or request.form.get('estudiante_id')
     estudiante_seleccionado = None
     notas_estudiante = {}
 
     if estudiante_id:
         estudiante_seleccionado = Estudiante.query.get(estudiante_id)
-        # Buscar el registro JSON asociado al estudiante
-        registro_nota = Nota2.query.filter_by(estudiante_id=estudiante_id).first()
-        
-        if registro_nota and registro_nota.datos_notas:
-            notas_estudiante = registro_nota.datos_notas
-
-    if request.method == 'POST':
-        id_est = request.form.get('estudiante_id')
-        
-        # Supongamos que recibes los datos organizados desde un formulario dinámico o JSON enviado por fetch
-        # Estructura esperada de ejemplo para las calificaciones enviadas
-        # request.form maneja campos como asignatura_Matematicas_p1, etc., o puedes recibir un JSON limpio vía API.
-        
-        # Buscamos si ya tiene un registro guardado
-        registro_nota = Nota2.query.filter_by(estudiante_id=id_est).first()
-        
-        # Construimos o actualizamos el diccionario JSON con la información del formulario
-        # (Esto puede variar según cómo diseñes los inputs de tu tabla HTML)
-        nuevos_datos = {}
-        
-        # Ejemplo procesando asignaturas comunes dinámicamente desde el form:
-        asignaturas = ['Matematicas', 'Espanol', 'Sociales', 'Naturales'] 
-        for asig in asignaturas:
-            nuevos_datos[asig] = {
-                'p1': request.form.get(f'{asig}_p1', 0),
-                'p2': request.form.get(f'{asig}_p2', 0),
-                'p3': request.form.get(f'{asig}_p3', 0),
-                'p4': request.form.get(f'{asig}_p4', 0)
-            }
-
-        if registro_nota:
-            registro_nota.datos_notas = nuevos_datos
-        else:
-            registro_nota = Nota2(estudiante_id=id_est, datos_notas=nuevos_datos)
-            db.session.add(registro_nota)
-            
-        db.session.commit()
-        flash('¡Información de notas guardada exitosamente!', 'success')
-        return redirect(url_for('notas2.gestionar_notas2', estudiante_id=id_est))
+        registro = Nota2.query.filter_by(estudiante_id=estudiante_id).first()
+        if registro and registro.datos_notas:
+            notas_estudiante = registro.datos_notas
 
     return render_template(
         'notas2.html', 
