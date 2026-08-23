@@ -56,3 +56,11 @@ class Notas1(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     id_estudiante = db.Column(db.String(50), unique=True, nullable=False)  # Llave única por estudiante
     datos_formulario = db.Column(db.Text, nullable=True)  # Almacena los campos del formulario en formato JSON
+
+# Modelo para la tabla notas2 (un registro único por estudiante para evitar duplicados)
+class Notas2(db.Model):
+    __tablename__ = 'notas2'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    id_estudiante = db.Column(db.String(50), unique=True, nullable=False)  # Llave única por estudiante
+    datos_formulario = db.Column(db.Text, nullable=True)  # Almacena los campos del formulario en formato JSON
