@@ -6,19 +6,19 @@
     <style>
         @page {
             size: letter landscape;
-            margin: 5mm 5mm;
+            margin: 5mm; /* Reducido para aprovechar más espacio en el PDF */
         }
         *, *::before, *::after { box-sizing: border-box; }
         body { 
             font-family: 'Arial', sans-serif; 
-            font-size: 11px; 
+            font-size: 11.5px; /* Aumentado de 10.5px a 11.5px */
             color: #000; 
             margin: 0; 
             padding: 0; 
         }
         
         .pagina-completa {
-            height: 198mm;
+            height: auto;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -42,7 +42,7 @@
         }
         .btn {
             padding: 5px 12px;
-            font-size: 11px;
+            font-size: 11.5px;
             font-weight: bold;
             border: none;
             border-radius: 4px;
@@ -75,31 +75,31 @@
         }
 
         /* ENCABEZADO */
-        .header { display: flex; align-items: flex-start; border-bottom: 1.5px solid #000; margin-bottom: 4px; padding-bottom: 4px; }
-        .logo { width: 75px; margin-right: 12px; }
+        .header { display: flex; align-items: flex-start; border-bottom: 1.5px solid #000; margin-bottom: 6px; padding-bottom: 6px; }
+        .logo { width: 75px; margin-right: 12px; } /* Logo ligeramente más grande */
         .header-content { flex-grow: 1; }
         .header-row-1 { display: flex; justify-content: space-between; align-items: baseline; }
         .title-school { font-size: 19px; font-weight: bold; color: #5b739e; margin: 0; font-family: 'Times New Roman', serif; }
         .lema { font-size: 12px; font-style: italic; color: #b87a42; font-family: 'Times New Roman', serif; }
-        .info-line { font-size: 11px; margin: 2px 0; }
+        .info-line { font-size: 11.5px; margin: 2px 0; }
         .info-row-2 { display: flex; justify-content: space-between; margin-top: 3px; }
 
         /* TABLAS GENERALES */
-        table { border-collapse: collapse; width: 100%; border: 1.5px solid #000; margin-bottom: 4px; table-layout: fixed; }
-        th, td { border: 1px solid #000; padding: 4px 3px; text-align: center; vertical-align: middle; font-size: 11px; overflow: hidden; }
+        table { border-collapse: collapse; width: 100%; border: 1.5px solid #000; margin-bottom: 6px; table-layout: fixed; }
+        th, td { border: 1px solid #000; padding: 3px 4px; text-align: center; vertical-align: middle; font-size: 11px; overflow: hidden; }
         .bold { font-weight: bold; }
         .bg-grey { background-color: #f2f2f2; }
         
         /* TABLA DATOS ESTUDIANTE */
-        #tabla-datos td { text-align: left; padding: 6px 8px; font-size: 11px; }
+        #tabla-datos td { text-align: left; padding: 5px 8px; font-size: 11.5px; }
 
         /* TABLA NOTAS */
-        #tabla-notas th { padding: 6px 4px; font-size: 11px; }
-        #tabla-notas td { padding: 1px; height: 23px; }
-        #tabla-notas .input-text { border: none; width: 100%; font-size: 11px; text-align: center; outline: none; background: transparent; font-weight: bold; }
+        #tabla-notas th { padding: 5px 2px; font-size: 10.5px; }
+        #tabla-notas td { padding: 1px; height: 26px; } /* Altura proporcional para mayor tamaño */
+        #tabla-notas .input-text { border: none; width: 100%; font-size: 11.5px; text-align: center; outline: none; background: transparent; font-weight: bold; }
         #tabla-notas .res { font-weight: bold; color: blue; background-color: #e8f0fe; }
         #tabla-notas .area-res { font-weight: bold; color: green; background-color: #e6ffed; }
-        #tabla-notas .text-left { text-align: left; padding-left: 6px; font-size: 11px; }
+        #tabla-notas .text-left { text-align: left; padding-left: 8px; font-size: 11.5px; }
         
         #tabla-notas .vertical-text { 
             writing-mode: vertical-rl; 
@@ -107,55 +107,55 @@
             white-space: nowrap; 
             padding: 2px; 
             font-size: 10.5px; 
-            height: 95px;
+            height: 90px;
             text-align: center;
         }
 
         /* ASISTENCIA COMPACTA */
-        #tabla-asistencia td { height: 28px; padding: 4px 4px; }
-        #tabla-asistencia .input-text { border: none; width: 100%; font-size: 11px; text-align: center; outline: none; background: transparent; }
-        .desc-cell { text-align: left; font-size: 10px; line-height: 1.15; padding: 3px 5px !important; }
-        .leyenda-cell { text-align: left; font-size: 10px; width: 135px; vertical-align: top; padding: 3px 5px !important; line-height: 1.15; }
+        #tabla-asistencia td { height: 24px; padding: 3px 5px; }
+        #tabla-asistencia .input-text { border: none; width: 100%; font-size: 11.5px; text-align: center; outline: none; background: transparent; }
+        .desc-cell { text-align: left; font-size: 10px; line-height: 1.2; padding: 4px 6px !important; }
+        .leyenda-cell { text-align: left; font-size: 10px; width: 135px; vertical-align: top; padding: 4px 6px !important; line-height: 1.2; }
 
         /* ESTILOS PÁGINA 2 */
         .titulo-avances {
-            font-size: 11.5px;
+            font-size: 13px;
             font-weight: bold;
             text-align: center;
             background-color: #f2f2f2;
             border: 1.5px solid #000;
-            padding: 6px;
-            margin-bottom: 4px;
+            padding: 8px;
+            margin-bottom: 6px;
         }
-        .tabla-avances { margin-bottom: 4px; }
-        .tabla-avances td { padding: 3px; }
+        .tabla-avances { margin-bottom: 6px; }
+        .tabla-avances td { padding: 4px; }
         .input-text-area {
             border: none;
             width: 100%;
-            height: 48px;
-            font-size: 10.5px;
+            height: 54px;
+            font-size: 11.5px;
             font-family: 'Arial', sans-serif;
             resize: none;
             outline: none;
             background: transparent;
-            padding: 4px;
+            padding: 5px;
         }
-        .tabla-inferior-p2 td { height: 28px; }
+        .tabla-inferior-p2 td { height: 32px; }
         .pie-firmas {
             display: flex;
             justify-content: space-around;
-            margin-top: 10px;
-            margin-bottom: 4px;
+            margin-top: 15px;
+            margin-bottom: 6px;
             text-align: center;
         }
         .linea-firma {
             border-top: 1.5px solid #000;
             width: 35%;
-            padding-top: 4px;
-            font-size: 10.5px;
+            padding-top: 6px;
+            font-size: 11.5px;
         }
 
-        .selector-container { margin-bottom: 6px; background: #f8f9fa; padding: 6px 10px; border: 1px solid #ccc; display: flex; align-items: center; gap: 10px; border-radius: 4px; }
+        .selector-container { margin-bottom: 8px; background: #f8f9fa; padding: 8px 12px; border: 1px solid #ccc; display: flex; align-items: center; gap: 10px; border-radius: 4px; }
     </style>
 </head>
 <body>
@@ -240,7 +240,7 @@
                             <b>Regional de Educación:</b> 05 San Pedro de Macorís. <b>Distrito Educativo:</b> 05-03 La Romana. <b>Código:</b> 07121
                         </div>
                         <div class="info-row-2 info-line" style="font-weight: bold;">
-                         <span class="title-school" style="font-size: 14px;">
+                         <span class="title-school" style="font-size: 15px;">
                          INFORME DE APRENDIZAJE. 
                             {% if estudiante and estudiante.grado %}
                             {{ estudiante.grado }} del Nivel Primario, Sección A.
@@ -277,25 +277,25 @@
     <thead class="bg-grey">
         <tr>
             <th rowspan="3" style="width: 16%;">ÁREAS CURRICULARES</th>
-            <th colspan="24" style="padding: 3px;">COMPETENCIAS FUNDAMENTALES</th>
-            <th colspan="3" style="padding: 3px;">CALIFICACIÓN FINAL</th>
+            <th colspan="24" style="padding: 4px;">COMPETENCIAS FUNDAMENTALES</th>
+            <th colspan="3" style="padding: 4px;">CALIFICACIÓN FINAL</th>
             <th rowspan="3" style="width: 3%;" class="vertical-text">DEL ÁREA</th>
             <th rowspan="3" style="width: 3.5%;" class="vertical-text">RECUPERACIÓN</th>
             <th rowspan="3" style="width: 4%;" class="vertical-text">RECUPERACIÓN ESPECIAL</th>
         </tr>
         <tr>
-            <th colspan="8" style="padding: 3px;">
-                C1<br><span style="font-size: 9px; font-weight: normal; display: block;">Comunicativa</span>
+            <th colspan="8" style="padding: 4px;">
+                C1<br><span style="font-size: 9.5px; font-weight: normal; display: block;">Comunicativa</span>
             </th>
-            <th colspan="8" style="padding: 3px;">
-                C2<br><span style="font-size: 9px; font-weight: normal; display: block;">Pensamiento Lógico Creativo y Crítico; Resolución de Problemas; Científica y Tecnológica</span>
+            <th colspan="8" style="padding: 4px;">
+                C2<br><span style="font-size: 9.5px; font-weight: normal; display: block;">Pensamiento Lógico Creativo y Crítico; Resolución de Problemas; Científica y Tecnológica</span>
             </th>
-            <th colspan="8" style="padding: 3px;">
-                C3<br><span style="font-size: 9px; font-weight: normal; display: block;">Ética y Ciudadana; Desarrollo Personal y Espiritual; Ambiental y de la Salud</span>
+            <th colspan="8" style="padding: 4px;">
+                C3<br><span style="font-size: 9.5px; font-weight: normal; display: block;">Ética y Ciudadana; Desarrollo Personal y Espiritual; Ambiental y de la Salud</span>
             </th>
             <th colspan="3">POR COMPETENCIA</th>
         </tr>
-        <tr style="font-size: 9.5px;">
+        <tr style="font-size: 10px;">
             <!-- C1 -->
             <th>P1</th><th>RP1</th><th>P2</th><th>RP2</th><th>P3</th><th>RP3</th><th>P4</th><th>RP4</th>
             <!-- C2 -->
@@ -311,7 +311,7 @@
         <tr>
             <td class="text-left bold">{{ m }}</td>
             
-            <!-- C1 (Con clases c1-p para lectura de JS) -->
+            <!-- C1 -->
             <td><input class="input-text c1-p" name="{{ m }}_c1_p1" value="{{ notas.get(m + '_c1_p1', '') }}" oninput="calcular(this)"></td>
             <td><input class="input-text" name="{{ m }}_c1_rp1" value="{{ notas.get(m + '_c1_rp1', '') }}"></td>
             <td><input class="input-text c1-p" name="{{ m }}_c1_p2" value="{{ notas.get(m + '_c1_p2', '') }}" oninput="calcular(this)"></td>
@@ -321,7 +321,7 @@
             <td><input class="input-text c1-p" name="{{ m }}_c1_p4" value="{{ notas.get(m + '_c1_p4', '') }}" oninput="calcular(this)"></td>
             <td><input class="input-text" name="{{ m }}_c1_rp4" value="{{ notas.get(m + '_c1_rp4', '') }}"></td>
             
-            <!-- C2 (Con clases c2-p para lectura de JS) -->
+            <!-- C2 -->
             <td><input class="input-text c2-p" name="{{ m }}_c2_p1" value="{{ notas.get(m + '_c2_p1', '') }}" oninput="calcular(this)"></td>
             <td><input class="input-text" name="{{ m }}_c2_rp1" value="{{ notas.get(m + '_c2_rp1', '') }}"></td>
             <td><input class="input-text c2-p" name="{{ m }}_c2_p2" value="{{ notas.get(m + '_c2_p2', '') }}" oninput="calcular(this)"></td>
@@ -331,7 +331,7 @@
             <td><input class="input-text c2-p" name="{{ m }}_c2_p4" value="{{ notas.get(m + '_c2_p4', '') }}" oninput="calcular(this)"></td>
             <td><input class="input-text" name="{{ m }}_c2_rp4" value="{{ notas.get(m + '_c2_rp4', '') }}"></td>
             
-            <!-- C3 (Con clases c3-p para lectura de JS) -->
+            <!-- C3 -->
             <td><input class="input-text c3-p" name="{{ m }}_c3_p1" value="{{ notas.get(m + '_c3_p1', '') }}" oninput="calcular(this)"></td>
             <td><input class="input-text" name="{{ m }}_c3_rp1" value="{{ notas.get(m + '_c3_rp1', '') }}"></td>
             <td><input class="input-text c3-p" name="{{ m }}_c3_p2" value="{{ notas.get(m + '_c3_p2', '') }}" oninput="calcular(this)"></td>
@@ -399,7 +399,7 @@
                         </tr>
                         <tr>
                             <td class="bold">65 - 76</td>
-                            <td class="desc-cell">Evidencia que el estudiante aún s encuentra en proceso con relación a los aspectos evaluados de las competencias de cada área, durante los periodos y al finalizar el año escolar, mostrando un logro muy básico.</td>
+                            <td class="desc-cell">Evidencia que el estudiante aún se encuentra en proceso con relación a los aspectos evaluados de las competencias de cada área, durante los periodos y al finalizar el año escolar, mostrando un logro muy básico.</td>
                             <td class="bold">P3</td>
                             <td><input class="input-text" name="asist_p3" value="{{ notas.get('asist_p3', '') }}"></td>
                             <td><input class="input-text" name="aus_p3" value="{{ notas.get('aus_p3', '') }}"></td>
@@ -479,21 +479,21 @@
                                 <tr class="bg-grey">
                                     <th colspan="3">SITUACION DEL/DE LA ESTUDIANTE</th>
                                 </tr>
-                                <tr class="bg-grey" style="font-size: 10px;">
+                                <tr class="bg-grey" style="font-size: 10.5px;">
                                     <th style="width: 33%;">Promovido/a</th>
                                     <th style="width: 33%;">Aplazado/a</th>
                                     <th style="width: 34%;">Repitente</th>
                                 </tr>
                                 <tr>
-                                    <td><input type="checkbox" name="promovido" value="1" {% if notas.get('promovido') == '1' %}checked{% endif %} style="transform: scale(1.2);"></td>
-                                    <td><input type="checkbox" name="aplazado" value="1" {% if notas.get('aplazado') == '1' %}checked{% endif %} style="transform: scale(1.2);"></td>
-                                    <td><input type="checkbox" name="repitente" value="1" {% if notas.get('repitente') == '1' %}checked{% endif %} style="transform: scale(1.2);"></td>
+                                    <td><input type="checkbox" name="promovido" value="1" {% if notas.get('promovido') == '1' %}checked{% endif %} style="transform: scale(1.3);"></td>
+                                    <td><input type="checkbox" name="aplazado" value="1" {% if notas.get('aplazado') == '1' %}checked{% endif %} style="transform: scale(1.3);"></td>
+                                    <td><input type="checkbox" name="repitente" value="1" {% if notas.get('repitente') == '1' %}checked{% endif %} style="transform: scale(1.3);"></td>
                                 </tr>
                                 <tr>
-                                    <td colspan="3" class="bg-grey text-left bold" style="font-size: 10px; padding: 3px 5px;">Condición final del/de la estudiante</td>
+                                    <td colspan="3" class="bg-grey text-left bold" style="font-size: 10.5px; padding: 4px 6px;">Condición final del/de la estudiante</td>
                                 </tr>
                                 <tr>
-                                    <td colspan="3" style="height: 30px;"><input class="input-text" name="condicion_final" value="{{ notas.get('condicion_final', '') }}" style="text-align: center; font-size: 11px;" placeholder="Escribir condición..."></td>
+                                    <td colspan="3" style="height: 34px;"><input class="input-text" name="condicion_final" value="{{ notas.get('condicion_final', '') }}" style="text-align: center; font-size: 12px;" placeholder="Escribir condición..."></td>
                                 </tr>
                             </table>
                         </td>
