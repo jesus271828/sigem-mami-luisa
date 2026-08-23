@@ -1700,7 +1700,7 @@ def notas1():
     # Filtrar estudiantes según el rol
     if rol_usuario == 'admin' or rol_usuario == 'oficina':
         lista_estudiantes = Estudiante.query.filter(
-            Estudiante.grado.in_(['Párvulos', '1ro A', '1ro B', '2do A', '2do B', '3ro A', '3ro B'])
+            Estudiante.grado.in_([ '1ro A', '1ro B', '2do A', '2do B', '3ro A', '3ro B'])
         ).order_by(*criterio_sql).all()
         grado_activo = "Primer Grado del Nivel Primario, Sección A"
     else:
