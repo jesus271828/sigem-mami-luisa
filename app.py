@@ -1821,6 +1821,8 @@ def notas2():
         notas=notas_estudiante
     )
 
+    
+
 @app.route('/planificacion')
 def planificacion():
     usuario_actual = {'nombre': session.get('usuario_nombre', 'Jesus Maria Alfonseca Duverge'), 'rol': session.get('rol', 'maestro')}
