@@ -1,5 +1,5 @@
 import os
-from models import db, Estudiante, Usuario, Planificacion, Notas1, Nota2
+from models import db, Estudiante, Usuario, Planificacion, Notas1, Notas2
 import base64
 import sqlite3
 from flask import Flask, render_template, make_response, request, redirect, url_for, session, flash, send_file, Blueprint
@@ -1772,7 +1772,7 @@ def notas2():
     if estudiante_id:
         estudiante_seleccionado = Estudiante.query.get(estudiante_id)
         # Consultamos los registros de notas asociados a este estudiante en la tabla nota2
-        registros_notas = Nota2.query.filter_by(estudiante_id=estudiante_id).all()
+        registros_notas = Notas2.query.filter_by(estudiante_id=estudiante_id).all()
         
         # Organizamos las notas en un diccionario por asignatura/competencia
         for n in registros_notas:
@@ -1792,7 +1792,7 @@ def notas2():
         p4 = request.form.get('periodo_4', 0)
         
         # Buscar si ya existe el registro para esa asignatura o crearlo nuevo
-        nota_obj = Nota2.query.filter_by(estudiante_id=id_est, asignatura_o_competencia=asignatura).first()
+        nota_obj = Notas2.query.filter_by(estudiante_id=id_est, asignatura_o_competencia=asignatura).first()
         
         if nota_obj:
             nota_obj.periodo_1 = p1
@@ -1800,7 +1800,7 @@ def notas2():
             nota_obj.periodo_3 = p3
             nota_obj.periodo_4 = p4
         else:
-            nueva_nota = Nota2(
+            nueva_nota = Notas2(
                 estudiante_id=id_est,
                 asignatura_o_competencia=asignatura,
                 periodo_1=p1,
@@ -1821,7 +1821,7 @@ def notas2():
         notas=notas_estudiante
     )
 
-    
+
 
 @app.route('/planificacion')
 def planificacion():
