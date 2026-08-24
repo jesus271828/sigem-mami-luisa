@@ -1685,11 +1685,11 @@ def notas1():
     rol_usuario = str(session.get('rol', '')).strip().lower()
     curso_maestro = str(session.get('curso_asignado', '')).strip().lower()
 
-    # RESTRICCIÓN: Si es un maestro de 4to a 6to (y no es admin u oficina), bloquear el acceso a notas1
+    # Si es maestro de 4to a 6to (y no es admin/oficina), bloquear acceso a notas1
     if rol_usuario not in ['admin', 'oficina']:
         if any(g in curso_maestro for g in ['4to', '5to', '6to', 'cuarto', 'quinto', 'sexto']):
-            flash('No tienes permiso para acceder a este curso (1ro a 3ro).', 'danger')
-            return redirect(url_for('notas2'))
+            flash('⚠️ No tienes acceso a las calificaciones de 1ro a 3ro. Tu curso asignado es de 4to a 6to.', 'danger')
+            return redirect(url_for('menu_notas'))
 
     nombre_docente_actual = session.get('nombre_completo') or session.get('usuario', 'Docente Titular')
 
@@ -1784,7 +1784,14 @@ def notas2():
         return redirect(url_for('login'))
 
     rol_usuario = str(session.get('rol', '')).strip().lower()
-    curso_maestro = str(session.get('curso_asignado', '')).strip()
+    curso_maestro = str(session.get('curso_asignado', '')).strip().lower()
+
+    # 🛑 CAMBIO AQUÍ: Si el maestro es de 1ro a 3ro (y no es admin u oficina), se bloquea y se manda al menú con un mensaje
+    if rol_usuario not in ['admin', 'oficina']:
+        if any(g in curso_maestro for g in ['1ro', '2do', '3ro', 'primer', 'segundo', 'tercer']):
+            flash('⚠️ No tienes acceso a las calificaciones de 4to a 6to. Tu curso asignado es de 1ro a 3ro.', 'danger')
+            return redirect(url_for('menu'))
+
     nombre_docente_actual = session.get('nombre_completo') or session.get('usuario', 'Docente Titular')
 
     # Recibir el tipo de orden ('nombre', 'orden' o 'grado')
@@ -1834,7 +1841,6 @@ def notas2():
 
         form_data['_docente_registro'] = nombre_docente_actual
 
-        # CORREGIDO: Usando estudiante_id en lugar de id_estudiante para la tabla Notas2
         registro_notas = Notas2.query.filter_by(estudiante_id=str(id_estudiante)).first()
 
         if registro_notas:
@@ -1854,7 +1860,6 @@ def notas2():
     # 2. CARGAR DATOS DEL ESTUDIANTE SELECCIONADO (GET)
     if id_estudiante:
         estudiante = Estudiante.query.get(id_estudiante)
-        # CORREGIDO: Usando estudiante_id aquí también
         registro_notas = Notas2.query.filter_by(estudiante_id=str(id_estudiante)).first()
         if registro_notas and registro_notas.datos_formulario:
             try:
