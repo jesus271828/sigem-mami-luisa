@@ -1697,12 +1697,24 @@ def notas1():
     else:
         criterio_sql = [Estudiante.nombres.asc()]
 
-    # Filtrar estudiantes según el rol (Oficina ve de 1ro a 3ro, maestro ve su curso)
+    # Filtrar estudiantes según el rol (Oficina ve 1ro a 3ro de forma flexible, el maestro ve su curso)
     if rol_usuario == 'admin' or rol_usuario == 'oficina':
         lista_estudiantes = Estudiante.query.filter(
-            Estudiante.grado.in_(['1ro A', '1ro B', '2do A', '2do B', '3ro A', '3ro B', 'Primer Grado', 'Segundo Grado', 'Tercer Grado'])
+            db.or_(
+                Estudiante.grado.ilike('%1ro%'),
+                Estudiante.grado.ilike('%2do%'),
+                Estudiante.grado.ilike('%3ro%'),
+                Estudiante.grado.ilike('%primer%'),
+                Estudiante.grado.ilike('%segundo%'),
+                Estudiante.grado.ilike('%tercer%')
+            )
         ).order_by(*criterio_sql).all()
-        grado_activo = "Nivel Primario (1ro a 3ro)"
+        
+        # Si por alguna razón la consulta flexible no trae nada, traemos todos los estudiantes para evitar listas vacías en oficina
+        if not lista_estudiantes:
+            lista_estudiantes = Estudiante.query.order_by(*criterio_sql).all()
+            
+        grado_activo = "Nivel Primario (1ro a 3ro - Oficina)"
     else:
         lista_estudiantes = Estudiante.query.filter(
             Estudiante.grado.ilike(f"%{curso_maestro}%")
