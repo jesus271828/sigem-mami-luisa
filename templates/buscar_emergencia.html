@@ -50,7 +50,7 @@
                                 {% set foto_est = estudiante.foto_estudiante_cedula_procesada or estudiante.foto or estudiante.foto_estudiante %}
                                 
                                 {% if foto_est %}
-                                    <img src="{% if foto_est.startswith(('http', 'data:', '/9j/', 'iVBOR', 'R0lGOD', 'UklGR')) %}{{ foto_est }}{% else %}{{ url_for('static', filename='uploads/' + foto_est) }}{% endif %}" 
+                                    <img src="{% if foto_est.startswith(('http://', 'https://', 'data:', 'blob:')) %}{{ foto_est }}{% else %}{{ url_for('static', filename='uploads/' + foto_est) }}{% endif %}" 
                                          class="rounded-circle img-thumbnail mb-2" style="width: 120px; height: 120px; object-fit: cover;" alt="Estudiante"
                                          onerror="this.onerror=null; this.src='https://via.placeholder.com/120?text=Sin+Foto';">
                                 {% else %}
@@ -118,7 +118,7 @@
                                 <div class="card card-custom h-100 text-center p-3">
                                     <div class="mx-auto mb-2">
                                         {% if fam.foto_proc %}
-                                            <img src="{% if fam.foto_proc.startswith(('http', 'data:', '/9j/', 'iVBOR', 'R0lGOD', 'UklGR')) %}{{ fam.foto_proc }}{% else %}{{ url_for('static', filename='uploads/' + fam.foto_proc) }}{% endif %}" 
+                                            <img src="{% if fam.foto_proc.startswith(('http://', 'https://', 'data:', 'blob:')) %}{{ fam.foto_proc }}{% else %}{{ url_for('static', filename='uploads/' + fam.foto_proc) }}{% endif %}" 
                                                  class="foto-autorizado" alt="{{ fam.tipo }}"
                                                  onerror="this.onerror=null; this.src='https://via.placeholder.com/100?text=Sin+Foto';">
                                         {% else %}
