@@ -1679,6 +1679,8 @@ import json
 
 import json
 
+import json
+
 @app.route('/notas1', methods=['GET', 'POST'])
 def notas1():
     # Verificar si el usuario ha iniciado sesión
@@ -1686,31 +1688,74 @@ def notas1():
         return redirect(url_for('login'))
     
     docente_nombre = session.get('usuario')
+    
+    # Conexión a tu base de datos (ajusta 'base.db' o tu conector real si usas otro)
+    import sqlite3
+    conn = sqlite3.connect('database.db')  # CAMBIA 'database.db' por el nombre de tu archivo de base de datos si es diferente
+    conn.row_factory = sqlite3.row_factory if hasattr(sqlite3, 'row_factory') else lambda cursor, row: {col[0]: row[idx] for idx, col in enumerate(cursor.description)}
+    cursor = conn.cursor()
 
+    # 1. SI EL USUARIO HACE CLIC EN "GUARDAR CAMBIOS" (POST)
     if request.method == 'POST':
         id_estudiante = request.form.get('id_estudiante')
         docente_registra = request.form.get('docente_registra', docente_nombre)
         
-        # AQUÍ VA TU CÓDIGO ACTUAL DE GUARDAR EN BASE DE DATOS
-        # (Usa la misma conexión/método que ya usas en el resto de tu app.py)
+        # Convertimos todo el formulario en un JSON o texto para guardarlo
+        datos_formulario = dict(request.form)
         
+        # Aquí guardas en tu tabla de notas (asegúrate de incluir id_estudiante, datos y docente_registra)
+        # Ejemplo genérico de guardado (ajusta según tu estructura de tablas):
+        try:
+            cursor.execute("""
+                INSERT INTO notas1 (id_estudiante, datos, docente_registra) 
+                VALUES (?, ?, ?)
+                ON CONFLICT(id_estudiante) DO UPDATE SET 
+                    datos = excluded.datos, 
+                    docente_registra = excluded.docente_registra
+            """, (id_estudiante, json.dumps(datos_formulario), docente_registra))
+            conn.commit()
+        except Exception as e:
+            print("Error al guardar:", e)
+
         flash('¡Informe guardado con éxito!', 'success')
+        conn.close()
         
-        # IMPORTANTE: Esto limpia el POST y actualiza la vista fluidamente
+        # Redirige limpiamente para refrescar la vista y evitar bloqueos
         return redirect(url_for('notas1', id_estudiante=id_estudiante))
 
-    # Petición GET: Cargar datos del estudiante y notas
+    # 2. PETICIÓN GET: CARGAR LISTA DE ESTUDIANTES Y DATOS
+    # Oficina puede ver todos los de 1ro a 3ro; aquí cargamos los de Primer Grado Sección A para notas1:
+    try:
+        cursor.execute("SELECT id, nombres, apellidos FROM estudiantes WHERE grado LIKE '%Primer Grado%' OR grado = '1' ORDER BY apellidos")
+        lista_estudiantes = cursor.fetchall()
+        
+        # Si la consulta anterior no devuelve nada por cómo guardas los grados, prueba trayendo todos:
+        if not lista_estudiantes:
+            cursor.execute("SELECT id, nombres, apellidos FROM estudiantes ORDER BY apellidos")
+            lista_estudiantes = cursor.fetchall()
+    except Exception as e:
+        print("Error al listar estudiantes:", e)
+        lista_estudiantes = []
+
     id_estudiante = request.args.get('id_estudiante')
-    
-    # REEMPLAZA ESTAS LÍNEAS CON TUS CONSULTAS REALES
-    # (Las mismas que usabas antes en esta ruta)
-    lista_estudiantes = [] # Tu consulta para obtener la lista de estudiantes
     estudiante = None
     notas = {}
 
     if id_estudiante:
-        # Tu consulta para buscar al estudiante y sus notas guardadas
-        pass
+        # Buscar los datos del estudiante seleccionado
+        cursor.execute("SELECT id, nombres, apellidos FROM estudiantes WHERE id = ?", (id_estudiante,))
+        estudiante = cursor.fetchone()
+        
+        # Cargar notas guardadas previamente si existen
+        try:
+            cursor.execute("SELECT datos FROM notas1 WHERE id_estudiante = ?", (id_estudiante,))
+            resultado = cursor.fetchone()
+            if resultado and resultado[0]:
+                notas = json.loads(resultado[0])
+        except Exception as e:
+            print("Error al cargar notas:", e)
+
+    conn.close()
 
     return render_template(
         'notas1.html',
