@@ -167,19 +167,29 @@
             </div>
         </div>
 
-        <!-- TABLA DATOS ESTUDIANTE -->
-        <table id="tabla-datos">
-            <tr>
-                <td class="bold" style="width: 8%;">NOMBRE(S):</td>
-                <td style="width: 27%; font-weight: bold; color: #1a73e8;">{{ estudiante.nombres if estudiante else '' }}</td>
-                <td class="bold" style="width: 9%;">APELLIDO(S):</td>
-                <td style="width: 27%; font-weight: bold; color: #1a73e8;">{{ estudiante.apellidos if estudiante else '' }}</td>
-                <td class="bold" style="width: 10%;">NO. DE ORDEN:</td>
-                <td style="width: 6%;">{{ estudiante.numero_orden if estudiante and estudiante.numero_orden else '' }}</td>
-                <td class="bold" style="width: 5%;">ID ESTUDIANTE:</td>
-                <td style="width: 8%;">{{ estudiante.id if estudiante else '' }}</td>
-            </tr>
-        </table>
+      <!-- TABLA DATOS ESTUDIANTE -->
+<table id="tabla-datos">
+    <tr>
+        <td class="bold" style="width: 8%;">NOMBRE(S):</td>
+        <td style="width: 27%; font-weight: bold; color: #1a73e8;">{{ estudiante.nombres if estudiante else '' }}</td>
+        <td class="bold" style="width: 9%;">APELLIDO(S):</td>
+        <td style="width: 27%; font-weight: bold; color: #1a73e8;">{{ estudiante.apellidos if estudiante else '' }}</td>
+        <td class="bold" style="width: 10%;">NO. DE ORDEN:</td>
+        <td style="width: 6%;">
+            {% if estudiante %}
+                {% set ns = namespace(index=0) %}
+                {% for est in lista_estudiantes %}
+                    {% if est.id == estudiante.id %}
+                        {% set ns.index = loop.index %}
+                    {% endif %}
+                {% endfor %}
+                {{ ns.index }}
+            {% endif %}
+        </td>
+        <td class="bold" style="width: 5%;">ID ESTUDIANTE:</td>
+        <td style="width: 8%;">{{ estudiante.id if estudiante else '' }}</td>
+    </tr>
+</table>
 
         <!-- TABLA CALIFICACIONES -->
         <table id="tabla-notas">
