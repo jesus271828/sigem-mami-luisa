@@ -132,7 +132,7 @@
             <option value="" disabled {% if not estudiante %}selected{% endif %}>-- Seleccione un estudiante --</option>
             {% for est in lista_estudiantes %}
                 <option value="{{ est.id }}" {% if estudiante and estudiante.id == est.id %}selected{% endif %}>
-                    {{ est.numero_orden }}. {{ est.nombres }} {{ est.apellidos }}
+                    {{ loop.index }}. {{ est.nombres }} {{ est.apellidos }}
                 </option>
             {% endfor %}
         </select>
