@@ -57,13 +57,34 @@
         .btn-menu:hover { background-color: #2c3e50; }
 
         @media print {
-            .action-bar, .selector-container { display: none !important; }
+            .action-bar, .selector-container, .alert-flash { display: none !important; }
             .salto-pagina { page-break-before: always; }
             body {
                 margin: 0;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
+        }
+
+        /* ALERTAS / MENSAJES FLASH */
+        .alert-flash {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .alert-close {
+            background: transparent;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+            color: #155724;
         }
 
         /* ENCABEZADO */
@@ -123,6 +144,18 @@
             <button type="button" class="btn btn-pdf" onclick="window.print()">🖨️ Generar PDF</button>
         </div>
     </div>
+
+    <!-- MENSAJES FLASH DE ÉXITO -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert-flash">
+                    <span>✅ {{ message }}</span>
+                    <button type="button" class="alert-close" onclick="this.parentElement.style.display='none'">&times;</button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
 
     <!-- SELECTOR DE ESTUDIANTE -->
     <div class="selector-container">
