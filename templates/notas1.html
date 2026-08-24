@@ -175,9 +175,9 @@
                 <td class="bold" style="width: 9%;">APELLIDO(S):</td>
                 <td style="width: 27%; font-weight: bold; color: #1a73e8;">{{ estudiante.apellidos if estudiante else '' }}</td>
                 <td class="bold" style="width: 10%;">NO. DE ORDEN:</td>
-                <td style="width: 6%;">{{ estudiante.orden if estudiante and estudiante.orden else '' }}</td>
+                <td style="width: 6%;">{{ estudiante.numero_orden if estudiante and estudiante.numero_orden else '' }}</td>
                 <td class="bold" style="width: 5%;">ID ESTUDIANTE:</td>
-                <td style="width: 8%;">{{ estudiante.id_estudiante if estudiante else '' }}</td>
+                <td style="width: 8%;">{{ estudiante.id if estudiante else '' }}</td>
             </tr>
         </table>
 
