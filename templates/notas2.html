@@ -173,68 +173,41 @@
         </div>
     </div>
 
-<!-- MENSAJES FLASH DE ALERTA -->
-{% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-        <div id="flash-alert" style="margin-bottom: 10px;">
+<!-- MENSAJES FLASH DE ÉXITO -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
             {% for category, message in messages %}
-                <div style="background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; padding: 10px; border-radius: 4px; text-align: center; font-weight: bold;">
-                    {{ message }}
+                <div class="alert-flash">
+                    <span>✅ {{ message }}</span>
+                    <button type="button" class="alert-close" onclick="this.parentElement.style.display='none'">&times;</button>
                 </div>
             {% endfor %}
-        </div>
-        <script>
-            setTimeout(function() {
-                var alerta = document.getElementById('flash-alert');
-                if (alerta) {
-                    alerta.style.transition = 'opacity 0.5s ease';
-                    alerta.style.opacity = '0';
-                    setTimeout(function() { alerta.remove(); }, 500);
-                }
-            }, 4000);
-        </script>
-    {% endif %}
-{% endwith %}
+        {% endif %}
+    {% endwith %}
 
-<select id="select-estudiante" class="form-control" onchange="actualizarDatosEstudiante(this)">
-    <option value="">-- Seleccione un estudiante --</option>
-    {% for est in estudiantes %}
-    <option value="{{ est.id }}" 
-            data-nombre="{{ est.nombre }}" 
-            data-apellido="{{ est.apellido }}" 
-            data-orden="{{ est.no_orden }}" 
-            data-id="{{ est.id }}">
-        No. {{ est.no_orden }} - {{ est.nombre }} {{ est.apellido }} ({{ est.seccion }})
-    </option>
-    {% endfor %}
-</select>
+    <!-- SELECTOR DE ESTUDIANTE -->
+    <div class="selector-container">
+        <form method="GET" action="{{ url_for('notas2') }}" style="display: flex; align-items: center; width: 100%; gap: 10px; margin: 0;">
+            <label for="id_estudiante" style="font-weight: bold;">SELECCIONAR ESTUDIANTE:</label>
+            <select name="id_estudiante" id="id_estudiante" onchange="this.form.submit()" style="padding: 4px; font-size: 11px; flex-grow: 1; border: 1px solid #000; background: #fff;">
+                <option value="" disabled {% if not estudiante %}selected{% endif %}>-- Seleccione un estudiante --</option>
+                {% for est in lista_estudiantes %}
+                    <option value="{{ est.id }}" {% if estudiante and estudiante.id == est.id %}selected{% endif %}>
+                        {{ loop.index }}. {{ est.nombres }} {{ est.apellidos }}
+                    </option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
 
-<script>
-    function actualizarDatosEstudiante(selectElement) {
-        var selectedOption = selectElement.options[selectElement.selectedIndex];
-        
-        // Si no selecciona nada, limpia los campos
-        if (!selectElement.value) {
-            document.getElementById('campo-nombre').innerText = '';
-            document.getElementById('campo-apellido').innerText = '';
-            document.getElementById('campo-orden').innerText = '';
-            document.getElementById('campo-id').innerText = '';
-            return;
-        }
+    <!-- FORMULARIO PRINCIPAL DE DATOS Y NOTAS -->
+    <form id="form-informe" method="POST" action="{{ url_for('notas2') }}">
+        {% if estudiante %}
+        <input type="hidden" name="id_estudiante" value="{{ estudiante.id }}">
+        {% endif %}
 
-        // Extraer los datos de los atributos data-*
-        var nombre = selectedOption.getAttribute('data-nombre');
-        var apellido = selectedOption.getAttribute('data-apellido');
-        var orden = selectedOption.getAttribute('data-orden');
-        var idEstudiante = selectedOption.getAttribute('data-id');
-
-        // Colocar los valores en las celdas de la tabla
-        document.getElementById('campo-nombre').innerText = nombre;
-        document.getElementById('campo-apellido').innerText = apellido;
-        document.getElementById('campo-orden').innerText = orden;
-        document.getElementById('campo-id').innerText = idEstudiante;
-    }
-</script>
+        <!-- Campo oculto para registrar el nombre del docente que guardó el informe -->
+        <input type="hidden" name="docente_registra" value="{{ docente_nombre }}">
 
         <!-- ================= PÁGINA 1: DELANTERA ================= -->
         <div class="pagina-completa">
