@@ -1683,7 +1683,14 @@ def notas1():
         return redirect(url_for('login'))
 
     rol_usuario = str(session.get('rol', '')).strip().lower()
-    curso_maestro = str(session.get('curso_asignado', '')).strip()
+    curso_maestro = str(session.get('curso_asignado', '')).strip().lower()
+
+    # RESTRICCIÓN: Si es un maestro de 4to a 6to (y no es admin u oficina), bloquear el acceso a notas1
+    if rol_usuario not in ['admin', 'oficina']:
+        if any(g in curso_maestro for g in ['4to', '5to', '6to', 'cuarto', 'quinto', 'sexto']):
+            flash('No tienes permiso para acceder a este curso (1ro a 3ro).', 'danger')
+            return redirect(url_for('notas2'))
+
     nombre_docente_actual = session.get('nombre_completo') or session.get('usuario', 'Docente Titular')
 
     # Recibir el tipo de orden ('nombre', 'orden' o 'grado')
@@ -1697,7 +1704,7 @@ def notas1():
     else:
         criterio_sql = [Estudiante.nombres.asc()]
 
-    # Filtrar estudiantes según el rol (Oficina ve 1ro a 3ro de forma flexible, el maestro ve su curso)
+    # Filtrar estudiantes según el rol (Oficina ve 1ro al 3ro de forma flexible, el maestro ve su curso)
     if rol_usuario == 'admin' or rol_usuario == 'oficina':
         lista_estudiantes = Estudiante.query.filter(
             db.or_(
@@ -1710,7 +1717,6 @@ def notas1():
             )
         ).order_by(*criterio_sql).all()
         
-        # Si por alguna razón la consulta flexible no trae nada, traemos todos los estudiantes para evitar listas vacías en oficina
         if not lista_estudiantes:
             lista_estudiantes = Estudiante.query.order_by(*criterio_sql).all()
             
@@ -1748,7 +1754,6 @@ def notas1():
         db.session.commit()
         flash('¡Informe guardado con éxito!', 'success')
         
-        # Redirigir para limpiar el formulario y evitar reenvíos duplicados
         return redirect(url_for('notas1', id_estudiante=id_estudiante, orden=tipo_orden))
 
     # 2. CARGAR DATOS DEL ESTUDIANTE SELECCIONADO (GET)
