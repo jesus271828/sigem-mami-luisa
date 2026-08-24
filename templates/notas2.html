@@ -196,17 +196,19 @@
     {% endif %}
 {% endwith %}
 
-    <!-- SELECTOR DE ESTUDIANTE -->
-    <div class="selector-container">
-        <label for="id_estudiante" class="font-weight-bold">SELECCIONAR ESTUDIANTE:</label>
-        <select id="id_estudiante" class="form-select" onchange="cambiarEstudiante(this)">
-            <option value="">-- Seleccione un estudiante --</option>
-                {% for est in lista_estudiantes %}
-                <option value="{{ est.id }}" {% if estudiante and estudiante.id|string == est.id|string %}selected{% endif %}>
-                    No. {{ loop.index }} - {{ est.nombres }} {{ est.apellidos }} ({{ est.grado }})
-                </option>
-            {% endfor %}
-        </select>
+<select id="select-estudiante" class="form-control" onchange="actualizarDatosEstudiante(this)">
+    <option value="">-- Seleccione un estudiante --</option>
+    <!-- Si usas un bucle en Flask/Jinja2 -->
+    {% for est in estudiantes %}
+    <option value="{{ est.id }}" 
+            data-nombre="{{ est.nombre }}" 
+            data-apellido="{{ est.apellido }}" 
+            data-orden="{{ est.no_orden }}" 
+            data-id="{{ est.id }}">
+        No. {{ est.no_orden }} - {{ est.nombre }} {{ est.apellido }} ({{ est.seccion }})
+    </option>
+    {% endfor %}
+</select>
     </div>
 
     <script>
