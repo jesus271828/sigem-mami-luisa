@@ -1677,42 +1677,48 @@ def menu_notas():
 
 import json
 
+import json
+
 @app.route('/notas1', methods=['GET', 'POST'])
 def notas1():
-    # 1. Cuando el usuario hace clic en "Guardar Cambios" (POST)
+    # Verificar si el usuario ha iniciado sesión
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+    
+    docente_nombre = session.get('usuario')
+
     if request.method == 'POST':
         id_estudiante = request.form.get('id_estudiante')
-        docente_registra = request.form.get('docente_registra')
+        docente_registra = request.form.get('docente_registra', docente_nombre)
         
-        # --- AQUÍ VA TU LÓGICA DE BASE DE DATOS PARA GUARDAR (UPDATE/INSERT) ---
-        # Asegúrate de guardar también la variable 'docente_registra' junto con las notas
+        # AQUÍ VA TU CÓDIGO ACTUAL DE GUARDAR EN BASE DE DATOS
+        # (Usa la misma conexión/método que ya usas en el resto de tu app.py)
         
         flash('¡Informe guardado con éxito!', 'success')
         
-        # IMPORTANTE: Esto limpia el formulario, quita el parámetro extra y actualiza la vista
+        # IMPORTANTE: Esto limpia el POST y actualiza la vista fluidamente
         return redirect(url_for('notas1', id_estudiante=id_estudiante))
 
-    # 2. PETICIÓN GET: Cargar datos para mostrar en la interfaz
+    # Petición GET: Cargar datos del estudiante y notas
     id_estudiante = request.args.get('id_estudiante')
     
-    # --- RESTAURA AQUÍ TUS CONSULTAS ORIGINALES ---
-    # (Las mismas líneas que usabas antes para extraer de tu base de datos)
-    lista_estudiantes = ... # Tu consulta para obtener todos los estudiantes de la sección A
+    # REEMPLAZA ESTAS LÍNEAS CON TUS CONSULTAS REALES
+    # (Las mismas que usabas antes en esta ruta)
+    lista_estudiantes = [] # Tu consulta para obtener la lista de estudiantes
     estudiante = None
     notas = {}
 
     if id_estudiante:
-        estudiante = ... # Tu consulta para buscar el estudiante por id_estudiante
-        notas = ...      # Tu consulta para cargar las notas guardadas de ese estudiante
+        # Tu consulta para buscar al estudiante y sus notas guardadas
+        pass
 
     return render_template(
-        'notas1.html', 
-        lista_estudiantes=lista_estudiantes, 
-        estudiante=estudiante, 
-        notas=notas, 
-        docente_nombre=session.get('usuario') # O la variable de sesión donde tengas tu nombre ("Jesús...")
+        'notas1.html',
+        lista_estudiantes=lista_estudiantes,
+        estudiante=estudiante,
+        notas=notas,
+        docente_nombre=docente_nombre
     )
-
 
 
 @app.route('/notas2', methods=['GET', 'POST'])
