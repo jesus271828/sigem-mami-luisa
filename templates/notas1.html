@@ -178,6 +178,9 @@
         <input type="hidden" name="id_estudiante" value="{{ estudiante.id }}">
         {% endif %}
 
+        <!-- Campo oculto para registrar el nombre del docente que guardó el informe -->
+        <input type="hidden" name="docente_registra" value="{{ docente_nombre }}">
+
         <!-- PARTE DELANTERA -->
         <div class="header">
             <img src="{{ url_for('static', filename='img/logo2.png') }}" class="logo" alt="Logo">
@@ -465,7 +468,14 @@
 
         function limpiarFormulario() {
             if (confirm("¿Estás seguro de que deseas limpiar todos los campos ingresados en este informe?")) {
-                document.getElementById('form-informe').reset();
+                // Selecciona todos los inputs y textareas dentro del formulario y los vacía
+                const form = document.getElementById('form-informe');
+                const inputs = form.querySelectorAll('input[type="text"], textarea');
+                inputs.forEach(input => input.value = '');
+                
+                // Desmarca todos los checkboxes
+                const checkboxes = form.querySelectorAll('input[type="checkbox"]');
+                checkboxes.forEach(cb => cb.checked = false);
             }
         }
     </script>
