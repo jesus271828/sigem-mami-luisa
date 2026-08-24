@@ -198,7 +198,6 @@
 
 <select id="select-estudiante" class="form-control" onchange="actualizarDatosEstudiante(this)">
     <option value="">-- Seleccione un estudiante --</option>
-    <!-- Si usas un bucle en Flask/Jinja2 -->
     {% for est in estudiantes %}
     <option value="{{ est.id }}" 
             data-nombre="{{ est.nombre }}" 
@@ -209,21 +208,33 @@
     </option>
     {% endfor %}
 </select>
-    </div>
 
-    <script>
-        function cambiarEstudiante(selectElement) {
-            var idEstudiante = selectElement.value;
-            if (idEstudiante) {
-                window.location.href = "{{ url_for('notas2') }}?id_estudiante=" + idEstudiante;
-            }
+<script>
+    function actualizarDatosEstudiante(selectElement) {
+        var selectedOption = selectElement.options[selectElement.selectedIndex];
+        
+        // Si no selecciona nada, limpia los campos
+        if (!selectElement.value) {
+            document.getElementById('campo-nombre').innerText = '';
+            document.getElementById('campo-apellido').innerText = '';
+            document.getElementById('campo-orden').innerText = '';
+            document.getElementById('campo-id').innerText = '';
+            return;
         }
-    </script>
 
-<form id="form-informe" method="POST" action="{{ url_for('notas2', id_estudiante=estudiante.id if estudiante else '') }}">
-    {% if estudiante %}
-    <input type="hidden" name="id_estudiante" value="{{ estudiante.id }}">
-    {% endif %}
+        // Extraer los datos de los atributos data-*
+        var nombre = selectedOption.getAttribute('data-nombre');
+        var apellido = selectedOption.getAttribute('data-apellido');
+        var orden = selectedOption.getAttribute('data-orden');
+        var idEstudiante = selectedOption.getAttribute('data-id');
+
+        // Colocar los valores en las celdas de la tabla
+        document.getElementById('campo-nombre').innerText = nombre;
+        document.getElementById('campo-apellido').innerText = apellido;
+        document.getElementById('campo-orden').innerText = orden;
+        document.getElementById('campo-id').innerText = idEstudiante;
+    }
+</script>
 
         <!-- ================= PÁGINA 1: DELANTERA ================= -->
         <div class="pagina-completa">
