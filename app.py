@@ -1790,7 +1790,7 @@ def notas2():
     if rol_usuario not in ['admin', 'oficina']:
         if any(g in curso_maestro for g in ['1ro', '2do', '3ro', 'primer', 'segundo', 'tercer']):
             flash('⚠️ No tienes acceso a las calificaciones de 4to a 6to. Tu curso asignado es de 1ro a 3ro.', 'danger')
-            return redirect(url_for('menu'))
+            return redirect(url_for('menu_notas'))
 
     nombre_docente_actual = session.get('nombre_completo') or session.get('usuario', 'Docente Titular')
 
