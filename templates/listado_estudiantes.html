@@ -38,7 +38,7 @@
 
         <div class="card shadow-sm">
             <div class="card-body">
-                <table class="table table-striped table-hover">
+                <table class="table table-striped table-hover align-middle">
                     <thead class="table-dark">
                         <tr>
                             <th>No. Orden</th>
@@ -46,6 +46,7 @@
                             <th>Nombres</th>
                             <th>Apellidos</th>
                             <th>Grado</th>
+                            <th class="text-center">Calificaciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -56,10 +57,23 @@
                             <td>{{ est.nombres }}</td>
                             <td>{{ est.apellidos }}</td>
                             <td>{{ est.grado }}</td>
+                            <td class="text-center">
+                                <!-- Botón condicional: Si es de 4to a 6to va a notas2, si es de 1ro a 3ro va a notas1 -->
+                                {% set grado_str = est.grado | string | lower %}
+                                {% if '4to' in grado_str or '5to' in grado_str or '6to' in grado_str or 'cuarto' in grado_str or 'quinto' in grado_str or 'sexto' in grado_str %}
+                                    <a href="{{ url_for('notas2', id_estudiante=est.id_estudiante) }}" class="btn btn-sm btn-primary">
+                                        Ver Notas (4to-6to)
+                                    </a>
+                                {% else %}
+                                    <a href="{{ url_for('notas1', id_estudiante=est.id_estudiante) }}" class="btn btn-sm btn-success">
+                                        Ver Notas (1ro-3ro)
+                                    </a>
+                                {% endif %}
+                            </td>
                         </tr>
                         {% else %}
                         <tr>
-                            <td colspan="5" class="text-center text-muted">No hay estudiantes registrados todavía.</td>
+                            <td colspan="6" class="text-center text-muted">No hay estudiantes registrados todavía.</td>
                         </tr>
                         {% endfor %}
                     </tbody>
