@@ -1773,64 +1773,91 @@ def notas1():
 
 @app.route('/notas2', methods=['GET', 'POST'])
 def notas2():
-    # Ordenamos por 'nombres' tal como lo tiene tu modelo de Estudiante
-    estudiantes = Estudiante.query.order_by(Estudiante.nombres).all()
-    
-    estudiante_id = request.args.get('estudiante_id') or request.form.get('estudiante_id')
-    estudiante_seleccionado = None
-    notas_estudiante = {}
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
 
-    if estudiante_id:
-        estudiante_seleccionado = Estudiante.query.get(estudiante_id)
-        # Consultamos los registros de notas asociados a este estudiante en la tabla nota2
-        registros_notas = Notas2.query.filter_by(estudiante_id=estudiante_id).all()
-        
-        # Organizamos las notas en un diccionario por asignatura/competencia
-        for n in registros_notas:
-            notas_estudiante[n.asignatura_o_competencia] = {
-                'p1': n.periodo_1,
-                'p2': n.periodo_2,
-                'p3': n.periodo_3,
-                'p4': n.periodo_4
-            }
+    rol_usuario = str(session.get('rol', '')).strip().lower()
+    curso_maestro = str(session.get('curso_asignado', '')).strip()
+    nombre_docente_actual = session.get('nombre_completo') or session.get('usuario', 'Docente Titular')
 
-    if request.method == 'POST':
-        id_est = request.form.get('estudiante_id')
-        asignatura = request.form.get('asignatura')
-        p1 = request.form.get('periodo_1', 0)
-        p2 = request.form.get('periodo_2', 0)
-        p3 = request.form.get('periodo_3', 0)
-        p4 = request.form.get('periodo_4', 0)
-        
-        # Buscar si ya existe el registro para esa asignatura o crearlo nuevo
-        nota_obj = Notas2.query.filter_by(estudiante_id=id_est, asignatura_o_competencia=asignatura).first()
-        
-        if nota_obj:
-            nota_obj.periodo_1 = p1
-            nota_obj.periodo_2 = p2
-            nota_obj.periodo_3 = p3
-            nota_obj.periodo_4 = p4
-        else:
-            nueva_nota = Notas2(
-                estudiante_id=id_est,
-                asignatura_o_competencia=asignatura,
-                periodo_1=p1,
-                periodo_2=p2,
-                periodo_3=p3,
-                periodo_4=p4
+    # Recibir el tipo de orden ('nombre', 'orden' o 'grado')
+    tipo_orden = request.args.get('orden', 'nombre')
+
+    # Criterio de ordenamiento SQL dinámico
+    if tipo_orden == 'grado' and hasattr(Estudiante, 'grado'):
+        criterio_sql = [Estudiante.grado.asc(), Estudiante.nombres.asc()]
+    elif tipo_orden == 'orden' and hasattr(Estudiante, 'numero_orden'):
+        criterio_sql = [Estudiante.numero_orden.asc()]
+    else:
+        criterio_sql = [Estudiante.nombres.asc()]
+
+    # Filtrar estrictamente de 4to a 6to para Oficina/Admin, o el curso específico para el maestro
+    if rol_usuario == 'admin' or rol_usuario == 'oficina':
+        lista_estudiantes = Estudiante.query.filter(
+            db.or_(
+                Estudiante.grado.ilike('%4to%'),
+                Estudiante.grado.ilike('%5to%'),
+                Estudiante.grado.ilike('%6to%'),
+                Estudiante.grado.ilike('%cuarto%'),
+                Estudiante.grado.ilike('%quinto%'),
+                Estudiante.grado.ilike('%sexto%')
             )
-            db.session.add(nueva_nota)
-            
-        db.session.commit()
-        flash('Calificaciones de Notas2 guardadas correctamente.', 'success')
-        return redirect(url_for('notas2', estudiante_id=id_est))
+        ).order_by(*criterio_sql).all()
+        grado_activo = "Segundo Ciclo Primario (4to a 6to - Oficina)"
+    else:
+        # El maestro de 4to a 6to solo verá los estudiantes de su curso asignado
+        lista_estudiantes = Estudiante.query.filter(
+            Estudiante.grado.ilike(f"%{curso_maestro}%")
+        ).order_by(*criterio_sql).all()
+        grado_activo = f"Grado: {curso_maestro}"
 
-    return render_template(
-        'notas2.html', 
-        estudiantes=estudiantes, 
-        estudiante=estudiante_seleccionado, 
-        notas=notas_estudiante
-    )
+    id_estudiante = request.args.get('id_estudiante') or request.form.get('id_estudiante')
+    estudiante = None
+    notas = {}
+    docente_guardado = nombre_docente_actual
+
+    # 1. PROCESAR GUARDADO (POST)
+    if request.method == 'POST' and id_estudiante:
+        form_data = dict(request.form)
+        if 'id_estudiante' in form_data:
+            form_data.pop('id_estudiante')
+
+        form_data['_docente_registro'] = nombre_docente_actual
+
+        registro_notas = Notas2.query.filter_by(id_estudiante=str(id_estudiante)).first()
+
+        if registro_notas:
+            registro_notas.datos_formulario = json.dumps(form_data)
+        else:
+            nuevo_registro = Notas2(
+                id_estudiante=str(id_estudiante),
+                datos_formulario=json.dumps(form_data)
+            )
+            db.session.add(nuevo_registro)
+
+        db.session.commit()
+        flash('¡Informe guardado con éxito!', 'success')
+        
+        return redirect(url_for('notas2', id_estudiante=id_estudiante, orden=tipo_orden))
+
+    # 2. CARGAR DATOS DEL ESTUDIANTE SELECCIONADO (GET)
+    if id_estudiante:
+        estudiante = Estudiante.query.get(id_estudiante)
+        registro_notas = Notas2.query.filter_by(id_estudiante=str(id_estudiante)).first()
+        if registro_notas and registro_notas.datos_formulario:
+            try:
+                notas = json.loads(registro_notas.datos_formulario)
+                docente_guardado = notas.get('_docente_registro', nombre_docente_actual)
+            except:
+                notas = {}
+
+    return render_template('notas2.html', 
+                           lista_estudiantes=lista_estudiantes, 
+                           estudiante=estudiante, 
+                           notas=notas,
+                           tipo_orden=tipo_orden,
+                           grado_activo=grado_activo,
+                           docente_nombre=docente_guardado)
 
 
 
