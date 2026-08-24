@@ -1771,6 +1771,8 @@ def notas1():
                            docente_nombre=docente_guardado)
 
 
+import json
+
 @app.route('/notas2', methods=['GET', 'POST'])
 def notas2():
     if 'usuario' not in session:
@@ -1791,7 +1793,7 @@ def notas2():
     else:
         criterio_sql = [Estudiante.nombres.asc()]
 
-    # Filtrar estrictamente de 4to a 6to para Oficina/Admin, o el curso específico para el maestro
+    # Filtrar estudiantes: Oficina ve 4to a 6to de forma flexible, el maestro ve su curso correspondiente
     if rol_usuario == 'admin' or rol_usuario == 'oficina':
         lista_estudiantes = Estudiante.query.filter(
             db.or_(
@@ -1803,9 +1805,13 @@ def notas2():
                 Estudiante.grado.ilike('%sexto%')
             )
         ).order_by(*criterio_sql).all()
-        grado_activo = "Segundo Ciclo Primario (4to a 6to - Oficina)"
+        
+        # Si la consulta flexible no trae nada, traemos todos para evitar listas vacías en oficina
+        if not lista_estudiantes:
+            lista_estudiantes = Estudiante.query.order_by(*criterio_sql).all()
+            
+        grado_activo = "Nivel Primario (4to a 6to - Oficina)"
     else:
-        # El maestro de 4to a 6to solo verá los estudiantes de su curso asignado
         lista_estudiantes = Estudiante.query.filter(
             Estudiante.grado.ilike(f"%{curso_maestro}%")
         ).order_by(*criterio_sql).all()
@@ -1838,6 +1844,7 @@ def notas2():
         db.session.commit()
         flash('¡Informe guardado con éxito!', 'success')
         
+        # Redirigir para limpiar el formulario y evitar reenvíos duplicados
         return redirect(url_for('notas2', id_estudiante=id_estudiante, orden=tipo_orden))
 
     # 2. CARGAR DATOS DEL ESTUDIANTE SELECCIONADO (GET)
