@@ -1806,7 +1806,6 @@ def notas2():
             )
         ).order_by(*criterio_sql).all()
         
-        # Si la consulta flexible no trae nada, traemos todos para evitar listas vacías en oficina
         if not lista_estudiantes:
             lista_estudiantes = Estudiante.query.order_by(*criterio_sql).all()
             
@@ -1830,13 +1829,14 @@ def notas2():
 
         form_data['_docente_registro'] = nombre_docente_actual
 
-        registro_notas = Notas2.query.filter_by(id_estudiante=str(id_estudiante)).first()
+        # CORREGIDO: Usando estudiante_id en lugar de id_estudiante para la tabla Notas2
+        registro_notas = Notas2.query.filter_by(estudiante_id=str(id_estudiante)).first()
 
         if registro_notas:
             registro_notas.datos_formulario = json.dumps(form_data)
         else:
             nuevo_registro = Notas2(
-                id_estudiante=str(id_estudiante),
+                estudiante_id=str(id_estudiante),
                 datos_formulario=json.dumps(form_data)
             )
             db.session.add(nuevo_registro)
@@ -1844,13 +1844,13 @@ def notas2():
         db.session.commit()
         flash('¡Informe guardado con éxito!', 'success')
         
-        # Redirigir para limpiar el formulario y evitar reenvíos duplicados
         return redirect(url_for('notas2', id_estudiante=id_estudiante, orden=tipo_orden))
 
     # 2. CARGAR DATOS DEL ESTUDIANTE SELECCIONADO (GET)
     if id_estudiante:
         estudiante = Estudiante.query.get(id_estudiante)
-        registro_notas = Notas2.query.filter_by(id_estudiante=str(id_estudiante)).first()
+        # CORREGIDO: Usando estudiante_id aquí también
+        registro_notas = Notas2.query.filter_by(estudiante_id=str(id_estudiante)).first()
         if registro_notas and registro_notas.datos_formulario:
             try:
                 notas = json.loads(registro_notas.datos_formulario)
