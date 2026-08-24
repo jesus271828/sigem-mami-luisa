@@ -1677,93 +1677,86 @@ def menu_notas():
 
 import json
 
-import json
-
-import json
-
 @app.route('/notas1', methods=['GET', 'POST'])
 def notas1():
-    # Verificar si el usuario ha iniciado sesión
     if 'usuario' not in session:
         return redirect(url_for('login'))
-    
-    docente_nombre = session.get('usuario')
-    
-    # Conexión a tu base de datos (ajusta 'base.db' o tu conector real si usas otro)
-    import sqlite3
-    conn = sqlite3.connect('database.db')  # CAMBIA 'database.db' por el nombre de tu archivo de base de datos si es diferente
-    conn.row_factory = sqlite3.row_factory if hasattr(sqlite3, 'row_factory') else lambda cursor, row: {col[0]: row[idx] for idx, col in enumerate(cursor.description)}
-    cursor = conn.cursor()
 
-    # 1. SI EL USUARIO HACE CLIC EN "GUARDAR CAMBIOS" (POST)
-    if request.method == 'POST':
-        id_estudiante = request.form.get('id_estudiante')
-        docente_registra = request.form.get('docente_registra', docente_nombre)
-        
-        # Convertimos todo el formulario en un JSON o texto para guardarlo
-        datos_formulario = dict(request.form)
-        
-        # Aquí guardas en tu tabla de notas (asegúrate de incluir id_estudiante, datos y docente_registra)
-        # Ejemplo genérico de guardado (ajusta según tu estructura de tablas):
-        try:
-            cursor.execute("""
-                INSERT INTO notas1 (id_estudiante, datos, docente_registra) 
-                VALUES (?, ?, ?)
-                ON CONFLICT(id_estudiante) DO UPDATE SET 
-                    datos = excluded.datos, 
-                    docente_registra = excluded.docente_registra
-            """, (id_estudiante, json.dumps(datos_formulario), docente_registra))
-            conn.commit()
-        except Exception as e:
-            print("Error al guardar:", e)
+    rol_usuario = str(session.get('rol', '')).strip().lower()
+    curso_maestro = str(session.get('curso_asignado', '')).strip()
+    nombre_docente_actual = session.get('nombre_completo') or session.get('usuario', 'Docente Titular')
 
-        flash('¡Informe guardado con éxito!', 'success')
-        conn.close()
-        
-        # Redirige limpiamente para refrescar la vista y evitar bloqueos
-        return redirect(url_for('notas1', id_estudiante=id_estudiante))
+    # Recibir el tipo de orden ('nombre', 'orden' o 'grado')
+    tipo_orden = request.args.get('orden', 'nombre')
 
-    # 2. PETICIÓN GET: CARGAR LISTA DE ESTUDIANTES Y DATOS
-    # Oficina puede ver todos los de 1ro a 3ro; aquí cargamos los de Primer Grado Sección A para notas1:
-    try:
-        cursor.execute("SELECT id, nombres, apellidos FROM estudiantes WHERE grado LIKE '%Primer Grado%' OR grado = '1' ORDER BY apellidos")
-        lista_estudiantes = cursor.fetchall()
-        
-        # Si la consulta anterior no devuelve nada por cómo guardas los grados, prueba trayendo todos:
-        if not lista_estudiantes:
-            cursor.execute("SELECT id, nombres, apellidos FROM estudiantes ORDER BY apellidos")
-            lista_estudiantes = cursor.fetchall()
-    except Exception as e:
-        print("Error al listar estudiantes:", e)
-        lista_estudiantes = []
+    # Criterio de ordenamiento SQL dinámico
+    if tipo_orden == 'grado' and hasattr(Estudiante, 'grado'):
+        criterio_sql = [Estudiante.grado.asc(), Estudiante.nombres.asc()]
+    elif tipo_orden == 'orden' and hasattr(Estudiante, 'numero_orden'):
+        criterio_sql = [Estudiante.numero_orden.asc()]
+    else:
+        criterio_sql = [Estudiante.nombres.asc()]
 
-    id_estudiante = request.args.get('id_estudiante')
+    # Filtrar estudiantes según el rol (Oficina ve de 1ro a 3ro, maestro ve su curso)
+    if rol_usuario == 'admin' or rol_usuario == 'oficina':
+        lista_estudiantes = Estudiante.query.filter(
+            Estudiante.grado.in_(['1ro A', '1ro B', '2do A', '2do B', '3ro A', '3ro B', 'Primer Grado', 'Segundo Grado', 'Tercer Grado'])
+        ).order_by(*criterio_sql).all()
+        grado_activo = "Nivel Primario (1ro a 3ro)"
+    else:
+        lista_estudiantes = Estudiante.query.filter(
+            Estudiante.grado.ilike(f"%{curso_maestro}%")
+        ).order_by(*criterio_sql).all()
+        grado_activo = f"Grado: {curso_maestro}"
+
+    id_estudiante = request.args.get('id_estudiante') or request.form.get('id_estudiante')
     estudiante = None
     notas = {}
+    docente_guardado = nombre_docente_actual
 
-    if id_estudiante:
-        # Buscar los datos del estudiante seleccionado
-        cursor.execute("SELECT id, nombres, apellidos FROM estudiantes WHERE id = ?", (id_estudiante,))
-        estudiante = cursor.fetchone()
+    # 1. PROCESAR GUARDADO (POST)
+    if request.method == 'POST' and id_estudiante:
+        form_data = dict(request.form)
+        if 'id_estudiante' in form_data:
+            form_data.pop('id_estudiante')
+
+        form_data['_docente_registro'] = nombre_docente_actual
+
+        registro_notas = Notas1.query.filter_by(id_estudiante=str(id_estudiante)).first()
+
+        if registro_notas:
+            registro_notas.datos_formulario = json.dumps(form_data)
+        else:
+            nuevo_registro = Notas1(
+                id_estudiante=str(id_estudiante),
+                datos_formulario=json.dumps(form_data)
+            )
+            db.session.add(nuevo_registro)
+
+        db.session.commit()
+        flash('¡Informe guardado con éxito!', 'success')
         
-        # Cargar notas guardadas previamente si existen
-        try:
-            cursor.execute("SELECT datos FROM notas1 WHERE id_estudiante = ?", (id_estudiante,))
-            resultado = cursor.fetchone()
-            if resultado and resultado[0]:
-                notas = json.loads(resultado[0])
-        except Exception as e:
-            print("Error al cargar notas:", e)
+        # Redirigir para limpiar el formulario y evitar reenvíos duplicados
+        return redirect(url_for('notas1', id_estudiante=id_estudiante, orden=tipo_orden))
 
-    conn.close()
+    # 2. CARGAR DATOS DEL ESTUDIANTE SELECCIONADO (GET)
+    if id_estudiante:
+        estudiante = Estudiante.query.get(id_estudiante)
+        registro_notas = Notas1.query.filter_by(id_estudiante=str(id_estudiante)).first()
+        if registro_notas and registro_notas.datos_formulario:
+            try:
+                notas = json.loads(registro_notas.datos_formulario)
+                docente_guardado = notas.get('_docente_registro', nombre_docente_actual)
+            except:
+                notas = {}
 
-    return render_template(
-        'notas1.html',
-        lista_estudiantes=lista_estudiantes,
-        estudiante=estudiante,
-        notas=notas,
-        docente_nombre=docente_nombre
-    )
+    return render_template('notas1.html', 
+                           lista_estudiantes=lista_estudiantes, 
+                           estudiante=estudiante, 
+                           notas=notas,
+                           tipo_orden=tipo_orden,
+                           grado_activo=grado_activo,
+                           docente_nombre=docente_guardado)
 
 
 @app.route('/notas2', methods=['GET', 'POST'])
