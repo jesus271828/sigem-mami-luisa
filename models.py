@@ -55,13 +55,9 @@ class Notas1(db.Model):
     datos_formulario = db.Column(db.Text, nullable=True)
 
 
-# Modelo para la tabla nota2 (Corregido el nombre de la tabla foránea a 'estudiantes.id')
-class Nota2(db.Model):
-    __tablename__ = 'nota2'
+# Modelo para la tabla notas2 (Guardado eficiente en formato JSON)
+class Notas2(db.Model):
+    __tablename__ = 'notas2'
     id = db.Column(db.Integer, primary_key=True)
-    estudiante_id = db.Column(db.Integer, db.ForeignKey('estudiantes.id'), nullable=False)
-    asignatura_o_competencia = db.Column(db.String(100), nullable=False)
-    periodo_1 = db.Column(db.Float, default=0.0)
-    periodo_2 = db.Column(db.Float, default=0.0)
-    periodo_3 = db.Column(db.Float, default=0.0)
-    periodo_4 = db.Column(db.Float, default=0.0)
+    estudiante_id = db.Column(db.Integer, db.ForeignKey('estudiantes.id'), nullable=False, unique=True)
+    datos_formulario = db.Column(db.Text, nullable=True) # Guarda todo el diccionario de los inputs del formulario
