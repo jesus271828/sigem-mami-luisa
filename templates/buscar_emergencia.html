@@ -47,8 +47,10 @@
                     <div class="card card-custom p-4 border-start border-danger border-5">
                         <div class="row">
                             <div class="col-md-3 text-center">
-                                {% if estudiante.foto_estudiante_cedula_procesada %}
-                                    <img src="{% if estudiante.foto_estudiante_cedula_procesada.startswith(('http', 'data:', '/9j/', 'iVBOR', 'R0lGOD', 'UklGR')) %}{{ estudiante.foto_estudiante_cedula_procesada }}{% else %}{{ url_for('static', filename='uploads/' + estudiante.foto_estudiante_cedula_procesada) }}{% endif %}" 
+                                {% set foto_est = estudiante.foto_estudiante_cedula_procesada or estudiante.foto or estudiante.foto_estudiante %}
+                                
+                                {% if foto_est %}
+                                    <img src="{% if foto_est.startswith(('http', 'data:', '/9j/', 'iVBOR', 'R0lGOD', 'UklGR')) %}{{ foto_est }}{% else %}{{ url_for('static', filename='uploads/' + foto_est) }}{% endif %}" 
                                          class="rounded-circle img-thumbnail mb-2" style="width: 120px; height: 120px; object-fit: cover;" alt="Estudiante"
                                          onerror="this.onerror=null; this.src='https://via.placeholder.com/120?text=Sin+Foto';">
                                 {% else %}
