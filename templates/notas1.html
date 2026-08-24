@@ -124,24 +124,25 @@
         </div>
     </div>
 
-<!-- SELECTOR DE ESTUDIANTE -->
-<div class="selector-container">
-    <form method="GET" action="{{ url_for('notas1') }}" style="display: flex; align-items: center; width: 100%; gap: 10px; margin: 0;">
-        <label for="id_estudiante" style="font-weight: bold;">SELECCIONAR ESTUDIANTE:</label>
-        <select name="id_estudiante" id="id_estudiante" onchange="this.form.submit()" style="padding: 4px; font-size: 11px; flex-grow: 1; border: 1px solid #000; background: #fff;">
-            <option value="" disabled {% if not estudiante %}selected{% endif %}>-- Seleccione un estudiante --</option>
-            {% for est in lista_estudiantes %}
-                <option value="{{ est.id }}" {% if estudiante and estudiante.id == est.id %}selected{% endif %}>
-                    {{ loop.index }}. {{ est.nombres }} {{ est.apellidos }}
-                </option>
-            {% endfor %}
-        </select>
-    </form>
-</div>
+    <!-- SELECTOR DE ESTUDIANTE -->
+    <div class="selector-container">
+        <form method="GET" action="{{ url_for('notas1') }}" style="display: flex; align-items: center; width: 100%; gap: 10px; margin: 0;">
+            <label for="id_estudiante" style="font-weight: bold;">SELECCIONAR ESTUDIANTE:</label>
+            <select name="id_estudiante" id="id_estudiante" onchange="this.form.submit()" style="padding: 4px; font-size: 11px; flex-grow: 1; border: 1px solid #000; background: #fff;">
+                <option value="" disabled {% if not estudiante %}selected{% endif %}>-- Seleccione un estudiante --</option>
+                {% for est in lista_estudiantes %}
+                    <option value="{{ est.id }}" {% if estudiante and estudiante.id == est.id %}selected{% endif %}>
+                        {{ loop.index }}. {{ est.nombres }} {{ est.apellidos }}
+                    </option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
 
+    <!-- FORMULARIO PRINCIPAL DE DATOS Y NOTAS -->
     <form id="form-informe" method="POST" action="{{ url_for('notas1') }}">
         {% if estudiante %}
-        <input type="hidden" name="id_estudiante" value="{{ estudiante.id_estudiante }}">
+        <input type="hidden" name="id_estudiante" value="{{ estudiante.id }}">
         {% endif %}
 
         <!-- PARTE DELANTERA -->
@@ -167,29 +168,29 @@
             </div>
         </div>
 
-      <!-- TABLA DATOS ESTUDIANTE -->
-<table id="tabla-datos">
-    <tr>
-        <td class="bold" style="width: 8%;">NOMBRE(S):</td>
-        <td style="width: 27%; font-weight: bold; color: #1a73e8;">{{ estudiante.nombres if estudiante else '' }}</td>
-        <td class="bold" style="width: 9%;">APELLIDO(S):</td>
-        <td style="width: 27%; font-weight: bold; color: #1a73e8;">{{ estudiante.apellidos if estudiante else '' }}</td>
-        <td class="bold" style="width: 10%;">NO. DE ORDEN:</td>
-        <td style="width: 6%;">
-            {% if estudiante %}
-                {% set ns = namespace(index=0) %}
-                {% for est in lista_estudiantes %}
-                    {% if est.id == estudiante.id %}
-                        {% set ns.index = loop.index %}
+        <!-- TABLA DATOS ESTUDIANTE -->
+        <table id="tabla-datos">
+            <tr>
+                <td class="bold" style="width: 8%;">NOMBRE(S):</td>
+                <td style="width: 27%; font-weight: bold; color: #1a73e8;">{{ estudiante.nombres if estudiante else '' }}</td>
+                <td class="bold" style="width: 9%;">APELLIDO(S):</td>
+                <td style="width: 27%; font-weight: bold; color: #1a73e8;">{{ estudiante.apellidos if estudiante else '' }}</td>
+                <td class="bold" style="width: 10%;">NO. DE ORDEN:</td>
+                <td style="width: 6%;">
+                    {% if estudiante %}
+                        {% set ns = namespace(index=0) %}
+                        {% for est in lista_estudiantes %}
+                            {% if est.id == estudiante.id %}
+                                {% set ns.index = loop.index %}
+                            {% endif %}
+                        {% endfor %}
+                        {{ ns.index }}
                     {% endif %}
-                {% endfor %}
-                {{ ns.index }}
-            {% endif %}
-        </td>
-        <td class="bold" style="width: 5%;">ID ESTUDIANTE:</td>
-        <td style="width: 8%;">{{ estudiante.id if estudiante else '' }}</td>
-    </tr>
-</table>
+                </td>
+                <td class="bold" style="width: 5%;">ID ESTUDIANTE:</td>
+                <td style="width: 8%;">{{ estudiante.id if estudiante else '' }}</td>
+            </tr>
+        </table>
 
         <!-- TABLA CALIFICACIONES -->
         <table id="tabla-notas">
@@ -405,12 +406,6 @@
     </form>
 
     <script>
-        function cambiarEstudiante(select) {
-            if (select.value) {
-                window.location.href = "{{ url_for('notas1') }}?id_estudiante=" + select.value;
-            }
-        }
-
         function calcular(el) {
             let row = el.closest('tr');
             function aplicarRegla(num) {
