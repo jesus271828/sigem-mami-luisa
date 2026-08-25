@@ -1780,7 +1780,7 @@ def notas1():
 
 # --- RUTA PARA EL BOTÓN DE PDF ---
 @app.route('/notas1/pdf/<int:id_estudiante>')
-def descargar_pdf_notas(id_estudiante):
+def general_pdf_notas1(id_estudiante):
     if 'usuario' not in session:
         return redirect(url_for('login'))
         
