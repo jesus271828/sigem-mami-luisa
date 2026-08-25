@@ -442,13 +442,16 @@
     </form>
 
     <script>
-        function calcular(el) {
+function calcular(el) {
             let row = el.closest('tr');
+            
             function aplicarRegla(num) {
                 let entero = Math.floor(num);
                 let decimal = num - entero;
-                return (decimal > 0.5) ? (entero + 1) : entero;
+                // Cambiamos '>' por '>=' para que el .5 se redondee hacia arriba
+                return (decimal >= 0.5) ? (entero + 1) : entero;
             }
+
             function promediar(clase) {
                 let inputs = row.querySelectorAll('.' + clase + '-p');
                 let suma = 0, count = 0;
@@ -456,14 +459,18 @@
                 if(count > 0) { row.querySelector('.' + clase + '-res').value = aplicarRegla(suma / count); } 
                 else { row.querySelector('.' + clase + '-res').value = ""; }
             }
+
             promediar('c1'); promediar('c2'); promediar('c3');
             let hayDatosC3 = Array.from(row.querySelectorAll('.c3-p')).some(i => i.value !== "");
+            
             if (hayDatosC3) {
                 let c1 = parseFloat(row.querySelector('.c1-res').value) || 0;
                 let c2 = parseFloat(row.querySelector('.c2-res').value) || 0;
                 let c3 = parseFloat(row.querySelector('.c3-res').value) || 0;
                 row.querySelector('.area-res').value = aplicarRegla((c1 + c2 + c3) / 3);
-            } else { row.querySelector('.area-res').value = ""; }
+            } else { 
+                row.querySelector('.area-res').value = ""; 
+            }
         }
 
         function limpiarFormulario() {
