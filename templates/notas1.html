@@ -133,7 +133,8 @@
 </head>
 <body>
 
-<!-- BARRA DE ACCIÓN SUPERIOR -->
+    <!-- BARRA DE ACCIÓN SUPERIOR (Se oculta en modo PDF) -->
+    {% if not modo_pdf %}
     <div class="action-bar">
         <div class="left-group">
             <a href="{{ url_for('menu_notas') }}" class="btn btn-menu">⬅ Salir al Menú de Notas</a>
@@ -141,17 +142,17 @@
         </div>
         <div class="right-group">
             <button type="submit" form="form-informe" class="btn btn-save">💾 Guardar Cambios</button>
-            
-            <!-- Botón de PDF actualizado para apuntar a una ruta de Flask con el ID del estudiante -->
             {% if estudiante %}
-                <a href="{{ url_for('general_pdf_notas1', id_estudiante=estudiante.id) }}" class="btn btn-pdf" target="_blank">📥 Descargar PDF</a>
+                <a href="{{ url_for('descargar_pdf_notas', id_estudiante=estudiante.id) }}" class="btn btn-pdf" target="_blank">📥 Generar PDF</a>
             {% else %}
-                <button type="button" class="btn btn-pdf" onclick="window.print()">🖨️ Imprimir / PDF</button>
+                <button type="button" class="btn btn-pdf" onclick="window.print()">🖨️ Generar PDF</button>
             {% endif %}
         </div>
     </div>
+    {% endif %}
 
     <!-- MENSAJES FLASH DE ÉXITO -->
+    {% if not modo_pdf %}
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
@@ -162,8 +163,10 @@
             {% endfor %}
         {% endif %}
     {% endwith %}
+    {% endif %}
 
-    <!-- SELECTOR DE ESTUDIANTE -->
+    <!-- SELECTOR DE ESTUDIANTE (Se oculta en modo PDF) -->
+    {% if not modo_pdf %}
     <div class="selector-container">
         <form method="GET" action="{{ url_for('notas1') }}" style="display: flex; align-items: center; width: 100%; gap: 10px; margin: 0;">
             <label for="id_estudiante" style="font-weight: bold;">SELECCIONAR ESTUDIANTE:</label>
@@ -177,6 +180,7 @@
             </select>
         </form>
     </div>
+    {% endif %}
 
     <!-- FORMULARIO PRINCIPAL DE DATOS Y NOTAS -->
     <form id="form-informe" method="POST" action="{{ url_for('notas1') }}">
