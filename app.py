@@ -1676,7 +1676,9 @@ def menu_notas():
     return render_template('menu_notas.html')
 
 import json
+from flask import render_template, request, redirect, url_for, session, flash
 
+# --- RUTA PRINCIPAL DE NOTAS 1 (GET Y POST) ---
 @app.route('/notas1', methods=['GET', 'POST'])
 def notas1():
     if 'usuario' not in session:
@@ -1774,6 +1776,34 @@ def notas1():
                            tipo_orden=tipo_orden,
                            grado_activo=grado_activo,
                            docente_nombre=docente_guardado)
+
+
+# --- RUTA PARA EL BOTÓN DE PDF ---
+@app.route('/notas1/pdf/<int:id_estudiante>')
+def descargar_pdf_notas(id_estudiante):
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+        
+    estudiante = Estudiante.query.get_or_404(id_estudiante)
+    
+    # Buscamos las notas guardadas de este estudiante en la base de datos
+    registro_notas = Notas1.query.filter_by(id_estudiante=str(id_estudiante)).first()
+    notas = {}
+    docente_guardado = session.get('nombre_completo', 'Docente Titular')
+    
+    if registro_notas and registro_notas.datos_formulario:
+        try:
+            notas = json.loads(registro_notas.datos_formulario)
+            docente_guardado = notas.get('_docente_registro', docente_guardado)
+        except:
+            notas = {}
+
+    return render_template('notas1.html',
+                           estudiante=estudiante,
+                           lista_estudiantes=[estudiante],
+                           notas=notas,
+                           docente_nombre=docente_guardado,
+                           modo_pdf=True)
 
 
 import json
