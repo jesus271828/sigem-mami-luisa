@@ -1780,7 +1780,7 @@ def notas1():
                            docente_nombre=docente_guardado)
 
 
-# --- RUTA PARA EL BOTÓN DE PDF (USANDO XHTML2PDF) ---
+# --- RUTA PARA EL BOTÓN DE PDF (USANDO XHTML2PDF CORREGIDO) ---
 @app.route('/notas1/pdf/<int:id_estudiante>')
 def general_pdf_notas1(id_estudiante):
     if 'usuario' not in session:
@@ -1788,7 +1788,6 @@ def general_pdf_notas1(id_estudiante):
         
     estudiante = Estudiante.query.get_or_404(id_estudiante)
     
-    # Buscamos las notas guardadas de este estudiante en la base de datos
     registro_notas = Notas1.query.filter_by(id_estudiante=str(id_estudiante)).first()
     notas = {}
     docente_guardado = session.get('nombre_completo', 'Docente Titular')
@@ -1801,14 +1800,44 @@ def general_pdf_notas1(id_estudiante):
             notas = {}
 
     # Renderizamos la plantilla HTML pasándole modo_pdf=True
-    html_renderizado = render_template('notas1.html',
-                                       estudiante=estudiante,
-                                       lista_estudiantes=[estudiante],
-                                       notas=notas,
-                                       docente_nombre=docente_guardado,
-                                       modo_pdf=True)
+    html_crudo = render_template('notas1.html',
+                                 estudiante=estudiante,
+                                 lista_estudiantes=[estudiante],
+                                 notas=notas,
+                                 docente_nombre=docente_guardado,
+                                 modo_pdf=True)
 
-    # Convertimos el HTML a PDF usando xhtml2pdf (pisa)
+    # Forzamos un contenedor estricto que evite anchos negativos en ReportLab
+    html_renderizado = f"""
+    <html>
+    <head>
+    <meta charset="utf-8">
+    <style>
+        @page {{
+            size: letter;
+            margin: 1cm;
+        }}
+        body {{
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 10pt;
+        }}
+        table {{
+            width: 100% !important;
+            max-width: 100% !important;
+            table-layout: fixed;
+        }}
+        td, th {{
+            word-wrap: break-word;
+            overflow: hidden;
+        }}
+    </style>
+    </head>
+    <body>
+    {html_crudo}
+    </body>
+    </html>
+    """
+
     pdf_buffer = BytesIO()
     pisa_status = pisa.CreatePDF(
         html_renderizado.encode('utf-8'), 
@@ -1817,9 +1846,8 @@ def general_pdf_notas1(id_estudiante):
     )
 
     if pisa_status.err:
-        return "Error al generar el PDF debido al formato de las tablas", 500
+        return f"Error al generar el PDF (pisa_status.err): {pisa_status.err}", 500
 
-    # Creamos la respuesta para forzar el visor nativo de PDF en el navegador
     response = make_response(pdf_buffer.getvalue())
     response.headers['Content-Type'] = 'application/pdf'
     response.headers['Content-Disposition'] = f'inline; filename=informe_notas_{estudiante.nombres}.pdf'
