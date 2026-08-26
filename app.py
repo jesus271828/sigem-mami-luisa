@@ -1826,20 +1826,6 @@ def general_pdf_notas1(id_estudiante):
     
     return response
 
-    # Convertimos el HTML a PDF usando xhtml2pdf (pisa)
-    pdf_buffer = BytesIO()
-    pisa_status = pisa.CreatePDF(BytesIO(html_renderizado.encode('utf-8')), dest=pdf_buffer)
-
-    if pisa_status.err:
-        return "Error al generar el PDF", 500
-
-    # Creamos la respuesta para forzar el visor nativo de PDF en el navegador
-    response = make_response(pdf_buffer.getvalue())
-    response.headers['Content-Type'] = 'application/pdf'
-    response.headers['Content-Disposition'] = f'inline; filename=informe_notas_{estudiante.nombres}.pdf'
-    
-    return response
-
 
 import json
 
