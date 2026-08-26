@@ -1676,7 +1676,9 @@ def menu_notas():
     return render_template('menu_notas.html')
 
 import json
-from flask import render_template, request, redirect, url_for, session, flash
+from io import BytesIO
+from xhtml2pdf import pisa
+from flask import render_template, request, redirect, url_for, session, flash, make_response
 
 # --- RUTA PRINCIPAL DE NOTAS 1 (GET Y POST) ---
 @app.route('/notas1', methods=['GET', 'POST'])
@@ -1778,7 +1780,7 @@ def notas1():
                            docente_nombre=docente_guardado)
 
 
-# --- RUTA PARA EL BOTÓN DE PDF ---
+# --- RUTA PARA EL BOTÓN DE PDF (USANDO XHTML2PDF) ---
 @app.route('/notas1/pdf/<int:id_estudiante>')
 def general_pdf_notas1(id_estudiante):
     if 'usuario' not in session:
@@ -1798,12 +1800,27 @@ def general_pdf_notas1(id_estudiante):
         except:
             notas = {}
 
-    return render_template('notas1.html',
-                           estudiante=estudiante,
-                           lista_estudiantes=[estudiante],
-                           notas=notas,
-                           docente_nombre=docente_guardado,
-                           modo_pdf=True)
+    # Renderizamos la plantilla HTML pasándole modo_pdf=True
+    html_renderizado = render_template('notas1.html',
+                                       estudiante=estudiante,
+                                       lista_estudiantes=[estudiante],
+                                       notas=notas,
+                                       docente_nombre=docente_guardado,
+                                       modo_pdf=True)
+
+    # Convertimos el HTML a PDF usando xhtml2pdf (pisa)
+    pdf_buffer = BytesIO()
+    pisa_status = pisa.CreatePDF(BytesIO(html_renderizado.encode('utf-8')), dest=pdf_buffer)
+
+    if pisa_status.err:
+        return "Error al generar el PDF", 500
+
+    # Creamos la respuesta para forzar el visor nativo de PDF en el navegador
+    response = make_response(pdf_buffer.getvalue())
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = f'inline; filename=informe_notas_{estudiante.nombres}.pdf'
+    
+    return response
 
 
 import json
