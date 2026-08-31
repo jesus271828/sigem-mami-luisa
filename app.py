@@ -1528,7 +1528,8 @@ def descargar_reporte_ausencias():
 
         conn = get_db_connection()
         try:
-            existe = conn.execute('SELECT identificacion FROM asistencia_personal WHERE fecha = %s', (fecha,)).fetchone()
+            # Usamos 'id' ya que así se llama la clave primaria en la tabla asistencia_personal
+            existe = conn.execute('SELECT id FROM asistencia_personal WHERE fecha = %s', (fecha,)).fetchone()
             if existe:
                 conn.execute('''
                     UPDATE asistencia_personal 
