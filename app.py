@@ -1366,7 +1366,7 @@ def buscar_emergencia():
                 
                 if criterio in nombres_est or criterio in apellidos_est or criterio in id_est or criterio_limpio in str(f_dict.get('id_estudiante') or '').lower():
                     
-                    # Función robusta para limpiar rutas de fotos y evitar valores NaN o basura
+                    # Función para limpiar rutas o strings vacíos/basura de las fotos
                     def limpiar_foto(raw_path):
                         if not raw_path or str(raw_path).lower() in ['none', 'nan', '', 'null', 'undefined', 'n/a']:
                             return ""
@@ -1375,29 +1375,17 @@ def buscar_emergencia():
                             return val
                         return os.path.basename(val.replace('\\', '/'))
 
-                    # 1. Foto del estudiante
-                    raw_est_foto = (
-                        f_dict.get('foto_estudiante') or 
-                        f_dict.get('foto_estudiante_cedula') or 
-                        f_dict.get('foto') or 
-                        f_dict.get('foto_cedula_estudiante')
-                    )
-                    f_dict['foto_estudiante'] = limpiar_foto(raw_est_foto)
-
-                    # 2. Fotos de padres y tutor
+                    # Procesamiento exacto con tus nombres de variables en la base de datos
+                    f_dict['foto_estudiante_cedula'] = limpiar_foto(f_dict.get('foto_estudiante_cedula'))
                     f_dict['foto_padre_cedula'] = limpiar_foto(f_dict.get('foto_padre_cedula'))
                     f_dict['foto_madre_cedula'] = limpiar_foto(f_dict.get('foto_madre_cedula'))
                     f_dict['foto_tutor_cedula'] = limpiar_foto(f_dict.get('foto_tutor_cedula'))
 
-                    # 3. Fotos de autorizados (1 al 5)
+                    # Procesar autorizados del 1 al 5
                     for i in range(1, 6):
-                        foto_aut = limpiar_foto(f_dict.get(f'foto_aut_cedula_{i}'))
-                        # Si no hay foto específica del autorizado 1, hereda la del padre/madre por defecto si aplica
-                        if not foto_aut and i == 1:
-                            foto_aut = f_dict['foto_padre_cedula'] or f_dict['foto_madre_cedula']
-                        f_dict[f'foto_aut_cedula_{i}'] = foto_aut
+                        f_dict[f'foto_aut_cedula_{i}'] = limpiar_foto(f_dict.get(f'foto_aut_cedula_{i}'))
 
-                    # Limpiar textos tipo 'NaN' en campos de texto de los tutores o autorizados para que no se vean feos en pantalla
+                    # Limpiar campos de texto nulos o NaN
                     for k, v in f_dict.items():
                         if v is None or str(v).lower() in ['nan', 'none', 'null']:
                             f_dict[k] = ''
