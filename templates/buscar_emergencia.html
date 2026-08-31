@@ -115,26 +115,43 @@
                     <h3 class="mb-3 mt-4">Personas Autorizadas, Padres y Tutores</h3>
                     <div class="row row-cols-1 row-cols-md-3 g-4">
 
+                        {% set p1 = 'Autorizado (' ~ (estudiante.aut_parentesco_1 or 'N/A') ~ ')' %}
+                        {% set p2 = 'Autorizado (' ~ (estudiante.aut_parentesco_2 or 'N/A') ~ ')' %}
+                        {% set p3 = 'Autorizado (' ~ (estudiante.aut_parentesco_3 or 'N/A') ~ ')' %}
+
                         {% set familiares = [
-                            {'nombre': estudiante.padre_nombre, 'cedula': estudiante.padre_cedula, 'tel': estudiante.padre_tel_personal, 'foto_proc': estudiante.foto_padre_cedula_procesada, 'tipo': 'Padre', 'badge': 'bg-secondary'},
-                            {'nombre': estudiante.madre_nombre, 'cedula': estudiante.madre_cedula, 'tel': estudiante.madre_tel_personal, 'foto_proc': estudiante.foto_madre_cedula_procesada, 'tipo': 'Madre', 'badge': 'bg-secondary'},
-                            {'nombre': estudiante.tutor_nombre, 'cedula': estudiante.tutor_cedula, 'tel': estudiante.tutor_tel_personal, 'foto_proc': estudiante.foto_tutor_cedula_procesada, 'tipo': 'Tutor Legal', 'badge': 'bg-info'},
-                            {'nombre': estudiante.aut_nombre_1, 'cedula': estudiante.aut_cedula_1, 'tel': estudiante.aut_tel_1, 'foto_proc': estudiante.foto_aut_cedula_1_procesada, 'tipo': 'Autorizado (' + (estudiante.aut_parentesco_1 or 'N/A') + ')', 'badge': 'bg-warning text-dark'},
-                            {'nombre': estudiante.aut_nombre_2, 'cedula': estudiante.aut_cedula_2, 'tel': estudiante.aut_tel_2, 'foto_proc': estudiante.foto_aut_cedula_2_procesada, 'tipo': 'Autorizado (' + (estudiante.aut_parentesco_2 or 'N/A') + ')', 'badge': 'bg-warning text-dark'},
-                            {'nombre': estudiante.aut_nombre_3, 'cedula': estudiante.aut_cedula_3, 'tel': estudiante.aut_tel_3, 'foto_proc': estudiante.foto_aut_cedula_3_procesada, 'tipo': 'Autorizado (' + (estudiante.aut_parentesco_3 or 'N/A') + ')', 'badge': 'bg-warning text-dark'}
+                            {'nombre': estudiante.padre_nombre, 'cedula': estudiante.padre_cedula, 'tel': estudiante.padre_tel_personal, 'foto_proc': estudiante.foto_padre_cedula_procesada or estudiante.foto_padre, 'tipo': 'Padre', 'badge': 'bg-secondary'},
+                            {'nombre': estudiante.madre_nombre, 'cedula': estudiante.madre_cedula, 'tel': estudiante.madre_tel_personal, 'foto_proc': estudiante.foto_madre_cedula_procesada or estudiante.foto_madre, 'tipo': 'Madre', 'badge': 'bg-secondary'},
+                            {'nombre': estudiante.tutor_nombre, 'cedula': estudiante.tutor_cedula, 'tel': estudiante.tutor_tel_personal, 'foto_proc': estudiante.foto_tutor_cedula_procesada or estudiante.foto_tutor, 'tipo': 'Tutor Legal', 'badge': 'bg-info'},
+                            {'nombre': estudiante.aut_nombre_1, 'cedula': estudiante.aut_cedula_1, 'tel': estudiante.aut_tel_1, 'foto_proc': estudiante.foto_aut_cedula_1_procesada or estudiante.foto_aut_1, 'tipo': p1, 'badge': 'bg-warning text-dark'},
+                            {'nombre': estudiante.aut_nombre_2, 'cedula': estudiante.aut_cedula_2, 'tel': estudiante.aut_tel_2, 'foto_proc': estudiante.foto_aut_cedula_2_procesada or estudiante.foto_aut_2, 'tipo': p2, 'badge': 'bg-warning text-dark'},
+                            {'nombre': estudiante.aut_nombre_3, 'cedula': estudiante.aut_cedula_3, 'tel': estudiante.aut_tel_3, 'foto_proc': estudiante.foto_aut_cedula_3_procesada or estudiante.foto_aut_3, 'tipo': p3, 'badge': 'bg-warning text-dark'}
                         ] %}
 
                         {% for fam in familiares %}
-                            {% if fam.nombre %}
+                            {% if fam.nombre and fam.nombre != 'None' %}
                             <div class="col">
                                 <div class="card card-custom h-100 text-center p-3">
                                     <div class="mx-auto mb-2">
-                                        {% if fam.foto_proc %}
-                                            <img src="{% if 'http' in fam.foto_proc %}{{ fam.foto_proc }}{% elif 'data:' in fam.foto_proc %}{{ fam.foto_proc }}{% else %}{{ url_for('static', filename='uploads/' + fam.foto_proc) }}{% endif %}" 
-                                                 class="foto-autorizado" alt="{{ fam.tipo }}"
-                                                 onerror="this.onerror=null; this.src='https://via.placeholder.com/100?text=Sin+Foto';">
+                                        {% set foto_f = fam.foto_proc %}
+                                        
+                                        {% if foto_f and foto_f != 'None' and foto_f != '' %}
+                                            {% if 'http' in foto_f %}
+                                                <img src="{{ foto_f }}" class="foto-autorizado mb-2" alt="{{ fam.tipo }}">
+                                            {% elif 'data:' in foto_f %}
+                                                <img src="{{ foto_f }}" class="foto-autorizado mb-2" alt="{{ fam.tipo }}">
+                                            {% elif '/9j/' in foto_f %}
+                                                <img src="data:image/jpeg;base64,{{ foto_f }}" class="foto-autorizado mb-2" alt="{{ fam.tipo }}">
+                                            {% elif 'iVBOR' in foto_f %}
+                                                <img src="data:image/jpeg;base64,{{ foto_f }}" class="foto-autorizado mb-2" alt="{{ fam.tipo }}">
+                                            {% else %}
+                                                <img src="{{ url_for('static', filename=foto_f) }}" class="foto-autorizado mb-2" alt="{{ fam.tipo }}"
+                                                     onerror="this.onerror=null; this.src='{{ url_for('static', filename='uploads/' + foto_f) }}';">
+                                            {% endif %}
                                         {% else %}
-                                            <div class="foto-autorizado bg-light d-flex align-items-center justify-content-center mx-auto"><i class="fas fa-user fa-2x text-muted"></i></div>
+                                            <div class="foto-autorizado bg-light d-flex align-items-center justify-content-center mx-auto mb-2">
+                                                <i class="fas fa-user fa-2x text-muted"></i>
+                                            </div>
                                         {% endif %}
                                     </div>
                                     <h5>{{ fam.nombre }}</h5>
