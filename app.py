@@ -1408,6 +1408,7 @@ def buscar_emergencia():
 
 
 from datetime import datetime
+from flask import render_template, request, redirect, url_for, session
 
 @app.route('/asistencia', methods=['GET', 'POST'])
 def asistencia():
@@ -1432,7 +1433,7 @@ def asistencia():
         asistencia_dict = {}
 
         if grado_seleccionado:
-            # Consultamos sin la columna matricula para evitar el error 500
+            # Consultamos los estudiantes del grado seleccionado
             estudiantes_db = conn.execute(
                 "SELECT id, nombres, apellidos FROM estudiantes WHERE grado = %s ORDER BY apellidos ASC", 
                 (grado_seleccionado,)
@@ -1483,9 +1484,9 @@ def guardar_asistencia():
                 id_estudiante = key.split('_')[1]
                 estado = value
                 
-                # Verificar si ya existe un registro para actualizarlo o insertarlo
+                # Verificar si ya existe un registro usando 'identificacion' (como se llama en tu tabla de Supabase)
                 existing = conn.execute(
-                    "SELECT id FROM asistencia WHERE id_estudiante = %s AND fecha = %s",
+                    "SELECT identificacion FROM asistencia WHERE id_estudiante = %s AND fecha = %s",
                     (id_estudiante, fecha)
                 ).fetchone()
                 
@@ -1499,6 +1500,9 @@ def guardar_asistencia():
                         "INSERT INTO asistencia (id_estudiante, grado, fecha, estado) VALUES (%s, %s, %s, %s)",
                         (id_estudiante, grado, fecha, estado)
                     )
+        
+        # Guardar los cambios permanentemente en la base de datos
+        conn.commit()
         flash('Asistencia guardada correctamente.', 'success')
     except Exception as e:
         flash(f'Error al guardar la asistencia: {e}', 'danger')
@@ -1507,15 +1511,12 @@ def guardar_asistencia():
         
     return redirect(url_for('asistencia', grado=grado, fecha=fecha))
 
-from datetime import datetime
-from flask import render_template, request, redirect, url_for, session
-
 @app.route('/descargar_reporte_ausencias', methods=['GET', 'POST'])
 def descargar_reporte_ausencias():
     if 'usuario' not in session:
         return redirect(url_for('login'))
 
-    # 1. Si el formulario envía los datos por POST, los guardamos en la base de datos
+    # Si el formulario envía los datos por POST, los guardamos en la base de datos
     if request.method == 'POST':
         fecha = request.form.get('fecha')
         adm_presente = request.form.get('adm_presente') or 0
@@ -1527,7 +1528,7 @@ def descargar_reporte_ausencias():
 
         conn = get_db_connection()
         try:
-            existe = conn.execute('SELECT id FROM asistencia_personal WHERE fecha = %s', (fecha,)).fetchone()
+            existe = conn.execute('SELECT identificacion FROM asistencia_personal WHERE fecha = %s', (fecha,)).fetchone()
             if existe:
                 conn.execute('''
                     UPDATE asistencia_personal 
@@ -1541,21 +1542,21 @@ def descargar_reporte_ausencias():
                     INSERT INTO asistencia_personal (fecha, adm_presente, adm_ausentes, aux_presente, aux_ausentes, doc_presente, doc_ausentes) 
                     VALUES (%s, %s, %s, %s, %s, %s, %s)
                 ''', (fecha, adm_presente, adm_ausentes, aux_presente, aux_ausentes, doc_presente, doc_ausentes))
+            
+            conn.commit()
         finally:
             conn.close()
         
         return '', 200
 
-    # 2. Si es GET, consultamos los datos guardados para mostrarlos en tu HTML de reporte
+    # Si es GET, consultamos los datos guardados para mostrarlos en el reporte
     fecha_reporte = request.args.get('fecha', datetime.now().strftime('%Y-%m-%d'))
     
     conn = get_db_connection()
     try:
-        # Obtenemos los datos del personal ingresados ese día
         personal_db = conn.execute('SELECT * FROM asistencia_personal WHERE fecha = %s', (fecha_reporte,)).fetchone()
         meta = dict(personal_db) if personal_db else {}
 
-        # Opcional: Si en tu HTML de reporte también muestras los estudiantes ausentes de ese día
         estudiantes_ausentes = conn.execute('''
             SELECT e.nombres, e.apellidos, a.grado, a.estado 
             FROM asistencia a 
@@ -1569,7 +1570,6 @@ def descargar_reporte_ausencias():
     finally:
         conn.close()
 
-    # Renderiza tu propia plantilla HTML de reporte pasando las variables correspondientes
     return render_template('control_asistencia_pdf.html', 
                            fecha=fecha_reporte, 
                            meta=meta, 
