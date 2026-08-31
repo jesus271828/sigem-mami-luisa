@@ -1534,9 +1534,13 @@ def descargar_reporte_ausencias():
     # Buscas los datos guardados del personal y de estudiantes ausentes para esa fecha
     # ...
     
-    # Renderizas la plantilla del PDF que diseñamos antes
-    return render_template('control_asistencia_pdf.html', fecha=fecha_consulta, meta=meta_datos, ausentes=lista_ausentes)
-                           ausentes=ausentes)
+    # Renderizas la plantilla del PDF con la tabulación correcta (4 espacios)
+    return render_template(
+        'control_asistencia_pdf.html', 
+        fecha=fecha_consulta, 
+        meta=meta_datos, 
+        ausentes=ausentes
+    )
 
 @app.route('/generar_pdf/<path:id_estudiante>')
 def generar_pdf(id_estudiante):
