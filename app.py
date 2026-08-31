@@ -1484,9 +1484,9 @@ def guardar_asistencia():
                 id_estudiante = key.split('_')[1]
                 estado = value
                 
-                # Verificar si ya existe un registro usando 'identificacion' (como se llama en tu tabla de Supabase)
+                # Usamos 'id' en lugar de 'identificacion' porque así se llama en la tabla asistencia
                 existing = conn.execute(
-                    "SELECT identificacion FROM asistencia WHERE id_estudiante = %s AND fecha = %s",
+                    "SELECT id FROM asistencia WHERE id_estudiante = %s AND fecha = %s",
                     (id_estudiante, fecha)
                 ).fetchone()
                 
