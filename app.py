@@ -1587,6 +1587,7 @@ def asistencia():
     finally:
         conn.close()
 
+    # <--- ¡IMPORTANTE! Esto debe estar indentado dentro de la función 'asistencia'
     return render_template('asistencia.html',
                            lista_grados=lista_grados,
                            grado_seleccionado=grado_seleccionado,
@@ -1594,7 +1595,8 @@ def asistencia():
                            estudiantes=estudiantes,
                            asistencia_dict=asistencia_dict,
                            resumen_grados=resumen_grados,
-                           totales=totales_inicial,  # Enviamos el resumen global de inicial para la tabla inferior
+                           totales_grales=totales_inicial,
+                           totales=totales_inicial,
                            meta=meta)
 
 @app.route('/guardar_asistencia', methods=['POST'])
