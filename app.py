@@ -1511,36 +1511,120 @@ def guardar_asistencia():
         
     return redirect(url_for('asistencia', grado=grado, fecha=fecha))
 
-@app.route('/descargar_reporte_ausencias', methods=['GET', 'POST'])
-def descargar_reporte_ausencias():
-    # 1. Si el botón rojo hace un POST (viene con los datos del formulario de la tabla)
-    if request.method == 'POST':
-        fecha = request.form.get('fecha')
-        adm_presente = request.form.get('adm_presente')
-        adm_ausentes = request.form.get('adm_ausentes')
-        aux_presente = request.form.get('aux_presente')
-        aux_ausentes = request.form.get('aux_ausentes')
-        doc_presente = request.form.get('doc_presente')
-        doc_ausentes = request.form.get('doc_ausentes')
-        
-        # Aquí guardas o actualizas los datos en tu base de datos para esa fecha...
-        # (ej. guardando en la tabla de metadatos o asistencia del personal)
-        
-        return "Guardado exitosamente", 200
+from flask import render_template, request, make_response
+from weasyprint import HTML
+import datetime
 
-    # 2. Si el navegador hace un GET (cuando se abre la pestaña del PDF con ?fecha=...)
-    fecha_consulta = request.args.get('fecha')
+@app.route('/descargar_reporte_ausencias', methods=['POST', 'GET'])
+def descargar_reporte_ausencias():
+    fecha_str = request.form.get('fecha') or request.args.get('fecha') or datetime.date.today().strftime('%Y-%m-%d')
     
-    # Buscas los datos guardados del personal y de estudiantes ausentes para esa fecha
-    # ...
+    # 1. Recuperar o guardar los datos del personal enviados desde el formulario
+    meta = RegistroPersonal.query.filter_by(fecha=fecha_str).first()
+    if request.method == 'POST':
+        adm_p = request.form.get('adm_presente', type=int) or 0
+        adm_a = request.form.get('adm_ausentes', '')
+        aux_p = request.form.get('aux_presente', type=int) or 0
+        aux_a = request.form.get('aux_ausentes', '')
+        doc_p = request.form.get('doc_presente', type=int) or 0
+        doc_a = request.form.get('doc_ausentes', '')
+        
+        if not meta:
+            meta = RegistroPersonal(fecha=fecha_str)
+            db.session.add(meta)
+        
+        meta.adm_presente = adm_p
+        meta.adm_ausentes = adm_a
+        meta.aux_presente = aux_p
+        meta.aux_ausentes = aux_a
+        meta.doc_presente = doc_p
+        meta.doc_ausentes = doc_a
+        db.session.commit()
+        
+        if request.args.get('format') != 'pdf':
+            return "OK", 200
+
+    # 2. Obtener datos estadísticos de estudiantes de la base de datos por grado
+    # (Ejemplo para los grados de primaria: 1ro, 2do, 3ro, 4to, 5to, 6to)
+    grados_nombres = ['1ro.', '2do.', '3ro.', '4to.', '5to.', '6to.']
+    grados_primaria = []
     
-    # Renderizas la plantilla del PDF con la tabulación correcta (4 espacios)
-    return render_template(
-        'control_asistencia_pdf.html', 
-        fecha=fecha_consulta, 
-        meta=meta_datos, 
-        ausentes=ausentes
+    tot_mat_ninos = 0
+    tot_mat_ninas = 0
+    tot_mat_total = 0
+    tot_asis_ninos = 0
+    tot_asis_ninas = 0
+    tot_asis_total = 0
+
+    for g in grados_nombres:
+        estudiantes_grado = Estudiante.query.filter_by(grado=g).all()
+        mat_ninos = sum(1 for e in estudiantes_grado if e.sexo == 'Masculino')
+        mat_ninas = sum(1 for e in estudiantes_grado if e.sexo == 'Femenino')
+        mat_total = len(estudiantes_grado)
+        
+        # Consultar asistencia guardada para este grado en la fecha
+        asistencias_grado = Asistencia.query.join(Estudiante).filter(
+            Estudiante.grado == g, Asistencia.fecha == fecha_str
+        ).all()
+        
+        asis_ninos = sum(1 for a in asistencias_grado if a.estudiante.sexo == 'Masculino' and a.estado == 'Presente')
+        asis_ninas = sum(1 for a in asistencias_grado if a.estudiante.sexo == 'Femenino' and a.estado == 'Presente')
+        asis_total = asis_ninos + asis_ninas
+        
+        ausentes_lista = ", ".join([f"{a.estudiante.apellidos}" for a in asistencias_grado if a.estado in ['Ausente', 'Tarde']])
+
+        grados_primaria.append({
+            'nombre': g,
+            'mat_ninos': mat_ninos,
+            'mat_ninas_f': mat_ninas,
+            'mat_total': mat_total,
+            'asis_ninos': asis_ninos if asistencias_grado else '',
+            'asis_ninas': asis_ninas if asistencias_grado else '',
+            'asis_total': asis_total if asistencias_grado else '',
+            'ausentes': ausentes_lista
+        })
+        
+        tot_mat_ninos += mat_ninos
+        tot_mat_ninas += mat_ninas
+        tot_mat_total += mat_total
+
+    # Nivel Inicial (L2)
+    estudiantes_inicial = Estudiante.query.filter(Estudiante.grado.ilike('%inicial%')).all()
+    ini_mat_ninos = sum(1 for e in estudiantes_inicial if e.sexo == 'Masculino')
+    ini_mat_ninas = sum(1 for e in estudiantes_inicial if e.sexo == 'Femenino')
+    ini_mat_total = len(estudiantes_inicial)
+
+    # Renderizar plantilla HTML para el PDF
+    rendered_html = render_template('control_asistencia_pdf.html',
+        anio_escolar="2026-2027",
+        fecha_formateada=fecha_str,
+        dia_semana="Viernes", # Puedes calcularlo dinámicamente con datetime si deseas
+        grados_primaria=grados_primaria,
+        total_primaria_mat_ninos=tot_mat_ninos,
+        total_primaria_mat_ninas_f=tot_mat_ninas,
+        total_primaria_mat_total=tot_mat_total,
+        total_primaria_asis_ninos="",
+        total_primaria_asis_ninas="",
+        total_primaria_asis_total="",
+        inicial_mat_ninos=ini_mat_ninos,
+        inicial_mat_ninas_f=ini_mat_ninas,
+        inicial_mat_total=ini_mat_total,
+        inicial_asis_ninos="",
+        inicial_asis_ninas_f="",
+        inicial_asis_total="",
+        personal_adm_contratado=10,
+        personal_doc_contratado=9,
+        total_personal_presente=(meta.adm_presente or 0) + (meta.aux_presente or 0) + (meta.doc_presente or 0) if meta else 0,
+        meta=meta
     )
+
+    # Generar PDF con WeasyPrint
+    pdf_bytes = HTML(string=rendered_html).write_pdf()
+    
+    response = make_response(pdf_bytes)
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = f'inline; filename=Control_Asistencia_{fecha_str}.pdf'
+    return response
 
 @app.route('/generar_pdf/<path:id_estudiante>')
 def generar_pdf(id_estudiante):

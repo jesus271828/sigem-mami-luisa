@@ -2,101 +2,94 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Control Diario de Asistencia</title>
+    <title>Control Diario de Asistencia - Centro Educativo Mami Luisa</title>
     <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+        @page {
+            size: letter portrait;
+            margin: 10mm 12mm 10mm 12mm;
+            background-color: #ffffff;
+        }
         body {
-            font-family: Arial, sans-serif;
-            font-size: 8.5pt;
-            color: #000;
-            margin: 10px;
-            padding: 0;
-        }
-
-        /* Estilos para los botones de navegación (solo pantalla) */
-        .action-buttons {
-            text-align: center;
-            margin-bottom: 15px;
-            padding: 10px;
-            background-color: #f1f1f1;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        .btn {
-            background-color: #007bff;
-            color: white;
-            padding: 8px 16px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
+            font-family: Arial, Helvetica, sans-serif;
             font-size: 10pt;
-            font-weight: bold;
-            text-decoration: none;
-            display: inline-block;
-            margin: 0 5px;
+            color: #000000;
+            margin: 0;
+            padding: 0;
+            line-height: 1.2;
         }
-        .btn-secondary {
-            background-color: #6c757d;
-        }
-        .btn:hover {
-            opacity: 0.9;
-        }
-
         .header-table {
             width: 100%;
             border-collapse: collapse;
-            border-bottom: 2px solid #000;
+            border-bottom: 2px solid #000080;
             padding-bottom: 5px;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
         }
         .header-table td {
-            border: none;
             vertical-align: middle;
         }
-        .logo {
-            width: 65px;
-        }
-        .school-info {
+        .logo-cell {
+            width: 12%;
             text-align: center;
         }
-        .school-info h2 {
-            margin: 0;
-            font-size: 13pt;
-            color: #000;
+        .logo-img {
+            width: 60px;
+            height: auto;
         }
-        .school-info .slogan {
-            font-style: italic;
-            color: #c9302c;
-            font-size: 8.5pt;
-            margin: 1px 0;
+        .info-cell {
+            width: 88%;
+            padding-left: 8px;
         }
-        .school-info p {
-            font-size: 7pt;
-            margin: 1px 0;
-            line-height: 1.15;
-        }
-        .control-title-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 5px;
-        }
-        .control-title-table td {
-            border: none;
-            padding: 0;
-        }
-        .title-section {
-            font-weight: bold;
-            font-size: 10.5pt;
-            color: #000;
-        }
-        .info-bar {
-            font-size: 8.5pt;
-        }
-        .subtitle-section {
+        .school-title {
+            font-size: 14pt;
             font-weight: bold;
             color: #000080;
-            font-size: 9pt;
-            margin-top: 10px;
-            margin-bottom: 3px;
+            text-transform: uppercase;
+        }
+        .school-slogan {
+            font-style: italic;
+            color: #b22222;
+            font-size: 9.5pt;
+            font-family: "Brush Script MT", cursive, sans-serif;
+            display: inline-block;
+            margin-left: 10px;
+        }
+        .school-details {
+            font-size: 8pt;
+            color: #222222;
+            margin-top: 3px;
+        }
+        .report-title-bar {
+            width: 100%;
+            margin-bottom: 8px;
+        }
+        .report-title-bar table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .report-title {
+            font-size: 11pt;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .report-sub {
+            font-size: 10pt;
+            font-weight: bold;
+        }
+        .date-box {
+            text-align: right;
+            font-weight: bold;
+            font-size: 10pt;
+        }
+        .section-header {
+            font-size: 9.5pt;
+            font-weight: bold;
+            color: #000080;
+            margin-top: 8px;
+            margin-bottom: 4px;
+            text-transform: uppercase;
         }
         table.data-table {
             width: 100%;
@@ -104,228 +97,239 @@
             margin-bottom: 8px;
         }
         table.data-table th, table.data-table td {
-            border: 1px solid #000;
-            padding: 2px 3px;
+            border: 1px solid #000000;
+            padding: 3px 4px;
             text-align: center;
-            font-size: 8pt;
+            font-size: 8.5pt;
         }
         table.data-table th {
-            background-color: #f9f9f9;
+            background-color: #f2f2f2;
             font-weight: bold;
         }
         .text-left {
-            text-align: left;
+            text-align: left !important;
         }
-        .bg-blue {
-            background-color: #d9edf7;
+        .bg-ninos {
+            background-color: #cce6ff;
         }
-        .bg-pink {
-            background-color: #f2dede;
+        .bg-ninas {
+            background-color: #ffccff;
         }
-        .bg-yellow {
-            background-color: #fcf8e3;
+        .bg-total {
+            background-color: #ffffcc;
         }
-        .total-row {
-            font-weight: bold;
-            background-color: #f5f5f5;
+        .footer-grid {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 5px;
         }
-        .signature-container {
-            margin-top: 30px;
-            text-align: center;
-            width: 280px;
-            margin-left: auto;
-            margin-right: auto;
+        .footer-grid td {
+            vertical-align: top;
         }
         .signature-line {
-            border-top: 1px solid #000;
-            padding-top: 3px;
-            font-size: 8.5pt;
+            width: 250px;
+            border-top: 1px solid #000000;
+            margin: 30px auto 5px auto;
+            text-align: center;
         }
-
-        /* Ocultar los botones de acción al imprimir o generar PDF */
-        @media print {
-            .action-buttons {
-                display: none !important;
-            }
+        .signature-text {
+            text-align: center;
+            font-size: 9pt;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
 
-    <!-- BARRA DE ACCIÓN (Imprimir / Volver) -->
-    <div class="action-buttons">
-        <button onclick="window.print();" class="btn">🖨️ Imprimir / Guardar PDF</button>
-        <a href="{{ url_for('asistencia') }}" class="btn btn-secondary">⬅️ Volver al Panel</a>
-    </div>
-
-    <!-- ENCABEZADO INSTITUCIONAL -->
+    <!-- Encabezado Institucional -->
     <table class="header-table">
         <tr>
-            <td style="width: 12%; text-align: left;">
-                <img src="{{ url_for('static', filename='img/logo2.png') }}" class="logo" alt="Logo">
+            <td class="logo-cell">
+                <!-- Simulación o imagen del logo -->
+                <div style="border: 2px solid #000080; border-radius: 50%; width: 55px; height: 55px; margin: 0 auto; display: flex; align-items: center; justify-content: center; background: #000080; color: white; font-weight: bold; font-size: 16pt;">M</div>
             </td>
-            <td class="school-info" style="width: 88%;">
-                <h2>Centro Educativo Mami Luisa S.R.L</h2>
-                <div class="slogan">"Educando con amor para un mundo mejor"</div>
-                <p><b>Dirección:</b> C/Castillo Márquez No. 53. La Romana, Centro Ciudad. <b>Teléfono:</b> 809-813-3675 <b>WhatsApp:</b> 809-710-3395 <b>Código:</b> 07121</p>
-                <p><b>Regional de educación:</b> 05 San Pedro de Macorís. <b>Distrito Educativo:</b> 05-03 <b>Directora:</b> María Teresa de Jesús Herrero Romero</p>
-                <p><b>Cédula:</b> 026-00225235 (usuario) / <b>Celular:</b> 809-710-3395 / <b>Correo:</b> centroeducativomamiluisa@gmail.com</p>
+            <td class="info-cell">
+                <div>
+                    <span class="school-title">Centro Educativo Mami Luisa S.R.L</span>
+                    <span class="school-slogan">"Educando con amor para un mundo mejor"</span>
+                </div>
+                <div class="school-details">
+                    <strong>Dirección:</strong> C/ Castillo Márquez No. 53, La Romana, Centro Ciudad. 
+                    <strong>Teléfono:</strong> 809-813-3675 
+                    <strong>WhatsApp:</strong> 809-710-3395 
+                    <strong>Código:</strong> 07121<br>
+                    <strong>Regional de educación:</strong> 05 San Pedro de Macorís. 
+                    <strong>Distrito Educativo:</strong> 05-03 
+                    <strong>Directora:</strong> María Teresa de Jesús Herrero Romero<br>
+                    <strong>Cédula:</strong> 026-0022535 (usuario) / 
+                    <strong>Celular:</strong> 809-710-3395 / 
+                    <strong>Correo:</strong> centropedagogicomamiluisa@gmail.com
+                </div>
             </td>
         </tr>
     </table>
 
-    <!-- TÍTULO Y FECHA -->
-    <table class="control-title-table">
-        <tr>
-            <td class="title-section" style="width: 65%;">CONTROL DIARIO DE ASISTENCIA</td>
-            <td class="info-bar" style="width: 35%; text-align: right;"><b>FECHA:</b> {{ fecha }}</td>
-        </tr>
-    </table>
-    <table class="control-title-table" style="margin-bottom: 6px;">
-        <tr>
-            <td class="info-bar" style="width: 70%;">Año Escolar 2025-2026 / Jornada Escolar Regular.</td>
-            <td class="info-bar" style="width: 30%; text-align: right;"><b>Día:</b> _______</td>
-        </tr>
-    </table>
+    <!-- Título del Reporte y Fecha -->
+    <div class="report-title-bar">
+        <table>
+            <tr>
+                <td>
+                    <div class="report-title">CONTROL DIARIO DE ASISTENCIA</div>
+                    <div class="report-sub">Año Escolar {{ anio_escolar }} / Jornada Escolar Regular.</div>
+                </td>
+                <td class="date-box">
+                    FECHA: {{ fecha_formateada }}<br><br>
+                    <span style="font-weight: normal; font-size: 9.5pt;">Día: {{ dia_semana }}</span>
+                </td>
+            </tr>
+        </table>
+    </div>
 
-    <!-- NIVEL PRIMARIO ML – L1 -->
-    <div class="subtitle-section">NIVEL PRIMARIO ML – L1</div>
+    <!-- NIVEL PRIMARIO ML - L1 -->
+    <div class="section-header">✚ NIVEL PRIMARIO ML – L1</div>
     <table class="data-table">
         <thead>
             <tr>
-                <th rowspan="2" class="text-left" style="width: 12%;">GRADOS</th>
+                <th rowspan="2" style="width: 15%; vertical-align: middle;">GRADOS</th>
                 <th colspan="3">MATRICULADOS</th>
                 <th colspan="3">ASISTENCIA</th>
-                <th rowspan="2" style="width: 38%;">Nombre de los ausentes</th>
+                <th rowspan="2" style="width: 40%; vertical-align: middle;">Nombre de los ausentes</th>
             </tr>
             <tr>
+                <th style="width: 7%;" class="bg-ninos">NIÑOS</th>
+                <th style="width: 7%;" class="bg-ninas">NIÑAS</th>
+                <th style="width: 8%;" class="bg-total">TOTAL</th>
                 <th style="width: 7%;">NIÑOS</th>
                 <th style="width: 7%;">NIÑAS</th>
-                <th style="width: 7%;">TOTAL</th>
-                <th style="width: 7%;">NIÑOS</th>
-                <th style="width: 7%;">NIÑAS</th>
-                <th style="width: 7%;">TOTAL</th>
+                <th style="width: 8%;">TOTAL</th>
             </tr>
         </thead>
         <tbody>
-            {% for row in datos_primaria %}
+            {% for grado in grados_primaria %}
             <tr>
-                <td class="text-left font-weight-bold">{{ row.grado }}</td>
-                <td class="bg-blue">{{ row.mat_ninos }}</td>
-                <td class="bg-pink">{{ row.mat_ninas }}</td>
-                <td class="bg-yellow">{{ row.tot_mat }}</td>
-                <td>{{ row.asis_ninos }}</td>
-                <td>{{ row.asis_ninas }}</td>
-                <td>{{ row.tot_asis }}</td>
-                <td class="text-left" style="font-size: 7.5pt;">{{ row.ausentes }}</td>
+                <td class="text-left font-weight-bold">{{ grado.nombre }}</td>
+                <td class="bg-ninos">{{ grado.mat_ninos }}</td>
+                <td class="bg-ninas">{{ grado.mat_ninas_f }}</td>
+                <td class="bg-total font-weight-bold">{{ grado.mat_total }}</td>
+                <td>{{ grado.asis_ninos if grado.asis_ninos is not none else '' }}</td>
+                <td>{{ grado.asis_ninas if grado.asis_ninas is not none else '' }}</td>
+                <td>{{ grado.asis_total if grado.asis_total is not none else '' }}</td>
+                <td class="text-left">{{ grado.ausentes }}</td>
             </tr>
             {% endfor %}
-            <tr class="total-row">
+            <tr style="font-weight: bold; background-color: #f9f9f9;">
                 <td class="text-left">TOTAL</td>
-                <td class="bg-blue">{{ tot_primaria.mat_ninos }}</td>
-                <td class="bg-pink">{{ tot_primaria.mat_ninas }}</td>
-                <td class="bg-yellow">{{ tot_primaria.tot_mat }}</td>
-                <td>{{ tot_primaria.asis_ninos }}</td>
-                <td>{{ tot_primaria.asis_ninas }}</td>
-                <td>{{ tot_primaria.tot_asis }}</td>
+                <td class="bg-ninos">{{ total_primaria_mat_ninos }}</td>
+                <td class="bg-ninas">{{ total_primaria_mat_ninas_f }}</td>
+                <td class="bg-total">{{ total_primaria_mat_total }}</td>
+                <td>{{ total_primaria_asis_ninos }}</td>
+                <td>{{ total_primaria_asis_ninas }}</td>
+                <td>{{ total_primaria_asis_total }}</td>
                 <td></td>
             </tr>
         </tbody>
     </table>
 
-    <!-- NIVEL INICIAL ML – L2 Y TABLA PLATAFORMA -->
-    <div class="subtitle-section">NIVEL INICIAL ML – L2</div>
-    <table style="width: 100%; border-collapse: collapse; border: none; margin-bottom: 8px;">
+    <!-- Dos columnas abajo: Nivel Inicial y Personal / Verificaciones -->
+    <table class="footer-grid">
         <tr>
-            <td style="width: 58%; vertical-align: top; border: none; padding: 0;">
-                <table class="data-table" style="margin-bottom: 0;">
+            <td style="width: 60%; padding-right: 10px;">
+                <!-- NIVEL INICIAL ML - L2 -->
+                <div class="section-header">NIVEL INICIAL ML – L2</div>
+                <table class="data-table">
                     <thead>
                         <tr>
-                            <th rowspan="2" style="width: 16%;">TOTAL</th>
+                            <th rowspan="2" style="vertical-align: middle;">TOTAL</th>
                             <th colspan="3">MATRICULADOS</th>
                             <th colspan="3">ASISTENCIA</th>
                         </tr>
                         <tr>
-                            <th style="width: 14%;">NIÑOS</th>
-                            <th style="width: 14%;">NIÑAS</th>
-                            <th style="width: 14%;">TOTAL</th>
-                            <th style="width: 14%;">NIÑOS</th>
-                            <th style="width: 14%;">NIÑAS</th>
-                            <th style="width: 14%;">TOTAL</th>
+                            <th class="bg-ninos">NIÑOS</th>
+                            <th class="bg-ninas">NIÑAS</th>
+                            <th class="bg-total">TOTAL</th>
+                            <th>NIÑOS</th>
+                            <th>NIÑAS</th>
+                            <th>TOTAL</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td class="total-row text-left">TOTAL</td>
-                            <td class="bg-blue">{{ tot_inicial.mat_ninos }}</td>
-                            <td class="bg-pink">{{ tot_inicial.mat_ninas }}</td>
-                            <td class="bg-yellow">{{ tot_inicial.tot_mat }}</td>
-                            <td>{{ tot_inicial.asis_ninos }}</td>
-                            <td>{{ tot_inicial.asis_ninas }}</td>
-                            <td>{{ tot_inicial.tot_asis }}</td>
+                            <td class="font-weight-bold">TOTAL</td>
+                            <td class="bg-ninos">{{ inicial_mat_ninos }}</td>
+                            <td class="bg-ninas">{{ inicial_mat_ninas_f }}</td>
+                            <td class="bg-total font-weight-bold">{{ inicial_mat_total }}</td>
+                            <td>{{ inicial_asis_ninos }}</td>
+                            <td>{{ inicial_asis_ninas_f }}</td>
+                            <td>{{ inicial_asis_total }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- TIPO DE PERSONAL -->
+                <table class="data-table" style="margin-top: 10px;">
+                    <thead>
+                        <tr>
+                            <th class="text-left">TIPO DE PERSONAL</th>
+                            <th style="width: 18%;">Contratado NP</th>
+                            <th style="width: 18%;">Contratado NI</th>
+                            <th style="width: 18%;">Presente</th>
+                            <th class="text-left">Nombre de los ausentes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="text-left">Adm. y apoyo.</td>
+                            <td>{{ personal_adm_contratado }}</td>
+                            <td>-</td>
+                            <td>{{ meta.adm_presente }}</td>
+                            <td class="text-left">{{ meta.adm_ausentes }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left">Auxiliares</td>
+                            <td>N/A</td>
+                            <td>-</td>
+                            <td>{{ meta.aux_presente }}</td>
+                            <td class="text-left">{{ meta.aux_ausentes }}</td>
+                        </tr>
+                        <tr>
+                            <td class="text-left">Docentes</td>
+                            <td>{{ personal_doc_contratado }}</td>
+                            <td>-</td>
+                            <td>{{ meta.doc_presente }}</td>
+                            <td class="text-left">{{ meta.doc_ausentes }}</td>
+                        </tr>
+                        <tr style="font-weight: bold;">
+                            <td class="text-left">Total</td>
+                            <td>18</td>
+                            <td>-</td>
+                            <td>{{ total_personal_presente }}</td>
+                            <td></td>
                         </tr>
                     </tbody>
                 </table>
             </td>
-            <td style="width: 42%; vertical-align: top; border: none; padding-left: 8px; padding-top: 0;">
-                <table class="data-table" style="margin-bottom: 0;">
+
+            <td style="width: 40%; padding-left: 10px; vertical-align: top;">
+                <!-- Cuadro lateral de verificación -->
+                <table class="data-table" style="margin-top: 22px;">
                     <tr>
-                        <td class="text-left" style="background-color: #f9f9f9; width: 75%;">Asistencia colocada en plataforma</td>
-                        <td style="width: 25%;"></td>
+                        <td class="text-left" style="width: 80%;">Asistencia colocada en plataforma</td>
+                        <td style="width: 20%; font-weight: bold;">X</td>
                     </tr>
                     <tr>
-                        <td class="text-left" style="background-color: #f9f9f9;">Captura enviada a grupo</td>
-                        <td></td>
+                        <td class="text-left">Captura enviada a grupo</td>
+                        <td>X</td>
                     </tr>
                 </table>
+
+                <!-- Firma -->
+                <div style="margin-top: 60px;">
+                    <div class="signature-line"></div>
+                    <div class="signature-text">Responsable del formulario.</div>
+                </div>
             </td>
         </tr>
     </table>
-
-    <!-- TIPO DE PERSONAL -->
-    <table class="data-table" style="width: 58%; margin-bottom: 10px;">
-        <thead>
-            <tr>
-                <th class="text-left" style="width: 45%;">TIPO DE PERSONAL</th>
-                <th style="width: 18%;">Contratado</th>
-                <th style="width: 18%;">Presente</th>
-                <th style="width: 19%;">Nombre de los ausentes</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td class="text-left">Adm. y apoyo.</td>
-                <td>10</td>
-                <td></td>
-                <td></td>
-            </tr>
-            <tr>
-                <td class="text-left">Auxiliares</td>
-                <td>N/A</td>
-                <td></td>
-                <td></td>
-            </tr>
-            <tr>
-                <td class="text-left">Docentes</td>
-                <td>09</td>
-                <td></td>
-                <td></td>
-            </tr>
-            <tr class="total-row">
-                <td class="text-left">Total</td>
-                <td>19</td>
-                <td></td>
-                <td></td>
-            </tr>
-        </tbody>
-    </table>
-
-    <!-- FIRMA -->
-    <div class="signature-container">
-        <div class="signature-line">
-            Responsable del formulario.
-        </div>
-    </div>
 
 </body>
 </html>
