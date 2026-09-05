@@ -9,3 +9,4 @@ google-generativeai
 pytesseract
 pillow
 google-api-core
+weasyprint
