@@ -164,15 +164,24 @@
                                         <td class="text-left text-muted small">{{ fila.ausentes }}</td>
                                     </tr>
                                     {% endfor %}
-                                    <!-- Fila de TOTALES GENERALES -->
+                                    <!-- Fila de TOTALES GENERALES (Suma automática de toda la tabla superior) -->
                                     <tr class="font-weight-bold">
                                         <td class="bg-dark text-white align-middle">TOTAL</td>
-                                        <td style="background-color: #b3d9ff;" class="text-dark">{{ totales_grales.mat_ninos }}</td>
-                                        <td style="background-color: #ffb3d9;" class="text-dark">{{ totales_grales.mat_ninas }}</td>
-                                        <td style="background-color: #ffff99;" class="text-dark">{{ totales_grales.mat_total }}</td>
-                                        <td class="bg-light">{{ totales_grales.asist_ninos if totales_grales.asist_ninos > 0 else '' }}</td>
-                                        <td class="bg-light">{{ totales_grales.asist_ninas if totales_grales.asist_ninas > 0 else '' }}</td>
-                                        <td style="background-color: #e2f0d9;">{{ totales_grales.asist_total if totales_grales.asist_total > 0 else '' }}</td>
+                                        <td style="background-color: #b3d9ff;" class="text-dark">{{ resumen_grados | sum(attribute='mat_ninos') }}</td>
+                                        <td style="background-color: #ffb3d9;" class="text-dark">{{ resumen_grados | sum(attribute='mat_ninas') }}</td>
+                                        <td style="background-color: #ffff99;" class="text-dark">{{ resumen_grados | sum(attribute='mat_total') }}</td>
+                                        <td class="bg-light">
+                                            {% set total_asist_ninos = resumen_grados | sum(attribute='asist_ninos') %}
+                                            {{ total_asist_ninos if total_asist_ninos > 0 else '' }}
+                                        </td>
+                                        <td class="bg-light">
+                                            {% set total_asist_ninas = resumen_grados | sum(attribute='asist_ninas') %}
+                                            {{ total_asist_ninas if total_asist_ninas > 0 else '' }}
+                                        </td>
+                                        <td style="background-color: #e2f0d9;">
+                                            {% set total_asist_gral = resumen_grados | sum(attribute='asist_total') %}
+                                            {{ total_asist_gral if total_asist_gral > 0 else '' }}
+                                        </td>
                                         <td class="bg-light"></td>
                                     </tr>
                                 {% else %}
