@@ -70,12 +70,6 @@ class Asistencia(db.Model):
     estado = db.Column(db.String(20), nullable=False) # 'Presente', 'Ausente', 'Tarde'
 
 class RegistroPersonal(db.Model):
-    __tablename__ = 'registro_personal'
+    __tablename__ = 'asistencia_personal'  # <-- Cámbialo aquí
     id = db.Column(db.Integer, primary_key=True)
-    fecha = db.Column(db.String(20), unique=True, nullable=False)
-    adm_presente = db.Column(db.Integer, default=0)
-    adm_ausentes = db.Column(db.String(255), nullable=True)
-    aux_presente = db.Column(db.Integer, default=0)
-    aux_ausentes = db.Column(db.String(255), nullable=True)
-    doc_presente = db.Column(db.Integer, default=0)
-    doc_ausentes = db.Column(db.String(255), nullable=True)
+    # ... demás columnas
