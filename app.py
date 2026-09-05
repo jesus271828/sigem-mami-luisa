@@ -1442,23 +1442,18 @@ def asistencia():
         asistencia_dict = {}
 
         if grado_seleccionado:
-            # Consultamos los estudiantes ordenados alfabéticamente por NOMBRE
+            # Consultamos incluyendo id_estudiante y ordenados alfabéticamente por NOMBRE
             estudiantes_db = conn.execute(
-                "SELECT id, nombres, apellidos FROM estudiantes WHERE grado = %s ORDER BY nombres ASC", 
+                "SELECT id_estudiante, nombres, apellidos FROM estudiantes WHERE grado = %s ORDER BY nombres ASC", 
                 (grado_seleccionado,)
             ).fetchall()
             
-            # Usamos 'id_estudiante' para que coincida exactamente con el HTML
             estudiantes = [
                 dict(e) if hasattr(e, 'keys') else {'id_estudiante': e[0], 'nombres': e[1], 'apellidos': e[2]} 
                 for e in estudiantes_db
             ]
-            # Asegurar la clave si viene como objeto dict con 'id'
-            for est in estudiantes:
-                if 'id' in est and 'id_estudiante' not in est:
-                    est['id_estudiante'] = est['id']
 
-            # Buscar asistencia existente para ese curso y fecha
+            # Buscar asistencia existente para ese curso y fecha usando id_estudiante
             asis_db = conn.execute(
                 "SELECT id_estudiante, estado FROM asistencia WHERE grado = %s AND fecha = %s",
                 (grado_seleccionado, fecha_actual)
@@ -1489,12 +1484,12 @@ def asistencia():
                     m_ninas = count_val
             m_total = m_ninos + m_ninas
 
-            # Asistencia por género
+            # Asistencia por género (relacionando por id_estudiante)
             asis_db_curso = conn.execute(
                 """
                 SELECT e.sexo, COUNT(a.id_estudiante) 
                 FROM asistencia a
-                JOIN estudiantes e ON a.id_estudiante = e.id
+                JOIN estudiantes e ON a.id_estudiante = e.id_estudiante
                 WHERE a.fecha = %s AND e.grado = %s AND a.estado IN ('Presente', 'Tarde')
                 GROUP BY e.sexo
                 """,
@@ -1512,12 +1507,12 @@ def asistencia():
                     a_ninas = count_val
             a_total = a_ninos + a_ninas
 
-            # Nombres de ausentes (Mostrando Nombre primero y Apellido después)
+            # Nombres de ausentes
             ausentes_db = conn.execute(
                 """
                 SELECT e.nombres, e.apellidos 
                 FROM estudiantes e
-                JOIN asistencia a ON e.id = a.id_estudiante
+                JOIN asistencia a ON e.id_estudiante = a.id_estudiante
                 WHERE a.fecha = %s AND e.grado = %s AND a.estado = 'Ausente'
                 ORDER BY e.nombres ASC
                 """,
@@ -1562,7 +1557,7 @@ def asistencia():
                 """
                 SELECT e.sexo, COUNT(a.id_estudiante) 
                 FROM asistencia a
-                JOIN estudiantes e ON a.id_estudiante = e.id
+                JOIN estudiantes e ON a.id_estudiante = e.id_estudiante
                 WHERE a.fecha = %s AND e.grado = %s AND a.estado IN ('Presente', 'Tarde')
                 GROUP BY e.sexo
                 """,
@@ -1621,7 +1616,7 @@ def guardar_asistencia():
                 if not id_estudiante or id_estudiante.strip() == "":
                     continue
                 
-                # Unificamos la búsqueda y guardado usando 'id_estudiante'
+                # Búsqueda usando id_estudiante (código personalizado)
                 existing = conn.execute(
                     "SELECT id FROM asistencia WHERE id_estudiante = %s AND fecha = %s",
                     (id_estudiante, fecha)
@@ -1646,7 +1641,8 @@ def guardar_asistencia():
     finally:
         conn.close()
         
-    return redirect(url_for('asistencia', grado=grado, fecha=fecha))
+    # Al no pasar el grado, el selector volverá limpio para elegir el siguiente curso
+    return redirect(url_for('asistencia', fecha=fecha))
 
 from flask import render_template, request, make_response
 from weasyprint import HTML
