@@ -121,18 +121,16 @@
             </div>
             <div class="card-body">
                 <form id="form-reporte" action="{{ url_for('descargar_reporte_ausencias') }}" method="POST">
+                    
+                    <!-- Selector de fecha para el personal -->
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label for="fecha_reporte">Fecha del Reporte General:</label>
+                            <label for="fecha_reporte">Fecha del Registro de Personal:</label>
                             <input type="date" name="fecha" id="fecha_reporte" class="form-control" value="{{ fecha_actual }}" required>
-                        </div>
-                        <div class="col-md-6 d-flex align-items-end">
-                            <button type="button" onclick="verReportePDF()" class="btn btn-danger btn-block">
-                                <i class="fas fa-file-pdf"></i> Ver / Imprimir Reporte General PDF
-                            </button>
                         </div>
                     </div>
 
+                    <!-- Tabla de Asistencia del Personal -->
                     <table class="table table-bordered mt-3">
                         <thead class="thead-light">
                             <tr>
@@ -165,11 +163,18 @@
                     </table>
                 </form>
 
-                <!-- Botón independiente y fuera de todo para guardar la asistencia del personal -->
-                <div class="text-center mt-4">
-                    <button type="button" onclick="guardarPersonalSolo()" class="btn btn-success btn-lg px-5 shadow-sm">
-                        <i class="fas fa-save"></i> Guardar Asistencia del Personal
-                    </button>
+                <!-- Botones abajo: Guardar y Generar Reporte PDF -->
+                <div class="row mt-4">
+                    <div class="col-md-6 mb-2">
+                        <button type="button" onclick="guardarPersonalSolo()" class="btn btn-success btn-lg btn-block shadow-sm">
+                            <i class="fas fa-save"></i> Guardar Asistencia del Personal
+                        </button>
+                    </div>
+                    <div class="col-md-6 mb-2">
+                        <button type="button" onclick="verReportePDF()" class="btn btn-danger btn-lg btn-block shadow-sm">
+                            <i class="fas fa-file-pdf"></i> Ver / Imprimir Reporte General PDF
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -184,7 +189,6 @@
         const formData = new FormData(form);
         const fechaVal = document.getElementById('fecha_reporte').value;
 
-        // Guarda los datos primero y abre el PDF en una pestaña nueva
         fetch("{{ url_for('descargar_reporte_ausencias') }}", {
             method: 'POST',
             body: formData

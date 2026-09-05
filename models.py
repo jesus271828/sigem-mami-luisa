@@ -64,17 +64,18 @@ class Notas2(db.Model):
 
 class Asistencia(db.Model):
     __tablename__ = 'asistencia'
-    id = db.Column(db.Integer, primary_key=True)
-    estudiante_id = db.Column(db.Integer, db.ForeignKey('estudiante.id'), nullable=False)
+    
+    id = db.Column('identificación', db.Integer, primary_key=True)
+    id_estudiante = db.Column(db.Integer, nullable=False)
+    grado = db.Column(db.String(50), nullable=False)
     fecha = db.Column(db.String(20), nullable=False)
     estado = db.Column(db.String(20), nullable=False) # 'Presente', 'Ausente', 'Tarde'
+
 
 class RegistroPersonal(db.Model):
     __tablename__ = 'asistencia_personal'
     
-    # Apuntamos exactamente al nombre sin tilde que tiene en Supabase
-    id = db.Column('identificacion', db.Integer, primary_key=True)
-    
+    id = db.Column('identificación', db.Integer, primary_key=True)
     fecha = db.Column(db.String(20), unique=True, nullable=False)
     adm_presente = db.Column(db.Integer, default=0)
     adm_ausentes = db.Column(db.Text, nullable=True)
