@@ -122,45 +122,85 @@
             <div class="card-body">
                 <form id="form-reporte" action="{{ url_for('descargar_reporte_ausencias') }}" method="POST">
                     
-                    <!-- Selector de fecha para el personal -->
+                    <!-- Fecha del Reporte -->
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label for="fecha_reporte">Fecha del Registro de Personal:</label>
+                            <label for="fecha_reporte">Fecha del Registro y Reporte:</label>
                             <input type="date" name="fecha" id="fecha_reporte" class="form-control" value="{{ fecha_actual }}" required>
                         </div>
                     </div>
 
-                    <!-- Tabla de Asistencia del Personal -->
-                    <table class="table table-bordered mt-3">
-                        <thead class="thead-light">
-                            <tr>
-                                <th>Tipo de Personal</th>
-                                <th>Contratado</th>
-                                <th>Presente</th>
-                                <th>Nombre de los ausentes</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>Adm. y apoyo.</td>
-                                <td>10</td>
-                                <td><input type="number" name="adm_presente" class="form-control" placeholder="Ej. 10" value="{{ meta.adm_presente if meta else '' }}"></td>
-                                <td><input type="text" name="adm_ausentes" class="form-control" placeholder="Nombres..." value="{{ meta.adm_ausentes if meta else '' }}"></td>
-                            </tr>
-                            <tr>
-                                <td>Auxiliares</td>
-                                <td>N/A</td>
-                                <td><input type="number" name="aux_presente" class="form-control" placeholder="Ej. 2" value="{{ meta.aux_presente if meta else '' }}"></td>
-                                <td><input type="text" name="aux_ausentes" class="form-control" placeholder="Nombres..." value="{{ meta.aux_ausentes if meta else '' }}"></td>
-                            </tr>
-                            <tr>
-                                <td>Docentes</td>
-                                <td>09</td>
-                                <td><input type="number" name="doc_presente" class="form-control" placeholder="Ej. 9" value="{{ meta.doc_presente if meta else '' }}"></td>
-                                <td><input type="text" name="doc_ausentes" class="form-control" placeholder="Nombres..." value="{{ meta.doc_ausentes if meta else '' }}"></td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <!-- 1. Tabla Resumen de Estudiantes (Matriculados y Asistencia) -->
+                    <h6 class="font-weight-bold text-secondary mt-4">Resumen de Estudiantes</h6>
+                    <div class="table-responsive">
+                        <table class="table table-bordered text-center">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th rowspan="2" class="align-middle">TOTAL</th>
+                                    <th colspan="3">MATRICULADOS</th>
+                                    <th colspan="3">ASISTENCIA</th>
+                                </tr>
+                                <tr>
+                                    <th>NIÑOS</th>
+                                    <th>NIÑAS</th>
+                                    <th>TOTAL</th>
+                                    <th>NIÑOS</th>
+                                    <th>NIÑAS</th>
+                                    <th>TOTAL</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="font-weight-bold bg-light">TOTAL</td>
+                                    <td><input type="number" name="mat_ninos" class="form-control text-center" value="{{ meta.mat_ninos if meta else '' }}" placeholder="0"></td>
+                                    <td><input type="number" name="mat_ninas" class="form-control text-center" value="{{ meta.mat_ninas if meta else '' }}" placeholder="0"></td>
+                                    <td><input type="number" name="mat_total" class="form-control text-center" value="{{ meta.mat_total if meta else '' }}" placeholder="0"></td>
+                                    <td><input type="number" name="asist_ninos" class="form-control text-center" value="{{ meta.asist_ninos if meta else '' }}" placeholder="0"></td>
+                                    <td><input type="number" name="asist_ninas" class="form-control text-center" value="{{ meta.asist_ninas if meta else '' }}" placeholder="0"></td>
+                                    <td><input type="number" name="asist_total" class="form-control text-center" value="{{ meta.asist_total if meta else '' }}" placeholder="0"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- 2. Tabla de Asistencia del Personal -->
+                    <h6 class="font-weight-bold text-secondary mt-4">Asistencia del Personal</h6>
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>TIPO DE PERSONAL</th>
+                                    <th>Contratado NP</th>
+                                    <th>Contratado NI</th>
+                                    <th>Presente</th>
+                                    <th>Nombre de los ausentes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Adm. y apoyo.</td>
+                                    <td><input type="text" name="adm_np" class="form-control" value="{{ meta.adm_np if meta else '09' }}"></td>
+                                    <td><input type="text" name="adm_ni" class="form-control" value="{{ meta.adm_ni if meta else '05' }}"></td>
+                                    <td><input type="number" name="adm_presente" class="form-control" value="{{ meta.adm_presente if meta else '' }}" placeholder="Ej. 10"></td>
+                                    <td><input type="text" name="adm_ausentes" class="form-control" value="{{ meta.adm_ausentes if meta else '' }}" placeholder="Nombres..."></td>
+                                </tr>
+                                <tr>
+                                    <td>Auxiliares</td>
+                                    <td><input type="text" name="aux_np" class="form-control" value="{{ meta.aux_np if meta else 'N/A' }}"></td>
+                                    <td><input type="text" name="aux_ni" class="form-control" value="{{ meta.aux_ni if meta else '05' }}"></td>
+                                    <td><input type="number" name="aux_presente" class="form-control" value="{{ meta.aux_presente if meta else '' }}" placeholder="Ej. 2"></td>
+                                    <td><input type="text" name="aux_ausentes" class="form-control" value="{{ meta.aux_ausentes if meta else '' }}" placeholder="Nombres..."></td>
+                                </tr>
+                                <tr>
+                                    <td>Docentes</td>
+                                    <td><input type="text" name="doc_np" class="form-control" value="{{ meta.doc_np if meta else '09' }}"></td>
+                                    <td><input type="text" name="doc_ni" class="form-control" value="{{ meta.doc_ni if meta else '07' }}"></td>
+                                    <td><input type="number" name="doc_presente" class="form-control" value="{{ meta.doc_presente if meta else '' }}" placeholder="Ej. 9"></td>
+                                    <td><input type="text" name="doc_ausentes" class="form-control" value="{{ meta.doc_ausentes if meta else '' }}" placeholder="Nombres..."></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </form>
 
                 <!-- Botones abajo: Guardar y Generar Reporte PDF -->
@@ -214,9 +254,9 @@
             body: formData
         }).then(response => {
             if (response.ok) {
-                alert('¡Asistencia del personal guardada exitosamente!');
+                alert('¡Datos guardados exitosamente!');
             } else {
-                alert('Hubo un error al guardar los datos del personal.');
+                alert('Hubo un error al guardar los datos.');
             }
         }).catch(error => {
             console.error('Error:', error);
