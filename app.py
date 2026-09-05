@@ -1423,8 +1423,14 @@ def asistencia():
     fecha_actual = request.args.get('fecha', datetime.now().strftime('%Y-%m-%d'))
     grado_seleccionado = request.args.get('grado', '')
 
-    # Lista exclusiva con las secciones A para la tabla superior
+    # 1. Cursos exclusivos para la TABLA SUPERIOR (Secciones A de Primaria)
     cursos_resumen = ['1ro A', '2do A', '3ro A', '4to A', '5to A', '6to A']
+
+    # 2. Cursos exclusivos para la TABLA INFERIOR (Resumen Global de Nivel Inicial)
+    cursos_inicial = [
+        'Párvulos', 'Prekínder – A', 'Prekínder – B', 
+        'Kínder – A', 'Kínder – B', 'Preprimario – A', 'Preprimario – B'
+    ]
 
     conn = get_db_connection()
     try:
@@ -1455,15 +1461,10 @@ def asistencia():
                 estado_val = a['estado'] if hasattr(a, 'keys') else a[1]
                 asistencia_dict[id_est] = estado_val
 
-        # --- CÁLCULO DETALLADO POR CADA CURSO (TABLA SUPERIOR) ---
+        # --- CÁLCULO DETALLADO PARA LA TABLA SUPERIOR (Primaria Secciones A) ---
         resumen_grados = []
-        tot_mat_ninos = 0
-        tot_mat_ninas = 0
-        tot_asist_ninos = 0
-        tot_asist_ninas = 0
-
         for curso in cursos_resumen:
-            # 1. Matriculados por género para este curso
+            # Matriculados por género
             mat_db = conn.execute(
                 "SELECT sexo, COUNT(*) FROM estudiantes WHERE grado = %s GROUP BY sexo", 
                 (curso,)
@@ -1480,7 +1481,7 @@ def asistencia():
                     m_ninas = count_val
             m_total = m_ninos + m_ninas
 
-            # 2. Asistencia por género para este curso y fecha
+            # Asistencia por género
             asis_db_curso = conn.execute(
                 """
                 SELECT e.sexo, COUNT(a.id_estudiante) 
@@ -1503,7 +1504,7 @@ def asistencia():
                     a_ninas = count_val
             a_total = a_ninos + a_ninas
 
-            # 3. Nombres de los ausentes para este curso y fecha
+            # Nombres de ausentes
             ausentes_db = conn.execute(
                 """
                 SELECT e.nombres, e.apellidos 
@@ -1515,19 +1516,8 @@ def asistencia():
                 (fecha_actual, curso)
             ).fetchall()
 
-            nombres_ausentes = []
-            for aus in ausentes_db:
-                nom = aus['nombres'] if hasattr(aus, 'keys') else aus[0]
-                ap = aus['apellidos'] if hasattr(aus, 'keys') else aus[1]
-                nombres_ausentes.append(f"{ap} {nom}")
-            
+            nombres_ausentes = [f"{aus['apellidos'] if hasattr(aus, 'keys') else aus[1]} {aus['nombres'] if hasattr(aus, 'keys') else aus[0]}" for aus in ausentes_db]
             str_ausentes = ", ".join(nombres_ausentes)
-
-            # Acumular para el total general global
-            tot_mat_ninos += m_ninos
-            tot_mat_ninas += m_ninas
-            tot_asist_ninos += a_ninos
-            tot_asist_ninas += a_ninas
 
             resumen_grados.append({
                 'grado': curso,
@@ -1540,14 +1530,54 @@ def asistencia():
                 'ausentes': str_ausentes
             })
 
-        # --- TOTALES GLOBALES (PARA LA OTRA TABLA SOLO CON EL TOTAL) ---
-        totales_grales = {
-            'mat_ninos': tot_mat_ninos,
-            'mat_ninas': tot_mat_ninas,
-            'mat_total': tot_mat_ninos + tot_mat_ninas,
-            'asist_ninos': tot_asist_ninos,
-            'asist_ninas': tot_asist_ninas,
-            'asist_total': tot_asist_ninos + tot_asist_ninas
+        # --- CÁLCULO PARA LA TABLA INFERIOR (Resumen Global Nivel Inicial) ---
+        tot_mat_ninos_ini = 0
+        tot_mat_ninas_ini = 0
+        tot_asist_ninos_ini = 0
+        tot_asist_ninas_ini = 0
+
+        for curso_ini in cursos_inicial:
+            # Matriculados inicial
+            mat_ini_db = conn.execute(
+                "SELECT sexo, COUNT(*) FROM estudiantes WHERE grado = %s GROUP BY sexo", 
+                (curso_ini,)
+            ).fetchall()
+            
+            for row in mat_ini_db:
+                sexo_val = row['sexo'] if hasattr(row, 'keys') else row[0]
+                count_val = row['count'] if hasattr(row, 'keys') else row[1]
+                if sexo_val == 'Masculino':
+                    tot_mat_ninos_ini += count_val
+                elif sexo_val == 'Femenino':
+                    tot_mat_ninas_ini += count_val
+
+            # Asistencia inicial
+            asis_ini_db = conn.execute(
+                """
+                SELECT e.sexo, COUNT(a.id_estudiante) 
+                FROM asistencia a
+                JOIN estudiantes e ON a.id_estudiante = e.id
+                WHERE a.fecha = %s AND e.grado = %s AND a.estado IN ('Presente', 'Tarde')
+                GROUP BY e.sexo
+                """,
+                (fecha_actual, curso_ini)
+            ).fetchall()
+
+            for row in asis_ini_db:
+                sexo_val = row['sexo'] if hasattr(row, 'keys') else row[0]
+                count_val = row['count'] if hasattr(row, 'keys') else row[1]
+                if sexo_val == 'Masculino':
+                    tot_asist_ninos_ini += count_val
+                elif sexo_val == 'Femenino':
+                    tot_asist_ninas_ini += count_val
+
+        totales_inicial = {
+            'mat_ninos': tot_mat_ninos_ini,
+            'mat_ninas': tot_mat_ninas_ini,
+            'mat_total': tot_mat_ninos_ini + tot_mat_ninas_ini,
+            'asist_ninos': tot_asist_ninos_ini,
+            'asist_ninas': tot_asist_ninas_ini,
+            'asist_total': tot_asist_ninos_ini + tot_asist_ninas_ini
         }
 
         # Obtener datos previos del personal si existen
@@ -1564,8 +1594,7 @@ def asistencia():
                            estudiantes=estudiantes,
                            asistencia_dict=asistencia_dict,
                            resumen_grados=resumen_grados,
-                           totales_grales=totales_grales,
-                           totales=totales_grales,
+                           totales=totales_inicial,  # Enviamos el resumen global de inicial para la tabla inferior
                            meta=meta)
 
 @app.route('/guardar_asistencia', methods=['POST'])
