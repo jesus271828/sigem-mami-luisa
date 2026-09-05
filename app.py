@@ -1513,7 +1513,7 @@ def guardar_asistencia():
 
 from flask import render_template, request, make_response
 from weasyprint import HTML
-import datetime
+from datetime import datetime
 
 @app.route('/descargar_reporte_ausencias', methods=['POST', 'GET'])
 def descargar_reporte_ausencias():
