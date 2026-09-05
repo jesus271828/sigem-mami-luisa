@@ -88,10 +88,10 @@
                                                 <input type="radio" name="estado_{{ est.id }}" value="Presente" {% if asistencia_dict.get(est.id, 'Presente') == 'Presente' %}checked{% endif %}> Presente
                                             </label>
                                             <label class="btn btn-outline-warning btn-sm {% if asistencia_dict.get(est.id) == 'Tarde' %}active{% endif %}">
-                                                <input type="radio" name="estado_{{ est.id }}" value="Tarde" {% if asistencia_dict.get(est.id) == 'Tarde' %}checked{% endif %}> Tarde
+                                                <input type="radio" name="estado_{{ est.id }}" value="Tarde" {% if asistencia_dict.get(est.id, 'Tarde') == 'Tarde' %}checked{% endif %}> Tarde
                                             </label>
                                             <label class="btn btn-outline-danger btn-sm {% if asistencia_dict.get(est.id) == 'Ausente' %}active{% endif %}">
-                                                <input type="radio" name="estado_{{ est.id }}" value="Ausente" {% if asistencia_dict.get(est.id) == 'Ausente' %}checked{% endif %}> Ausente
+                                                <input type="radio" name="estado_{{ est.id }}" value="Ausente" {% if asistencia_dict.get(est.id, 'Ausente') == 'Ausente' %}checked{% endif %}> Ausente
                                             </label>
                                         </div>
                                     </td>
@@ -130,9 +130,9 @@
                         </div>
                     </div>
 
-                    <!-- 1. Tabla Resumen de Estudiantes Desglosada por Grados (Estilo Oficial) -->
+                    <!-- TABLA 1: Resumen de Estudiantes Desglosada por Grados -->
                     <h6 class="font-weight-bold text-secondary mt-4">NIVEL PRIMARIO ML – L1 (Resumen por Grados)</h6>
-                    <div class="table-responsive">
+                    <div class="table-responsive mb-4">
                         <table class="table table-bordered text-center">
                             <thead class="thead-light">
                                 <tr>
@@ -184,7 +184,40 @@
                         </table>
                     </div>
 
-                    <!-- 2. Tabla de Asistencia del Personal -->
+                    <!-- TABLA 2: Resumen Global de Estudiantes (Totales Generales Acumulados) -->
+                    <h6 class="font-weight-bold text-secondary mt-4">Resumen General Global (Nivel Inicial / Primario)</h6>
+                    <div class="table-responsive mb-4">
+                        <table class="table table-bordered text-center">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th rowspan="2" class="align-middle">TOTAL</th>
+                                    <th colspan="3">MATRICULADOS</th>
+                                    <th colspan="3">ASISTENCIA</th>
+                                </tr>
+                                <tr>
+                                    <th>NIÑOS</th>
+                                    <th>NIÑAS</th>
+                                    <th>TOTAL</th>
+                                    <th>NIÑOS</th>
+                                    <th>NIÑAS</th>
+                                    <th>TOTAL</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="font-weight-bold bg-light">TOTAL</td>
+                                    <td class="font-weight-bold text-info align-middle" style="background-color: #cce6ff;">{{ totales.mat_ninos }}</td>
+                                    <td class="font-weight-bold text-danger align-middle" style="background-color: #ffcce6;">{{ totales.mat_ninas }}</td>
+                                    <td class="font-weight-bold bg-warning text-dark align-middle">{{ totales.mat_total }}</td>
+                                    <td class="font-weight-bold text-success align-middle">{{ totales.asist_ninos }}</td>
+                                    <td class="font-weight-bold text-success align-middle">{{ totales.asist_ninas }}</td>
+                                    <td class="font-weight-bold bg-success text-white align-middle">{{ totales.asist_total }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- 3. Tabla de Asistencia del Personal -->
                     <h6 class="font-weight-bold text-secondary mt-4">Asistencia del Personal</h6>
                     <div class="table-responsive">
                         <table class="table table-bordered">
