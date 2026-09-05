@@ -1612,7 +1612,13 @@ def guardar_asistencia():
         # Recorremos todos los campos enviados en el formulario para buscar los estados de asistencia
         for key, value in request.form.items():
             if key.startswith('estado_'):
-                id_estudiante = key.split('_')[1]
+                id_estudiante_str = key.split('_')[1]
+                
+                # VALIDACIÓN: Asegurar que el ID no esté vacío y contenga solo dígitos
+                if not id_estudiante_str or not id_estudiante_str.isdigit():
+                    continue  # Si el ID está vacío, saltamos este registro para evitar errores
+                
+                id_estudiante = int(id_estudiante_str)
                 estado = value
                 
                 # Usamos 'id' en lugar de 'identificacion' porque así se llama en la tabla asistencia
@@ -1636,6 +1642,7 @@ def guardar_asistencia():
         conn.commit()
         flash('Asistencia guardada correctamente.', 'success')
     except Exception as e:
+        conn.rollback() # Buena práctica: revertir cambios si ocurre un error en medio del bucle
         flash(f'Error al guardar la asistencia: {e}', 'danger')
     finally:
         conn.close()
