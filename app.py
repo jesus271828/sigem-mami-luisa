@@ -1423,15 +1423,8 @@ def asistencia():
     fecha_actual = request.args.get('fecha', datetime.now().strftime('%Y-%m-%d'))
     grado_seleccionado = request.args.get('grado', '')
 
-    # Lista completa con todas las secciones (A y B) para la tabla detallada superior
-    cursos_resumen = [
-        '1ro A', '1ro B', 
-        '2do A', '2do B', 
-        '3ro A', '3ro B', 
-        '4to A', '4to B', 
-        '5to A', '5to B', 
-        '6to A', '6to B'
-    ]
+    # Lista exclusiva con las secciones A para la tabla superior
+    cursos_resumen = ['1ro A', '2do A', '3ro A', '4to A', '5to A', '6to A']
 
     conn = get_db_connection()
     try:
