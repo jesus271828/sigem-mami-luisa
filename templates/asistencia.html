@@ -89,18 +89,19 @@
                                 {% for est in estudiantes %}
                                 <tr>
                                     <td class="text-center font-weight-bold">{{ loop.index }}</td>
-                                    <td>{{ est.id }}</td>
+                                    <td>{{ est.id_estudiante }}</td>
                                     <td>{{ est.apellidos }}, {{ est.nombres }}</td>
                                     <td class="text-center">
+                                        {% set estado_actual = asistencia_dict.get(est.id_estudiante, 'Presente') %}
                                         <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                                            <label class="btn btn-outline-success btn-sm {% if asistencia_dict.get(est.id) == 'Presente' %}active{% endif %}">
-                                                <input type="radio" name="estado_{{ est.id }}" value="Presente" {% if asistencia_dict.get(est.id, 'Presente') == 'Presente' %}checked{% endif %}> Presente
+                                            <label class="btn btn-outline-success btn-sm {% if estado_actual == 'Presente' %}active{% endif %}">
+                                                <input type="radio" name="estado_{{ est.id_estudiante }}" value="Presente" autocomplete="off" {% if estado_actual == 'Presente' %}checked{% endif %}> Presente
                                             </label>
-                                            <label class="btn btn-outline-warning btn-sm {% if asistencia_dict.get(est.id) == 'Tarde' %}active{% endif %}">
-                                                <input type="radio" name="estado_{{ est.id }}" value="Tarde" {% if asistencia_dict.get(est.id, 'Tarde') == 'Tarde' %}checked{% endif %}> Tarde
+                                            <label class="btn btn-outline-warning btn-sm {% if estado_actual == 'Tarde' %}active{% endif %}">
+                                                <input type="radio" name="estado_{{ est.id_estudiante }}" value="Tarde" autocomplete="off" {% if estado_actual == 'Tarde' %}checked{% endif %}> Tarde
                                             </label>
-                                            <label class="btn btn-outline-danger btn-sm {% if asistencia_dict.get(est.id) == 'Ausente' %}active{% endif %}">
-                                                <input type="radio" name="estado_{{ est.id }}" value="Ausente" {% if asistencia_dict.get(est.id, 'Ausente') == 'Ausente' %}checked{% endif %}> Ausente
+                                            <label class="btn btn-outline-danger btn-sm {% if estado_actual == 'Ausente' %}active{% endif %}">
+                                                <input type="radio" name="estado_{{ est.id_estudiante }}" value="Ausente" autocomplete="off" {% if estado_actual == 'Ausente' %}checked{% endif %}> Ausente
                                             </label>
                                         </div>
                                     </td>
