@@ -81,7 +81,7 @@
                                 <tr>
                                     <th style="width: 8%; text-align: center;">No.</th>
                                     <th style="width: 15%;">ID</th>
-                                    <th>Apellidos y Nombres</th>
+                                    <th>Nombres y Apellidos</th>
                                     <th style="width: 30%; text-align: center;">Estado de Asistencia</th>
                                 </tr>
                             </thead>
@@ -90,7 +90,8 @@
                                 <tr>
                                     <td class="text-center font-weight-bold">{{ loop.index }}</td>
                                     <td>{{ est.id_estudiante }}</td>
-                                    <td>{{ est.apellidos }}, {{ est.nombres }}</td>
+                                    <!-- Nombres primero y luego Apellidos -->
+                                    <td>{{ est.nombres }} {{ est.apellidos }}</td>
                                     <td class="text-center">
                                         {% set estado_actual = asistencia_dict.get(est.id_estudiante, 'Presente') %}
                                         <div class="btn-group btn-group-toggle" data-toggle="buttons">
