@@ -72,8 +72,8 @@ class Asistencia(db.Model):
 class RegistroPersonal(db.Model):
     __tablename__ = 'asistencia_personal'
     
-    # Mapeamos 'identificación' como la clave primaria
-    id = db.Column('identificación', db.Integer, primary_key=True)
+    # Apuntamos exactamente al nombre sin tilde que tiene en Supabase
+    id = db.Column('identificacion', db.Integer, primary_key=True)
     
     fecha = db.Column(db.String(20), unique=True, nullable=False)
     adm_presente = db.Column(db.Integer, default=0)
