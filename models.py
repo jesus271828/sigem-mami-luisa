@@ -61,3 +61,21 @@ class Notas2(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     estudiante_id = db.Column(db.Integer, db.ForeignKey('estudiantes.id'), nullable=False, unique=True)
     datos_formulario = db.Column(db.Text, nullable=True) # Guarda todo el diccionario de los inputs del formulario
+
+class Asistencia(db.Model):
+    __tablename__ = 'asistencia'
+    id = db.Column(db.Integer, primary_key=True)
+    estudiante_id = db.Column(db.Integer, db.ForeignKey('estudiante.id'), nullable=False)
+    fecha = db.Column(db.String(20), nullable=False)
+    estado = db.Column(db.String(20), nullable=False) # 'Presente', 'Ausente', 'Tarde'
+
+class RegistroPersonal(db.Model):
+    __tablename__ = 'registro_personal'
+    id = db.Column(db.Integer, primary_key=True)
+    fecha = db.Column(db.String(20), unique=True, nullable=False)
+    adm_presente = db.Column(db.Integer, default=0)
+    adm_ausentes = db.Column(db.String(255), nullable=True)
+    aux_presente = db.Column(db.Integer, default=0)
+    aux_ausentes = db.Column(db.String(255), nullable=True)
+    doc_presente = db.Column(db.Integer, default=0)
+    doc_ausentes = db.Column(db.String(255), nullable=True)

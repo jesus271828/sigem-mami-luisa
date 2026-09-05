@@ -1,5 +1,5 @@
 import os
-from models import db, Estudiante, Usuario, Planificacion, Notas1, Notas2
+from models import db, Estudiante, Usuario, Planificacion, Notas1, Notas2, Asistencia, RegistroPersonal
 import base64
 import sqlite3
 from flask import Flask, render_template, make_response, request, redirect, url_for, session, flash, send_file, Blueprint
