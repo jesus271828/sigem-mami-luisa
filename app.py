@@ -1609,40 +1609,39 @@ def guardar_asistencia():
     
     conn = get_db_connection()
     try:
-        # Recorremos todos los campos enviados en el formulario para buscar los estados de asistencia
+        # Recorremos todos los campos enviados en el formulario
         for key, value in request.form.items():
             if key.startswith('estado_'):
-                id_estudiante_str = key.split('_')[1]
-                
-                # VALIDACIÓN: Asegurar que el ID no esté vacío y contenga solo dígitos
-                if not id_estudiante_str or not id_estudiante_str.isdigit():
-                    continue  # Si el ID está vacío, saltamos este registro para evitar errores
-                
-                id_estudiante = int(id_estudiante_str)
+                # Extraemos el identificador del estudiante (puede ser texto, cédula o número)
+                id_estudiante = key.split('_')[1]
                 estado = value
                 
-                # Usamos 'id' en lugar de 'identificacion' porque así se llama en la tabla asistencia
+                # VALIDACIÓN: Solo verificamos que no esté vacío
+                if not id_estudiante or id_estudiante.strip() == "":
+                    continue
+                
+                # Verificamos usando la columna 'identificacion' o 'id_estudiante' según corresponda en tu BD
+                # Basado en tu captura de Supabase, la columna es 'identificacion' o 'id_estudiante'
                 existing = conn.execute(
-                    "SELECT id FROM asistencia WHERE id_estudiante = %s AND fecha = %s",
+                    "SELECT id FROM asistencia WHERE identificacion = %s AND fecha = %s",
                     (id_estudiante, fecha)
                 ).fetchone()
                 
                 if existing:
                     conn.execute(
-                        "UPDATE asistencia SET estado = %s WHERE id_estudiante = %s AND fecha = %s",
+                        "UPDATE asistencia SET estado = %s WHERE identificacion = %s AND fecha = %s",
                         (estado, id_estudiante, fecha)
                     )
                 else:
                     conn.execute(
-                        "INSERT INTO asistencia (id_estudiante, grado, fecha, estado) VALUES (%s, %s, %s, %s)",
+                        "INSERT INTO asistencia (identificacion, grado, fecha, estado) VALUES (%s, %s, %s, %s)",
                         (id_estudiante, grado, fecha, estado)
                     )
         
-        # Guardar los cambios permanentemente en la base de datos
         conn.commit()
         flash('Asistencia guardada correctamente.', 'success')
     except Exception as e:
-        conn.rollback() # Buena práctica: revertir cambios si ocurre un error en medio del bucle
+        conn.rollback()
         flash(f'Error al guardar la asistencia: {e}', 'danger')
     finally:
         conn.close()
