@@ -64,14 +64,22 @@
             <input type="hidden" name="fecha" value="{{ fecha_actual }}">
 
             <div class="card shadow-sm mb-4">
-                <div class="card-header bg-dark text-white">
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Estudiantes de {{ grado_seleccionado }} - Fecha: {{ fecha_actual }}</h5>
+                    <!-- Buscador en tiempo real -->
+                    <div class="input-group" style="width: 300px;">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        </div>
+                        <input type="text" id="buscadorEstudiantes" class="form-control form-control-sm" placeholder="Buscar estudiante...">
+                    </div>
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
-                        <table class="table table-striped table-bordered mb-0">
+                        <table class="table table-striped table-bordered mb-0" id="tablaEstudiantes">
                             <thead class="thead-light">
                                 <tr>
+                                    <th style="width: 8%; text-align: center;">No.</th>
                                     <th style="width: 15%;">ID</th>
                                     <th>Apellidos y Nombres</th>
                                     <th style="width: 30%; text-align: center;">Estado de Asistencia</th>
@@ -80,6 +88,7 @@
                             <tbody>
                                 {% for est in estudiantes %}
                                 <tr>
+                                    <td class="text-center font-weight-bold">{{ loop.index }}</td>
                                     <td>{{ est.id }}</td>
                                     <td>{{ est.apellidos }}, {{ est.nombres }}</td>
                                     <td class="text-center">
@@ -98,7 +107,7 @@
                                 </tr>
                                 {% else %}
                                 <tr>
-                                    <td colspan="3" class="text-center text-muted py-3">No hay estudiantes registrados en este curso.</td>
+                                    <td colspan="4" class="text-center text-muted py-3">No hay estudiantes registrados en este curso.</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -164,7 +173,7 @@
                                         <td class="text-left text-muted small">{{ fila.ausentes }}</td>
                                     </tr>
                                     {% endfor %}
-                                    <!-- Fila de TOTALES GENERALES (Suma automática de toda la tabla superior) -->
+                                    <!-- Fila de TOTALES GENERALES -->
                                     <tr class="font-weight-bold">
                                         <td class="bg-dark text-white align-middle">TOTAL</td>
                                         <td style="background-color: #b3d9ff;" class="text-dark">{{ resumen_grados | sum(attribute='mat_ninos') }}</td>
@@ -193,7 +202,7 @@
                         </table>
                     </div>
 
-                    <!-- TABLA 2: Resumen Global de Estudiantes (Totales Generales Acumulados) -->
+                    <!-- TABLA 2: Resumen Global de Estudiantes -->
                     <h6 class="font-weight-bold text-secondary mt-4">Resumen General Global (Nivel Inicial / Primario)</h6>
                     <div class="table-responsive mb-4">
                         <table class="table table-bordered text-center">
@@ -287,6 +296,26 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
+    // Buscador en tiempo real de estudiantes
+    document.addEventListener("DOMContentLoaded", function() {
+        const inputBuscador = document.getElementById('buscadorEstudiantes');
+        if (inputBuscador) {
+            inputBuscador.addEventListener('keyup', function() {
+                const filtro = inputBuscador.value.toLowerCase();
+                const filas = document.querySelectorAll('#tablaEstudiantes tbody tr');
+
+                filas.forEach(fila => {
+                    const textoFila = fila.textContent.toLowerCase();
+                    if (textoFila.includes(filtro)) {
+                        fila.style.display = '';
+                    } else {
+                        fila.style.display = 'none';
+                    }
+                });
+            });
+        }
+    });
+
     function verReportePDF() {
         const form = document.getElementById('form-reporte');
         const formData = new FormData(form);
