@@ -80,7 +80,8 @@
                             <thead class="thead-light">
                                 <tr>
                                     <th style="width: 8%; text-align: center;">No.</th>
-                                    <th style="width: 15%;">ID</th>
+                                    <!-- Cambiamos el título de la columna de ID a ID Estudiante -->
+                                    <th style="width: 15%;">ID Estudiante</th>
                                     <th>Nombres y Apellidos</th>
                                     <th style="width: 30%; text-align: center;">Estado de Asistencia</th>
                                 </tr>
@@ -89,7 +90,8 @@
                                 {% for est in estudiantes %}
                                 <tr>
                                     <td class="text-center font-weight-bold">{{ loop.index }}</td>
-                                    <td>{{ est.id_estudiante }}</td>
+                                    <!-- Aquí mostramos el id_estudiente en lugar del id numérico -->
+                                    <td>{{ est.id_estudiente }}</td>
                                     <!-- Nombres primero y luego Apellidos -->
                                     <td>{{ est.nombres }} {{ est.apellidos }}</td>
                                     <td class="text-center">
