@@ -1423,8 +1423,15 @@ def asistencia():
     fecha_actual = request.args.get('fecha', datetime.now().strftime('%Y-%m-%d'))
     grado_seleccionado = request.args.get('grado', '')
 
-    # Lista oficial de cursos solicitada para las tablas superiores
-    cursos_resumen = ['1ro A', '2do A', '3ro A', '4to A', '5to A', '6to A']
+    # Lista completa con todas las secciones (A y B) para la tabla detallada superior
+    cursos_resumen = [
+        '1ro A', '1ro B', 
+        '2do A', '2do B', 
+        '3ro A', '3ro B', 
+        '4to A', '4to B', 
+        '5to A', '5to B', 
+        '6to A', '6to B'
+    ]
 
     conn = get_db_connection()
     try:
@@ -1455,7 +1462,7 @@ def asistencia():
                 estado_val = a['estado'] if hasattr(a, 'keys') else a[1]
                 asistencia_dict[id_est] = estado_val
 
-        # --- CÁLCULO DETALLADO POR CADA CURSO PARA LA TABLA 1 Y 2 ---
+        # --- CÁLCULO DETALLADO POR CADA CURSO (TABLA SUPERIOR) ---
         resumen_grados = []
         tot_mat_ninos = 0
         tot_mat_ninas = 0
@@ -1523,7 +1530,7 @@ def asistencia():
             
             str_ausentes = ", ".join(nombres_ausentes)
 
-            # Acumular para totales generales
+            # Acumular para el total general global
             tot_mat_ninos += m_ninos
             tot_mat_ninas += m_ninas
             tot_asist_ninos += a_ninos
@@ -1540,6 +1547,7 @@ def asistencia():
                 'ausentes': str_ausentes
             })
 
+        # --- TOTALES GLOBALES (PARA LA OTRA TABLA SOLO CON EL TOTAL) ---
         totales_grales = {
             'mat_ninos': tot_mat_ninos,
             'mat_ninas': tot_mat_ninas,
