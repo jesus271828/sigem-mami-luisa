@@ -1423,11 +1423,8 @@ def asistencia():
     fecha_actual = request.args.get('fecha', datetime.now().strftime('%Y-%m-%d'))
     grado_seleccionado = request.args.get('grado', '')
 
-    # Lista oficial de cursos del Nivel Inicial para el resumen automático
-    cursos_resumen = [
-        'Párvulos', 'Prekínder – A', 'Prekínder – B', 
-        'Kínder – A', 'Kínder – B', 'Preprimario – A', 'Preprimario – B'
-    ]
+    # Lista oficial de cursos solicitada para las tablas superiores
+    cursos_resumen = ['1ro A', '2do A', '3ro A', '4to A', '5to A', '6to A']
 
     conn = get_db_connection()
     try:
@@ -1458,53 +1455,98 @@ def asistencia():
                 estado_val = a['estado'] if hasattr(a, 'keys') else a[1]
                 asistencia_dict[id_est] = estado_val
 
-        # --- CÁLCULO AUTOMÁTICO PARA LA TABLA RESUMEN DE INICIAL ---
-        format_strings = ','.join(['%s'] * len(cursos_resumen))
-        
-        # 1. Matriculados Niños y Niñas
-        sql_mat = f"SELECT sexo, COUNT(*) FROM estudiantes WHERE grado IN ({format_strings}) GROUP BY sexo"
-        mat_db = conn.execute(sql_mat, tuple(cursos_resumen)).fetchall()
-        
-        mat_ninos = 0
-        mat_ninas = 0
-        for row in mat_db:
-            sexo_val = row['sexo'] if hasattr(row, 'keys') else row[0]
-            count_val = row['count'] if hasattr(row, 'keys') else row[1]
-            if sexo_val == 'Masculino':
-                mat_ninos = count_val
-            elif sexo_val == 'Femenino':
-                mat_ninas = count_val
-        mat_total = mat_ninos + mat_ninas
+        # --- CÁLCULO DETALLADO POR CADA CURSO PARA LA TABLA 1 Y 2 ---
+        resumen_grados = []
+        tot_mat_ninos = 0
+        tot_mat_ninas = 0
+        tot_asist_ninos = 0
+        tot_asist_ninas = 0
 
-        # 2. Asistencia Niños y Niñas para la fecha seleccionada
-        sql_asis = f"""
-            SELECT e.sexo, COUNT(a.id_estudiante) 
-            FROM asistencia a
-            JOIN estudiantes e ON a.id_estudiante = e.id
-            WHERE a.fecha = %s AND e.grado IN ({format_strings}) AND a.estado IN ('Presente', 'Tarde')
-            GROUP BY e.sexo
-        """
-        params_asis = [fecha_actual] + cursos_resumen
-        asis_db_res = conn.execute(sql_asis, tuple(params_asis)).fetchall()
+        for curso in cursos_resumen:
+            # 1. Matriculados por género para este curso
+            mat_db = conn.execute(
+                "SELECT sexo, COUNT(*) FROM estudiantes WHERE grado = %s GROUP BY sexo", 
+                (curso,)
+            ).fetchall()
+            
+            m_ninos = 0
+            m_ninas = 0
+            for row in mat_db:
+                sexo_val = row['sexo'] if hasattr(row, 'keys') else row[0]
+                count_val = row['count'] if hasattr(row, 'keys') else row[1]
+                if sexo_val == 'Masculino':
+                    m_ninos = count_val
+                elif sexo_val == 'Femenino':
+                    m_ninas = count_val
+            m_total = m_ninos + m_ninas
 
-        asist_ninos = 0
-        asist_ninas = 0
-        for row in asis_db_res:
-            sexo_val = row['sexo'] if hasattr(row, 'keys') else row[0]
-            count_val = row['count'] if hasattr(row, 'keys') else row[1]
-            if sexo_val == 'Masculino':
-                asist_ninos = count_val
-            elif sexo_val == 'Femenino':
-                asist_ninas = count_val
-        asist_total = asist_ninos + asist_ninas
+            # 2. Asistencia por género para este curso y fecha
+            asis_db_curso = conn.execute(
+                """
+                SELECT e.sexo, COUNT(a.id_estudiante) 
+                FROM asistencia a
+                JOIN estudiantes e ON a.id_estudiante = e.id
+                WHERE a.fecha = %s AND e.grado = %s AND a.estado IN ('Presente', 'Tarde')
+                GROUP BY e.sexo
+                """,
+                (fecha_actual, curso)
+            ).fetchall()
 
-        totales_resumen = {
-            'mat_ninos': mat_ninos,
-            'mat_ninas': mat_ninas,
-            'mat_total': mat_total,
-            'asist_ninos': asist_ninos,
-            'asist_ninas': asist_ninas,
-            'asist_total': asist_total
+            a_ninos = 0
+            a_ninas = 0
+            for row in asis_db_curso:
+                sexo_val = row['sexo'] if hasattr(row, 'keys') else row[0]
+                count_val = row['count'] if hasattr(row, 'keys') else row[1]
+                if sexo_val == 'Masculino':
+                    a_ninos = count_val
+                elif sexo_val == 'Femenino':
+                    a_ninas = count_val
+            a_total = a_ninos + a_ninas
+
+            # 3. Nombres de los ausentes para este curso y fecha
+            ausentes_db = conn.execute(
+                """
+                SELECT e.nombres, e.apellidos 
+                FROM estudiantes e
+                JOIN asistencia a ON e.id = a.id_estudiante
+                WHERE a.fecha = %s AND e.grado = %s AND a.estado = 'Ausente'
+                ORDER BY e.apellidos ASC
+                """,
+                (fecha_actual, curso)
+            ).fetchall()
+
+            nombres_ausentes = []
+            for aus in ausentes_db:
+                nom = aus['nombres'] if hasattr(aus, 'keys') else aus[0]
+                ap = aus['apellidos'] if hasattr(aus, 'keys') else aus[1]
+                nombres_ausentes.append(f"{ap} {nom}")
+            
+            str_ausentes = ", ".join(nombres_ausentes)
+
+            # Acumular para totales generales
+            tot_mat_ninos += m_ninos
+            tot_mat_ninas += m_ninas
+            tot_asist_ninos += a_ninos
+            tot_asist_ninas += a_ninas
+
+            resumen_grados.append({
+                'grado': curso,
+                'mat_ninos': m_ninos,
+                'mat_ninas': m_ninas,
+                'mat_total': m_total,
+                'asist_ninos': a_ninos,
+                'asist_ninas': a_ninas,
+                'asist_total': a_total,
+                'ausentes': str_ausentes
+            })
+
+        totales_grales = {
+            'mat_ninos': tot_mat_ninos,
+            'mat_ninas': tot_mat_ninas,
+            'mat_total': tot_mat_ninos + tot_mat_ninas,
+            'asist_ninos': tot_asist_ninos,
+            'asist_ninas': tot_asist_ninas,
+            'asist_total': tot_asist_ninos + tot_asist_ninas
         }
 
         # Obtener datos previos del personal si existen
@@ -1520,7 +1562,9 @@ def asistencia():
                            fecha_actual=fecha_actual,
                            estudiantes=estudiantes,
                            asistencia_dict=asistencia_dict,
-                           totales=totales_resumen,
+                           resumen_grados=resumen_grados,
+                           totales_grales=totales_grales,
+                           totales=totales_grales,
                            meta=meta)
 
 @app.route('/guardar_asistencia', methods=['POST'])
