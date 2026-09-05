@@ -130,8 +130,8 @@
                         </div>
                     </div>
 
-                    <!-- 1. Tabla Resumen de Estudiantes (Matriculados y Asistencia) -->
-                    <h6 class="font-weight-bold text-secondary mt-4">Resumen de Estudiantes</h6>
+                    <!-- 1. Tabla Resumen de Estudiantes (Matriculados y Asistencia Automáticos) -->
+                    <h6 class="font-weight-bold text-secondary mt-4">Resumen de Estudiantes (Nivel Inicial)</h6>
                     <div class="table-responsive">
                         <table class="table table-bordered text-center">
                             <thead class="thead-light">
@@ -152,12 +152,12 @@
                             <tbody>
                                 <tr>
                                     <td class="font-weight-bold bg-light">TOTAL</td>
-                                    <td><input type="number" name="mat_ninos" class="form-control text-center" value="{{ meta.mat_ninos if meta else '' }}" placeholder="0"></td>
-                                    <td><input type="number" name="mat_ninas" class="form-control text-center" value="{{ meta.mat_ninas if meta else '' }}" placeholder="0"></td>
-                                    <td><input type="number" name="mat_total" class="form-control text-center" value="{{ meta.mat_total if meta else '' }}" placeholder="0"></td>
-                                    <td><input type="number" name="asist_ninos" class="form-control text-center" value="{{ meta.asist_ninos if meta else '' }}" placeholder="0"></td>
-                                    <td><input type="number" name="asist_ninas" class="form-control text-center" value="{{ meta.asist_ninas if meta else '' }}" placeholder="0"></td>
-                                    <td><input type="number" name="asist_total" class="form-control text-center" value="{{ meta.asist_total if meta else '' }}" placeholder="0"></td>
+                                    <td class="font-weight-bold text-info align-middle">{{ totales.mat_ninos }}</td>
+                                    <td class="font-weight-bold text-danger align-middle">{{ totales.mat_ninas }}</td>
+                                    <td class="font-weight-bold bg-warning text-dark align-middle">{{ totales.mat_total }}</td>
+                                    <td class="font-weight-bold text-success align-middle">{{ totales.asist_ninos }}</td>
+                                    <td class="font-weight-bold text-success align-middle">{{ totales.asist_ninas }}</td>
+                                    <td class="font-weight-bold bg-success text-white align-middle">{{ totales.asist_total }}</td>
                                 </tr>
                             </tbody>
                         </table>

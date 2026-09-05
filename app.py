@@ -1408,7 +1408,7 @@ def buscar_emergencia():
 
 
 from datetime import datetime
-from flask import render_template, request, redirect, url_for, session
+from flask import render_template, request, redirect, url_for, session, flash
 
 @app.route('/asistencia', methods=['GET', 'POST'])
 def asistencia():
@@ -1423,9 +1423,15 @@ def asistencia():
     fecha_actual = request.args.get('fecha', datetime.now().strftime('%Y-%m-%d'))
     grado_seleccionado = request.args.get('grado', '')
 
+    # Lista oficial de cursos del Nivel Inicial para el resumen automático
+    cursos_resumen = [
+        'Párvulos', 'Prekínder – A', 'Prekínder – B', 
+        'Kínder – A', 'Kínder – B', 'Preprimario – A', 'Preprimario – B'
+    ]
+
     conn = get_db_connection()
     try:
-        # Obtener lista limpia de grados para el selector
+        # Obtener lista limpia de grados para el selector principal
         grados_db = conn.execute("SELECT DISTINCT grado FROM estudiantes WHERE grado IS NOT NULL ORDER BY grado ASC").fetchall()
         lista_grados = [g['grado'] if isinstance(g, dict) or hasattr(g, 'keys') else g[0] for g in grados_db]
 
@@ -1439,7 +1445,6 @@ def asistencia():
                 (grado_seleccionado,)
             ).fetchall()
             
-            # Convertir a lista de diccionarios estándar
             estudiantes = [dict(e) if hasattr(e, 'keys') else {'id': e[0], 'nombres': e[1], 'apellidos': e[2]} for e in estudiantes_db]
 
             # Buscar asistencia existente para ese curso y fecha
@@ -1452,6 +1457,55 @@ def asistencia():
                 id_est = a['id_estudiante'] if hasattr(a, 'keys') else a[0]
                 estado_val = a['estado'] if hasattr(a, 'keys') else a[1]
                 asistencia_dict[id_est] = estado_val
+
+        # --- CÁLCULO AUTOMÁTICO PARA LA TABLA RESUMEN DE INICIAL ---
+        format_strings = ','.join(['%s'] * len(cursos_resumen))
+        
+        # 1. Matriculados Niños y Niñas
+        sql_mat = f"SELECT sexo, COUNT(*) FROM estudiantes WHERE grado IN ({format_strings}) GROUP BY sexo"
+        mat_db = conn.execute(sql_mat, tuple(cursos_resumen)).fetchall()
+        
+        mat_ninos = 0
+        mat_ninas = 0
+        for row in mat_db:
+            sexo_val = row['sexo'] if hasattr(row, 'keys') else row[0]
+            count_val = row['count'] if hasattr(row, 'keys') else row[1]
+            if sexo_val == 'Masculino':
+                mat_ninos = count_val
+            elif sexo_val == 'Femenino':
+                mat_ninas = count_val
+        mat_total = mat_ninos + mat_ninas
+
+        # 2. Asistencia Niños y Niñas para la fecha seleccionada
+        sql_asis = f"""
+            SELECT e.sexo, COUNT(a.id_estudiante) 
+            FROM asistencia a
+            JOIN estudiantes e ON a.id_estudiante = e.id
+            WHERE a.fecha = %s AND e.grado IN ({format_strings}) AND a.estado IN ('Presente', 'Tarde')
+            GROUP BY e.sexo
+        """
+        params_asis = [fecha_actual] + cursos_resumen
+        asis_db_res = conn.execute(sql_asis, tuple(params_asis)).fetchall()
+
+        asist_ninos = 0
+        asist_ninas = 0
+        for row in asis_db_res:
+            sexo_val = row['sexo'] if hasattr(row, 'keys') else row[0]
+            count_val = row['count'] if hasattr(row, 'keys') else row[1]
+            if sexo_val == 'Masculino':
+                asist_ninos = count_val
+            elif sexo_val == 'Femenino':
+                asist_ninas = count_val
+        asist_total = asist_ninos + asist_ninas
+
+        totales_resumen = {
+            'mat_ninos': mat_ninos,
+            'mat_ninas': mat_ninas,
+            'mat_total': mat_total,
+            'asist_ninos': asist_ninos,
+            'asist_ninas': asist_ninas,
+            'asist_total': asist_total
+        }
 
         # Obtener datos previos del personal si existen
         meta_personal = conn.execute('SELECT * FROM asistencia_personal WHERE fecha = %s', (fecha_actual,)).fetchone()
@@ -1466,6 +1520,7 @@ def asistencia():
                            fecha_actual=fecha_actual,
                            estudiantes=estudiantes,
                            asistencia_dict=asistencia_dict,
+                           totales=totales_resumen,
                            meta=meta)
 
 @app.route('/guardar_asistencia', methods=['POST'])
