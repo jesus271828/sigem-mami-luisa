@@ -130,15 +130,16 @@
                         </div>
                     </div>
 
-                    <!-- 1. Tabla Resumen de Estudiantes (Matriculados y Asistencia Automáticos) -->
-                    <h6 class="font-weight-bold text-secondary mt-4">Resumen de Estudiantes (Nivel Inicial)</h6>
+                    <!-- 1. Tabla Resumen de Estudiantes Desglosada por Grados (Estilo Oficial) -->
+                    <h6 class="font-weight-bold text-secondary mt-4">NIVEL PRIMARIO ML – L1 (Resumen por Grados)</h6>
                     <div class="table-responsive">
                         <table class="table table-bordered text-center">
                             <thead class="thead-light">
                                 <tr>
-                                    <th rowspan="2" class="align-middle">TOTAL</th>
+                                    <th rowspan="2" class="align-middle">GRADOS</th>
                                     <th colspan="3">MATRICULADOS</th>
                                     <th colspan="3">ASISTENCIA</th>
+                                    <th rowspan="2" class="align-middle" style="width: 35%;">Nombre de los ausentes</th>
                                 </tr>
                                 <tr>
                                     <th>NIÑOS</th>
@@ -150,15 +151,35 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td class="font-weight-bold bg-light">TOTAL</td>
-                                    <td class="font-weight-bold text-info align-middle">{{ totales.mat_ninos }}</td>
-                                    <td class="font-weight-bold text-danger align-middle">{{ totales.mat_ninas }}</td>
-                                    <td class="font-weight-bold bg-warning text-dark align-middle">{{ totales.mat_total }}</td>
-                                    <td class="font-weight-bold text-success align-middle">{{ totales.asist_ninos }}</td>
-                                    <td class="font-weight-bold text-success align-middle">{{ totales.asist_ninas }}</td>
-                                    <td class="font-weight-bold bg-success text-white align-middle">{{ totales.asist_total }}</td>
-                                </tr>
+                                {% if resumen_grados %}
+                                    {% for fila in resumen_grados %}
+                                    <tr>
+                                        <td class="font-weight-bold bg-light text-left">{{ fila.grado }}</td>
+                                        <td style="background-color: #cce6ff;">{{ fila.mat_ninos }}</td>
+                                        <td style="background-color: #ffcce6;">{{ fila.mat_ninas }}</td>
+                                        <td style="background-color: #ffffcc;" class="font-weight-bold">{{ fila.mat_total }}</td>
+                                        <td>{{ fila.asist_ninos if fila.asist_ninos > 0 else '' }}</td>
+                                        <td>{{ fila.asist_ninas if fila.asist_ninas > 0 else '' }}</td>
+                                        <td class="font-weight-bold">{{ fila.asist_total if fila.asist_total > 0 else '' }}</td>
+                                        <td class="text-left text-muted small">{{ fila.ausentes }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                    <!-- Fila de TOTALES GENERALES -->
+                                    <tr class="font-weight-bold">
+                                        <td class="bg-dark text-white align-middle">TOTAL</td>
+                                        <td style="background-color: #b3d9ff;" class="text-dark">{{ totales_grales.mat_ninos }}</td>
+                                        <td style="background-color: #ffb3d9;" class="text-dark">{{ totales_grales.mat_ninas }}</td>
+                                        <td style="background-color: #ffff99;" class="text-dark">{{ totales_grales.mat_total }}</td>
+                                        <td class="bg-light">{{ totales_grales.asist_ninos if totales_grales.asist_ninos > 0 else '' }}</td>
+                                        <td class="bg-light">{{ totales_grales.asist_ninas if totales_grales.asist_ninas > 0 else '' }}</td>
+                                        <td style="background-color: #e2f0d9;">{{ totales_grales.asist_total if totales_grales.asist_total > 0 else '' }}</td>
+                                        <td class="bg-light"></td>
+                                    </tr>
+                                {% else %}
+                                    <tr>
+                                        <td colspan="8" class="text-muted">Cargando datos de los grados...</td>
+                                    </tr>
+                                {% endif %}
                             </tbody>
                         </table>
                     </div>
