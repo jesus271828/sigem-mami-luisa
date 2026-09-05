@@ -90,7 +90,7 @@
                                 {% for est in estudiantes %}
                                 <tr>
                                     <td class="text-center font-weight-bold">{{ loop.index }}</td>
-                                    <!-- Aquí mostramos el id_estudiente en lugar del id numérico -->
+                                    <!-- Aquí mostramos el id_estudiante en lugar del id numérico -->
                                     <td>{{ est.id_estudiante }}</td>
                                     <!-- Nombres primero y luego Apellidos -->
                                     <td>{{ est.nombres }} {{ est.apellidos }}</td>
@@ -299,7 +299,7 @@
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
     
-    <script>
+<script>
     // Buscador en tiempo real de estudiantes
     document.addEventListener("DOMContentLoaded", function() {
         const inputBuscador = document.getElementById('buscadorEstudiantes');
@@ -344,6 +344,7 @@
     function guardarPersonalSolo() {
         const form = document.getElementById('form-reporte');
         const formData = new FormData(form);
+        formData.append('action', 'guardar_solo'); // <--- Esto diferencia el guardado simple del PDF
 
         fetch("{{ url_for('descargar_reporte_ausencias') }}", {
             method: 'POST',

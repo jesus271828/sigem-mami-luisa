@@ -1674,11 +1674,12 @@ def descargar_reporte_ausencias():
         meta.doc_ausentes = doc_a
         db.session.commit()
         
-        if request.args.get('format') != 'pdf':
+        # Si la petición viene del botón de guardar simple, detenemos aquí y respondemos OK
+        action_type = request.form.get('action')
+        if action_type == 'guardar_solo':
             return "OK", 200
 
     # 2. Obtener datos estadísticos de estudiantes de la base de datos por grado
-    # (Ejemplo para los grados de primaria: 1ro, 2do, 3ro, 4to, 5to, 6to)
     grados_nombres = ['1ro.', '2do.', '3ro.', '4to.', '5to.', '6to.']
     grados_primaria = []
     
@@ -1731,7 +1732,7 @@ def descargar_reporte_ausencias():
     rendered_html = render_template('control_asistencia_pdf.html',
         anio_escolar="2026-2027",
         fecha_formateada=fecha_str,
-        dia_semana="Viernes", # Puedes calcularlo dinámicamente con datetime si deseas
+        dia_semana="Viernes", 
         grados_primaria=grados_primaria,
         total_primaria_mat_ninos=tot_mat_ninos,
         total_primaria_mat_ninas_f=tot_mat_ninas,
