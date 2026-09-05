@@ -1442,13 +1442,21 @@ def asistencia():
         asistencia_dict = {}
 
         if grado_seleccionado:
-            # Consultamos los estudiantes del grado seleccionado
+            # Consultamos los estudiantes ordenados alfabéticamente por NOMBRE
             estudiantes_db = conn.execute(
-                "SELECT id, nombres, apellidos FROM estudiantes WHERE grado = %s ORDER BY apellidos ASC", 
+                "SELECT id, nombres, apellidos FROM estudiantes WHERE grado = %s ORDER BY nombres ASC", 
                 (grado_seleccionado,)
             ).fetchall()
             
-            estudiantes = [dict(e) if hasattr(e, 'keys') else {'id': e[0], 'nombres': e[1], 'apellidos': e[2]} for e in estudiantes_db]
+            # Usamos 'id_estudiante' para que coincida exactamente con el HTML
+            estudiantes = [
+                dict(e) if hasattr(e, 'keys') else {'id_estudiante': e[0], 'nombres': e[1], 'apellidos': e[2]} 
+                for e in estudiantes_db
+            ]
+            # Asegurar la clave si viene como objeto dict con 'id'
+            for est in estudiantes:
+                if 'id' in est and 'id_estudiante' not in est:
+                    est['id_estudiante'] = est['id']
 
             # Buscar asistencia existente para ese curso y fecha
             asis_db = conn.execute(
@@ -1504,19 +1512,19 @@ def asistencia():
                     a_ninas = count_val
             a_total = a_ninos + a_ninas
 
-            # Nombres de ausentes
+            # Nombres de ausentes (Mostrando Nombre primero y Apellido después)
             ausentes_db = conn.execute(
                 """
                 SELECT e.nombres, e.apellidos 
                 FROM estudiantes e
                 JOIN asistencia a ON e.id = a.id_estudiante
                 WHERE a.fecha = %s AND e.grado = %s AND a.estado = 'Ausente'
-                ORDER BY e.apellidos ASC
+                ORDER BY e.nombres ASC
                 """,
                 (fecha_actual, curso)
             ).fetchall()
 
-            nombres_ausentes = [f"{aus['apellidos'] if hasattr(aus, 'keys') else aus[1]} {aus['nombres'] if hasattr(aus, 'keys') else aus[0]}" for aus in ausentes_db]
+            nombres_ausentes = [f"{aus['nombres'] if hasattr(aus, 'keys') else aus[0]} {aus['apellidos'] if hasattr(aus, 'keys') else aus[1]}" for aus in ausentes_db]
             str_ausentes = ", ".join(nombres_ausentes)
 
             resumen_grados.append({
@@ -1537,7 +1545,6 @@ def asistencia():
         tot_asist_ninas_ini = 0
 
         for curso_ini in cursos_inicial:
-            # Matriculados inicial
             mat_ini_db = conn.execute(
                 "SELECT sexo, COUNT(*) FROM estudiantes WHERE grado = %s GROUP BY sexo", 
                 (curso_ini,)
@@ -1551,7 +1558,6 @@ def asistencia():
                 elif sexo_val == 'Femenino':
                     tot_mat_ninas_ini += count_val
 
-            # Asistencia inicial
             asis_ini_db = conn.execute(
                 """
                 SELECT e.sexo, COUNT(a.id_estudiante) 
@@ -1580,14 +1586,12 @@ def asistencia():
             'asist_total': tot_asist_ninos_ini + tot_asist_ninas_ini
         }
 
-        # Obtener datos previos del personal si existen
         meta_personal = conn.execute('SELECT * FROM asistencia_personal WHERE fecha = %s', (fecha_actual,)).fetchone()
         meta = dict(meta_personal) if meta_personal else {}
 
     finally:
         conn.close()
 
-    # <--- ¡IMPORTANTE! Esto debe estar indentado dentro de la función 'asistencia'
     return render_template('asistencia.html',
                            lista_grados=lista_grados,
                            grado_seleccionado=grado_seleccionado,
@@ -1609,32 +1613,28 @@ def guardar_asistencia():
     
     conn = get_db_connection()
     try:
-        # Recorremos todos los campos enviados en el formulario
         for key, value in request.form.items():
             if key.startswith('estado_'):
-                # Extraemos el identificador del estudiante (puede ser texto, cédula o número)
                 id_estudiante = key.split('_')[1]
                 estado = value
                 
-                # VALIDACIÓN: Solo verificamos que no esté vacío
                 if not id_estudiante or id_estudiante.strip() == "":
                     continue
                 
-                # Verificamos usando la columna 'identificacion' o 'id_estudiante' según corresponda en tu BD
-                # Basado en tu captura de Supabase, la columna es 'identificacion' o 'id_estudiante'
+                # Unificamos la búsqueda y guardado usando 'id_estudiante'
                 existing = conn.execute(
-                    "SELECT id FROM asistencia WHERE identificacion = %s AND fecha = %s",
+                    "SELECT id FROM asistencia WHERE id_estudiante = %s AND fecha = %s",
                     (id_estudiante, fecha)
                 ).fetchone()
                 
                 if existing:
                     conn.execute(
-                        "UPDATE asistencia SET estado = %s WHERE identificacion = %s AND fecha = %s",
+                        "UPDATE asistencia SET estado = %s WHERE id_estudiante = %s AND fecha = %s",
                         (estado, id_estudiante, fecha)
                     )
                 else:
                     conn.execute(
-                        "INSERT INTO asistencia (identificacion, grado, fecha, estado) VALUES (%s, %s, %s, %s)",
+                        "INSERT INTO asistencia (id_estudiante, grado, fecha, estado) VALUES (%s, %s, %s, %s)",
                         (id_estudiante, grado, fecha, estado)
                     )
         
