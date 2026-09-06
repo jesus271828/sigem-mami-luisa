@@ -1648,6 +1648,10 @@ from flask import render_template, request, make_response
 from weasyprint import HTML
 from datetime import datetime
 
+from flask import render_template, request, make_response
+from weasyprint import HTML
+from datetime import datetime
+
 @app.route('/descargar_reporte_ausencias', methods=['POST', 'GET'])
 def descargar_reporte_ausencias():
     fecha_str = request.form.get('fecha') or request.args.get('fecha') or datetime.date.today().strftime('%Y-%m-%d')
@@ -1721,8 +1725,8 @@ def descargar_reporte_ausencias():
         mat_ninas = sum(1 for e in estudiantes_grado if e.sexo == 'Femenino')
         mat_total = len(estudiantes_grado)
         
-        # Consultar asistencia guardada para este grado en la fecha
-        asistencias_grado = Asistencia.query.join(Estudiante).filter(
+        # Consulta corregida sin errores de join implícito
+        asistencias_grado = Asistencia.query.join(Estudiante, Asistencia.estudiante_id == Estudiante.id).filter(
             Estudiante.grado == g, Asistencia.fecha == fecha_str
         ).all()
         
