@@ -18,11 +18,11 @@ class Estudiante(db.Model):
     __tablename__ = 'estudiantes'
     
     id = db.Column(db.Integer, primary_key=True)
+    id_estudiante = db.Column(db.String(50))  # <--- Agrega esta línea
     nombres = db.Column(db.String(100), nullable=False)
     apellidos = db.Column(db.String(100), nullable=False)
     grado = db.Column(db.String(50), nullable=False)
     numero_orden = db.Column(db.String(10), nullable=True)
-
 
 # Modelo para la Planificación
 class Planificacion(db.Model):
@@ -94,10 +94,3 @@ class RegistroPersonal(db.Model):
     doc_presente = db.Column(db.Integer, default=0)
     doc_ausentes = db.Column(db.String(255), nullable=True)
 
-class Estudiante(db.Model):
-    __tablename__ = 'estudiantes'
-    id = db.Column(db.Integer, primary_key=True) # o como se llame tu PK interna
-    id_estudiante = db.Column(db.String(50))      # <-- Añade esta línea si falta
-    nombres = db.Column(db.String(100))
-    apellidos = db.Column(db.String(100))
-    # ... demás campos ...
