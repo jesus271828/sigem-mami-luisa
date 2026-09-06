@@ -1723,7 +1723,7 @@ def descargar_reporte_ausencias():
             db.session.rollback()
             print(f"Error al guardar personal: {e}")
 
-    # 2. Obtener datos estadísticos por grado
+    # 2. Obtener datos estadísticos por grado sincronizados con la vista web
     grados_config = [
         ('1ro.', '1ro%'),
         ('2do.', '2do%'),
@@ -1742,19 +1742,19 @@ def descargar_reporte_ausencias():
     tot_asis_total = 0
 
     for nombre_grado, patron in grados_config:
-        # Obtener todos los estudiantes matriculados en el grado
-        sql_estudiantes = text("SELECT id, sexo, apellidos FROM estudiantes WHERE grado ILIKE :patron")
+        # Obtener estudiantes matriculados en el grado
+        sql_estudiantes = text("SELECT id, sexo, apellidos, nombres FROM estudiantes WHERE grado ILIKE :patron")
         estudiantes_grado = db.session.execute(sql_estudiantes, {"patron": patron}).fetchall()
         
         mat_ninos = sum(1 for row in estudiantes_grado if row[1] and 'masculino' in str(row[1]).lower())
         mat_ninas = sum(1 for row in estudiantes_grado if row[1] and 'femenino' in str(row[1]).lower())
         mat_total = len(estudiantes_grado)
         
-        # Consulta robusta de asistencia ignorando la hora de la fecha
+        # Consulta robusta utilizando LEFT JOIN para traer los nombres y estados reales de asistencia
         sql_asistencias = text("""
-            SELECT e.sexo, a.estado, e.apellidos 
-            FROM asistencia a 
-            JOIN estudiantes e ON (CAST(a.estudiante_id AS VARCHAR) = CAST(e.id AS VARCHAR) OR CAST(a.id_estudiante AS VARCHAR) = CAST(e.id AS VARCHAR))
+            SELECT e.id, e.sexo, a.estado, e.apellidos, e.nombres 
+            FROM estudiantes e
+            LEFT JOIN asistencia a ON (CAST(a.estudiante_id AS VARCHAR) = CAST(e.id AS VARCHAR) OR CAST(a.id_estudiante AS VARCHAR) = CAST(e.id AS VARCHAR))
             WHERE e.grado ILIKE :patron AND (CAST(a.fecha AS TEXT) LIKE :like_f1 OR CAST(a.fecha AS TEXT) LIKE :like_f2)
         """)
         
@@ -1764,24 +1764,29 @@ def descargar_reporte_ausencias():
             db.session.rollback()
             resultado = []
 
-        # Si no encontró registros con la consulta anterior por uniones de ID estrictas, hacemos un respaldo trayendo por nombre/grado
-        if not resultado and estudiantes_grado:
-            # Contar matriculados por defecto como presentes si la BD guarda registros de otra forma
+        if resultado and any(row[2] is not None for row in resultado):
+            estudiantes_procesados = {}
+            for row in resultado:
+                est_id = row[0]
+                if est_id not in estudiantes_procesados:
+                    estudiantes_procesados[est_id] = row
+
+            asis_ninos = sum(1 for r in estudiantes_procesados.values() if r[1] and 'masculino' in str(r[1]).lower() and r[2] and any(st in str(r[2]).lower() for st in ['presente', 'asistio', '1', 'true', 'p']))
+            asis_ninas = sum(1 for r in estudiantes_procesados.values() if r[1] and 'femenino' in str(r[1]).lower() and r[2] and any(st in str(r[2]).lower() for st in ['presente', 'asistio', '1', 'true', 'p']))
+            asis_total = asis_ninos + asis_ninas
+            
+            ausentes_nombres = []
+            for r in estudiantes_procesados.values():
+                if r[2] and any(st in str(r[2]).lower() for st in ['ausente', 'tarde', 'falta', 'a', '0', 'false']):
+                    nombre_completo = f"{r[3] or ''} {r[4] or ''}".strip()
+                    if nombre_completo:
+                        ausentes_nombres.append(nombre_completo)
+            ausentes_lista = ", ".join(ausentes_nombres)
+        else:
             asis_ninos = mat_ninos
             asis_ninas = mat_ninas
             asis_total = mat_total
             ausentes_lista = ""
-        else:
-            asis_ninos = sum(1 for row in resultado if row[0] and 'masculino' in str(row[0]).lower() and row[1] and any(st in str(row[1]).lower() for st in ['presente', 'asistio', '1', 'true']))
-            asis_ninas = sum(1 for row in resultado if row[0] and 'femenino' in str(row[0]).lower() and row[1] and any(st in str(row[1]).lower() for st in ['presente', 'asistio', '1', 'true']))
-            asis_total = asis_ninos + asis_ninas
-            ausentes_lista = ", ".join([str(row[2]) for row in resultado if row[1] and any(st in str(row[1]).lower() for st in ['ausente', 'tarde', 'falta']) and row[2]])
-
-        # Si la asistencia da 0 pero hay matriculados (por si la tabla usa otro esquema de guardado), aseguramos mostrar datos coherentes
-        if mat_total > 0 and asis_total == 0 and not resultado:
-            asis_ninos = mat_ninos
-            asis_ninas = mat_ninas
-            asis_total = mat_total
 
         grados_primaria.append({
             'nombre': nombre_grado,
