@@ -1652,7 +1652,6 @@ from sqlalchemy import text
 
 @app.route('/descargar_reporte_ausencias', methods=['POST', 'GET'])
 def descargar_reporte_ausencias():
-    # Limpiar cualquier transacción previa fallida en la base de datos
     try:
         db.session.rollback()
     except Exception:
@@ -1660,20 +1659,23 @@ def descargar_reporte_ausencias():
 
     fecha_str = request.form.get('fecha') or request.args.get('fecha') or datetime.date.today().strftime('%Y-%m-%d')
     
-    # Preparar formatos alternativos de fecha (YYYY-MM-DD y DD/MM/YYYY) para asegurar coincidencia en la BD
-    fecha_alt1 = fecha_str
-    fecha_alt2 = fecha_str
+    # Generar patrones de búsqueda flexibles para la fecha (ej: '2026-09-05' o '05/09/2026')
+    f1 = fecha_str
+    f2 = fecha_str
     try:
         if '-' in fecha_str:
             p = fecha_str.split('-')
             if len(p) == 3:
-                fecha_alt2 = f"{p[2]}/{p[1]}/{p[0]}"
+                f2 = f"{p[2]}/{p[1]}/{p[0]}"
         elif '/' in fecha_str:
             p = fecha_str.split('/')
             if len(p) == 3:
-                fecha_alt2 = f"{p[2]}-{p[1]}-{p[0]}"
+                f2 = f"{p[2]}-{p[1]}-{p[0]}"
     except Exception:
         pass
+
+    like_f1 = f"%{f1}%"
+    like_f2 = f"%{f2}%"
 
     # 1. Recuperar o guardar los datos del personal enviados desde el formulario
     meta = RegistroPersonal.query.filter_by(fecha=fecha_str).first()
@@ -1723,7 +1725,7 @@ def descargar_reporte_ausencias():
             print(f"Error al guardar personal: {e}")
             return str(e), 500
 
-    # 2. Obtener datos estadísticos usando patrones para grados y doble validación de fecha
+    # 2. Obtener datos estadísticos con consulta ultra robusta
     grados_config = [
         ('1ro.', '1ro%'),
         ('2do.', '2do%'),
@@ -1746,29 +1748,29 @@ def descargar_reporte_ausencias():
         sql_estudiantes = text("SELECT sexo, apellidos FROM estudiantes WHERE grado ILIKE :patron")
         estudiantes_grado = db.session.execute(sql_estudiantes, {"patron": patron}).fetchall()
         
-        mat_ninos = sum(1 for row in estudiantes_grado if row[0] == 'Masculino')
-        mat_ninas = sum(1 for row in estudiantes_grado if row[0] == 'Femenino')
+        mat_ninos = sum(1 for row in estudiantes_grado if row[0] and 'masculino' in str(row[0]).lower())
+        mat_ninas = sum(1 for row in estudiantes_grado if row[0] and 'femenino' in str(row[0]).lower())
         mat_total = len(estudiantes_grado)
         
-        # Consulta de asistencias probando ambos formatos de fecha
+        # Consulta de asistencias usando LIKE para ignorar marcas de tiempo o formatos de fecha
         sql_asistencias = text("""
             SELECT e.sexo, a.estado, e.apellidos 
             FROM asistencia a 
             JOIN estudiantes e ON (CAST(a.estudiante_id AS VARCHAR) = CAST(e.id AS VARCHAR) OR CAST(a.id_estudiante AS VARCHAR) = CAST(e.id AS VARCHAR))
-            WHERE e.grado ILIKE :patron AND (a.fecha = :f1 OR a.fecha = :f2)
+            WHERE e.grado ILIKE :patron AND (CAST(a.fecha AS TEXT) LIKE :like_f1 OR CAST(a.fecha AS TEXT) LIKE :like_f2)
         """)
         
         try:
-            resultado = db.session.execute(sql_asistencias, {"patron": patron, "f1": fecha_alt1, "f2": fecha_alt2}).fetchall()
+            resultado = db.session.execute(sql_asistencias, {"patron": patron, "like_f1": like_f1, "like_f2": like_f2}).fetchall()
         except Exception:
             db.session.rollback()
             resultado = []
 
-        asis_ninos = sum(1 for row in resultado if row[0] == 'Masculino' and row[1] == 'Presente')
-        asis_ninas = sum(1 for row in resultado if row[0] == 'Femenino' and row[1] == 'Presente')
+        asis_ninos = sum(1 for row in resultado if row[0] and 'masculino' in str(row[0]).lower() and row[1] and 'presente' in str(row[1]).lower())
+        asis_ninas = sum(1 for row in resultado if row[0] and 'femenino' in str(row[0]).lower() and row[1] and 'presente' in str(row[1]).lower())
         asis_total = asis_ninos + asis_ninas
         
-        ausentes_lista = ", ".join([str(row[2]) for row in resultado if row[1] in ['Ausente', 'Tarde'] and row[2]])
+        ausentes_lista = ", ".join([str(row[2]) for row in resultado if row[1] and any(st in str(row[1]).lower() for st in ['ausente', 'tarde']) and row[2]])
 
         grados_primaria.append({
             'nombre': nombre_grado,
@@ -1791,8 +1793,8 @@ def descargar_reporte_ausencias():
     # Nivel Inicial (L2)
     sql_inicial = text("SELECT sexo FROM estudiantes WHERE grado ILIKE :inicial")
     estudiantes_inicial = db.session.execute(sql_inicial, {"inicial": "%inicial%"}).fetchall()
-    ini_mat_ninos = sum(1 for row in estudiantes_inicial if row[0] == 'Masculino')
-    ini_mat_ninas = sum(1 for row in estudiantes_inicial if row[0] == 'Femenino')
+    ini_mat_ninos = sum(1 for row in estudiantes_inicial if row[0] and 'masculino' in str(row[0]).lower())
+    ini_mat_ninas = sum(1 for row in estudiantes_inicial if row[0] and 'femenino' in str(row[0]).lower())
     ini_mat_total = len(estudiantes_inicial)
 
     # Renderizar plantilla HTML para el PDF con los totales correctos
@@ -1819,7 +1821,6 @@ def descargar_reporte_ausencias():
         meta=meta
     )
 
-    # Generar PDF con WeasyPrint
     pdf_bytes = HTML(string=rendered_html).write_pdf()
     
     response = make_response(pdf_bytes)
