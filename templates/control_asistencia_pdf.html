@@ -31,15 +31,17 @@
             vertical-align: middle;
         }
         .logo-cell {
-            width: 12%;
+            width: 15%;
             text-align: center;
         }
         .logo-img {
-            width: 60px;
+            width: 65px;
             height: auto;
+            max-height: 65px;
+            object-fit: contain;
         }
         .info-cell {
-            width: 88%;
+            width: 85%;
             padding-left: 8px;
         }
         .school-title {
@@ -145,8 +147,8 @@
     <table class="header-table">
         <tr>
             <td class="logo-cell">
-                <!-- Simulación o imagen del logo -->
-                <div style="border: 2px solid #000080; border-radius: 50%; width: 55px; height: 55px; margin: 0 auto; display: flex; align-items: center; justify-content: center; background: #000080; color: white; font-weight: bold; font-size: 16pt;">M</div>
+                <!-- Muestra tu logo (ej. logo2.png o estático si usas url_for) -->
+                <img src="{{ url_for('static', filename='img/logo2.png', _external=True) }}" class="logo-img" alt="Logo Mami Luisa">
             </td>
             <td class="info-cell">
                 <div>
@@ -211,9 +213,9 @@
                 <td class="bg-ninos">{{ grado.mat_ninos }}</td>
                 <td class="bg-ninas">{{ grado.mat_ninas_f }}</td>
                 <td class="bg-total font-weight-bold">{{ grado.mat_total }}</td>
-                <td>{{ grado.asis_ninos if grado.asis_ninos is not none else '' }}</td>
-                <td>{{ grado.asis_ninas if grado.asis_ninas is not none else '' }}</td>
-                <td>{{ grado.asis_total if grado.asis_total is not none else '' }}</td>
+                <td>{{ grado.asis_ninos if grado.asis_ninos is not none else '0' }}</td>
+                <td>{{ grado.asis_ninas if grado.asis_ninas is not none else '0' }}</td>
+                <td>{{ grado.asis_total if grado.asis_total is not none else '0' }}</td>
                 <td class="text-left">{{ grado.ausentes }}</td>
             </tr>
             {% endfor %}
@@ -265,7 +267,7 @@
                     </tbody>
                 </table>
 
-<!-- TIPO DE PERSONAL -->
+                <!-- TIPO DE PERSONAL -->
                 <table class="data-table" style="margin-top: 10px;">
                     <thead>
                         <tr>
@@ -288,7 +290,7 @@
                             <td class="text-left">Auxiliares</td>
                             <td>{{ meta.aux_np if meta and meta.aux_np not in [None, 'None', ''] else 'N/A' }}</td>
                             <td>{{ meta.aux_ni if meta and meta.aux_ni not in [None, 'None', ''] else '-' }}</td>
-                            <td>{{ meta.aux_presente if meta and meta.aux_presente not in [None, 'None', ''] else '0' }}</td>
+                            <td>{{ meta.aux_presente if meta.aux_presente not in [None, 'None', ''] else '0' }}</td>
                             <td class="text-left">{{ meta.aux_ausentes if meta and meta.aux_ausentes not in [None, 'None', ''] else '' }}</td>
                         </tr>
                         <tr>
