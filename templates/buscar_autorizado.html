@@ -10,63 +10,89 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body {
-            background-color: #f8f9fa;
+            background-color: #f4f6f9;
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        .search-container {
+            background: linear-gradient(135deg, #198754 0%, #157347 100%);
+            border-radius: 16px;
+            color: white;
+            padding: 40px 20px;
+            box-shadow: 0 10px 25px rgba(25, 135, 84, 0.2);
         }
         .card-aut {
-            border: 2px solid #d1e7dd;
-            background-color: #f4fcf7;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border: none;
+            background-color: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            overflow: hidden;
+        }
+        .card-aut:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
         }
         .avatar-circle {
-            width: 150px;
-            height: 150px;
+            width: 130px;
+            height: 130px;
             object-fit: cover;
             border-radius: 50%;
-            border: 4px solid #ffffff;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            border: 4px solid #f8f9fa;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
         .avatar-circle-sm {
-            width: 100px;
-            height: 100px;
+            width: 75px;
+            height: 75px;
             object-fit: cover;
             border-radius: 50%;
-            border: 3px solid #ffffff;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+            border: 3px solid #f8f9fa;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .student-box {
+            background-color: #f8f9fa;
+            border-radius: 12px;
+            border: 1px solid #e9ecef;
         }
     </style>
 </head>
 <body>
 
     <div class="container my-5">
-        <!-- Encabezado y buscador -->
-        <div class="row justify-content-center mb-4">
-            <div class="col-md-8 text-center">
-                <h2 class="fw-bold text-success mb-3"><i class="fas fa-search me-2"></i>Buscar Autorizado o Tutor</h2>
-                <form method="POST" action="{{ url_for('buscar_autorizado') }}" class="input-group shadow-sm">
-                    <input type="text" name="criterio" value="{{ criterio | default('') }}" class="form-control form-control-lg" placeholder="Ingrese el nombre o cédula del autorizado..." required>
-                    <button class="btn btn-success px-4" type="submit"><i class="fas fa-search"></i> Buscar</button>
-                </form>
-                <div class="mt-3">
-                    <!-- Botón cambiado para que regrese al menú de búsqueda -->
-                    <a href="/menu_buscar" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left me-1"></i> Volver al Módulo de Búsqueda</a>
+        <!-- Encabezado y Buscador Premium -->
+        <div class="row justify-content-center mb-5">
+            <div class="col-lg-8 text-center">
+                <div class="search-container mb-4">
+                    <h2 class="fw-bold mb-3"><i class="fas fa-id-card me-2"></i>Consulta de Autorizados y Tutores</h2>
+                    <p class="text-white-50 mb-4">Ingrese el nombre completo o número de cédula para verificar los permisos de retiro.</p>
+                    <form method="POST" action="{{ url_for('buscar_autorizado') }}" class="input-group input-group-lg shadow-sm bg-white p-1 rounded-pill">
+                        <span class="input-group-text bg-transparent border-0 ps-3 text-muted"><i class="fas fa-search"></i></span>
+                        <input type="text" name="criterio" value="{{ criterio | default('') }}" class="form-control border-0 shadow-none ps-2" placeholder="Ej. Juan Pérez o 001-..." required>
+                        <button class="btn btn-success px-4 rounded-pill fw-semibold" type="submit">Buscar</button>
+                    </form>
+                </div>
+                <div>
+                    <a href="/menu_buscar" class="btn btn-outline-secondary rounded-pill px-4"><i class="fas fa-arrow-left me-2"></i>Volver al Módulo de Búsqueda</a>
                 </div>
             </div>
         </div>
 
         <!-- Resultados de la Búsqueda -->
         <div class="row justify-content-center">
-            <div class="col-md-10">
+            <div class="col-lg-9">
                 {% if autorizados %}
-                    <p class="text-muted mb-3">Se encontraron <strong>{{ autorizados|length }}</strong> resultado(s):</p>
+                    <div class="d-flex align-items-center justify-content-between mb-4">
+                        <h5 class="text-secondary fw-bold mb-0">Resultados de la búsqueda</h5>
+                        <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill fs-6">
+                            {{ autorizados|length }} registro(s) encontrado(s)
+                        </span>
+                    </div>
                     
                     {% for aut in autorizados %}
                     <div class="card card-aut p-4 mb-4">
                         <div class="row align-items-center">
                             
-                            <!-- Columna 1: Foto del Autorizado -->
-                            <div class="col-md-4 text-center border-end border-success-subtle py-3">
-                                <h5 class="text-secondary fw-bold mb-3">Autorizado</h5>
+                            <!-- Columna 1: Foto y Parentesco del Autorizado -->
+                            <div class="col-md-4 text-center border-end-md py-2">
                                 <div class="mb-3 d-flex justify-content-center">
                                     {% if aut.foto_autorizado and aut.foto_autorizado != 'None' and aut.foto_autorizado != '' %}
                                         {% if aut.foto_autorizado.startswith('/9j/') or aut.foto_autorizado.startswith('iVBOR') or aut.foto_autorizado.startswith('R0lGOD') or aut.foto_autorizado.startswith('UklGR') %}
@@ -75,28 +101,30 @@
                                             <img src="{{ url_for('static', filename=aut.foto_autorizado) }}" class="avatar-circle" alt="Foto Autorizado">
                                         {% endif %}
                                     {% else %}
-                                        <div class="avatar-circle bg-secondary text-white d-flex align-items-center justify-content-center">
-                                            <i class="fas fa-user fa-4x"></i>
+                                        <div class="avatar-circle bg-secondary text-white d-flex align-items-center justify-content-center mx-auto">
+                                            <i class="fas fa-user fa-3x"></i>
                                         </div>
                                     {% endif %}
                                 </div>
-                                <span class="badge bg-success text-white px-3 py-2 fs-6">Parentesco: {{ aut.parentesco }}</span>
+                                <span class="badge bg-success text-white px-3 py-2 rounded-pill fw-normal">
+                                    <i class="fas fa-heart me-1"></i> Parentesco: {{ aut.parentesco }}
+                                </span>
                             </div>
 
-                            <!-- Columna 2: Datos y Estudiante Asociado -->
-                            <div class="col-md-8 ps-md-4">
-                                <h3 class="text-success fw-bold mb-2">Autorizado Encontrado</h3>
-                                <p class="mb-1 fs-5"><strong>Nombre:</strong> {{ aut.nombre_completo }}</p>
-                                <p class="mb-3 fs-5"><strong>Cédula:</strong> {{ aut.cedula }}</p>
-                                
-                                <hr class="text-success opacity-25">
+                            <!-- Columna 2: Datos Personales y Estudiante Asociado -->
+                            <div class="col-md-8 ps-md-4 mt-3 mt-md-0">
+                                <div class="mb-3">
+                                    <span class="text-uppercase text-muted fs-7 fw-bold tracking-wider">Autorizado</span>
+                                    <h3 class="text-dark fw-bold mb-1">{{ aut.nombre_completo }}</h3>
+                                    <p class="text-muted mb-0"><i class="fas fa-id-card-clip me-1 text-success"></i> Cédula: <span class="text-dark fw-semibold">{{ aut.cedula }}</span></p>
+                                </div>
 
-                                <!-- Datos del Estudiante Relacionado -->
-                                <div class="mt-2">
-                                    <h5 class="text-primary fw-bold mb-3">Estudiante Asociado:</h5>
+                                <!-- Contenedor del Estudiante Asociado -->
+                                <div class="student-box p-3">
+                                    <div class="small fw-bold text-primary mb-2 text-uppercase"><i class="fas fa-child me-1"></i> Estudiante Autorizado a Retirar</div>
                                     <div class="row align-items-center">
-                                        <!-- FOTO DEL ESTUDIANTE -->
-                                        <div class="col-md-4 text-center mb-3 mb-md-0">
+                                        <!-- Foto del Estudiante -->
+                                        <div class="col-auto">
                                             {% if aut.foto_estudiante and aut.foto_estudiante != 'None' and aut.foto_estudiante != '' %}
                                                 {% if aut.foto_estudiante.startswith('/9j/') or aut.foto_estudiante.startswith('iVBOR') or aut.foto_estudiante.startswith('R0lGOD') or aut.foto_estudiante.startswith('UklGR') %}
                                                     <img src="data:image/jpeg;base64,{{ aut.foto_estudiante }}" class="avatar-circle-sm" alt="Foto Estudiante">
@@ -104,15 +132,18 @@
                                                     <img src="{{ url_for('static', filename=aut.foto_estudiante) }}" class="avatar-circle-sm" alt="Foto Estudiante">
                                                 {% endif %}
                                             {% else %}
-                                                <div class="avatar-circle-sm bg-primary text-white d-flex align-items-center justify-content-center mx-auto">
-                                                    <i class="fas fa-user-graduate fa-2x"></i>
+                                                <div class="avatar-circle-sm bg-primary text-white d-flex align-items-center justify-content-center">
+                                                    <i class="fas fa-user-graduate fa-lg"></i>
                                                 </div>
                                             {% endif %}
                                         </div>
-                                        <div class="col-md-8">
-                                            <p class="mb-1 fs-5"><strong>Nombre:</strong> {{ aut.nombres or 'No registrado' }} {{ aut.apellidos or '' }}</p>
-                                            <p class="mb-1"><strong>Curso:</strong> {{ aut.grado or 'No especificado' }}</p>
-                                            <p class="mb-0 text-muted small"><strong>ID:</strong> {{ aut.id_estudiante or 'N/A' }}</p>
+                                        <!-- Detalles del Estudiante -->
+                                        <div class="col">
+                                            <h5 class="fw-bold text-dark mb-1">{{ aut.nombres or 'No registrado' }} {{ aut.apellidos or '' }}</h5>
+                                            <div class="d-flex flex-wrap gap-2">
+                                                <span class="badge bg-light text-dark border">Curso: {{ aut.grado or 'No especificado' }}</span>
+                                                <span class="badge bg-light text-muted border">ID: {{ aut.id_estudiante or 'N/A' }}</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -123,8 +154,10 @@
                     {% endfor %}
 
                 {% else %}
-                    <div class="text-center py-5">
-                        <div class="text-muted fs-4"><i class="fas fa-info-circle me-2"></i> Realice una búsqueda para ver los autorizados registrados.</div>
+                    <div class="text-center py-5 bg-white rounded-4 shadow-sm p-5">
+                        <div class="text-muted fs-1 mb-3"><i class="fas fa-folder-open opacity-50"></i></div>
+                        <h5 class="text-secondary fw-bold">Sin resultados que mostrar</h5>
+                        <p class="text-muted mb-0">Realiza una búsqueda utilizando el campo superior para verificar la información de los tutores.</p>
                     </div>
                 {% endif %}
             </div>
