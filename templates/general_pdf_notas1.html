@@ -128,19 +128,19 @@
         </tr>
     </table>
 
-    <!-- DATOS DEL ESTUDIANTE -->
-    <table class="data-table">
-        <tr>
-            <td class="data-label" style="width: 10%;">NOMBRE(S):</td>
-            <td style="width: 38%; color: #1a73e8; font-weight: bold;">{{ estudiante.nombres }}</td>
-            <td class="data-label" style="width: 12%;">APELLIDO (S):</td>
-            <td style="width: 25%; color: #1a73e8; font-weight: bold;">{{ estudiante.apellidos }}</td>
-            <td class="data-label" style="width: 8%;">NO. DE ORDEN:</td>
-            <td style="width: 7%; text-align: center; font-weight: bold;">{{ numero_orden | default('01') }}</td>
-            <td class="data-label" style="width: 10%;">ID ESTUDIANTE:</td>
-            <td style="width: 10%; text-align: center; font-weight: bold;">{{ estudiante.id_estudiante }}</td>
-        </tr>
-    </table>
+<!-- DATOS DEL ESTUDIANTE -->
+<table class="data-table">
+    <tr>
+        <td class="data-label" style="width: 10%;">NOMBRE(S):</td>
+        <td style="width: 38%; color: #1a73e8; font-weight: bold;">{{ estudiante.nombres if estudiante else '' }}</td>
+        <td class="data-label" style="width: 12%;">APELLIDO (S):</td>
+        <td style="width: 25%; color: #1a73e8; font-weight: bold;">{{ estudiante.apellidos if estudiante else '' }}</td>
+        <td class="data-label" style="width: 8%;">NO. DE ORDEN:</td>
+        <td style="width: 7%; text-align: center; font-weight: bold;">{{ estudiante.numero_orden if estudiante and estudiante.numero_orden else '' }}</td>
+        <td class="data-label" style="width: 10%;">ID ESTUDIANTE:</td>
+        <td style="width: 10%; text-align: center; font-weight: bold;">{{ estudiante.id_estudiante if estudiante else '' }}</td>
+    </tr>
+</table>
 
     <!-- TABLA DE CALIFICACIONES -->
     <table class="grades-table">
