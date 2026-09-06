@@ -1708,18 +1708,29 @@ def descargar_reporte_ausencias():
             print(f"Error al guardar personal: {e}")
             return str(e), 500
 
-    # 2. Obtener datos estadísticos usando SQL puro para evitar errores de ORM
-    grados_nombres = ['1ro.', '2do.', '3ro.', '4to.', '5to.', '6to.']
+    # 2. Obtener datos estadísticos usando patrones para atrapar '1ro A', '2do A', etc.
+    grados_config = [
+        ('1ro.', '1ro%'),
+        ('2do.', '2do%'),
+        ('3ro.', '3ro%'),
+        ('4to.', '4to%'),
+        ('5to.', '5to%'),
+        ('6to.', '6to%')
+    ]
+    
     grados_primaria = []
     
     tot_mat_ninos = 0
     tot_mat_ninas = 0
     tot_mat_total = 0
+    tot_asis_ninos = 0
+    tot_asis_ninas = 0
+    tot_asis_total = 0
 
-    for g in grados_nombres:
-        # Consulta segura de estudiantes por grado usando SQL directo
-        sql_estudiantes = text("SELECT sexo, apellidos FROM estudiantes WHERE grado = :grado")
-        estudiantes_grado = db.session.execute(sql_estudiantes, {"grado": g}).fetchall()
+    for nombre_grado, patron in grados_config:
+        # Consulta segura de estudiantes por grado usando ILIKE
+        sql_estudiantes = text("SELECT sexo, apellidos FROM estudiantes WHERE grado ILIKE :patron")
+        estudiantes_grado = db.session.execute(sql_estudiantes, {"patron": patron}).fetchall()
         
         mat_ninos = sum(1 for row in estudiantes_grado if row[0] == 'Masculino')
         mat_ninas = sum(1 for row in estudiantes_grado if row[0] == 'Femenino')
@@ -1730,11 +1741,11 @@ def descargar_reporte_ausencias():
             SELECT e.sexo, a.estado, e.apellidos 
             FROM asistencia a 
             JOIN estudiantes e ON (CAST(a.estudiante_id AS VARCHAR) = CAST(e.id AS VARCHAR) OR CAST(a.id_estudiante AS VARCHAR) = CAST(e.id AS VARCHAR))
-            WHERE e.grado = :grado AND a.fecha = :fecha
+            WHERE e.grado ILIKE :patron AND a.fecha = :fecha
         """)
         
         try:
-            resultado = db.session.execute(sql_asistencias, {"grado": g, "fecha": fecha_str}).fetchall()
+            resultado = db.session.execute(sql_asistencias, {"patron": patron, "fecha": fecha_str}).fetchall()
         except Exception:
             db.session.rollback()
             resultado = []
@@ -1746,19 +1757,22 @@ def descargar_reporte_ausencias():
         ausentes_lista = ", ".join([str(row[2]) for row in resultado if row[1] in ['Ausente', 'Tarde'] and row[2]])
 
         grados_primaria.append({
-            'nombre': g,
+            'nombre': nombre_grado,
             'mat_ninos': mat_ninos,
             'mat_ninas_f': mat_ninas,
             'mat_total': mat_total,
-            'asis_ninos': asis_ninos if resultado else '',
-            'asis_ninas': asis_ninas if resultado else '',
-            'asis_total': asis_total if resultado else '',
+            'asis_ninos': asis_ninos if resultado else 0,
+            'asis_ninas': asis_ninas if resultado else 0,
+            'asis_total': asis_total if resultado else 0,
             'ausentes': ausentes_lista
         })
         
         tot_mat_ninos += mat_ninos
         tot_mat_ninas += mat_ninas
         tot_mat_total += mat_total
+        tot_asis_ninos += asis_ninos
+        tot_asis_ninas += asis_ninas
+        tot_asis_total += asis_total
 
     # Nivel Inicial (L2) con SQL directo
     sql_inicial = text("SELECT sexo FROM estudiantes WHERE grado ILIKE :inicial")
@@ -1767,7 +1781,7 @@ def descargar_reporte_ausencias():
     ini_mat_ninas = sum(1 for row in estudiantes_inicial if row[0] == 'Femenino')
     ini_mat_total = len(estudiantes_inicial)
 
-    # Renderizar plantilla HTML para el PDF
+    # Renderizar plantilla HTML para el PDF con los totales correctos
     rendered_html = render_template('control_asistencia_pdf.html',
         anio_escolar="2026-2027",
         fecha_formateada=fecha_str,
@@ -1776,9 +1790,9 @@ def descargar_reporte_ausencias():
         total_primaria_mat_ninos=tot_mat_ninos,
         total_primaria_mat_ninas_f=tot_mat_ninas,
         total_primaria_mat_total=tot_mat_total,
-        total_primaria_asis_ninos="",
-        total_primaria_asis_ninas="",
-        total_primaria_asis_total="",
+        total_primaria_asis_ninos=tot_asis_ninos,
+        total_primaria_asis_ninas=tot_asis_ninas,
+        total_primaria_asis_total=tot_asis_total,
         inicial_mat_ninos=ini_mat_ninos,
         inicial_mat_ninas_f=ini_mat_ninas,
         inicial_mat_total=ini_mat_total,
