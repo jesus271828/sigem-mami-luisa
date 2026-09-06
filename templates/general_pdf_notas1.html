@@ -5,8 +5,8 @@
     <title>Informe de Aprendizaje - {{ estudiante.nombres if estudiante else '' }}</title>
     <style>
         @page {
-            size: letter landscape; /* Formato horizontal */
-            margin: 0.6cm 0.8cm;
+            size: letter landscape;
+            margin: 0.5cm 0.7cm;
         }
         body {
             font-family: Helvetica, Arial, sans-serif;
@@ -21,13 +21,13 @@
         .header-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 4px;
+            margin-bottom: 3px;
         }
         .header-table td {
             vertical-align: middle;
         }
         .logo-cell {
-            width: 8%;
+            width: 7%;
             text-align: center;
         }
         .logo-cell img {
@@ -35,7 +35,7 @@
             height: auto;
         }
         .title-cell {
-            width: 92%;
+            width: 93%;
         }
         .school-name {
             font-size: 13pt;
@@ -59,12 +59,12 @@
             width: 100%;
             border-collapse: collapse;
             border: 1.5px solid #000;
-            margin-bottom: 5px;
+            margin-bottom: 4px;
         }
         .data-table td, .bottom-table td, .back-table td {
             border: 1px solid #000;
-            padding: 3px 4px;
-            font-size: 7.5pt;
+            padding: 2px 3px;
+            font-size: 7.2pt;
         }
         .data-label {
             font-weight: bold;
@@ -75,8 +75,8 @@
         .grades-table th, .grades-table td {
             border: 1px solid #000;
             text-align: center;
-            padding: 3px 2px;
-            font-size: 7pt;
+            padding: 2px 1px;
+            font-size: 6.8pt;
         }
         .grades-table th {
             background-color: #f2f2f2;
@@ -84,9 +84,9 @@
         }
         .subject-name {
             text-align: left !important;
-            padding-left: 6px !important;
+            padding-left: 5px !important;
             font-weight: bold;
-            font-size: 7.5pt;
+            font-size: 7.2pt;
             width: 16%;
         }
 
@@ -95,20 +95,20 @@
             background-color: #f2f2f2;
             font-weight: bold;
             text-align: center;
-            padding: 5px;
+            padding: 4px;
             border: 1.5px solid #000;
             font-size: 8.5pt;
-            margin-bottom: 6px;
+            margin-bottom: 5px;
         }
         .comment-row td {
             vertical-align: top;
-            height: 48px;
+            height: 46px;
         }
     </style>
 </head>
 <body>
 
-    <!-- ================= PÁGINA 1: PARTE DELANTERA (HORIZONTAL) ================= -->
+    <!-- ================= PÁGINA 1: PARTE DELANTERA ================= -->
     
     <!-- ENCABEZADO INSTITUCIONAL -->
     <table class="header-table">
@@ -148,8 +148,8 @@
                     {{ ns.index }}
                 {% endif %}
             </td>
-            <td class="data-label" style="width: 4%;">ID:</td>
-            <td style="width: 4%; text-align: center; font-weight: bold; font-size: 7pt;">{{ estudiante.id_estudiante if estudiante else '' }}</td>
+            <td class="data-label" style="width: 4%;">ID ESTUDIANTE:</td>
+            <td style="width: 4%; text-align: center; font-weight: bold; font-size: 6.5pt;">{{ estudiante.id_estudiante if estudiante else '' }}</td>
         </tr>
     </table>
 
@@ -200,28 +200,28 @@
         </tbody>
     </table>
 
-    <!-- SECCIÓN INFERIOR: ESCALA, ASISTENCIA Y LEYENDA -->
+    <!-- SECCIÓN INFERIOR: ESCALA, ASISTENCIA Y LEYENDA (EXACTO A TU IMAGEN) -->
     <table class="bottom-table">
         <tr>
-            <td style="width: 8%; text-align: center; font-weight: bold; background: #f2f2f2;">Escala numérica</td>
-            <td style="width: 42%; font-weight: bold; background: #f2f2f2; text-align: center;">DESCRIPCIÓN</td>
-            <td style="width: 32%; padding: 0;">
+            <td style="width: 7%; text-align: center; font-weight: bold; background: #f2f2f2; font-size: 6.8pt;">Escala numérica</td>
+            <td style="width: 40%; font-weight: bold; background: #f2f2f2; text-align: center; font-size: 7.5pt;">DESCRIPCIÓN</td>
+            <td style="width: 35%; padding: 0;">
                 <table style="width: 100%; border-collapse: collapse;">
                     <tr style="background: #f2f2f2; font-weight: bold; text-align: center;">
-                        <td colspan="5" style="border-bottom: 1px solid #000; padding: 2px; font-size: 7pt;">RESUMEN DE ASISTENCIA DEL ESTUDIANTE</td>
+                        <td colspan="5" style="border-bottom: 1px solid #000; padding: 2px; font-size: 6.8pt;">RESUMEN DE ASISTENCIA DEL ESTUDIANTE</td>
                     </tr>
-                    <tr style="background: #f2f2f2; font-weight: bold; text-align: center; font-size: 6.5pt;">
+                    <tr style="background: #f2f2f2; font-weight: bold; text-align: center; font-size: 6.2pt;">
                         <td rowspan="2" style="border: 1px solid #000; vertical-align: middle;">PERÍODO</td>
-                        <td rowspan="2" style="border: 1px solid #000; vertical-align: middle;">ASISTENCIA</td>
+                        <td rowspan="2" style="border: 1px solid #000; vertical-align: middle;">ASITENCIA</td>
                         <td rowspan="2" style="border: 1px solid #000; vertical-align: middle;">AUSENCIA</td>
                         <td colspan="2" style="border: 1px solid #000;">% ANUAL</td>
                     </tr>
-                    <tr style="background: #f2f2f2; font-weight: bold; text-align: center; font-size: 6.5pt;">
-                        <td style="border: 1px solid #000;">ASIT.</td>
-                        <td style="border: 1px solid #000;">AUS.</td>
+                    <tr style="background: #f2f2f2; font-weight: bold; text-align: center; font-size: 6.2pt;">
+                        <td style="border: 1px solid #000;">ASITENCIA</td>
+                        <td style="border: 1px solid #000;">AUSENCIA</td>
                     </tr>
                     {% for p in ['P1', 'P2', 'P3', 'P4'] %}
-                    <tr style="font-size: 7pt;">
+                    <tr style="font-size: 6.8pt;">
                         <td style="text-align: center; font-weight: bold; border: 1px solid #000;">{{ p }}</td>
                         <td style="border: 1px solid #000; text-align: center;">{{ notas.get('asistencia_' ~ p ~ '_asistencia', '') }}</td>
                         <td style="border: 1px solid #000; text-align: center;">{{ notas.get('asistencia_' ~ p ~ '_ausencia', '') }}</td>
@@ -233,36 +233,40 @@
                     {% endfor %}
                 </table>
             </td>
-            <td style="width: 18%; background: #fdfdfd; font-size: 6.8pt;">
+            <td style="width: 18%; background: #fdfdfd; font-size: 6.4pt; vertical-align: top;">
                 <strong>Leyenda:</strong><br>
-                (P1) Período 1 | (P2) Período 2<br>
-                (P3) Período 3 | (P4) Período 4<br>
-                (C1) Compet. 1 | (C2) Compet. 2<br>(C3) Compet. 3
+                (P1) Período 1<br>
+                (P2) Período 2<br>
+                (P3) Período 3<br>
+                (P4) Período 4<br><br>
+                (C1) Competencia 1<br>
+                (C2) Competencia 2<br>
+                (C3) Competencia 3
             </td>
         </tr>
         <tr>
-            <td style="text-align: center; font-weight: bold; font-size: 7pt;">89-100</td>
-            <td style="font-size: 6.8pt;">Evidencia que el estudiante ha alcanzado un desempeño destacado con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
+            <td style="text-align: center; font-weight: bold; font-size: 6.8pt;">89-100</td>
+            <td style="font-size: 6.4pt;">Evidencia que el estudiante ha alcanzado un desempeño destacado con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
             <td colspan="2" rowspan="4" style="border: none;"></td>
         </tr>
         <tr>
-            <td style="text-align: center; font-weight: bold; font-size: 7pt;">77-88</td>
-            <td style="font-size: 6.8pt;">Evidencia que el estudiante ha logrado, en general, los aprendizajes esperados con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
+            <td style="text-align: center; font-weight: bold; font-size: 6.8pt;">77-88</td>
+            <td style="font-size: 6.4pt;">Evidencia que el estudiante ha logrado, en general, los aprendizajes esperados con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
         </tr>
         <tr>
-            <td style="text-align: center; font-weight: bold; font-size: 7pt;">65-76</td>
-            <td style="font-size: 6.8pt;">Evidencia que el estudiante aún se encuentra en proceso con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar, mostrando un logro muy básico.</td>
+            <td style="text-align: center; font-weight: bold; font-size: 6.8pt;">65-76</td>
+            <td style="font-size: 6.4pt;">Evidencia que el estudiante aún se encuentra en proceso con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar, mostrando un logro muy básico.</td>
         </tr>
         <tr>
-            <td style="text-align: center; font-weight: bold; font-size: 7pt;">Menos de 65</td>
-            <td style="font-size: 6.8pt;">Evidencia que el estudiante ha alcanzado un desempeño insuficiente con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
+            <td style="text-align: center; font-weight: bold; font-size: 6.8pt;">Menos de 65</td>
+            <td style="font-size: 6.4pt;">Evidencia que el estudiante ha alcanzado un desempeño insuficiente con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
         </tr>
     </table>
 
     <!-- SALTO DE PÁGINA OBLIGATORIO PARA LA PARTE TRASERA -->
     <div style="page-break-after: always;"></div>
 
-    <!-- ================= PÁGINA 2: PARTE TRASERA (HORIZONTAL) ================= -->
+    <!-- ================= PÁGINA 2: PARTE TRASERA ================= -->
 
     <div class="section-title">Información sobre el nivel de avances de los aprendizajes y los apoyos que necesita para su mejora.</div>
 
@@ -290,46 +294,46 @@
             <td style="width: 50%; padding: 0; vertical-align: top;">
                 <table style="width: 100%; border-collapse: collapse;">
                     <tr style="background: #f2f2f2; font-weight: bold; text-align: center;">
-                        <td style="border: 1px solid #000; padding: 4px; font-size: 7.5pt;">Períodos de reportes de calificaciones</td>
-                        <td style="border: 1px solid #000; padding: 4px; font-size: 7.5pt;">FIRMA DEL PADRE, MADRE O TUTOR</td>
+                        <td style="border: 1px solid #000; padding: 4px; font-size: 7.2pt;">Períodos de reportes de calificaciones</td>
+                        <td style="border: 1px solid #000; padding: 4px; font-size: 7.2pt;">FIRMA DEL PADRE, MADRE O TUTOR</td>
                     </tr>
                     <tr>
-                        <td style="border: 1px solid #000; text-align: center; padding: 6px; font-size: 7pt;">Septiembre – Octubre</td>
-                        <td style="border: 1px solid #000; height: 22px;"></td>
+                        <td style="border: 1px solid #000; text-align: center; padding: 5px; font-size: 6.8pt;">Septiembre – Octubre</td>
+                        <td style="border: 1px solid #000; height: 20px;"></td>
                     </tr>
                     <tr>
-                        <td style="border: 1px solid #000; text-align: center; padding: 6px; font-size: 7pt;">Noviembre – Diciembre – Enero</td>
-                        <td style="border: 1px solid #000; height: 22px;"></td>
+                        <td style="border: 1px solid #000; text-align: center; padding: 5px; font-size: 6.8pt;">Noviembre – Diciembre – Enero</td>
+                        <td style="border: 1px solid #000; height: 20px;"></td>
                     </tr>
                     <tr>
-                        <td style="border: 1px solid #000; text-align: center; padding: 6px; font-size: 7pt;">Febrero – Marzo</td>
-                        <td style="border: 1px solid #000; height: 22px;"></td>
+                        <td style="border: 1px solid #000; text-align: center; padding: 5px; font-size: 6.8pt;">Febrero – Marzo</td>
+                        <td style="border: 1px solid #000; height: 20px;"></td>
                     </tr>
                     <tr>
-                        <td style="border: 1px solid #000; text-align: center; padding: 6px; font-size: 7pt;">Abril – Mayo – Junio</td>
-                        <td style="border: 1px solid #000; height: 22px;"></td>
+                        <td style="border: 1px solid #000; text-align: center; padding: 5px; font-size: 6.8pt;">Abril – Mayo – Junio</td>
+                        <td style="border: 1px solid #000; height: 20px;"></td>
                     </tr>
                 </table>
             </td>
             <td style="width: 50%; padding: 0; vertical-align: top;">
                 <table style="width: 100%; border-collapse: collapse;">
                     <tr style="background: #f2f2f2; font-weight: bold; text-align: center;">
-                        <td colspan="3" style="border: 1px solid #000; padding: 4px; font-size: 7.5pt;">SITUACION DEL/DE LA ESTUDIANTE</td>
+                        <td colspan="3" style="border: 1px solid #000; padding: 4px; font-size: 7.2pt;">SITUACION DEL/DE LA ESTUDIANTE</td>
                     </tr>
-                    <tr style="text-align: center; font-weight: bold; font-size: 7pt;">
+                    <tr style="text-align: center; font-weight: bold; font-size: 6.8pt;">
                         <td style="border: 1px solid #000; padding: 3px; width: 33%;">Promovido/a</td>
                         <td style="border: 1px solid #000; padding: 3px; width: 33%;">Aplazado/a</td>
                         <td style="border: 1px solid #000; padding: 3px; width: 34%;">Repitente</td>
                     </tr>
-                    <tr style="text-align: center; height: 22px;">
+                    <tr style="text-align: center; height: 20px;">
                         <td style="border: 1px solid #000;"><input type="checkbox" style="transform: scale(1.1);"></td>
                         <td style="border: 1px solid #000;"><input type="checkbox" style="transform: scale(1.1);"></td>
                         <td style="border: 1px solid #000;"><input type="checkbox" style="transform: scale(1.1);"></td>
                     </tr>
                     <tr>
-                        <td colspan="3" style="border: 1px solid #000; text-align: center; padding: 4px; font-size: 7pt; background: #fafafa;">
+                        <td colspan="3" style="border: 1px solid #000; text-align: center; padding: 4px; font-size: 6.8pt; background: #fafafa;">
                             <strong>Condición final del/de la estudiante</strong><br><br>
-                            <span style="border-bottom: 1px solid #000; padding: 2px 50px; color: #555;">{{ notas.get('condicion_final', 'Escribir condición...') }}</span>
+                            <span style="border-bottom: 1px solid #000; padding: 2px 40px; color: #555;">{{ notas.get('condicion_final', 'Escribir condición...') }}</span>
                         </td>
                     </tr>
                 </table>
@@ -338,16 +342,16 @@
     </table>
 
     <!-- FIRMAS INFERIORES -->
-    <table style="width: 100%; margin-top: 30px; border-collapse: collapse;">
+    <table style="width: 100%; margin-top: 25px; border-collapse: collapse;">
         <tr>
             <td style="width: 50%; text-align: center; vertical-align: top;">
-                <div style="width: 60%; margin: 0 auto; border-top: 1px solid #000; padding-top: 4px; font-size: 7.5pt;">
+                <div style="width: 55%; margin: 0 auto; border-top: 1px solid #000; padding-top: 3px; font-size: 7.2pt;">
                     <strong>Oficina Nivel Inicial</strong><br>
                     (Docente titular del grado)
                 </div>
             </td>
             <td style="width: 50%; text-align: center; vertical-align: top;">
-                <div style="width: 60%; margin: 0 auto; border-top: 1px solid #000; padding-top: 4px; font-size: 7.5pt;">
+                <div style="width: 55%; margin: 0 auto; border-top: 1px solid #000; padding-top: 3px; font-size: 7.2pt;">
                     <strong>Licda. María Teresa Herrera Romero</strong><br>
                     (Directora)
                 </div>
