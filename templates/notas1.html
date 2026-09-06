@@ -143,7 +143,9 @@
         <div class="right-group">
             <button type="submit" form="form-informe" class="btn btn-save">💾 Guardar Cambios</button>
             {% if estudiante %}
-               <a href="{{ url_for('general_pdf_notasi', id_estudiante=id_estudiante) }}" class="btn btn-danger" target="_blank">Generar PDF</a>
+             <a href="{{ url_for('general_pdf_notas1', id_estudiante=id_estudiante) }}" class="btn btn-danger" target="_blank">
+             <i class="fas fa-file-pdf me-1"></i> Generar PDF
+            </a>
             {% else %}
                 <button type="button" class="btn btn-pdf" onclick="window.print()">🖨️ Generar PDF</button>
             {% endif %}
