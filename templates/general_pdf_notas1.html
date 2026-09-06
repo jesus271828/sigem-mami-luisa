@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Informe de Aprendizaje - {{ estudiante.nombres }} {{ estudiante.apellidos }}</title>
+    <style>
+        @page {
+            size: letter portrait;
+            margin: 0.8cm;
+        }
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 8.5pt;
+            color: #000;
+            line-height: 1.1;
+        }
+        /* ENCABEZADO INSTITUCIONAL */
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 5px;
+        }
+        .header-table td {
+            vertical-align: middle;
+        }
+        .logo-cell {
+            width: 15%;
+            text-align: center;
+        }
+        .logo-cell img {
+            width: 60px;
+            height: auto;
+        }
+        .title-cell {
+            width: 85%;
+        }
+        .school-name {
+            font-size: 16pt;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .school-slogan {
+            font-size: 9pt;
+            font-style: italic;
+            color: #e67e22;
+            float: right;
+        }
+        .school-info {
+            font-size: 7.5pt;
+            color: #333;
+            margin-top: 2px;
+        }
+
+        /* TABLA DE DATOS DEL ESTUDIANTE */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1.5px solid #000;
+            margin-bottom: 6px;
+        }
+        .data-table td {
+            border: 1px solid #000;
+            padding: 4px 6px;
+            font-size: 8.5pt;
+        }
+        .data-label {
+            font-weight: bold;
+            background-color: #f2f2f2;
+            width: auto;
+        }
+
+        /* TABLA PRINCIPAL DE CALIFICACIONES */
+        .grades-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1.5px solid #000;
+            margin-bottom: 6px;
+        }
+        .grades-table th, .grades-table td {
+            border: 1px solid #000;
+            text-align: center;
+            padding: 3px 2px;
+            font-size: 7.5pt;
+        }
+        .grades-table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        .subject-name {
+            text-align: left !important;
+            padding-left: 5px !important;
+            font-weight: bold;
+            width: 22%;
+        }
+
+        /* TABLA INFERIOR (ESCALA, ASISTENCIA Y LEYENDA) */
+        .bottom-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1.5px solid #000;
+        }
+        .bottom-table td {
+            border: 1px solid #000;
+            vertical-align: top;
+            padding: 4px;
+            font-size: 7.5pt;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ENCABEZADO -->
+    <table class="header-table">
+        <tr>
+            <td class="logo-cell">
+                <img src="{{ url_for('static', filename='img/logo2.png', _external=True) }}" alt="Logo">
+            </td>
+            <td class="title-cell">
+                <span class="school-slogan">"Educando con amor para un mundo mejor"</span>
+                <div class="school-name">Centro Educativo Mami Luisa S.R.L</div>
+                <div class="school-info">
+                    <strong>Dirección:</strong> C/Castillo Márquez #53. La Romana, Centro Ciudad. <strong>Teléfono:</strong> 809-550-7385 / 809-710-3395<br>
+                    <strong>Regional de Educación:</strong> 05 San Pedro de Macorís. <strong>Distrito Educativo:</strong> 05-03 La Romana. <strong>Código:</strong> 07121<br>
+                    <strong>INFORME DE APRENDIZAJE.</strong> Primer Grado del Nivel Primario, Sección A.<br>
+                    Año Escolar 2025-2026 / Jornada Escolar Regular. Tanda Matutina.
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- DATOS DEL ESTUDIANTE -->
+    <table class="data-table">
+        <tr>
+            <td class="data-label" style="width: 10%;">NOMBRE(S):</td>
+            <td style="width: 38%; color: #1a73e8; font-weight: bold;">{{ estudiante.nombres }}</td>
+            <td class="data-label" style="width: 12%;">APELLIDO (S):</td>
+            <td style="width: 25%; color: #1a73e8; font-weight: bold;">{{ estudiante.apellidos }}</td>
+            <td class="data-label" style="width: 8%;">NO. DE ORDEN:</td>
+            <td style="width: 7%; text-align: center; font-weight: bold;">{{ numero_orden | default('01') }}</td>
+            <td class="data-label" style="width: 10%;">ID ESTUDIANTE:</td>
+            <td style="width: 10%; text-align: center; font-weight: bold;">{{ estudiante.id_estudiante }}</td>
+        </tr>
+    </table>
+
+    <!-- TABLA DE CALIFICACIONES -->
+    <table class="grades-table">
+        <thead>
+            <tr>
+                <th rowspan="2" style="width: 22%;">ÁREAS CURRICULARES</th>
+                <th colspan="12">COMPETENCIAS FUNDAMENTALES</th>
+                <th colspan="3">CALIFICACION FINAL</th>
+                <th rowspan="2" style="width: 4%;">DEL ÁREA</th>
+                <th rowspan="2" style="width: 5%;">RECUPERACIÓN</th>
+            </tr>
+            <tr>
+                <!-- C1 -->
+                <th colspan="4">C1<br>Comunicativa</th>
+                <!-- C2 -->
+                <th colspan="4">C2<br>Pensamiento Lógico Creativo y Crítico; Resolución de Problemas; Científica y Tecnológica</th>
+                <!-- C3 -->
+                <th colspan="4">C3<br>Ética y Ciudadana; Desarrollo Personal y Espiritual; Ambiental y de la Salud</th>
+                <!-- Calificación Final por Competencia -->
+                <th colspan="3">POR COMPETENCIA</th>
+            </tr>
+            <tr>
+                <th></th>
+                <th>P1</th><th>P2</th><th>P3</th><th>P4</th>
+                <th>P1</th><th>P2</th><th>P3</th><th>P4</th>
+                <th>P1</th><th>P2</th><th>P3</th><th>P4</th>
+                <th>C1</th><th>C2</th><th>C3</th>
+                <th></th><th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% set asignaturas = [
+                "Lengua Española", "Matemática", "Ciencias Sociales", 
+                "Ciencias de la Naturaleza", "Educación Física", 
+                "Formación Integral, Humana y Religiosa", "Educación Artística", "Inglés"
+            ] %}
+            {% for asig in asignaturas %}
+            <tr>
+                <td class="subject-name">{{ asig }}</td>
+                <!-- P1 a P4 de C1 -->
+                <td>{{ notas.get(asig ~ '_c1_p1', '') }}</td><td>{{ notas.get(asig ~ '_c1_p2', '') }}</td><td>{{ notas.get(asig ~ '_c1_p3', '') }}</td><td>{{ notas.get(asig ~ '_c1_p4', '') }}</td>
+                <!-- P1 a P4 de C2 -->
+                <td>{{ notas.get(asig ~ '_c2_p1', '') }}</td><td>{{ notas.get(asig ~ '_c2_p2', '') }}</td><td>{{ notas.get(asig ~ '_c2_p3', '') }}</td><td>{{ notas.get(asig ~ '_c2_p4', '') }}</td>
+                <!-- P1 a P4 de C3 -->
+                <td>{{ notas.get(asig ~ '_c3_p1', '') }}</td><td>{{ notas.get(asig ~ '_c3_p2', '') }}</td><td>{{ notas.get(asig ~ '_c3_p3', '') }}</td><td>{{ notas.get(asig ~ '_c3_p4', '') }}</td>
+                <!-- Final C1, C2, C3 -->
+                <td><strong>{{ notas.get(asig ~ '_cf_c1', '') }}</strong></td>
+                <td><strong>{{ notas.get(asig ~ '_cf_c2', '') }}</strong></td>
+                <td><strong>{{ notas.get(asig ~ '_cf_c3', '') }}</strong></td>
+                <!-- Del Área y Recuperación -->
+                <td style="background-color: #f8f9fa;"><strong>{{ notas.get(asig ~ '_del_area', '') }}</strong></td>
+                <td>{{ notas.get(asig ~ '_recuperacion', '') }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- SECCIÓN INFERIOR: ESCALA, ASISTENCIA Y LEYENDA -->
+    <table class="bottom-table">
+        <tr>
+            <!-- Escala numérica -->
+            <td style="width: 12%; text-align: center; font-weight: bold; background: #f2f2f2;">Escala numérica</td>
+            <td style="width: 38%; font-weight: bold; background: #f2f2f2; text-align: center;">DESCRIPCIÓN</td>
+            <td style="width: 32%; padding: 0;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr style="background: #f2f2f2; font-weight: bold; text-align: center;">
+                        <td colspan="5" style="border-bottom: 1px solid #000; border-right: none; border-left: none; border-top: none;">RESUMEN DE ASISTENCIA DEL ESTUDIANTE</td>
+                    </tr>
+                    <tr style="background: #f2f2f2; font-weight: bold; text-align: center;">
+                        <td rowspan="2" style="border: 1px solid #000; vertical-align: middle;">PERÍODO</td>
+                        <td rowspan="2" style="border: 1px solid #000; vertical-align: middle;">ASITENCIA</td>
+                        <td rowspan="2" style="border: 1px solid #000; vertical-align: middle;">AUSENCIA</td>
+                        <td colspan="2" style="border: 1px solid #000;">% ANUAL</td>
+                    </tr>
+                    <tr style="background: #f2f2f2; font-weight: bold; text-align: center;">
+                        <td style="border: 1px solid #000;">ASITENCIA</td>
+                        <td style="border: 1px solid #000;">AUSENCIA</td>
+                    </tr>
+                    {% for p in ['P1', 'P2', 'P3', 'P4'] %}
+                    <tr>
+                        <td style="text-align: center; font-weight: bold; border: 1px solid #000;">{{ p }}</td>
+                        <td style="border: 1px solid #000; text-align: center;">{{ notas.get('asistencia_' ~ p ~ '_asistencia', '') }}</td>
+                        <td style="border: 1px solid #000; text-align: center;">{{ notas.get('asistencia_' ~ p ~ '_ausencia', '') }}</td>
+                        {% if loop.first %}
+                        <td rowspan="4" style="border: 1px solid #000; text-align: center; vertical-align: middle;">{{ notas.get('asistencia_pct_asistencia', '') }}</td>
+                        <td rowspan="4" style="border: 1px solid #000; text-align: center; vertical-align: middle;">{{ notas.get('asistencia_pct_ausencia', '') }}</td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </table>
+            </td>
+            <td style="width: 18%; background: #fdfdfd;">
+                <strong>Leyenda:</strong><br>
+                (P1) Período 1<br>
+                (P2) Período 2<br>
+                (P3) Período 3<br>
+                (P4) Período 4<br><br>
+                (C1) Competencia 1<br>
+                (C2) Competencia 2<br>
+                (C3) Competencia 3
+            </td>
+        </tr>
+        <tr>
+            <td style="text-align: center; font-weight: bold;">89-100</td>
+            <td>Evidencia que el estudiante ha alcanzado un desempeño destacado con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
+            <td colspan="2" rowspan="4" style="vertical-align: top; border: none;"></td>
+        </tr>
+        <tr>
+            <td style="text-align: center; font-weight: bold;">77-88</td>
+            <td>Evidencia que el estudiante ha logrado, en general, los aprendizajes esperados con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
+        </tr>
+        <tr>
+            <td style="text-align: center; font-weight: bold;">65-76</td>
+            <td>Evidencia que el estudiante aún se encuentra en proceso con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar, mostrando un logro muy básico.</td>
+        </tr>
+        <tr>
+            <td style="text-align: center; font-weight: bold;">Menos de 65</td>
+            <td>Evidencia que el estudiante ha alcanzado un desempeño insuficiente con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
+        </tr>
+    </table>
+
+</body>
+</html>
