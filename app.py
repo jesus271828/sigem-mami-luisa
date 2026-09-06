@@ -1652,6 +1652,12 @@ from sqlalchemy import text
 
 @app.route('/descargar_reporte_ausencias', methods=['POST', 'GET'])
 def descargar_reporte_ausencias():
+    # Limpiar cualquier transacción previa fallida en la base de datos
+    try:
+        db.session.rollback()
+    except Exception:
+        pass
+
     fecha_str = request.form.get('fecha') or request.args.get('fecha') or datetime.date.today().strftime('%Y-%m-%d')
     
     # 1. Recuperar o guardar los datos del personal enviados desde el formulario
@@ -1659,7 +1665,6 @@ def descargar_reporte_ausencias():
     
     if request.method == 'POST':
         try:
-            # Capturar Contratados NP y NI
             adm_np = request.form.get('adm_np', '')
             adm_ni = request.form.get('adm_ni', '')
             aux_np = request.form.get('aux_np', '')
@@ -1667,7 +1672,6 @@ def descargar_reporte_ausencias():
             doc_np = request.form.get('doc_np', '')
             doc_ni = request.form.get('doc_ni', '')
 
-            # Capturar presentes y ausentes
             adm_p = int(request.form.get('adm_presente') or 0)
             adm_a = request.form.get('adm_ausentes', '')
             aux_p = int(request.form.get('aux_presente') or 0)
@@ -1704,7 +1708,7 @@ def descargar_reporte_ausencias():
             print(f"Error al guardar personal: {e}")
             return str(e), 500
 
-    # 2. Obtener datos estadísticos de estudiantes por grado usando SQL directo (Cero errores de ORM)
+    # 2. Obtener datos estadísticos usando SQL puro para evitar errores de ORM
     grados_nombres = ['1ro.', '2do.', '3ro.', '4to.', '5to.', '6to.']
     grados_primaria = []
     
@@ -1713,33 +1717,27 @@ def descargar_reporte_ausencias():
     tot_mat_total = 0
 
     for g in grados_nombres:
-        estudiantes_grado = Estudiante.query.filter_by(grado=g).all()
-        mat_ninos = sum(1 for e in estudiantes_grado if e.sexo == 'Masculino')
-        mat_ninas = sum(1 for e in estudiantes_grado if e.sexo == 'Femenino')
+        # Consulta segura de estudiantes por grado usando SQL directo
+        sql_estudiantes = text("SELECT sexo, apellidos FROM estudiantes WHERE grado = :grado")
+        estudiantes_grado = db.session.execute(sql_estudiantes, {"grado": g}).fetchall()
+        
+        mat_ninos = sum(1 for row in estudiantes_grado if row[0] == 'Masculino')
+        mat_ninas = sum(1 for row in estudiantes_grado if row[0] == 'Femenino')
         mat_total = len(estudiantes_grado)
         
-        # Consulta SQL segura para extraer las asistencias de este grado en esta fecha
-        sql_query = text("""
+        # Consulta segura de asistencias
+        sql_asistencias = text("""
             SELECT e.sexo, a.estado, e.apellidos 
             FROM asistencia a 
-            JOIN estudiante e ON (CAST(a.estudiante_id AS VARCHAR) = CAST(e.id AS VARCHAR) OR CAST(a.id_estudiante AS VARCHAR) = CAST(e.id AS VARCHAR))
+            JOIN estudiantes e ON (CAST(a.estudiante_id AS VARCHAR) = CAST(e.id AS VARCHAR) OR CAST(a.id_estudiante AS VARCHAR) = CAST(e.id AS VARCHAR))
             WHERE e.grado = :grado AND a.fecha = :fecha
         """)
         
-        # Si las columnas de la tabla de asistencia tienen otro nombre, probamos una alternativa genérica
         try:
-            resultado = db.session.execute(sql_query, {"grado": g, "fecha": fecha_str}).fetchall()
+            resultado = db.session.execute(sql_asistencias, {"grado": g, "fecha": fecha_str}).fetchall()
         except Exception:
-            # Fallback ultra seguro si la relación usa nombres diferentes en PostgreSQL
-            try:
-                sql_query_alt = text("""
-                    SELECT e.sexo, a.estado, e.apellidos 
-                    FROM asistencia a, estudiante e 
-                    WHERE e.grado = :grado AND a.fecha = :fecha
-                """)
-                resultado = db.session.execute(sql_query_alt, {"grado": g, "fecha": fecha_str}).fetchall()
-            except Exception:
-                resultado = []
+            db.session.rollback()
+            resultado = []
 
         asis_ninos = sum(1 for row in resultado if row[0] == 'Masculino' and row[1] == 'Presente')
         asis_ninas = sum(1 for row in resultado if row[0] == 'Femenino' and row[1] == 'Presente')
@@ -1762,10 +1760,11 @@ def descargar_reporte_ausencias():
         tot_mat_ninas += mat_ninas
         tot_mat_total += mat_total
 
-    # Nivel Inicial (L2)
-    estudiantes_inicial = Estudiante.query.filter(Estudiante.grado.ilike('%inicial%')).all()
-    ini_mat_ninos = sum(1 for e in estudiantes_inicial if e.sexo == 'Masculino')
-    ini_mat_ninas = sum(1 for e in estudiantes_inicial if e.sexo == 'Femenino')
+    # Nivel Inicial (L2) con SQL directo
+    sql_inicial = text("SELECT sexo FROM estudiantes WHERE grado ILIKE :inicial")
+    estudiantes_inicial = db.session.execute(sql_inicial, {"inicial": "%inicial%"}).fetchall()
+    ini_mat_ninos = sum(1 for row in estudiantes_inicial if row[0] == 'Masculino')
+    ini_mat_ninas = sum(1 for row in estudiantes_inicial if row[0] == 'Femenino')
     ini_mat_total = len(estudiantes_inicial)
 
     # Renderizar plantilla HTML para el PDF
