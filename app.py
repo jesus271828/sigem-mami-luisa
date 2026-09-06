@@ -1726,7 +1726,7 @@ def descargar_reporte_ausencias():
         mat_total = len(estudiantes_grado)
         
         # Consulta corregida sin errores de join implícito
-        asistencias_grado = Asistencia.query.join(Estudiante, Asistencia.estudiante_id == Estudiante.id).filter(
+        asistencias_grado = Asistencia.query.join(Estudiante).filter(
             Estudiante.grado == g, Asistencia.fecha == fecha_str
         ).all()
         
