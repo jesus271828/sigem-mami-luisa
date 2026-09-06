@@ -215,14 +215,14 @@
         </div>
 
 <!-- TABLA DATOS ESTUDIANTE -->
-        <table id="tabla-datos">
+        <table id="tabla-datos" style="width: 100%; border-collapse: collapse;">
             <tr>
-                <td class="bold" style="width: 8%;">NOMBRE(S):</td>
-                <td style="width: 27%; font-weight: bold; color: #1a73e8;">{{ estudiante.nombres if estudiante else '' }}</td>
+                <td class="bold" style="width: 9%;">NOMBRE(S):</td>
+                <td style="width: 26%; font-weight: bold; color: #1a73e8;">{{ estudiante.nombres if estudiante else '' }}</td>
                 <td class="bold" style="width: 9%;">APELLIDO(S):</td>
-                <td style="width: 27%; font-weight: bold; color: #1a73e8;">{{ estudiante.apellidos if estudiante else '' }}</td>
-                <td class="bold" style="width: 10%;">NO. DE ORDEN:</td>
-                <td style="width: 6%;">
+                <td style="width: 26%; font-weight: bold; color: #1a73e8;">{{ estudiante.apellidos if estudiante else '' }}</td>
+                <td class="bold" style="width: 11%;">NO. DE ORDEN:</td>
+                <td style="width: 5%; text-align: center; font-weight: bold;">
                     {% if estudiante %}
                         {% set ns = namespace(index=0) %}
                         {% for est in lista_estudiantes %}
@@ -233,8 +233,8 @@
                         {{ ns.index }}
                     {% endif %}
                 </td>
-                <td class="bold" style="width: 5%;">ID ESTUDIANTE:</td>
-                <td style="width: 8%;">{{ estudiante.id_estudiante if estudiante else '' }}</td>
+                <td class="bold" style="width: 9%;">ID ESTUDIANTE:</td>
+                <td style="width: 5%; text-align: center; font-weight: bold; font-size: 7.5pt;">{{ estudiante.id_estudiante if estudiante else '' }}</td>
             </tr>
         </table>
 
