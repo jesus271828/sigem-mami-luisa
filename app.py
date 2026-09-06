@@ -1255,11 +1255,11 @@ def buscar_estudiante():
     try:
         if is_postgres:
             cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-            cur.execute("SELECT DISTINCT grado FROM inscripciones WHERE grado IS NOT NULL AND grado != ''")
+            cur.execute("SELECT DISTINCT grado FROM inscripciones WHERE grado IS NOT NULL AND grado != '' ORDER BY grado ASC")
             grados_res = cur.fetchall()
             cur.close()
         else:
-            conexion.execute("SELECT DISTINCT grado FROM inscripciones WHERE grado IS NOT NULL AND grado != ''")
+            conexion.execute("SELECT DISTINCT grado FROM inscripciones WHERE grado IS NOT NULL AND grado != '' ORDER BY grado ASC")
             grados_res = conexion.fetchall()
             
         grados_disponibles = [g['grado'] if isinstance(g, dict) else g[0] for g in grados_res]
@@ -1275,6 +1275,9 @@ def buscar_estudiante():
                 query += " AND grado = %s"
                 params.append(grado_filtro)
             
+            # Ordenar por nombres de forma ascendente (A-Z)
+            query += " ORDER BY nombres ASC"
+            
             cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             cur.execute(query, params)
             estudiantes = cur.fetchall()
@@ -1289,6 +1292,9 @@ def buscar_estudiante():
             if grado_filtro:
                 query += " AND grado = ?"
                 params.append(grado_filtro)
+                
+            # Ordenar por nombres de forma ascendente (A-Z)
+            query += " ORDER BY nombres ASC"
                 
             conexion.execute(query, params)
             estudiantes = conexion.fetchall()
