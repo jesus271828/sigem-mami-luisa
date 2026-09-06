@@ -93,3 +93,11 @@ class RegistroPersonal(db.Model):
     aux_ausentes = db.Column(db.String(255), nullable=True)
     doc_presente = db.Column(db.Integer, default=0)
     doc_ausentes = db.Column(db.String(255), nullable=True)
+
+class Estudiante(db.Model):
+    __tablename__ = 'estudiantes'
+    id = db.Column(db.Integer, primary_key=True) # o como se llame tu PK interna
+    id_estudiante = db.Column(db.String(50))      # <-- Añade esta línea si falta
+    nombres = db.Column(db.String(100))
+    apellidos = db.Column(db.String(100))
+    # ... demás campos ...
