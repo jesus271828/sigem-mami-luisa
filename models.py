@@ -74,12 +74,12 @@ class Asistencia(db.Model):
 
 class RegistroPersonal(db.Model):
     __tablename__ = 'asistencia_personal'
-    
-    id = db.Column('identificación', db.Integer, primary_key=True)
-    fecha = db.Column(db.String(20), unique=True, nullable=False)
+
+    id = db.Column(db.Integer, primary_key=True)  # O id_registro, pero sin tildes ni eñes en la base de datos
+    fecha = db.Column(db.String(20), unique=True)
     adm_presente = db.Column(db.Integer, default=0)
-    adm_ausentes = db.Column(db.Text, nullable=True)
+    adm_ausentes = db.Column(db.String(255), nullable=True)
     aux_presente = db.Column(db.Integer, default=0)
-    aux_ausentes = db.Column(db.Text, nullable=True)
+    aux_ausentes = db.Column(db.String(255), nullable=True)
     doc_presente = db.Column(db.Integer, default=0)
-    doc_ausentes = db.Column(db.Text, nullable=True)
+    doc_ausentes = db.Column(db.String(255), nullable=True)
