@@ -214,7 +214,7 @@
             </div>
         </div>
 
-        <!-- TABLA DATOS ESTUDIANTE -->
+<!-- TABLA DATOS ESTUDIANTE -->
         <table id="tabla-datos">
             <tr>
                 <td class="bold" style="width: 8%;">NOMBRE(S):</td>
@@ -226,7 +226,7 @@
                     {% if estudiante %}
                         {% set ns = namespace(index=0) %}
                         {% for est in lista_estudiantes %}
-                            {% if est.id == estudiante.id %}
+                            {% if est.id_estudiante == estudiante.id_estudiante %}
                                 {% set ns.index = loop.index %}
                             {% endif %}
                         {% endfor %}
@@ -234,7 +234,7 @@
                     {% endif %}
                 </td>
                 <td class="bold" style="width: 5%;">ID ESTUDIANTE:</td>
-                <td style="width: 8%;">{{ estudiante.id if estudiante else '' }}</td>
+                <td style="width: 8%;">{{ estudiante.id_estudiante if estudiante else '' }}</td>
             </tr>
         </table>
 
