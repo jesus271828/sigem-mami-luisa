@@ -1660,6 +1660,21 @@ def descargar_reporte_ausencias():
 
     fecha_str = request.form.get('fecha') or request.args.get('fecha') or datetime.date.today().strftime('%Y-%m-%d')
     
+    # Preparar formatos alternativos de fecha (YYYY-MM-DD y DD/MM/YYYY) para asegurar coincidencia en la BD
+    fecha_alt1 = fecha_str
+    fecha_alt2 = fecha_str
+    try:
+        if '-' in fecha_str:
+            p = fecha_str.split('-')
+            if len(p) == 3:
+                fecha_alt2 = f"{p[2]}/{p[1]}/{p[0]}"
+        elif '/' in fecha_str:
+            p = fecha_str.split('/')
+            if len(p) == 3:
+                fecha_alt2 = f"{p[2]}-{p[1]}-{p[0]}"
+    except Exception:
+        pass
+
     # 1. Recuperar o guardar los datos del personal enviados desde el formulario
     meta = RegistroPersonal.query.filter_by(fecha=fecha_str).first()
     
@@ -1708,7 +1723,7 @@ def descargar_reporte_ausencias():
             print(f"Error al guardar personal: {e}")
             return str(e), 500
 
-    # 2. Obtener datos estadísticos usando patrones para atrapar '1ro A', '2do A', etc.
+    # 2. Obtener datos estadísticos usando patrones para grados y doble validación de fecha
     grados_config = [
         ('1ro.', '1ro%'),
         ('2do.', '2do%'),
@@ -1728,7 +1743,6 @@ def descargar_reporte_ausencias():
     tot_asis_total = 0
 
     for nombre_grado, patron in grados_config:
-        # Consulta segura de estudiantes por grado usando ILIKE
         sql_estudiantes = text("SELECT sexo, apellidos FROM estudiantes WHERE grado ILIKE :patron")
         estudiantes_grado = db.session.execute(sql_estudiantes, {"patron": patron}).fetchall()
         
@@ -1736,16 +1750,16 @@ def descargar_reporte_ausencias():
         mat_ninas = sum(1 for row in estudiantes_grado if row[0] == 'Femenino')
         mat_total = len(estudiantes_grado)
         
-        # Consulta segura de asistencias
+        # Consulta de asistencias probando ambos formatos de fecha
         sql_asistencias = text("""
             SELECT e.sexo, a.estado, e.apellidos 
             FROM asistencia a 
             JOIN estudiantes e ON (CAST(a.estudiante_id AS VARCHAR) = CAST(e.id AS VARCHAR) OR CAST(a.id_estudiante AS VARCHAR) = CAST(e.id AS VARCHAR))
-            WHERE e.grado ILIKE :patron AND a.fecha = :fecha
+            WHERE e.grado ILIKE :patron AND (a.fecha = :f1 OR a.fecha = :f2)
         """)
         
         try:
-            resultado = db.session.execute(sql_asistencias, {"patron": patron, "fecha": fecha_str}).fetchall()
+            resultado = db.session.execute(sql_asistencias, {"patron": patron, "f1": fecha_alt1, "f2": fecha_alt2}).fetchall()
         except Exception:
             db.session.rollback()
             resultado = []
@@ -1761,9 +1775,9 @@ def descargar_reporte_ausencias():
             'mat_ninos': mat_ninos,
             'mat_ninas_f': mat_ninas,
             'mat_total': mat_total,
-            'asis_ninos': asis_ninos if resultado else 0,
-            'asis_ninas': asis_ninas if resultado else 0,
-            'asis_total': asis_total if resultado else 0,
+            'asis_ninos': asis_ninos,
+            'asis_ninas': asis_ninas,
+            'asis_total': asis_total,
             'ausentes': ausentes_lista
         })
         
@@ -1774,7 +1788,7 @@ def descargar_reporte_ausencias():
         tot_asis_ninas += asis_ninas
         tot_asis_total += asis_total
 
-    # Nivel Inicial (L2) con SQL directo
+    # Nivel Inicial (L2)
     sql_inicial = text("SELECT sexo FROM estudiantes WHERE grado ILIKE :inicial")
     estudiantes_inicial = db.session.execute(sql_inicial, {"inicial": "%inicial%"}).fetchall()
     ini_mat_ninos = sum(1 for row in estudiantes_inicial if row[0] == 'Masculino')
