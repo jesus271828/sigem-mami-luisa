@@ -351,12 +351,19 @@ function guardarPersonalSolo() {
             body: formData
         }).then(async response => {
             if (response.ok) {
-                alert('¡Datos guardados exitosamente!');
+                // MOSTRAR ALERTA ELEGANTE EN VEZ DE ALERT()
+                const toast = document.getElementById('toast-alerta');
+                toast.style.display = 'block';
+                
+                // Ocultar automáticamente la notificación después de 3 segundos (3000 milisegundos)
+                setTimeout(() => {
+                    toast.style.display = 'none';
+                }, 3000);
+
             } else {
-                // Lee el texto del error que envía Flask para saber qué falló
                 const errorText = await response.text();
                 console.error('Error del servidor:', errorText);
-                alert('Hubo un error al guardar los datos. Revisa la consola.');
+                alert('Hubo un error al guardar los datos.');
             }
         }).catch(error => {
             console.error('Error de red:', error);
