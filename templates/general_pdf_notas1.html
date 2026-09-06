@@ -130,15 +130,15 @@
         </tr>
     </table>
 
-    <!-- DATOS DEL ESTUDIANTE -->
-    <table class="data-table">
+<!-- DATOS DEL ESTUDIANTE -->
+    <table class="data-table" style="width: 100%; border-collapse: collapse; border: 1.5px solid #000; margin-bottom: 4px;">
         <tr>
-            <td class="data-label" style="width: 7%;">NOMBRE(S):</td>
-            <td style="width: 35%; color: #1a73e8; font-weight: bold; font-size: 8.5pt;">{{ estudiante.nombres if estudiante else '' }}</td>
-            <td class="data-label" style="width: 8%;">APELLIDO(S):</td>
-            <td style="width: 35%; color: #1a73e8; font-weight: bold; font-size: 8.5pt;">{{ estudiante.apellidos if estudiante else '' }}</td>
-            <td class="data-label" style="width: 7%;">NO. DE ORDEN:</td>
-            <td style="width: 3%; text-align: center; font-weight: bold; font-size: 8.5pt;">
+            <td class="data-label" style="width: 6%; padding: 3px 4px; font-size: 7.5pt; font-weight: bold; background-color: #f8f9fa;">NOMBRE(S):</td>
+            <td style="width: 33%; padding: 3px 4px; color: #1a73e8; font-weight: bold; font-size: 8.5pt;">{{ estudiante.nombres if estudiante else '' }}</td>
+            <td class="data-label" style="width: 7%; padding: 3px 4px; font-size: 7.5pt; font-weight: bold; background-color: #f8f9fa;">APELLIDO(S):</td>
+            <td style="width: 33%; padding: 3px 4px; color: #1a73e8; font-weight: bold; font-size: 8.5pt;">{{ estudiante.apellidos if estudiante else '' }}</td>
+            <td class="data-label" style="width: 7%; padding: 3px 2px; font-size: 7pt; font-weight: bold; background-color: #f8f9fa; text-align: center;">NO. ORDEN:</td>
+            <td style="width: 3%; padding: 3px 2px; text-align: center; font-weight: bold; font-size: 8.5pt;">
                 {% if estudiante %}
                     {% set ns = namespace(index=0) %}
                     {% for est in lista_estudiantes %}
@@ -149,8 +149,8 @@
                     {{ ns.index }}
                 {% endif %}
             </td>
-            <td class="data-label" style="width: 4%;">ID ESTUDIANTE:</td>
-            <td style="width: 4%; text-align: center; font-weight: bold; font-size: 7.5pt;">{{ estudiante.id_estudiante if estudiante else '' }}</td>
+            <td class="data-label" style="width: 5%; padding: 3px 2px; font-size: 6.5pt; font-weight: bold; background-color: #f8f9fa; text-align: center;">ID EST.:</td>
+            <td style="width: 6%; padding: 3px 2px; text-align: center; font-weight: bold; font-size: 7.5pt; white-space: nowrap;">{{ estudiante.id_estudiante if estudiante else '' }}</td>
         </tr>
     </table>
 
