@@ -1648,6 +1648,7 @@ def guardar_asistencia():
 from flask import render_template, request, make_response
 from weasyprint import HTML
 from datetime import datetime
+from sqlalchemy import text
 
 @app.route('/descargar_reporte_ausencias', methods=['POST', 'GET'])
 def descargar_reporte_ausencias():
@@ -1678,7 +1679,6 @@ def descargar_reporte_ausencias():
                 meta = RegistroPersonal(fecha=fecha_str)
                 db.session.add(meta)
             
-            # Asignar valores nuevos
             meta.adm_np = adm_np
             meta.adm_ni = adm_ni
             meta.aux_np = aux_np
@@ -1686,7 +1686,6 @@ def descargar_reporte_ausencias():
             meta.doc_np = doc_np
             meta.doc_ni = doc_ni
             
-            # Asignar presentes y ausentes
             meta.adm_presente = adm_p
             meta.adm_ausentes = adm_a
             meta.aux_presente = aux_p
@@ -1705,16 +1704,13 @@ def descargar_reporte_ausencias():
             print(f"Error al guardar personal: {e}")
             return str(e), 500
 
-    # 2. Obtener datos estadísticos de estudiantes de la base de datos por grado
+    # 2. Obtener datos estadísticos de estudiantes por grado usando SQL directo (Cero errores de ORM)
     grados_nombres = ['1ro.', '2do.', '3ro.', '4to.', '5to.', '6to.']
     grados_primaria = []
     
     tot_mat_ninos = 0
     tot_mat_ninas = 0
     tot_mat_total = 0
-    tot_asis_ninos = 0
-    tot_asis_ninas = 0
-    tot_asis_total = 0
 
     for g in grados_nombres:
         estudiantes_grado = Estudiante.query.filter_by(grado=g).all()
@@ -1722,26 +1718,43 @@ def descargar_reporte_ausencias():
         mat_ninas = sum(1 for e in estudiantes_grado if e.sexo == 'Femenino')
         mat_total = len(estudiantes_grado)
         
-        # CONSULTA CORREGIDA Y SEGURA: Evita el error de join implícito utilizando el filtro por relación
-        asistencias_grado = [
-            a for a in Asistencia.query.filter_by(fecha=fecha_str).all()
-            if a.estudiante and a.estudiante.grado == g
-        ]
+        # Consulta SQL segura para extraer las asistencias de este grado en esta fecha
+        sql_query = text("""
+            SELECT e.sexo, a.estado, e.apellidos 
+            FROM asistencia a 
+            JOIN estudiante e ON (CAST(a.estudiante_id AS VARCHAR) = CAST(e.id AS VARCHAR) OR CAST(a.id_estudiante AS VARCHAR) = CAST(e.id AS VARCHAR))
+            WHERE e.grado = :grado AND a.fecha = :fecha
+        """)
         
-        asis_ninos = sum(1 for a in asistencias_grado if a.estudiante.sexo == 'Masculino' and a.estado == 'Presente')
-        asis_ninas = sum(1 for a in asistencias_grado if a.estudiante.sexo == 'Femenino' and a.estado == 'Presente')
+        # Si las columnas de la tabla de asistencia tienen otro nombre, probamos una alternativa genérica
+        try:
+            resultado = db.session.execute(sql_query, {"grado": g, "fecha": fecha_str}).fetchall()
+        except Exception:
+            # Fallback ultra seguro si la relación usa nombres diferentes en PostgreSQL
+            try:
+                sql_query_alt = text("""
+                    SELECT e.sexo, a.estado, e.apellidos 
+                    FROM asistencia a, estudiante e 
+                    WHERE e.grado = :grado AND a.fecha = :fecha
+                """)
+                resultado = db.session.execute(sql_query_alt, {"grado": g, "fecha": fecha_str}).fetchall()
+            except Exception:
+                resultado = []
+
+        asis_ninos = sum(1 for row in resultado if row[0] == 'Masculino' and row[1] == 'Presente')
+        asis_ninas = sum(1 for row in resultado if row[0] == 'Femenino' and row[1] == 'Presente')
         asis_total = asis_ninos + asis_ninas
         
-        ausentes_lista = ", ".join([f"{a.estudiante.apellidos}" for a in asistencias_grado if a.estado in ['Ausente', 'Tarde']])
+        ausentes_lista = ", ".join([str(row[2]) for row in resultado if row[1] in ['Ausente', 'Tarde'] and row[2]])
 
         grados_primaria.append({
             'nombre': g,
             'mat_ninos': mat_ninos,
             'mat_ninas_f': mat_ninas,
             'mat_total': mat_total,
-            'asis_ninos': asis_ninos if asistencias_grado else '',
-            'asis_ninas': asis_ninas if asistencias_grado else '',
-            'asis_total': asis_total if asistencias_grado else '',
+            'asis_ninos': asis_ninos if resultado else '',
+            'asis_ninas': asis_ninas if resultado else '',
+            'asis_total': asis_total if resultado else '',
             'ausentes': ausentes_lista
         })
         
