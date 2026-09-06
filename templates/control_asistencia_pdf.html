@@ -265,7 +265,7 @@
                     </tbody>
                 </table>
 
-                <!-- TIPO DE PERSONAL -->
+<!-- TIPO DE PERSONAL -->
                 <table class="data-table" style="margin-top: 10px;">
                     <thead>
                         <tr>
@@ -279,24 +279,24 @@
                     <tbody>
                         <tr>
                             <td class="text-left">Adm. y apoyo.</td>
-                            <td>{{ personal_adm_contratado }}</td>
-                            <td>-</td>
-                            <td>{{ meta.adm_presente }}</td>
-                            <td class="text-left">{{ meta.adm_ausentes }}</td>
+                            <td>{{ meta.adm_np if meta and meta.adm_np is not none else personal_adm_contratado }}</td>
+                            <td>{{ meta.adm_ni if meta and meta.adm_ni is not none else '-' }}</td>
+                            <td>{{ meta.adm_presente if meta and meta.adm_presente is not none else '0' }}</td>
+                            <td class="text-left">{{ meta.adm_ausentes if meta and meta.adm_ausentes is not none else '' }}</td>
                         </tr>
                         <tr>
                             <td class="text-left">Auxiliares</td>
-                            <td>N/A</td>
-                            <td>-</td>
-                            <td>{{ meta.aux_presente }}</td>
-                            <td class="text-left">{{ meta.aux_ausentes }}</td>
+                            <td>{{ meta.aux_np if meta and meta.aux_np is not none else 'N/A' }}</td>
+                            <td>{{ meta.aux_ni if meta and meta.aux_ni is not none else '-' }}</td>
+                            <td>{{ meta.aux_presente if meta and meta.aux_presente is not none else '0' }}</td>
+                            <td class="text-left">{{ meta.aux_ausentes if meta and meta.aux_ausentes is not none else '' }}</td>
                         </tr>
                         <tr>
                             <td class="text-left">Docentes</td>
-                            <td>{{ personal_doc_contratado }}</td>
-                            <td>-</td>
-                            <td>{{ meta.doc_presente }}</td>
-                            <td class="text-left">{{ meta.doc_ausentes }}</td>
+                            <td>{{ meta.doc_np if meta and meta.doc_np is not none else personal_doc_contratado }}</td>
+                            <td>{{ meta.doc_ni if meta and meta.doc_ni is not none else '-' }}</td>
+                            <td>{{ meta.doc_presente if meta and meta.doc_presente is not none else '0' }}</td>
+                            <td class="text-left">{{ meta.doc_ausentes if meta and meta.doc_ausentes is not none else '' }}</td>
                         </tr>
                         <tr style="font-weight: bold;">
                             <td class="text-left">Total</td>
