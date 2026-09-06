@@ -2061,8 +2061,8 @@ def general_pdf_notas1(id_estudiante):
         except:
             notas = {}
 
-    # Renderizamos la plantilla HTML pasándole modo_pdf=True
-    html_crudo = render_template('notas1.html',
+    # CAMBIO AQUÍ: Ahora llama correctamente a general_pdf_notas1.html
+    html_crudo = render_template('general_pdf_notas1.html',
                                  estudiante=estudiante,
                                  lista_estudiantes=[estudiante],
                                  notas=notas,
