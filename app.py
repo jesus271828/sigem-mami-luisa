@@ -1654,7 +1654,8 @@ def descargar_reporte_ausencias():
     
     # 1. Recuperar o guardar los datos del personal enviados desde el formulario
     meta = RegistroPersonal.query.filter_by(fecha=fecha_str).first()
-if request.method == 'POST':
+    
+    if request.method == 'POST':
         try:
             # Capturar Contratados NP y NI
             adm_np = request.form.get('adm_np', '')
@@ -1697,6 +1698,11 @@ if request.method == 'POST':
             action_type = request.form.get('action')
             if action_type == 'guardar_solo':
                 return "OK", 200
+                
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error al guardar personal: {e}")
+            return str(e), 500
 
     # 2. Obtener datos estadísticos de estudiantes de la base de datos por grado
     grados_nombres = ['1ro.', '2do.', '3ro.', '4to.', '5to.', '6to.']
