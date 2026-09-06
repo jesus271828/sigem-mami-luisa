@@ -14,7 +14,8 @@
             <h2><i class="fas fa-calendar-check"></i> Control de Asistencia</h2>
             <a href="{{ url_for('menu') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Volver al Menú</a>
         </div>
-
+<!-- Aquí aparecerá la alerta bonita -->
+<div id="contenedor-alertas"></div>
         <!-- Mensajes Flash -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
@@ -342,34 +343,42 @@
     }
 
 function guardarPersonalSolo() {
-        const form = document.getElementById('form-reporte');
-        const formData = new FormData(form);
-        formData.append('action', 'guardar_solo');
+    const form = document.getElementById('form-reporte');
+    const formData = new FormData(form);
+    formData.append('action', 'guardar_solo');
 
-        fetch("{{ url_for('descargar_reporte_ausencias') }}", {
-            method: 'POST',
-            body: formData
-        }).then(async response => {
-            if (response.ok) {
-                // MOSTRAR ALERTA ELEGANTE EN VEZ DE ALERT()
-                const toast = document.getElementById('toast-alerta');
-                toast.style.display = 'block';
-                
-                // Ocultar automáticamente la notificación después de 3 segundos (3000 milisegundos)
-                setTimeout(() => {
-                    toast.style.display = 'none';
-                }, 3000);
-
-            } else {
-                const errorText = await response.text();
-                console.error('Error del servidor:', errorText);
-                alert('Hubo un error al guardar los datos.');
-            }
-        }).catch(error => {
-            console.error('Error de red:', error);
-            alert('Error de conexión al intentar guardar.');
-        });
-    }
+    fetch("{{ url_for('descargar_reporte_ausencias') }}", {
+        method: 'POST',
+        body: formData
+    }).then(async response => {
+        const contenedor = document.getElementById('contenedor-alertas');
+        
+        if (response.ok) {
+            // Mensaje de éxito con el diseño idéntico a tus alertas flash
+            contenedor.innerHTML = `
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    ¡Datos guardados exitosamente!
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close" onclick="this.parentElement.remove();">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            `;
+        } else {
+            // Mensaje de error si algo falla
+            contenedor.innerHTML = `
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    Hubo un error al guardar los datos.
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close" onclick="this.parentElement.remove();">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            `;
+        }
+    }).catch(error => {
+        console.error('Error de red:', error);
+        alert('Error de conexión al intentar guardar.');
+    });
+}
     </script>
 </body>
 </html>
