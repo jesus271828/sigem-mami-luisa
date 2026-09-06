@@ -165,7 +165,7 @@
     {% endwith %}
     {% endif %}
 
-    <!-- SELECTOR DE ESTUDIANTE (Se oculta en modo PDF) -->
+<!-- SELECTOR DE ESTUDIANTE (Se oculta en modo PDF) -->
     {% if not modo_pdf %}
     <div class="selector-container">
         <form method="GET" action="{{ url_for('notas1') }}" style="display: flex; align-items: center; width: 100%; gap: 10px; margin: 0;">
@@ -173,7 +173,7 @@
             <select name="id_estudiante" id="id_estudiante" onchange="this.form.submit()" style="padding: 4px; font-size: 11px; flex-grow: 1; border: 1px solid #000; background: #fff;">
                 <option value="" disabled {% if not estudiante %}selected{% endif %}>-- Seleccione un estudiante --</option>
                 {% for est in lista_estudiantes %}
-                    <option value="{{ est.id }}" {% if estudiante and estudiante.id == est.id %}selected{% endif %}>
+                    <option value="{{ est.id_estudiante }}" {% if estudiante and estudiante.id_estudiante|string == est.id_estudiante|string %}selected{% endif %}>
                         {{ loop.index }}. {{ est.nombres }} {{ est.apellidos }}
                     </option>
                 {% endfor %}
