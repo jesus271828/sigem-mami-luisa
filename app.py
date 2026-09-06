@@ -1173,12 +1173,12 @@ def listado_estudiantes():
                 rows = conn.execute('''
                     SELECT * FROM estudiantes 
                     WHERE grado = ? 
-                    ORDER BY apellidos ASC, nombres ASC
+                    ORDER BY nombres ASC, apellidos ASC
                 ''', (curso_seleccionado,)).fetchall()
             else:
                 rows = conn.execute('''
                     SELECT * FROM estudiantes 
-                    ORDER BY grado ASC, apellidos ASC, nombres ASC
+                    ORDER BY grado ASC, nombres ASC, apellidos ASC
                 ''').fetchall()
                 
             estudiantes = []
