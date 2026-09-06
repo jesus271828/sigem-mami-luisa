@@ -2024,7 +2024,7 @@ def notas1():
 
     # 2. CARGAR DATOS DEL ESTUDIANTE SELECCIONADO (GET)
     if id_estudiante:
-        estudiante = Estudiante.query.get(id_estudiante)
+        estudiante = Estudiante.query.filter_by(id_estudiante=str(id_estudiante)).first()
         registro_notas = Notas1.query.filter_by(id_estudiante=str(id_estudiante)).first()
         if registro_notas and registro_notas.datos_formulario:
             try:
@@ -2042,13 +2042,13 @@ def notas1():
                            docente_nombre=docente_guardado)
 
 
-# --- RUTA PARA EL BOTÓN DE PDF (USANDO XHTML2PDF CORREGIDO) ---
-@app.route('/notas1/pdf/<int:id_estudiante>')
+# --- RUTA PARA EL BOTÓN DE PDF (USANDO STRING PARA EL ID DE SUPABASE) ---
+@app.route('/notas1/pdf/<string:id_estudiante>')
 def general_pdf_notas1(id_estudiante):
     if 'usuario' not in session:
         return redirect(url_for('login'))
         
-    estudiante = Estudiante.query.get_or_404(id_estudiante)
+    estudiante = Estudiante.query.filter_by(id_estudiante=str(id_estudiante)).first_or_404()
     
     registro_notas = Notas1.query.filter_by(id_estudiante=str(id_estudiante)).first()
     notas = {}
