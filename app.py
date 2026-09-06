@@ -1644,9 +1644,6 @@ def guardar_asistencia():
     # Al no pasar el grado, el selector volverá limpio para elegir el siguiente curso
     return redirect(url_for('asistencia', fecha=fecha))
 
-from flask import render_template, request, make_response
-from weasyprint import HTML
-from datetime import datetime
 
 from flask import render_template, request, make_response
 from weasyprint import HTML
@@ -1725,10 +1722,11 @@ def descargar_reporte_ausencias():
         mat_ninas = sum(1 for e in estudiantes_grado if e.sexo == 'Femenino')
         mat_total = len(estudiantes_grado)
         
-        # Consulta corregida sin errores de join implícito
-        asistencias_grado = Asistencia.query.join(Estudiante).filter(
-            Estudiante.grado == g, Asistencia.fecha == fecha_str
-        ).all()
+        # CONSULTA CORREGIDA Y SEGURA: Evita el error de join implícito utilizando el filtro por relación
+        asistencias_grado = [
+            a for a in Asistencia.query.filter_by(fecha=fecha_str).all()
+            if a.estudiante and a.estudiante.grado == g
+        ]
         
         asis_ninos = sum(1 for a in asistencias_grado if a.estudiante.sexo == 'Masculino' and a.estado == 'Presente')
         asis_ninas = sum(1 for a in asistencias_grado if a.estudiante.sexo == 'Femenino' and a.estado == 'Presente')
