@@ -6,7 +6,7 @@
     <style>
         @page {
             size: letter landscape;
-            margin: 0.5cm 0.7cm;
+            margin: 0.4cm 0.5cm; /* Márgenes reducidos para ocupar toda la hoja */
         }
         body {
             font-family: Helvetica, Arial, sans-serif;
@@ -17,7 +17,7 @@
             padding: 0;
         }
 
-        /* ENCABEZADO INSTITUCIONAL */
+        /* ENCABEZADO INSTITUCIONAL CON LOGO */
         .header-table {
             width: 100%;
             border-collapse: collapse;
@@ -27,15 +27,15 @@
             vertical-align: middle;
         }
         .logo-cell {
-            width: 7%;
+            width: 8%;
             text-align: center;
         }
         .logo-cell img {
-            width: 45px;
+            width: 55px;
             height: auto;
         }
         .title-cell {
-            width: 93%;
+            width: 92%;
         }
         .school-name {
             font-size: 13pt;
@@ -114,7 +114,7 @@
     <table class="header-table">
         <tr>
             <td class="logo-cell">
-                <img src="{{ url_for('static', filename='img/logo2.png', _external=True) }}" alt="Logo">
+                <img src="{{ url_for('static', filename='img/logo2.png', _external=True) }}" alt="Logo Mami Luisa">
             </td>
             <td class="title-cell">
                 <span class="school-slogan">"Educando con amor para un mundo mejor"</span>
@@ -136,7 +136,7 @@
             <td style="width: 35%; color: #1a73e8; font-weight: bold;">{{ estudiante.nombres if estudiante else '' }}</td>
             <td class="data-label" style="width: 8%;">APELLIDO(S):</td>
             <td style="width: 35%; color: #1a73e8; font-weight: bold;">{{ estudiante.apellidos if estudiante else '' }}</td>
-            <td class="data-label" style="width: 8%;">NO. DE ORDEN:</td>
+            <td class="data-label" style="width: 7%;">NO. DE ORDEN:</td>
             <td style="width: 3%; text-align: center; font-weight: bold;">
                 {% if estudiante %}
                     {% set ns = namespace(index=0) %}
@@ -200,7 +200,7 @@
         </tbody>
     </table>
 
-    <!-- SECCIÓN INFERIOR: ESCALA, ASISTENCIA Y LEYENDA (EXACTO A TU IMAGEN) -->
+    <!-- SECCIÓN INFERIOR: ESCALA, ASISTENCIA Y LEYENDA -->
     <table class="bottom-table">
         <tr>
             <td style="width: 7%; text-align: center; font-weight: bold; background: #f2f2f2; font-size: 6.8pt;">Escala numérica</td>
@@ -212,7 +212,7 @@
                     </tr>
                     <tr style="background: #f2f2f2; font-weight: bold; text-align: center; font-size: 6.2pt;">
                         <td rowspan="2" style="border: 1px solid #000; vertical-align: middle;">PERÍODO</td>
-                        <td rowspan="2" style="border: 1px solid #000; vertical-align: middle;">ASITENCIA</td>
+                        <td rowspan="2" style="border: 1px solid #000; vertical-align: middle;">ASISTENCIA</td>
                         <td rowspan="2" style="border: 1px solid #000; vertical-align: middle;">AUSENCIA</td>
                         <td colspan="2" style="border: 1px solid #000;">% ANUAL</td>
                     </tr>
