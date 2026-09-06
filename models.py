@@ -74,9 +74,19 @@ class Asistencia(db.Model):
 
 class RegistroPersonal(db.Model):
     __tablename__ = 'asistencia_personal'
-
-    id = db.Column(db.Integer, primary_key=True)  # O id_registro, pero sin tildes ni eñes en la base de datos
+    
+    id = db.Column(db.Integer, primary_key=True)
     fecha = db.Column(db.String(20), unique=True)
+    
+    # Campos nuevos de Contratado (usamos String porque Auxiliares puede tener "N/A")
+    adm_np = db.Column(db.String(20), nullable=True)
+    adm_ni = db.Column(db.String(20), nullable=True)
+    aux_np = db.Column(db.String(20), nullable=True)
+    aux_ni = db.Column(db.String(20), nullable=True)
+    doc_np = db.Column(db.String(20), nullable=True)
+    doc_ni = db.Column(db.String(20), nullable=True)
+    
+    # Los que ya tenías de presentes y ausentes
     adm_presente = db.Column(db.Integer, default=0)
     adm_ausentes = db.Column(db.String(255), nullable=True)
     aux_presente = db.Column(db.Integer, default=0)

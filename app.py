@@ -1654,30 +1654,49 @@ def descargar_reporte_ausencias():
     
     # 1. Recuperar o guardar los datos del personal enviados desde el formulario
     meta = RegistroPersonal.query.filter_by(fecha=fecha_str).first()
-    if request.method == 'POST':
-        adm_p = request.form.get('adm_presente', type=int) or 0
-        adm_a = request.form.get('adm_ausentes', '')
-        aux_p = request.form.get('aux_presente', type=int) or 0
-        aux_a = request.form.get('aux_ausentes', '')
-        doc_p = request.form.get('doc_presente', type=int) or 0
-        doc_a = request.form.get('doc_ausentes', '')
-        
-        if not meta:
-            meta = RegistroPersonal(fecha=fecha_str)
-            db.session.add(meta)
-        
-        meta.adm_presente = adm_p
-        meta.adm_ausentes = adm_a
-        meta.aux_presente = aux_p
-        meta.aux_ausentes = aux_a
-        meta.doc_presente = doc_p
-        meta.doc_ausentes = doc_a
-        db.session.commit()
-        
-        # Si la petición viene del botón de guardar simple, detenemos aquí y respondemos OK
-        action_type = request.form.get('action')
-        if action_type == 'guardar_solo':
-            return "OK", 200
+if request.method == 'POST':
+        try:
+            # Capturar Contratados NP y NI
+            adm_np = request.form.get('adm_np', '')
+            adm_ni = request.form.get('adm_ni', '')
+            aux_np = request.form.get('aux_np', '')
+            aux_ni = request.form.get('aux_ni', '')
+            doc_np = request.form.get('doc_np', '')
+            doc_ni = request.form.get('doc_ni', '')
+
+            # Capturar presentes y ausentes
+            adm_p = int(request.form.get('adm_presente') or 0)
+            adm_a = request.form.get('adm_ausentes', '')
+            aux_p = int(request.form.get('aux_presente') or 0)
+            aux_a = request.form.get('aux_ausentes', '')
+            doc_p = int(request.form.get('doc_presente') or 0)
+            doc_a = request.form.get('doc_ausentes', '')
+            
+            if not meta:
+                meta = RegistroPersonal(fecha=fecha_str)
+                db.session.add(meta)
+            
+            # Asignar valores nuevos
+            meta.adm_np = adm_np
+            meta.adm_ni = adm_ni
+            meta.aux_np = aux_np
+            meta.aux_ni = aux_ni
+            meta.doc_np = doc_np
+            meta.doc_ni = doc_ni
+            
+            # Asignar presentes y ausentes
+            meta.adm_presente = adm_p
+            meta.adm_ausentes = adm_a
+            meta.aux_presente = aux_p
+            meta.aux_ausentes = aux_a
+            meta.doc_presente = doc_p
+            meta.doc_ausentes = doc_a
+            
+            db.session.commit()
+            
+            action_type = request.form.get('action')
+            if action_type == 'guardar_solo':
+                return "OK", 200
 
     # 2. Obtener datos estadísticos de estudiantes de la base de datos por grado
     grados_nombres = ['1ro.', '2do.', '3ro.', '4to.', '5to.', '6to.']
