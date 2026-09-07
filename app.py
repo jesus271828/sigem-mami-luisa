@@ -2255,6 +2255,17 @@ def planificacion_diaria():
                            docente=nombre_docente, 
                            grado_seccion=grado_seccion)
 
+@app.route('/ver_planificaciones_diarias')
+def ver_planificaciones_diarias():
+    if 'nombre_completo' not in session:
+        return redirect(url_for('login'))
+    
+    # Aquí puedes hacer una consulta a tu base de datos PostgreSQL para obtener las planificaciones guardadas
+    # Ejemplo: planificaciones = db.execute("SELECT * FROM planificaciones_diarias WHERE docente = %s", (session['nombre_completo'],)).fetchall()
+    
+    # Por ahora, puedes renderizar una plantilla que muestre el listado
+    return render_template('ver_planificaciones_diarias.html')
+
 @app.route('/registrar_usuario', methods=['GET', 'POST'])
 def registrar_usuario():
     if session.get('rol') not in ['oficina', 'admin']:
