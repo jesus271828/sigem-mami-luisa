@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Planificación Diaria | SIGEM Mami Luisa</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --primary-color: #1A237E; }
+        body { background-color: #f0f2f5; font-family: 'Segoe UI', sans-serif; }
+        .sidebar { background: var(--primary-color); color: white; min-height: 100vh; padding: 20px; }
+        .plan-container { background: white; border-radius: 15px; padding: 30px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+        .table-bordered { border-color: #000 !important; }
+        .table-bordered th, .table-bordered td { border-color: #000 !important; }
+        .form-control, .form-control:focus { background-color: transparent; border: none; box-shadow: none; }
+        .input-line { border-bottom: 1px solid #333; border-radius: 0; padding: 2px 5px; }
+    </style>
+</head>
+<body>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 sidebar d-print-none">
+                <h4 class="mb-4">SIGEM Mami Luisa</h4>
+                <p><i class="fas fa-user-circle"></i> {{ session['nombre_completo'] }} ({{ session['rol'] }})</p>
+                <hr>
+                <a href="{{ url_for('menu_planificacion') }}" class="btn btn-outline-light w-100 mb-3"><i class="fas fa-arrow-left me-2"></i>Volver al Menú</a>
+                <a href="{{ url_for('logout') }}" class="btn btn-danger w-100">Cerrar Sesión</a>
+            </div>
+
+            <!-- Contenido Principal -->
+            <div class="col-md-9 p-4">
+                <div class="plan-container">
+                    
+                    <form method="POST">
+                        <!-- Cabecera del Esquema -->
+                        <div class="row mb-4 align-items-center">
+                            <div class="col-md-7">
+                                <div class="mb-2">
+                                    <label class="fw-bold">Docente:</label>
+                                    <input type="text" name="docente" class="form-control input-line d-inline-block w-75 fw-bold" value="{{ docente }}" readonly>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="fw-bold">Área:</label>
+                                    <input type="text" name="area" class="form-control input-line d-inline-block w-80" placeholder="Ej. Lengua Española / Matemáticas" required>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-7 mb-2">
+                                        <label class="fw-bold">Grado y Sección:</label>
+                                        <input type="text" name="grado_seccion" class="form-control input-line d-inline-block w-50" value="{{ grado_seccion }}" required>
+                                    </div>
+                                    <div class="col-md-5 mb-2">
+                                        <label class="fw-bold">Fecha:</label>
+                                        <input type="date" name="fecha" class="form-control input-line d-inline-block w-50" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-5 text-end">
+                                <h4 class="text-primary fw-bold mb-0">Esquema de Planificación Diaria</h4>
+                                <h5 class="text-secondary">Nivel Primario</h5>
+                            </div>
+                        </div>
+
+                        <!-- Tabla de Estructura Diaria -->
+                        <table class="table table-bordered border-dark align-middle">
+                            <tbody>
+                                <tr>
+                                    <td colspan="3">
+                                        <strong class="d-block mb-1">Estrategias de enseñanza – aprendizaje:</strong>
+                                        <textarea name="estrategias" class="form-control" rows="2" placeholder="Escribe las estrategias..."></textarea>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3">
+                                        <strong class="d-block mb-1">Intención pedagógica del día:</strong>
+                                        <textarea name="intencion_pedagogica" class="form-control" rows="2" placeholder="¿Cuál es el propósito de hoy?"></textarea>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3">
+                                        <strong class="d-block mb-1">Indicador de logro:</strong>
+                                        <textarea name="indicador_logro" class="form-control" rows="2" placeholder="Indica el logro esperado..."></textarea>
+                                    </td>
+                                </tr>
+                                <tr class="table-light text-center fw-bold">
+                                    <td style="width: 25%;">Competencia específica</td>
+                                    <td style="width: 15%;">Momentos</td>
+                                    <td style="width: 60%;">Actividades / Duración & Recursos</td>
+                                </tr>
+                                <tr>
+                                    <td rowspan="3" class="align-top">
+                                        <textarea name="competencia_especifica" class="form-control" rows="10" placeholder="Competencias específicas del área..."></textarea>
+                                    </td>
+                                    <td><strong>Inicio</strong></td>
+                                    <td>
+                                        <textarea name="actividad_inicio" class="form-control" rows="3" placeholder="Actividades de inicio (Rutinas, exploración)..."></textarea>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Desarrollo</strong></td>
+                                    <td>
+                                        <textarea name="actividad_desarrollo" class="form-control" rows="4" placeholder="Actividades centrales de la clase..."></textarea>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Cierre</strong></td>
+                                    <td>
+                                        <textarea name="actividad_cierre" class="form-control" rows="3" placeholder="Metacognición y cierre..."></textarea>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3">
+                                        <strong class="d-block mb-1">Recursos:</strong>
+                                        <input type="text" name="recursos" class="form-control" placeholder="Pizarra, cuaderno, proyector, láminas...">
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3">
+                                        <strong class="d-block mb-1">Actividades de recuperación pedagógica:</strong>
+                                        <textarea name="recuperacion_pedagogica" class="form-control" rows="2" placeholder="Actividades de reforzamiento si es necesario..."></textarea>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- Botones de Acción -->
+                        <div class="text-center mt-4 d-print-none">
+                            <button type="submit" class="btn btn-primary px-5 py-2 fw-bold"><i class="fas fa-save me-2"></i>Guardar Planificación</button>
+                            <button type="button" onclick="window.print()" class="btn btn-secondary px-4 py-2 fw-bold ms-2"><i class="fas fa-print me-2"></i>Imprimir / PDF</button>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

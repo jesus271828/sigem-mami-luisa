@@ -2231,6 +2231,30 @@ def planificacion():
     usuario_actual = {'nombre': session.get('usuario_nombre', 'Jesus Maria Alfonseca Duverge'), 'rol': session.get('rol', 'maestro')}
     return render_template('planificacion.html', usuario=usuario_actual)
 
+@app.route('/planificacion_diaria', methods=['GET', 'POST'])
+def planificacion_diaria():
+    if 'nombre_completo' not in session:
+        return redirect(url_for('login'))
+    
+    # Recuperamos el nombre del maestro desde la sesión
+    nombre_docente = session.get('nombre_completo')
+    
+    # Si permites seleccionar el grado y sección, puedes recibirlos por POST o GET, 
+    # o asignarlos por defecto si el maestro tiene un curso fijo asignado.
+    grado_seccion = session.get('grado_seccion', '4to de Primaria - Sección A') # Ejemplo o valor por defecto
+    
+    if request.method == 'POST':
+        # Aquí procesas y guardas la planificación en tu base de datos PostgreSQL
+        area = request.form.get('area')
+        fecha = request.form.get('fecha')
+        # ... resto de campos ...
+        flash("Planificación diaria guardada con éxito", "success")
+        return redirect(url_for('planificacion_diaria'))
+
+    return render_template('planificacion_diaria.html', 
+                           docente=nombre_docente, 
+                           grado_seccion=grado_seccion)
+
 @app.route('/registrar_usuario', methods=['GET', 'POST'])
 def registrar_usuario():
     if session.get('rol') not in ['oficina', 'admin']:
