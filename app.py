@@ -2218,6 +2218,13 @@ def notas2():
                            docente_nombre=docente_guardado)
 
 
+@app.route('/menu_planificacion')
+def menu_planificacion():
+    # Asegúrate de validar si el usuario ha iniciado sesión si usas control de acceso
+    if 'nombre_completo' not in session:
+        return redirect(url_for('login'))
+    return render_template('menu_planificacion.html')
+
 
 @app.route('/planificacion')
 def planificacion():
