@@ -2238,26 +2238,22 @@ def planificacion_diaria():
     
     nombre_docente = session.get('nombre_completo')
     
-    # 1. Consultar automáticamente el grado y sección asignados a este docente en la base de datos
+    # Consultar automáticamente el grado y sección asignados a este docente
     grado_seccion = "No asignado"
     try:
         conexion = get_db_connection()
-        cursor = conexion.cursor()
-        # Ajusta el nombre de tu tabla ('usuarios' o 'maestros') y de las columnas según tu BD
-        cursor.execute("SELECT grado_seccion FROM usuarios WHERE nombre_completo = %s", (nombre_docente,))
-        resultado = cursor.fetchone()
+        # Si get_db_connection() devuelve un wrapper directo, ejecutamos sobre él o sobre su cursor si lo soporta.
+        # Probamos primero ejecutando directo si es un wrapper de conexión/cursor combinado:
+        resultado = conexion.execute("SELECT grado_seccion FROM usuarios WHERE nombre_completo = %s", (nombre_docente,)).fetchone()
         if resultado and resultado[0]:
             grado_seccion = resultado[0]
-        cursor.close()
         conexion.close()
     except Exception as e:
-        # Si falla la consulta, toma un valor por defecto de la sesión o texto genérico
         grado_seccion = session.get('grado_seccion', '4to de Primaria - A')
 
     if request.method == 'POST':
         area = request.form.get('area')
         fecha = request.form.get('fecha')
-        # Capturamos el grado que viene del input (que ya estará prellenado automáticamente)
         grado_sec = request.form.get('grado_seccion')
         estrategias = request.form.get('estrategias')
         intencion = request.form.get('intencion_pedagogica')
@@ -2271,16 +2267,17 @@ def planificacion_diaria():
         
         try:
             conexion = get_db_connection()
-            cursor = conexion.cursor()
-            cursor.execute("""
+            
+            # Ejecutamos directamente sin llamar a .cursor() ya que el objeto es el wrapper
+            conexion.execute("""
                 INSERT INTO planificaciones_diarias 
                 (docente, area, grado_seccion, fecha, estrategias, intencion_pedagogica, indicador_logro, 
                  competencia_especifica, actividad_inicio, actividad_desarrollo, actividad_cierre, recursos, recuperacion_pedagogica)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (nombre_docente, area, grado_sec, fecha, estrategias, intencion, indicador, competencia, 
                   act_inicio, act_desarrollo, act_cierre, recursos, recuperacion))
+            
             conexion.commit()
-            cursor.close()
             conexion.close()
             
             flash("¡Planificación diaria guardada con éxito!", "success")
