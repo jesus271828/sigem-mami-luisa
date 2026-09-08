@@ -2231,31 +2231,33 @@ def planificacion():
     usuario_actual = {'nombre': session.get('usuario_nombre', 'Jesus Maria Alfonseca Duverge'), 'rol': session.get('rol', 'maestro')}
     return render_template('planificacion.html', usuario=usuario_actual)
 
-@app.route('/ver_planificaciones_diarias')
-def ver_planificaciones_diarias():
+@app.route('/ver_pdf_planificacion/<int:id>')
+def ver_pdf_planificacion(id):
     if 'nombre_completo' not in session:
         return redirect(url_for('login'))
     
-    nombre_docente = session.get('nombre_completo')
-    planificaciones = []
-    
+    planificacion = None
     try:
         conexion = get_db_connection()
-        # Ejecutamos y guardamos el resultado directamente
         resultado = conexion.execute("""
-            SELECT id, fecha, area, grado_seccion, intencion_pedagogica 
+            SELECT id, docente, area, grado_seccion, fecha, estrategias, 
+                   intencion_pedagogica, indicador_logro, competencia_especifica, 
+                   actividad_inicio, actividad_desarrollo, actividad_cierre, 
+                   recursos, recuperacion_pedagogica 
             FROM planificaciones_diarias 
-            WHERE docente = %s 
-            ORDER BY fecha DESC
-        """, (nombre_docente,))
-        
-        # Obtenemos todas las filas usando fetchall() directamente sobre el resultado del execute
-        planificaciones = resultado.fetchall()
+            WHERE id = %s
+        """, (id,))
+        planificacion = resultado.fetchone()
         conexion.close()
     except Exception as e:
-        flash(f"Error al cargar las planificaciones: {e}", "danger")
+        flash(f"Error al cargar la planificación: {e}", "danger")
+        return redirect(url_for('ver_planificaciones_diarias'))
     
-    return render_template('ver_planificaciones_diarias.html', planificaciones=planificaciones)
+    if not planificacion:
+        flash("La planificación solicitada no existe.", "warning")
+        return redirect(url_for('ver_planificaciones_diarias'))
+
+    return render_template('pdf_planificacion_diaria.html', plan=planificacion)
 
 @app.route('/registrar_usuario', methods=['GET', 'POST'])
 def registrar_usuario():
