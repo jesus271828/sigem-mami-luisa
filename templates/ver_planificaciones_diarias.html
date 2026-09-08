@@ -48,10 +48,10 @@
                                 {% if planificaciones %}
                                     {% for plan in planificaciones %}
                                     <tr>
-                                        <td>{{ plan[1] }}</td>
-                                        <td>{{ plan[2] }}</td>
-                                        <td>{{ plan[3] }}</td>
-                                        <td>{{ plan[4] }}</td>
+                                        <td>{{ plan.fecha }}</td>
+                                        <td>{{ plan.area }}</td>
+                                        <td>{{ plan.grado_seccion }}</td>
+                                        <td>{{ plan.intencion_pedagogica }}</td>
                                         <td class="text-center">
                                             <a href="#" class="btn btn-sm btn-info text-white" title="Ver detalle"><i class="fas fa-eye"></i></a>
                                         </td>
