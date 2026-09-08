@@ -2295,7 +2295,25 @@ def ver_planificaciones_diarias():
     if 'nombre_completo' not in session:
         return redirect(url_for('login'))
     
-    return render_template('ver_planificaciones_diarias.html')
+    nombre_docente = session.get('nombre_completo')
+    planificaciones = []
+    
+    try:
+        conexion = get_db_connection()
+        # Consultamos las planificaciones guardadas de este docente específico
+        cursor = conexion.execute("""
+            SELECT id, fecha, area, grado_seccion, intencion_pedagogica 
+            FROM planificaciones_diarias 
+            WHERE docente = %s 
+            ORDER BY fecha DESC
+        """, (nombre_docente,))
+        
+        planificaciones = cursor.fetchall()
+        conexion.close()
+    except Exception as e:
+        flash(f"Error al cargar las planificaciones: {e}", "danger")
+    
+    return render_template('ver_planificaciones_diarias.html', planificaciones=planificaciones)
 
 @app.route('/registrar_usuario', methods=['GET', 'POST'])
 def registrar_usuario():
