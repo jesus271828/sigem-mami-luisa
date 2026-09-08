@@ -11,44 +11,54 @@
         .sidebar { background: var(--primary-color); color: white; min-height: 100vh; padding: 20px; }
         .plan-container { background: white; border-radius: 15px; padding: 25px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
         .table-bordered { border-color: #000 !important; }
-        .table-bordered th, .table-bordered td { border-color: #000 !important; padding: 6px 10px !important; }
-        .form-control, .form-control:focus { background-color: transparent; border: none; box-shadow: none; font-size: 0.9rem; }
+        .table-bordered th, .table-bordered td { border-color: #000 !important; padding: 4px 8px !important; }
+        .form-control, .form-control:focus { background-color: transparent; border: none; box-shadow: none; font-size: 0.85rem; }
         .input-line { border-bottom: 1px solid #333; border-radius: 0; padding: 2px 5px; }
 
-        /* Estilo para forzar la impresión/PDF en HORIZONTAL (landscape) en una sola página */
+        /* Estilo estricto para forzar impresión en una sola página horizontal */
         @media print {
-            body, page {
+            body {
                 background: white !important;
                 margin: 0 !important;
                 padding: 0 !important;
+                -webkit-print-color-adjust: exact;
             }
             .sidebar, .d-print-none {
                 display: none !important;
             }
             .col-md-9 {
                 width: 100% !important;
+                max-width: 100% !important;
+                flex: 0 0 100% !important;
                 padding: 0 !important;
                 margin: 0 !important;
             }
             .plan-container {
                 box-shadow: none !important;
-                padding: 5px !important;
+                padding: 0px !important;
                 border: none !important;
+                width: 100% !important;
             }
             @page {
-                size: letter landscape; /* Cambiado a horizontal */
-                margin: 0.8cm;
+                size: letter landscape;
+                margin: 0.5cm;
             }
-            textarea {
+            textarea, input {
                 resize: none;
                 border: none !important;
+                background: transparent !important;
+                box-shadow: none !important;
+                padding: 2px !important;
+            }
+            table {
+                font-size: 0.8rem !important;
             }
         }
     </style>
 </head>
 <body>
 
-    <!-- Alertas Flash por si hay errores o avisos al guardar -->
+    <!-- Alertas Flash -->
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         <div class="container mt-3 d-print-none">
@@ -93,7 +103,7 @@
                                 <div class="row">
                                     <div class="col-md-7 mb-1">
                                         <label class="fw-bold">Grado y Sección:</label>
-                                        <!-- Se llena automático con la variable grado_seccion -->
+                                        <!-- Se carga automáticamente según el usuario logueado -->
                                         <input type="text" name="grado_seccion" class="form-control input-line d-inline-block w-50 fw-bold" value="{{ grado_seccion }}" required>
                                     </div>
                                     <div class="col-md-5 mb-1">

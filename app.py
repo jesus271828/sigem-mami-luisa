@@ -2237,11 +2237,27 @@ def planificacion_diaria():
         return redirect(url_for('login'))
     
     nombre_docente = session.get('nombre_completo')
-    grado_seccion = session.get('grado_seccion', '4to de Primaria - A')
     
+    # 1. Consultar automáticamente el grado y sección asignados a este docente en la base de datos
+    grado_seccion = "No asignado"
+    try:
+        conexion = get_db_connection()
+        cursor = conexion.cursor()
+        # Ajusta el nombre de tu tabla ('usuarios' o 'maestros') y de las columnas según tu BD
+        cursor.execute("SELECT grado_seccion FROM usuarios WHERE nombre_completo = %s", (nombre_docente,))
+        resultado = cursor.fetchone()
+        if resultado and resultado[0]:
+            grado_seccion = resultado[0]
+        cursor.close()
+        conexion.close()
+    except Exception as e:
+        # Si falla la consulta, toma un valor por defecto de la sesión o texto genérico
+        grado_seccion = session.get('grado_seccion', '4to de Primaria - A')
+
     if request.method == 'POST':
         area = request.form.get('area')
         fecha = request.form.get('fecha')
+        # Capturamos el grado que viene del input (que ya estará prellenado automáticamente)
         grado_sec = request.form.get('grado_seccion')
         estrategias = request.form.get('estrategias')
         intencion = request.form.get('intencion_pedagogica')
@@ -2254,8 +2270,7 @@ def planificacion_diaria():
         recuperacion = request.form.get('recuperacion_pedagogica')
         
         try:
-            # Conexión a la base de datos (ajusta 'get_db_connection()' si usas otro nombre como 'db' o 'conn')
-            conexion = get_db_connection() 
+            conexion = get_db_connection()
             cursor = conexion.cursor()
             cursor.execute("""
                 INSERT INTO planificaciones_diarias 
