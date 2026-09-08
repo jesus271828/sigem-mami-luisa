@@ -53,7 +53,8 @@
                                         <td>{{ plan.grado_seccion }}</td>
                                         <td>{{ plan.intencion_pedagogica }}</td>
                                         <td class="text-center">
-                                            <a href="#" class="btn btn-sm btn-info text-white" title="Ver detalle"><i class="fas fa-eye"></i></a>
+                                            <!-- Botón del ojo vinculado para ver el PDF -->
+                                            <a href="{{ url_for('ver_pdf_planificacion', id=plan.id) }}" class="btn btn-sm btn-info text-white" title="Ver PDF"><i class="fas fa-eye"></i></a>
                                         </td>
                                     </tr>
                                     {% endfor %}

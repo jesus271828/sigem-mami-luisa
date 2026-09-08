@@ -2231,65 +2231,6 @@ def planificacion():
     usuario_actual = {'nombre': session.get('usuario_nombre', 'Jesus Maria Alfonseca Duverge'), 'rol': session.get('rol', 'maestro')}
     return render_template('planificacion.html', usuario=usuario_actual)
 
-@app.route('/planificacion_diaria', methods=['GET', 'POST'])
-def planificacion_diaria():
-    if 'nombre_completo' not in session:
-        return redirect(url_for('login'))
-    
-    nombre_docente = session.get('nombre_completo')
-    
-    # Consultar automáticamente el grado y sección asignados a este docente
-    grado_seccion = "No asignado"
-    try:
-        conexion = get_db_connection()
-        # Si get_db_connection() devuelve un wrapper directo, ejecutamos sobre él o sobre su cursor si lo soporta.
-        # Probamos primero ejecutando directo si es un wrapper de conexión/cursor combinado:
-        resultado = conexion.execute("SELECT grado_seccion FROM usuarios WHERE nombre_completo = %s", (nombre_docente,)).fetchone()
-        if resultado and resultado[0]:
-            grado_seccion = resultado[0]
-        conexion.close()
-    except Exception as e:
-        grado_seccion = session.get('grado_seccion', '4to de Primaria - A')
-
-    if request.method == 'POST':
-        area = request.form.get('area')
-        fecha = request.form.get('fecha')
-        grado_sec = request.form.get('grado_seccion')
-        estrategias = request.form.get('estrategias')
-        intencion = request.form.get('intencion_pedagogica')
-        indicador = request.form.get('indicador_logro')
-        competencia = request.form.get('competencia_especifica')
-        act_inicio = request.form.get('actividad_inicio')
-        act_desarrollo = request.form.get('actividad_desarrollo')
-        act_cierre = request.form.get('actividad_cierre')
-        recursos = request.form.get('recursos')
-        recuperacion = request.form.get('recuperacion_pedagogica')
-        
-        try:
-            conexion = get_db_connection()
-            
-            # Ejecutamos directamente sin llamar a .cursor() ya que el objeto es el wrapper
-            conexion.execute("""
-                INSERT INTO planificaciones_diarias 
-                (docente, area, grado_seccion, fecha, estrategias, intencion_pedagogica, indicador_logro, 
-                 competencia_especifica, actividad_inicio, actividad_desarrollo, actividad_cierre, recursos, recuperacion_pedagogica)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """, (nombre_docente, area, grado_sec, fecha, estrategias, intencion, indicador, competencia, 
-                  act_inicio, act_desarrollo, act_cierre, recursos, recuperacion))
-            
-            conexion.commit()
-            conexion.close()
-            
-            flash("¡Planificación diaria guardada con éxito!", "success")
-            return redirect(url_for('ver_planificaciones_diarias'))
-            
-        except Exception as e:
-            flash(f"Error al guardar la planificación: {e}", "danger")
-
-    return render_template('planificacion_diaria.html', 
-                           docente=nombre_docente, 
-                           grado_seccion=grado_seccion)
-
 @app.route('/ver_planificaciones_diarias')
 def ver_planificaciones_diarias():
     if 'nombre_completo' not in session:
@@ -2300,15 +2241,16 @@ def ver_planificaciones_diarias():
     
     try:
         conexion = get_db_connection()
-        # Consultamos las planificaciones guardadas de este docente específico
-        cursor = conexion.execute("""
+        # Ejecutamos y guardamos el resultado directamente
+        resultado = conexion.execute("""
             SELECT id, fecha, area, grado_seccion, intencion_pedagogica 
             FROM planificaciones_diarias 
             WHERE docente = %s 
             ORDER BY fecha DESC
         """, (nombre_docente,))
         
-        planificaciones = cursor.fetchall()
+        # Obtenemos todas las filas usando fetchall() directamente sobre el resultado del execute
+        planificaciones = resultado.fetchall()
         conexion.close()
     except Exception as e:
         flash(f"Error al cargar las planificaciones: {e}", "danger")
