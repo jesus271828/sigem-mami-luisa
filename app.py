@@ -2254,7 +2254,8 @@ def planificacion_diaria():
         recuperacion = request.form.get('recuperacion_pedagogica')
         
         try:
-            # Conexión y guardado en PostgreSQL (ajusta 'conexion' al objeto que uses en tu proyecto)
+            # Conexión a la base de datos (ajusta 'get_db_connection()' si usas otro nombre como 'db' o 'conn')
+            conexion = get_db_connection() 
             cursor = conexion.cursor()
             cursor.execute("""
                 INSERT INTO planificaciones_diarias 
@@ -2265,6 +2266,7 @@ def planificacion_diaria():
                   act_inicio, act_desarrollo, act_cierre, recursos, recuperacion))
             conexion.commit()
             cursor.close()
+            conexion.close()
             
             flash("¡Planificación diaria guardada con éxito!", "success")
             return redirect(url_for('ver_planificaciones_diarias'))
@@ -2280,12 +2282,6 @@ def planificacion_diaria():
 def ver_planificaciones_diarias():
     if 'nombre_completo' not in session:
         return redirect(url_for('login'))
-    
-    # Aquí puedes hacer la consulta para listar las planificaciones guardadas del docente
-    # cursor = conexion.cursor()
-    # cursor.execute("SELECT * FROM planificaciones_diarias WHERE docente = %s", (session['nombre_completo'],))
-    # planificaciones = cursor.fetchall()
-    # cursor.close()
     
     return render_template('ver_planificaciones_diarias.html')
 
