@@ -2266,6 +2266,54 @@ def ver_planificaciones_diarias():
     # Por ahora, puedes renderizar una plantilla que muestre el listado
     return render_template('ver_planificaciones_diarias.html')
 
+@app.route('/planificacion_diaria', methods=['GET', 'POST'])
+def planificacion_diaria():
+    if 'nombre_completo' not in session:
+        return redirect(url_for('login'))
+    
+    nombre_docente = session.get('nombre_completo')
+    
+    # Supongamos que tienes guardado el grado/sección en la sesión o lo buscas del maestro.
+    # Si no lo tienes en sesión, puedes consultarlo desde tu tabla de usuarios/maestros.
+    grado_seccion = session.get('grado_seccion', '4to de Primaria - A') # Valor por defecto o dinámico
+    
+    if request.method == 'POST':
+        # Capturamos todos los campos enviados por el formulario
+        area = request.form.get('area')
+        fecha = request.form.get('fecha')
+        grado_sec = request.form.get('grado_seccion')
+        estrategias = request.form.get('estrategias')
+        intencion = request.form.get('intencion_pedagogica')
+        indicador = request.form.get('indicador_logro')
+        competencia = request.form.get('competencia_especifica')
+        act_inicio = request.form.get('actividad_inicio')
+        act_desarrollo = request.form.get('actividad_desarrollo')
+        act_cierre = request.form.get('actividad_cierre')
+        recursos = request.form.get('recursos')
+        recuperacion = request.form.get('recuperacion_pedagogica')
+        
+        try:
+            # Inserta los datos en tu base de datos PostgreSQL (Ajusta la conexión y sintaxis según tu proyecto)
+            # cursor = conexion.cursor()
+            # cursor.execute("""
+            #     INSERT INTO planificaciones_diarias 
+            #     (docente, area, grado_seccion, fecha, estrategias, intencion_pedagogica, indicador_logro, 
+            #      competencia_especifica, actividad_inicio, actividad_desarrollo, actividad_cierre, recursos, recuperacion_pedagogica)
+            #     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            # """, (nombre_docente, area, grado_sec, fecha, estrategias, intencion, indicador, competencia, 
+            #       act_inicio, act_desarrollo, act_cierre, recursos, recuperacion))
+            # conexion.commit()
+            
+            flash("¡Planificación diaria guardada con éxito!", "success")
+            return redirect(url_for('ver_planificaciones_diarias'))
+            
+        except Exception as e:
+            flash(f"Error al guardar la planificación: {e}", "danger")
+
+    return render_template('planificacion_diaria.html', 
+                           docente=nombre_docente, 
+                           grado_seccion=grado_seccion)
+
 @app.route('/registrar_usuario', methods=['GET', 'POST'])
 def registrar_usuario():
     if session.get('rol') not in ['oficina', 'admin']:
