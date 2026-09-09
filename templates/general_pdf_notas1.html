@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Informe de Aprendizaje - SIGEM Mami Luisa</title>
-    <!-- Bootstrap para estructurar tablas y rejillas base -->
+    <!-- Bootstrap para la estructura de tablas y rejillas -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         /* Configuración estricta para impresión y formato A4 Horizontal */
@@ -22,7 +22,7 @@
         }
 
         /* Ocultar elementos globales de la aplicación si se reusan componentes */
-        .no-imprimir, .navbar, .btn-acciones, .sidebar {
+        .no-imprimir, .navbar, .btn-acciones, .sidebar, header, footer {
             display: none !important;
         }
 
@@ -100,7 +100,7 @@
                     </div>
                 </div>
 
-                <!-- Tabla de Calificaciones (Estructura estándar del sistema) -->
+                <!-- Tabla de Calificaciones -->
                 <table class="table table-bordered">
                     <thead>
                         <tr>
@@ -116,7 +116,6 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- Ejemplo de filas de competencias inyectadas desde Flask -->
                         <tr>
                             <td class="text-start">Lengua Española</td>
                             <td>{{ calificaciones.lp1 | default('') }}</td>
@@ -133,7 +132,6 @@
                             <td>{{ calificaciones.mp4 | default('') }}</td>
                             <td><strong>{{ calificaciones.mpf | default('') }}</strong></td>
                         </tr>
-                        <!-- Puedes iterar dinámicamente con un bucle for de Jinja2 según tu base de datos -->
                     </tbody>
                 </table>
             </div>
@@ -162,21 +160,21 @@
                             <tr>
                                 <th colspan="2">SITUACIÓN FINAL</th>
                             </tr>
-                        <tr>
-                            <td>Promovido (P)</td>
-                            <td class="text-center">[{{ 'X' if estudiante.condicion == 'P' else ' ' }}]</td>
-                        </tr>
-                        <tr>
-                            <td>Aplazado (A)</td>
-                            <td class="text-center">[{{ 'X' if estudiante.condicion == 'A' else ' ' }}]</td>
-                        </tr>
-                        <tr>
-                            <td>Repitente (R)</td>
-                            <td class="text-center">[{{ 'X' if estudiante.condicion == 'R' else ' ' }}]</td>
-                        </tr>
-                    </table>
+                            <tr>
+                                <td>Promovido (P)</td>
+                                <td class="text-center">[{{ 'X' if estudiante.condicion == 'P' else ' ' }}]</td>
+                            </tr>
+                            <tr>
+                                <td>Aplazado (A)</td>
+                                <td class="text-center">[{{ 'X' if estudiante.condicion == 'A' else ' ' }}]</td>
+                            </tr>
+                            <tr>
+                                <td>Repitente (R)</td>
+                                <td class="text-center">[{{ 'X' if estudiante.condicion == 'R' else ' ' }}]</td>
+                            </tr>
+                        </table>
+                    </div>
                 </div>
-            </div>
 
                 <!-- Bloque de Firmas -->
                 <div class="row mt-5 pt-4 text-center">
@@ -198,12 +196,5 @@
         </div>
     </div>
 
-    <!-- Script opcional para autolanzar la impresión si se desea al cargar la pestaña -->
-    <script>
-        window.onload = function() {
-            // Opcional: descomentar si deseas que el cuadro de impresión salte automáticamente al abrir la pestaña
-            // window.print();
-        };
-    </script>
 </body>
 </html>
