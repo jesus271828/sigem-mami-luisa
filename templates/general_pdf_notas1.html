@@ -204,18 +204,28 @@
     <!-- ========================================== -->
     <!-- PÁGINA 1: ENCABEZADO Y CALIFICACIONES       -->
     <!-- ========================================== -->
-    <table class="header-table">
-        <tr>
-            <td class="logo-cell">
-                <b>[Logo]</b>
-            </td>
-            <td class="title-cell">
-                <h1>Centro Educativo Mami Luisa S.R.L</h1>
-                <p><b>Dirección:</b> C/Castillo Márquez #53. La Romana, Centro Ciudad. <b>Teléfono:</b> 809-550-7385 / 809-710-3395</p>
-                <p><b>Regional de Educación:</b> 05 San Pedro de Macorís. <b>Distrito Educativo:</b> 05-03 La Romana. <b>Código:</b> 07121</p>
-                <p><b>INFORME DE APRENDIZAJE. Primer Grado del Nivel Primario, Sección A.</b></p>
-                <p><b>Año Escolar 2026-2027 / Jornada Escolar Regular. Tanda Matutina.</b></p>
-            </td>
+<!-- PARTE DELANTERA -->
+        <div class="header">
+            <img src="{{ url_for('static', filename='img/logo2.png') }}" class="logo" alt="Logo">
+            <div class="header-content">
+                <div class="header-row-1">
+                    <span class="title-school">Centro Educativo Mami Luisa S.R.L</span>
+                    <span class="lema">"Educando con amor para un mundo mejor"</span>
+                </div>
+                <div class="info-line">
+                    <b>Dirección:</b> C/Castillo Márquez #53. La Romana, Centro Ciudad. <b>Teléfono:</b> 809-550-7385 / 809-710-3395
+                </div>
+                <div class="info-line">
+                    <b>Regional de Educación:</b> 05 San Pedro de Macorís. <b>Distrito Educativo:</b> 05-03 La Romana. <b>Código:</b> 07121
+                </div>
+                <div class="info-row-2 info-line" style="font-weight: bold;">
+                    <span>INFORME DE APRENDIZAJE. Primer Grado del Nivel Primario, Sección A.</span>
+                </div>
+                <div class="info-line" style="color: #444;">
+                    Año Escolar 2026-2027 / Jornada Escolar Regular. Tanda Matutina.
+                </div>
+            </div>
+        </div>
             <td class="slogan-cell">
                 <i>"Educando con amor para un mundo mejor"</i>
             </td>
