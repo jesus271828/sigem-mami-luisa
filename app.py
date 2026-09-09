@@ -2218,9 +2218,45 @@ def planificacion():
     usuario_actual = {'nombre': session.get('usuario_nombre', 'Jesus Maria Alfonseca Duverge'), 'rol': session.get('rol', 'maestro')}
     return render_template('planificacion.html', usuario=usuario_actual)
 
+@app.route('/planificacion_diaria', methods=['GET', 'POST'])
+def planificacion_diaria():
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+        
+    # Aquí puedes añadir la lógica POST si guardas la planificación en base de datos al enviar el formulario
+    if request.method == 'POST':
+        # Ejemplo de lógica de guardado:
+        # docente = request.form.get('docente')
+        # area = request.form.get('area')
+        # ... procesar inserción en base de datos ...
+        flash("Planificación guardada con éxito.", "success")
+        return redirect(url_for('ver_planificaciones_diarias'))
+
+    return render_template('planificacion_diaria.html')
+
+@app.route('/ver_planificaciones_diarias')
+def ver_planificaciones_diarias():
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+    
+    planificaciones = []
+    try:
+        conexion = get_db_connection()
+        resultado = conexion.execute("""
+            SELECT id, docente, area, grado_seccion, fecha 
+            FROM planificaciones_diarias 
+            ORDER BY id DESC
+        """)
+        planificaciones = resultado.fetchall()
+        conexion.close()
+    except Exception as e:
+        flash(f"Error al cargar la lista de planificaciones: {e}", "danger")
+    
+    return render_template('ver_planificaciones_diarias.html', planificaciones=planificaciones)
+
 @app.route('/ver_pdf_planificacion/<int:id>')
 def ver_pdf_planificacion(id):
-    if 'nombre_completo' not in session:
+    if 'usuario' not in session and 'nombre_completo' not in session:
         return redirect(url_for('login'))
     
     planificacion = None
@@ -2245,14 +2281,6 @@ def ver_pdf_planificacion(id):
         return redirect(url_for('ver_planificaciones_diarias'))
 
     return render_template('pdf_planificacion_diaria.html', plan=planificacion)
-
-@app.route('/planificacion_diaria', methods=['GET', 'POST'])
-def planificacion_diaria():
-    if 'usuario' not in session:
-        return redirect(url_for('login'))
-        
-    # Lógica de tu planificación (mensual o diaria según corresponda)
-    return render_template('planificacion_diaria.html')
 
 @app.route('/registrar_usuario', methods=['GET', 'POST'])
 def registrar_usuario():
