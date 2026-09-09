@@ -14,14 +14,13 @@
         }
         body {
             font-family: Arial, Helvetica, sans-serif;
-            font-size: 9pt;
+            font-size: 10pt; /* Letra principal más grande y legible */
             color: #000000;
             margin: 0;
             padding: 0;
             width: 100%;
             height: 100%;
         }
-        /* Contenedor que fuerza el uso de toda la altura de la página */
         .page-container {
             width: 100%;
             height: 100%;
@@ -33,28 +32,28 @@
             width: 100%;
             border-collapse: collapse;
             border-bottom: 2px solid #000080;
-            padding-bottom: 4px;
-            margin-bottom: 6px;
+            padding-bottom: 5px;
+            margin-bottom: 8px;
         }
         .header-table td {
             vertical-align: middle;
         }
         .logo-cell {
-            width: 9%;
+            width: 10%;
             text-align: center;
         }
         .logo-img {
-            width: 55px;
+            width: 60px;
             height: auto;
-            max-height: 55px;
+            max-height: 60px;
             object-fit: contain;
         }
         .info-cell {
-            width: 91%;
-            padding-left: 8px;
+            width: 90%;
+            padding-left: 10px;
         }
         .school-title {
-            font-size: 13pt;
+            font-size: 14pt;
             font-weight: bold;
             color: #000080;
             text-transform: uppercase;
@@ -62,62 +61,63 @@
         .school-slogan {
             font-style: italic;
             color: #b22222;
-            font-size: 9pt;
+            font-size: 10pt;
             font-family: "Brush Script MT", cursive, sans-serif;
             display: inline-block;
             margin-left: 8px;
         }
         .school-details {
-            font-size: 7.5pt;
+            font-size: 8.5pt; /* Detalles institucionales más claros */
             color: #222222;
-            margin-top: 2px;
-            line-height: 1.2;
+            margin-top: 3px;
+            line-height: 1.25;
         }
         .report-title-bar {
             width: 100%;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
         }
         .report-title-bar table {
             width: 100%;
             border-collapse: collapse;
         }
         .report-title {
-            font-size: 11pt;
+            font-size: 12pt;
             font-weight: bold;
             text-transform: uppercase;
         }
         .report-sub {
-            font-size: 9pt;
+            font-size: 9.5pt;
             font-weight: bold;
         }
         .date-box {
             text-align: right;
             font-weight: bold;
-            font-size: 9.5pt;
+            font-size: 10.5pt;
         }
         .section-header {
-            font-size: 9pt;
+            font-size: 10pt;
             font-weight: bold;
             color: #000080;
-            margin-top: 6px;
-            margin-bottom: 3px;
+            margin-top: 8px;
+            margin-bottom: 4px;
             text-transform: uppercase;
         }
         table.data-table {
             width: 100%;
             max-width: 100%;
             border-collapse: collapse;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
         }
         table.data-table th, table.data-table td {
             border: 1px solid #000000;
-            padding: 4px 5px; /* Mayor padding para ocupar más altura vertical */
+            padding: 5px 6px; /* Celdas más espaciosas */
             text-align: center;
-            font-size: 8pt;
+            font-size: 9pt; /* Texto interno de tablas más grande */
         }
         table.data-table th {
             background-color: #f2f2f2;
             font-weight: bold;
+            font-size: 9.5pt;
         }
         .text-left {
             text-align: left !important;
@@ -134,20 +134,20 @@
         .footer-grid {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 4px;
+            margin-top: 6px;
         }
         .footer-grid td {
             vertical-align: top;
         }
         .signature-line {
-            width: 220px;
+            width: 240px;
             border-top: 1px solid #000000;
-            margin: 30px auto 4px auto;
+            margin: 45px auto 6px auto;
             text-align: center;
         }
         .signature-text {
             text-align: center;
-            font-size: 8.5pt;
+            font-size: 9.5pt;
             font-weight: bold;
         }
     </style>
@@ -192,7 +192,7 @@
                         <div class="report-sub">Año Escolar {{ anio_escolar }} / Jornada Escolar Regular.</div>
                     </td>
                     <td class="date-box">
-                        FECHA: {{ fecha_formateada }} &nbsp;&nbsp;|&nbsp;&nbsp; <span style="font-weight: normal; font-size: 9pt;">Día: {{ dia_semana }}</span>
+                        FECHA: {{ fecha_formateada }} &nbsp;&nbsp;|&nbsp;&nbsp; <span style="font-weight: normal; font-size: 10pt;">Día: {{ dia_semana }}</span>
                     </td>
                 </tr>
             </table>
@@ -248,7 +248,7 @@
         <!-- Dos columnas abajo -->
         <table class="footer-grid">
             <tr>
-                <td style="width: 55%; padding-right: 10px;">
+                <td style="width: 55%; padding-right: 12px;">
                     <!-- NIVEL INICIAL ML - L2 -->
                     <div class="section-header">NIVEL INICIAL ML – L2</div>
                     <table class="data-table">
@@ -281,7 +281,7 @@
                     </table>
 
                     <!-- TIPO DE PERSONAL -->
-                    <div class="section-header" style="margin-top: 4px;">TIPO DE PERSONAL</div>
+                    <div class="section-header" style="margin-top: 6px;">TIPO DE PERSONAL</div>
                     <table class="data-table">
                         <thead>
                             <tr>
@@ -325,9 +325,9 @@
                     </table>
                 </td>
 
-                <td style="width: 45%; padding-left: 10px; vertical-align: top;">
+                <td style="width: 45%; padding-left: 12px; vertical-align: top;">
                     <!-- Cuadro lateral de verificación -->
-                    <table class="data-table" style="margin-top: 22px;">
+                    <table class="data-table" style="margin-top: 25px;">
                         <tr>
                             <td class="text-left" style="width: 80%;">Asistencia colocada en plataforma</td>
                             <td style="width: 20%; font-weight: bold;">X</td>
@@ -339,7 +339,7 @@
                     </table>
 
                     <!-- Firma -->
-                    <div style="margin-top: 40px;">
+                    <div style="margin-top: 35px;">
                         <div class="signature-line"></div>
                         <div class="signature-text">Responsable del formulario.</div>
                     </div>
