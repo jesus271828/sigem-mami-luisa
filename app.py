@@ -2092,7 +2092,7 @@ def general_pdf_notas1(id_estudiante):
         return f"Error crítico procesando xhtml2pdf: {str(e)}", 500
 
     if pisa_status.err:
-        return f"Error interno de xhtml2pdf (Código de error: {pisa_status.err}). Es posible que existan estilos CSS no compatibles (como display: flex) en la plantilla.", 500
+        return f"Error interno de xhtml2pdf (Código de error: {pisa_status.err}). Es posible que existan estilos CSS no compatibles o tablas con desbordamiento en la plantilla.", 500
 
     # Limpiar nombre de archivo de caracteres especiales si es necesario
     nombre_archivo = f"informe_notas_{getattr(estudiante, 'nombres', 'estudiante')}.pdf".replace(" ", "_")
