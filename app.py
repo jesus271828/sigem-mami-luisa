@@ -1654,15 +1654,9 @@ def guardar_asistencia():
 from flask import render_template, request, make_response
 from weasyprint import HTML
 from datetime import datetime
-from sqlalchemy import text
 
 @app.route('/descargar_reporte_ausencias', methods=['POST', 'GET'])
 def descargar_reporte_ausencias():
-    try:
-        db.session.rollback()
-    except Exception:
-        pass
-
     fecha_str = request.form.get('fecha') or request.args.get('fecha') or datetime.now().strftime('%Y-%m-%d')
     
     # Normalizar objeto fecha para el día de la semana
@@ -1679,173 +1673,191 @@ def descargar_reporte_ausencias():
     except Exception:
         pass
 
-    f_iso = fecha_obj.strftime('%Y-%m-%d')
-    f_slash = fecha_obj.strftime('%d/%m/%Y')
-
     dias_semana = {
         'Monday': 'Lunes', 'Tuesday': 'Martes', 'Wednesday': 'Miércoles',
         'Thursday': 'Jueves', 'Friday': 'Viernes', 'Saturday': 'Sábado', 'Sunday': 'Domingo'
     }
     dia_semana_esp = dias_semana.get(fecha_obj.strftime('%A'), 'Miércoles')
 
-    # 1. Recuperar o guardar los datos del personal
-    meta = RegistroPersonal.query.filter_by(fecha=fecha_str).first()
-    
-    if request.method == 'POST':
-        try:
-            adm_np = request.form.get('adm_np', '')
-            adm_ni = request.form.get('adm_ni', '')
-            aux_np = request.form.get('aux_np', '')
-            aux_ni = request.form.get('aux_ni', '')
-            doc_np = request.form.get('doc_np', '')
-            doc_ni = request.form.get('doc_ni', '')
-
-            adm_p = int(request.form.get('adm_presente') or 0)
-            adm_a = request.form.get('adm_ausentes', '')
-            aux_p = int(request.form.get('aux_presente') or 0)
-            aux_a = request.form.get('aux_ausentes', '')
-            doc_p = int(request.form.get('doc_presente') or 0)
-            doc_a = request.form.get('doc_ausentes', '')
-            
-            if not meta:
-                meta = RegistroPersonal(fecha=fecha_str)
-                db.session.add(meta)
-            
-            meta.adm_np = adm_np
-            meta.adm_ni = adm_ni
-            meta.aux_np = aux_np
-            meta.aux_ni = aux_ni
-            meta.doc_np = doc_np
-            meta.doc_ni = doc_ni
-            meta.adm_presente = adm_p
-            meta.adm_ausentes = adm_a
-            meta.aux_presente = aux_p
-            meta.aux_ausentes = aux_a
-            meta.doc_presente = doc_p
-            meta.doc_ausentes = doc_a
-            
-            db.session.commit()
-            
-            if request.form.get('action') == 'guardar_solo':
-                return "OK", 200
-        except Exception as e:
-            db.session.rollback()
-            print(f"Error al guardar personal: {e}")
-
-    # 2. Obtener datos estadísticos por grado de primaria usando los nombres reales exactos ('1ro A', etc.)
-    grados_config = [
-        ('1ro.', '1ro A'),
-        ('2do.', '2do A'),
-        ('3ro.', '3ro A'),
-        ('4to.', '4to A'),
-        ('5to.', '5to A'),
-        ('6to.', '6to A')
-    ]
-    
-    grados_primaria = []
-    tot_mat_ninos = 0
-    tot_mat_ninas = 0
-    tot_mat_total = 0
-    tot_asis_ninos = 0
-    tot_asis_ninas = 0
-    tot_asis_total = 0
-
-    for nombre_grado_pdf, nombre_grado_db in grados_config:
-        # Consulta directa por grado exacto y trayendo la asistencia de esa fecha
-        sql_asistencias = text("""
-            SELECT e.id, e.sexo, a.estado, e.apellidos, e.nombres 
-            FROM estudiantes e
-            LEFT JOIN asistencia a ON (
-                (CAST(a.estudiante_id AS VARCHAR) = CAST(e.id AS VARCHAR) OR CAST(a.id_estudiante AS VARCHAR) = CAST(e.id AS VARCHAR))
-                AND (CAST(a.fecha AS TEXT) LIKE :f_iso OR CAST(a.fecha AS TEXT) LIKE :f_slash)
-            )
-            WHERE e.grado ILIKE :grado_db
-        """)
-        
-        try:
-            resultado = db.session.execute(sql_asistencias, {
-                "grado_db": nombre_grado_db,
-                "f_iso": f"%{f_iso}%", 
-                "f_slash": f"%{f_slash}%"
-            }).fetchall()
-        except Exception:
-            db.session.rollback()
-            resultado = []
-
-        # Calcular matriculados únicos y asistencias
-        estudiantes_unicos = {}
-        for r in resultado:
-            est_id = r[0]
-            if est_id not in estudiantes_unicos:
-                estudiantes_unicos[est_id] = {'sexo': r[1], 'estado': r[2], 'apellidos': r[3], 'nombres': r[4]}
-
-        mat_ninos = sum(1 for e in estudiantes_unicos.values() if e['sexo'] and 'masculino' in str(e['sexo']).lower())
-        mat_ninas = sum(1 for e in estudiantes_unicos.values() if e['sexo'] and 'femenino' in str(e['sexo']).lower())
-        mat_total = len(estudiantes_unicos)
-
-        asis_ninos = sum(1 for e in estudiantes_unicos.values() if e['sexo'] and 'masculino' in str(e['sexo']).lower() and e['estado'] and any(st in str(e['estado']).lower() for st in ['presente', 'asistio', '1', 'true', 'p']))
-        asis_ninas = sum(1 for e in estudiantes_unicos.values() if e['sexo'] and 'femenino' in str(e['sexo']).lower() and e['estado'] and any(st in str(e['estado']).lower() for st in ['presente', 'asistio', '1', 'true', 'p']))
-        asis_total = asis_ninos + asis_ninas
-
-        ausentes_nombres = []
-        for e in estudiantes_unicos.values():
-            if e['estado'] and any(st in str(e['estado']).lower() for st in ['ausente', 'tarde', 'falta', 'a', '0', 'false']):
-                nombre_completo = f"{e['apellidos'] or ''} {e['nombres'] or ''}".strip()
-                if nombre_completo:
-                    ausentes_nombres.append(nombre_completo)
-        ausentes_lista = ", ".join(ausentes_nombres)
-
-        grados_primaria.append({
-            'nombre': nombre_grado_pdf,
-            'mat_ninos': mat_ninos,
-            'mat_ninas_f': mat_ninas,
-            'mat_total': mat_total,
-            'asis_ninos': asis_ninos,
-            'asis_ninas': asis_ninas,
-            'asis_total': asis_total,
-            'ausentes': ausentes_lista
-        })
-        
-        tot_mat_ninos += mat_ninos
-        tot_mat_ninas += mat_ninas
-        tot_mat_total += mat_total
-        tot_asis_ninos += asis_ninos
-        tot_asis_ninas += asis_ninas
-        tot_asis_total += asis_total
-
-    # 3. Nivel Inicial (L2)
-    sql_inicial_asis = text("""
-        SELECT e.id, e.sexo, a.estado 
-        FROM estudiantes e
-        LEFT JOIN asistencia a ON (
-            (CAST(a.estudiante_id AS VARCHAR) = CAST(e.id AS VARCHAR) OR CAST(a.id_estudiante AS VARCHAR) = CAST(e.id AS VARCHAR))
-            AND (CAST(a.fecha AS TEXT) LIKE :f_iso OR CAST(a.fecha AS TEXT) LIKE :f_slash)
-        )
-        WHERE e.grado ILIKE :p1 OR e.grado ILIKE :p2
-    """)
-    
+    conn = get_db_connection()
     try:
-        resultado_inicial = db.session.execute(sql_inicial_asis, {
-            "p1": "%inicial%", "p2": "%kinder%", 
-            "f_iso": f"%{f_iso}%", "f_slash": f"%{f_slash}%"
-        }).fetchall()
-    except Exception:
-        db.session.rollback()
-        resultado_inicial = []
+        # 1. Recuperar o guardar los datos del personal usando la misma conexión
+        meta_personal = conn.execute('SELECT * FROM asistencia_personal WHERE fecha = %s', (fecha_str,)).fetchone()
+        meta = dict(meta_personal) if meta_personal else {}
 
-    ini_unicos = {}
-    for r in resultado_inicial:
-        est_id = r[0]
-        if est_id not in ini_unicos:
-            ini_unicos[est_id] = {'sexo': r[1], 'estado': r[2]}
+        if request.method == 'POST':
+            try:
+                adm_np = request.form.get('adm_np', '')
+                adm_ni = request.form.get('adm_ni', '')
+                aux_np = request.form.get('aux_np', '')
+                aux_ni = request.form.get('aux_ni', '')
+                doc_np = request.form.get('doc_np', '')
+                doc_ni = request.form.get('doc_ni', '')
 
-    ini_mat_ninos = sum(1 for e in ini_unicos.values() if e['sexo'] and 'masculino' in str(e['sexo']).lower())
-    ini_mat_ninas = sum(1 for e in ini_unicos.values() if e['sexo'] and 'femenino' in str(e['sexo']).lower())
-    ini_mat_total = len(ini_unicos)
+                adm_p = int(request.form.get('adm_presente') or 0)
+                adm_a = request.form.get('adm_ausentes', '')
+                aux_p = int(request.form.get('aux_presente') or 0)
+                aux_a = request.form.get('aux_ausentes', '')
+                doc_p = int(request.form.get('doc_presente') or 0)
+                doc_a = request.form.get('doc_ausentes', '')
+                
+                if not meta_personal:
+                    conn.execute(
+                        '''INSERT INTO asistencia_personal (fecha, adm_np, adm_ni, aux_np, aux_ni, doc_np, doc_ni, adm_presente, adm_ausentes, aux_presente, aux_ausentes, doc_presente, doc_ausentes) 
+                           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
+                        (fecha_str, adm_np, adm_ni, aux_np, aux_ni, doc_np, doc_ni, adm_p, adm_a, aux_p, aux_a, doc_p, doc_a)
+                    )
+                else:
+                    conn.execute(
+                        '''UPDATE asistencia_personal SET adm_np=%s, adm_ni=%s, aux_np=%s, aux_ni=%s, doc_np=%s, doc_ni=%s, 
+                           adm_presente=%s, adm_ausentes=%s, aux_presente=%s, aux_ausentes=%s, doc_presente=%s, doc_ausentes=%s WHERE fecha=%s''',
+                        (adm_np, adm_ni, aux_np, aux_ni, doc_np, doc_ni, adm_p, adm_a, aux_p, aux_a, doc_p, doc_a, fecha_str)
+                    )
+                conn.commit()
+                
+                if request.form.get('action') == 'guardar_solo':
+                    return "OK", 200
+            except Exception as e:
+                conn.rollback()
+                print(f"Error al guardar personal: {e}")
 
-    ini_asis_ninos = sum(1 for e in ini_unicos.values() if e['sexo'] and 'masculino' in str(e['sexo']).lower() and e['estado'] and any(st in str(e['estado']).lower() for st in ['presente', 'asistio', '1', 'true', 'p']))
-    ini_asis_ninas = sum(1 for e in ini_unicos.values() if e['sexo'] and 'femenino' in str(e['sexo']).lower() and e['estado'] and any(st in str(e['estado']).lower() for st in ['presente', 'asistio', '1', 'true', 'p']))
-    ini_asis_total = ini_asis_ninos + ini_asis_ninas
+        # 2. Cursos para la Tabla Superior (Primaria Secciones A) exactamente igual que en la web
+        cursos_resumen = ['1ro A', '2do A', '3ro A', '4to A', '5to A', '6to A']
+        grados_primaria = []
+        
+        tot_mat_ninos = 0
+        tot_mat_ninas = 0
+        tot_mat_total = 0
+        tot_asis_ninos = 0
+        tot_asis_ninas = 0
+        tot_asis_total = 0
+
+        for curso in cursos_resumen:
+            # Matriculados por género
+            mat_db = conn.execute(
+                "SELECT sexo, COUNT(*) FROM estudiantes WHERE grado = %s GROUP BY sexo", 
+                (curso,)
+            ).fetchall()
+            
+            m_ninos = 0
+            m_ninas = 0
+            for row in mat_db:
+                sexo_val = row['sexo'] if hasattr(row, 'keys') else row[0]
+                count_val = row['count'] if hasattr(row, 'keys') else row[1]
+                if sexo_val == 'Masculino':
+                    m_ninos = count_val
+                elif sexo_val == 'Femenino':
+                    m_ninas = count_val
+            m_total = m_ninos + m_ninas
+
+            # Asistencia por género usando id_estudiante
+            asis_db_curso = conn.execute(
+                """
+                SELECT e.sexo, COUNT(a.id_estudiante) 
+                FROM asistencia a
+                JOIN estudiantes e ON a.id_estudiante = e.id_estudiante
+                WHERE a.fecha = %s AND e.grado = %s AND a.estado IN ('Presente', 'Tarde')
+                GROUP BY e.sexo
+                """,
+                (fecha_str, curso)
+            ).fetchall()
+
+            a_ninos = 0
+            a_ninas = 0
+            for row in asis_db_curso:
+                sexo_val = row['sexo'] if hasattr(row, 'keys') else row[0]
+                count_val = row['count'] if hasattr(row, 'keys') else row[1]
+                if sexo_val == 'Masculino':
+                    a_ninos = count_val
+                elif sexo_val == 'Femenino':
+                    a_ninas = count_val
+            a_total = a_ninos + a_ninas
+
+            # Nombres de ausentes
+            ausentes_db = conn.execute(
+                """
+                SELECT e.nombres, e.apellidos 
+                FROM estudiantes e
+                JOIN asistencia a ON e.id_estudiante = a.id_estudiante
+                WHERE a.fecha = %s AND e.grado = %s AND a.estado = 'Ausente'
+                ORDER BY e.nombres ASC
+                """,
+                (fecha_str, curso)
+            ).fetchall()
+
+            nombres_ausentes = [f"{aus['nombres'] if hasattr(aus, 'keys') else aus[0]} {aus['apellidos'] if hasattr(aus, 'keys') else aus[1]}" for aus in ausentes_db]
+            str_ausentes = ", ".join(nombres_ausentes)
+
+            # Mapear nombre visual ('1ro.') con su sección correspondiente ('1ro A')
+            nombre_corto = curso.split()[0] + "."
+
+            grados_primaria.append({
+                'nombre': nombre_corto,
+                'mat_ninos': m_ninos,
+                'mat_ninas_f': m_ninas,
+                'mat_total': m_total,
+                'asis_ninos': a_ninos,
+                'asis_ninas': a_ninas,
+                'asis_total': a_total,
+                'ausentes': str_ausentes
+            })
+            
+            tot_mat_ninos += m_ninos
+            tot_mat_ninas += m_ninas
+            tot_mat_total += m_total
+            tot_asis_ninos += a_ninos
+            tot_asis_ninas += a_ninas
+            tot_asis_total += a_total
+
+        # 3. Nivel Inicial (Exactamente igual que en tu vista web)
+        cursos_inicial = [
+            'Párvulos', 'Prekínder – A', 'Prekínder – B', 
+            'Kínder – A', 'Kínder – B', 'Preprimario – A', 'Preprimario – B'
+        ]
+        
+        tot_mat_ninos_ini = 0
+        tot_mat_ninas_ini = 0
+        tot_asist_ninos_ini = 0
+        tot_asist_ninas_ini = 0
+
+        for curso_ini in cursos_inicial:
+            mat_ini_db = conn.execute(
+                "SELECT sexo, COUNT(*) FROM estudiantes WHERE grado = %s GROUP BY sexo", 
+                (curso_ini,)
+            ).fetchall()
+            
+            for row in mat_ini_db:
+                sexo_val = row['sexo'] if hasattr(row, 'keys') else row[0]
+                count_val = row['count'] if hasattr(row, 'keys') else row[1]
+                if sexo_val == 'Masculino':
+                    tot_mat_ninos_ini += count_val
+                elif sexo_val == 'Femenino':
+                    tot_mat_ninas_ini += count_val
+
+            asis_ini_db = conn.execute(
+                """
+                SELECT e.sexo, COUNT(a.id_estudiante) 
+                FROM asistencia a
+                JOIN estudiantes e ON a.id_estudiante = e.id_estudiante
+                WHERE a.fecha = %s AND e.grado = %s AND a.estado IN ('Presente', 'Tarde')
+                GROUP BY e.sexo
+                """,
+                (fecha_str, curso_ini)
+            ).fetchall()
+
+            for row in asis_ini_db:
+                sexo_val = row['sexo'] if hasattr(row, 'keys') else row[0]
+                count_val = row['count'] if hasattr(row, 'keys') else row[1]
+                if sexo_val == 'Masculino':
+                    tot_asist_ninos_ini += count_val
+                elif sexo_val == 'Femenino':
+                    tot_asist_ninas_ini += count_val
+
+        tot_mat_total_ini = tot_mat_ninos_ini + tot_mat_ninas_ini
+        tot_asist_total_ini = tot_asist_ninos_ini + tot_asist_ninas_ini
+
+    finally:
+        conn.close()
 
     rendered_html = render_template('control_asistencia_pdf.html',
         anio_escolar="2026-2027",
@@ -1858,15 +1870,15 @@ def descargar_reporte_ausencias():
         total_primaria_asis_ninos=tot_asis_ninos,
         total_primaria_asis_ninas=tot_asis_ninas,
         total_primaria_asis_total=tot_asis_total,
-        inicial_mat_ninos=ini_mat_ninos,
-        inicial_mat_ninas_f=ini_mat_ninas,
-        inicial_mat_total=ini_mat_total,
-        inicial_asis_ninos=ini_asis_ninos,
-        inicial_asis_ninas_f=ini_asis_ninas,
-        inicial_asis_total=ini_asis_total,
+        inicial_mat_ninos=tot_mat_ninos_ini,
+        inicial_mat_ninas_f=tot_mat_ninas_ini,
+        inicial_mat_total=tot_mat_total_ini,
+        inicial_asis_ninos=tot_asist_ninos_ini,
+        inicial_asis_ninas_f=tot_asist_ninas_ini,
+        inicial_asis_total=tot_asist_total_ini,
         personal_adm_contratado=10,
         personal_doc_contratado=9,
-        total_personal_presente=(meta.adm_presente or 0) + (meta.aux_presente or 0) + (meta.doc_presente or 0) if meta else 0,
+        total_personal_presente=(meta.get('adm_presente') or 0) + (meta.get('aux_presente') or 0) + (meta.get('doc_presente') or 0),
         meta=meta
     )
 
