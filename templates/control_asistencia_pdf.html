@@ -8,44 +8,44 @@
             box-sizing: border-box;
         }
         @page {
-            size: letter portrait;
-            margin: 10mm 12mm 10mm 12mm;
+            size: letter landscape; /* Configurado en horizontal */
+            margin: 8mm 10mm 8mm 10mm;
             background-color: #ffffff;
         }
         body {
             font-family: Arial, Helvetica, sans-serif;
-            font-size: 10pt;
+            font-size: 9.5pt;
             color: #000000;
             margin: 0;
             padding: 0;
-            line-height: 1.2;
+            line-height: 1.15;
         }
         .header-table {
             width: 100%;
             border-collapse: collapse;
             border-bottom: 2px solid #000080;
-            padding-bottom: 5px;
-            margin-bottom: 10px;
+            padding-bottom: 4px;
+            margin-bottom: 6px;
         }
         .header-table td {
             vertical-align: middle;
         }
         .logo-cell {
-            width: 15%;
+            width: 12%;
             text-align: center;
         }
         .logo-img {
-            width: 65px;
+            width: 55px;
             height: auto;
-            max-height: 65px;
+            max-height: 55px;
             object-fit: contain;
         }
         .info-cell {
-            width: 85%;
+            width: 88%;
             padding-left: 8px;
         }
         .school-title {
-            font-size: 14pt;
+            font-size: 13pt;
             font-weight: bold;
             color: #000080;
             text-transform: uppercase;
@@ -53,56 +53,56 @@
         .school-slogan {
             font-style: italic;
             color: #b22222;
-            font-size: 9.5pt;
+            font-size: 9pt;
             font-family: "Brush Script MT", cursive, sans-serif;
             display: inline-block;
             margin-left: 10px;
         }
         .school-details {
-            font-size: 8pt;
+            font-size: 7.5pt;
             color: #222222;
-            margin-top: 3px;
+            margin-top: 2px;
         }
         .report-title-bar {
             width: 100%;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
         .report-title-bar table {
             width: 100%;
             border-collapse: collapse;
         }
         .report-title {
-            font-size: 11pt;
+            font-size: 10.5pt;
             font-weight: bold;
             text-transform: uppercase;
         }
         .report-sub {
-            font-size: 10pt;
+            font-size: 9.5pt;
             font-weight: bold;
         }
         .date-box {
             text-align: right;
             font-weight: bold;
-            font-size: 10pt;
+            font-size: 9.5pt;
         }
         .section-header {
-            font-size: 9.5pt;
+            font-size: 9pt;
             font-weight: bold;
             color: #000080;
-            margin-top: 8px;
-            margin-bottom: 4px;
+            margin-top: 6px;
+            margin-bottom: 3px;
             text-transform: uppercase;
         }
         table.data-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
         table.data-table th, table.data-table td {
             border: 1px solid #000000;
-            padding: 3px 4px;
+            padding: 2px 3px;
             text-align: center;
-            font-size: 8.5pt;
+            font-size: 8pt;
         }
         table.data-table th {
             background-color: #f2f2f2;
@@ -123,20 +123,20 @@
         .footer-grid {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 5px;
+            margin-top: 2px;
         }
         .footer-grid td {
             vertical-align: top;
         }
         .signature-line {
-            width: 250px;
+            width: 220px;
             border-top: 1px solid #000000;
-            margin: 30px auto 5px auto;
+            margin: 20px auto 3px auto;
             text-align: center;
         }
         .signature-text {
             text-align: center;
-            font-size: 9pt;
+            font-size: 8.5pt;
             font-weight: bold;
         }
     </style>
@@ -147,8 +147,8 @@
     <table class="header-table">
         <tr>
             <td class="logo-cell">
-                <!-- Muestra tu logo (ej. logo2.png o estático si usas url_for) -->
-                <img src="{{ url_for('static', filename='img/logo2.png', _external=True) }}" class="logo-img" alt="Logo Mami Luisa">
+                <!-- Usamos la ruta absoluta local en disco para que WeasyPrint pinte el logo sin fallos -->
+                <img src="{{ logo_path }}" class="logo-img" alt="Logo Mami Luisa">
             </td>
             <td class="info-cell">
                 <div>
@@ -180,8 +180,7 @@
                     <div class="report-sub">Año Escolar {{ anio_escolar }} / Jornada Escolar Regular.</div>
                 </td>
                 <td class="date-box">
-                    FECHA: {{ fecha_formateada }}<br><br>
-                    <span style="font-weight: normal; font-size: 9.5pt;">Día: {{ dia_semana }}</span>
+                    FECHA: {{ fecha_formateada }} &nbsp;&nbsp;|&nbsp;&nbsp; <span style="font-weight: normal; font-size: 9pt;">Día: {{ dia_semana }}</span>
                 </td>
             </tr>
         </table>
@@ -192,27 +191,27 @@
     <table class="data-table">
         <thead>
             <tr>
-                <th rowspan="2" style="width: 15%; vertical-align: middle;">GRADOS</th>
+                <th rowspan="2" style="width: 12%; vertical-align: middle;">GRADOS</th>
                 <th colspan="3">MATRICULADOS</th>
                 <th colspan="3">ASISTENCIA</th>
-                <th rowspan="2" style="width: 40%; vertical-align: middle;">Nombre de los ausentes</th>
+                <th rowspan="2" style="width: 55%; vertical-align: middle;">Nombre de los ausentes</th>
             </tr>
             <tr>
-                <th style="width: 7%;" class="bg-ninos">NIÑOS</th>
-                <th style="width: 7%;" class="bg-ninas">NIÑAS</th>
-                <th style="width: 8%;" class="bg-total">TOTAL</th>
-                <th style="width: 7%;">NIÑOS</th>
-                <th style="width: 7%;">NIÑAS</th>
-                <th style="width: 8%;">TOTAL</th>
+                <th style="width: 5%;" class="bg-ninos">NIÑOS</th>
+                <th style="width: 5%;" class="bg-ninas">NIÑAS</th>
+                <th style="width: 6%;" class="bg-total">TOTAL</th>
+                <th style="width: 5%;">NIÑOS</th>
+                <th style="width: 5%;">NIÑAS</th>
+                <th style="width: 6%;">TOTAL</th>
             </tr>
         </thead>
         <tbody>
             {% for grado in grados_primaria %}
             <tr>
-                <td class="text-left font-weight-bold">{{ grado.nombre }}</td>
+                <td class="text-left" style="font-weight: bold;">{{ grado.nombre }}</td>
                 <td class="bg-ninos">{{ grado.mat_ninos }}</td>
                 <td class="bg-ninas">{{ grado.mat_ninas_f }}</td>
-                <td class="bg-total font-weight-bold">{{ grado.mat_total }}</td>
+                <td class="bg-total" style="font-weight: bold;">{{ grado.mat_total }}</td>
                 <td>{{ grado.asis_ninos if grado.asis_ninos is not none else '0' }}</td>
                 <td>{{ grado.asis_ninas if grado.asis_ninas is not none else '0' }}</td>
                 <td>{{ grado.asis_total if grado.asis_total is not none else '0' }}</td>
@@ -235,13 +234,13 @@
     <!-- Dos columnas abajo: Nivel Inicial y Personal / Verificaciones -->
     <table class="footer-grid">
         <tr>
-            <td style="width: 60%; padding-right: 10px;">
+            <td style="width: 55%; padding-right: 10px;">
                 <!-- NIVEL INICIAL ML - L2 -->
                 <div class="section-header">NIVEL INICIAL ML – L2</div>
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th rowspan="2" style="vertical-align: middle;">TOTAL</th>
+                            <th rowspan="2" style="vertical-align: middle; width: 16%;">TOTAL</th>
                             <th colspan="3">MATRICULADOS</th>
                             <th colspan="3">ASISTENCIA</th>
                         </tr>
@@ -256,10 +255,10 @@
                     </thead>
                     <tbody>
                         <tr>
-                            <td class="font-weight-bold">TOTAL</td>
+                            <td style="font-weight: bold;">TOTAL</td>
                             <td class="bg-ninos">{{ inicial_mat_ninos }}</td>
                             <td class="bg-ninas">{{ inicial_mat_ninas_f }}</td>
-                            <td class="bg-total font-weight-bold">{{ inicial_mat_total }}</td>
+                            <td class="bg-total" style="font-weight: bold;">{{ inicial_mat_total }}</td>
                             <td>{{ inicial_asis_ninos }}</td>
                             <td>{{ inicial_asis_ninas_f }}</td>
                             <td>{{ inicial_asis_total }}</td>
@@ -268,14 +267,15 @@
                 </table>
 
                 <!-- TIPO DE PERSONAL -->
-                <table class="data-table" style="margin-top: 10px;">
+                <div class="section-header" style="margin-top: 4px;">TIPO DE PERSONAL</div>
+                <table class="data-table">
                     <thead>
                         <tr>
-                            <th class="text-left">TIPO DE PERSONAL</th>
-                            <th style="width: 18%;">Contratado NP</th>
-                            <th style="width: 18%;">Contratado NI</th>
-                            <th style="width: 18%;">Presente</th>
-                            <th class="text-left">Nombre de los ausentes</th>
+                            <th class="text-left" style="width: 28%;">TIPO DE PERSONAL</th>
+                            <th style="width: 12%;">Cont. NP</th>
+                            <th style="width: 12%;">Cont. NI</th>
+                            <th style="width: 12%;">Presente</th>
+                            <th class="text-left" style="width: 36%;">Nombre de los ausentes</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -290,7 +290,7 @@
                             <td class="text-left">Auxiliares</td>
                             <td>{{ meta.aux_np if meta and meta.aux_np not in [None, 'None', ''] else 'N/A' }}</td>
                             <td>{{ meta.aux_ni if meta and meta.aux_ni not in [None, 'None', ''] else '-' }}</td>
-                            <td>{{ meta.aux_presente if meta.aux_presente not in [None, 'None', ''] else '0' }}</td>
+                            <td>{{ meta.aux_presente if meta and meta.aux_presente not in [None, 'None', ''] else '0' }}</td>
                             <td class="text-left">{{ meta.aux_ausentes if meta and meta.aux_ausentes not in [None, 'None', ''] else '' }}</td>
                         </tr>
                         <tr>
@@ -311,9 +311,9 @@
                 </table>
             </td>
 
-            <td style="width: 40%; padding-left: 10px; vertical-align: top;">
+            <td style="width: 45%; padding-left: 10px; vertical-align: top;">
                 <!-- Cuadro lateral de verificación -->
-                <table class="data-table" style="margin-top: 22px;">
+                <table class="data-table" style="margin-top: 15px;">
                     <tr>
                         <td class="text-left" style="width: 80%;">Asistencia colocada en plataforma</td>
                         <td style="width: 20%; font-weight: bold;">X</td>
@@ -325,7 +325,7 @@
                 </table>
 
                 <!-- Firma -->
-                <div style="margin-top: 60px;">
+                <div style="margin-top: 35px;">
                     <div class="signature-line"></div>
                     <div class="signature-text">Responsable del formulario.</div>
                 </div>

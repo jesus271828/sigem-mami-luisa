@@ -1651,7 +1651,8 @@ def guardar_asistencia():
     return redirect(url_for('asistencia', fecha=fecha))
 
 
-from flask import render_template, request, make_response
+import os
+from flask import render_template, request, make_response, current_app
 from weasyprint import HTML
 from datetime import datetime
 
@@ -1659,6 +1660,9 @@ from datetime import datetime
 def descargar_reporte_ausencias():
     fecha_str = request.form.get('fecha') or request.args.get('fecha') or datetime.now().strftime('%Y-%m-%d')
     
+    # Definir la ruta absoluta del logo para que WeasyPrint lo renderice sin fallos
+    logo_path = os.path.join(current_app.root_path, 'static', 'img', 'logo2.png')
+
     # Normalizar objeto fecha para el día de la semana
     fecha_obj = datetime.now()
     try:
@@ -1860,6 +1864,7 @@ def descargar_reporte_ausencias():
         conn.close()
 
     rendered_html = render_template('control_asistencia_pdf.html',
+        logo_path=logo_path,  # Se inyecta la ruta absoluta de la imagen aquí
         anio_escolar="2026-2027",
         fecha_formateada=fecha_str,
         dia_semana=dia_semana_esp, 
