@@ -3,197 +3,190 @@
 <head>
     <meta charset="UTF-8">
     <title>Informe de Aprendizaje - SIGEM Mami Luisa</title>
-    <!-- Bootstrap para la estructura de tablas y rejillas -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        /* Configuración estricta para impresión y formato A4 Horizontal */
+        /* Configuración de página para xhtml2pdf en orientación horizontal */
         @page {
-            size: A4 landscape;
-            margin: 8mm;
+            size: letter landscape;
+            margin: 1cm;
         }
 
         body {
-            font-family: Arial, sans-serif;
-            font-size: 11pt;
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 10pt;
             color: #000;
             background-color: #fff;
             margin: 0;
             padding: 0;
         }
 
-        /* Ocultar elementos globales de la aplicación si se reusan componentes */
-        .no-imprimir, .navbar, .btn-acciones, .sidebar, header, footer {
-            display: none !important;
-        }
-
-        /* Control de saltos de página para separar la parte delantera y trasera */
-        .salto-pagina {
-            page-break-after: always;
-            break-after: page;
-            height: 100vh;
-            box-sizing: border-box;
-        }
-
-        .pagina-reporte {
+        .contenedor-pagina {
             width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
+            page-break-after: always;
         }
 
+        h2, h4, h5 {
+            text-align: center;
+            margin: 5px 0;
+        }
+
+        /* Estructura de tablas limpias compatibles con PDF */
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 10px;
+            margin-top: 10px;
+            margin-bottom: 15px;
         }
 
         th, td {
             border: 1px solid #333;
-            padding: 4px 6px;
+            padding: 6px;
             text-align: center;
-            font-size: 10pt;
+            font-size: 9pt;
         }
 
         th {
-            background-color: #f2f2f2 !important;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
+            background-color: #f2f2f2;
         }
 
-        @media print {
-            .no-imprimir {
-                display: none !important;
-            }
+        .text-left {
+            text-align: left;
+        }
+
+        .info-box {
+            border: 1px solid #333;
+            padding: 8px;
+            margin-bottom: 15px;
+            background-color: #f9f9f9;
+        }
+
+        .firma-linea {
+            border-top: 1px solid #333;
+            width: 80%;
+            margin: 40px auto 5px auto;
+            text-align: center;
+            padding-top: 5px;
         }
     </style>
 </head>
 <body>
 
-    <!-- Botón flotante para imprimir manualmente desde la vista previa (se oculta al imprimir) -->
-    <div class="position-fixed top-0 end-0 p-3 no-imprimir">
-        <button onclick="window.print()" class="btn btn-success shadow">
-            <i class="fas fa-print"></i> Imprimir / Guardar PDF
-        </button>
+    <!-- ================= PÁGINA 1: DATOS Y CALIFICACIONES ================= -->
+    <div class="contenedor-pagina">
+        <h4>INFORME DE APRENDIZAJE - NIVEL PRIMARIO</h4>
+        <h5>SIGEM Mami Luisa</h5>
+        <p style="text-align: center; font-size: 8pt; color: #555;">Docente a cargo: {{ docente_nombre }}</p>
+
+        <!-- Datos del Estudiante -->
+        <div class="info-box">
+            <table style="border: none; margin: 0;">
+                <tr style="border: none;">
+                    <td style="border: none; text-align: left;" width="60%"><strong>Estudiante:</strong> {{ estudiante.nombres }} {{ estudiante.apellidos }}</td>
+                    <td style="border: none; text-align: left;" width="20%"><strong>No. Orden:</strong> {{ estudiante.numero_orden }}</td>
+                    <td style="border: none; text-align: left;" width="20%"><strong>ID:</strong> {{ estudiante.id_estudiante }}</td>
+                </tr>
+                <tr style="border: none;">
+                    <td style="border: none; text-align: left;" colspan="3"><strong>Grado:</strong> {{ estudiante.grado }}</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Tabla de Calificaciones (Extraídas del diccionario 'notas' guardado en JSON) -->
+        <table>
+            <thead>
+                <tr>
+                    <th rowspan="2" style="vertical-align: middle;">Áreas / Competencias Específicas</th>
+                    <th colspan="4">Períodos de Aprendizaje</th>
+                    <th rowspan="2" style="vertical-align: middle;">Calificación Final</th>
+                </tr>
+                <tr>
+                    <th>P1</th>
+                    <th>P2</th>
+                    <th>P3</th>
+                    <th>P4</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="text-left">Lengua Española</td>
+                    <td>{{ notas.get('lp1', '') }}</td>
+                    <td>{{ notas.get('lp2', '') }}</td>
+                    <td>{{ notas.get('lp3', '') }}</td>
+                    <td>{{ notas.get('lp4', '') }}</td>
+                    <td><strong>{{ notas.get('lpf', '') }}</strong></td>
+                </tr>
+                <tr>
+                    <td class="text-left">Matemáticas</td>
+                    <td>{{ notas.get('mp1', '') }}</td>
+                    <td>{{ notas.get('mp2', '') }}</td>
+                    <td>{{ notas.get('mp3', '') }}</td>
+                    <td>{{ notas.get('mp4', '') }}</td>
+                    <td><strong>{{ notas.get('mpf', '') }}</strong></td>
+                </tr>
+                <tr>
+                    <td class="text-left">Ciencias de la Naturaleza</td>
+                    <td>{{ notas.get('cnp1', '') }}</td>
+                    <td>{{ notas.get('cnp2', '') }}</td>
+                    <td>{{ notas.get('cnp3', '') }}</td>
+                    <td>{{ notas.get('cnp4', '') }}</td>
+                    <td><strong>{{ notas.get('cnpf', '') }}</strong></td>
+                </tr>
+                <tr>
+                    <td class="text-left">Ciencias Sociales</td>
+                    <td>{{ notas.get('csp1', '') }}</td>
+                    <td>{{ notas.get('csp2', '') }}</td>
+                    <td>{{ notas.get('csp3', '') }}</td>
+                    <td>{{ notas.get('csp4', '') }}</td>
+                    <td><strong>{{ notas.get('cspf', '') }}</strong></td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div style="text-align: right; font-size: 8pt; margin-top: 20px;">Página 1 de 2</div>
     </div>
 
-    <!-- PÁGINA 1: Calificaciones, Competencias y Asistencia -->
-    <div class="salto-pagina">
-        <div class="pagina-reporte">
-            <div>
-                <h4 class="text-center fw-bold mb-1">INFORME DE APRENDIZAJE - PRIMER GRADO</h4>
-                <p class="text-center text-muted mb-3">SIGEM Mami Luisa</p>
-
-                <!-- Datos Informativos del Estudiante -->
-                <div class="row border p-2 mb-3 bg-light">
-                    <div class="col-6">
-                        <strong>Estudiante:</strong> {{ estudiante.nombre }} {{ estudiante.apellido }}
-                    </div>
-                    <div class="col-3">
-                        <strong>No. de Orden:</strong> {{ estudiante.numero_orden }}
-                    </div>
-                    <div class="col-3">
-                        <strong>ID:</strong> {{ estudiante.id }}
-                    </div>
-                    <div class="col-6 mt-1">
-                        <strong>Grado / Sección:</strong> {{ estudiante.nombre_grado }} - {{ estudiante.seccion }}
-                    </div>
-                </div>
-
-                <!-- Tabla de Calificaciones -->
-                <table class="table table-bordered">
-                    <thead>
-                        <tr>
-                            <th rowspan="2" class="align-middle">Áreas / Competencias</th>
-                            <th colspan="4">Períodos</th>
-                            <th rowspan="2" class="align-middle">Calificación Final</th>
-                        </tr>
-                        <tr>
-                            <th>P1</th>
-                            <th>P2</th>
-                            <th>P3</th>
-                            <th>P4</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td class="text-start">Lengua Española</td>
-                            <td>{{ calificaciones.lp1 | default('') }}</td>
-                            <td>{{ calificaciones.lp2 | default('') }}</td>
-                            <td>{{ calificaciones.lp3 | default('') }}</td>
-                            <td>{{ calificaciones.lp4 | default('') }}</td>
-                            <td><strong>{{ calificaciones.lpf | default('') }}</strong></td>
-                        </tr>
-                        <tr>
-                            <td class="text-start">Matemáticas</td>
-                            <td>{{ calificaciones.mp1 | default('') }}</td>
-                            <td>{{ calificaciones.mp2 | default('') }}</td>
-                            <td>{{ calificaciones.mp3 | default('') }}</td>
-                            <td>{{ calificaciones.mp4 | default('') }}</td>
-                            <td><strong>{{ calificaciones.mpf | default('') }}</strong></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="text-end text-muted small">
-                <span>Página 1 de 2</span>
-            </div>
+    <!-- ================= PÁGINA 2: SEGUIMIENTO, CONDICIÓN Y FIRMAS ================= -->
+    <div class="contenedor-pagina">
+        <h5>SEGUIMIENTO Y OBSERVACIONES DEL PROGRESO</h5>
+        
+        <div style="border: 1px solid #333; padding: 10px; height: 120px; margin-bottom: 20px;">
+            <strong>Comentarios y Avances:</strong>
+            <p style="color: #333; margin-top: 5px;">{{ notas.get('comentarios_avances', 'Sin observaciones registradas para este período.') }}</p>
         </div>
-    </div>
 
-    <!-- PÁGINA 2: Avances por período, Firmas y Situación Final -->
-    <div class="salto-pagina" style="height: auto;">
-        <div class="pagina-reporte" style="height: 100%;">
-            <div>
-                <h5 class="fw-bold mb-3">SEGUIMIENTO Y AVANCES POR PERÍODO</h5>
-                
-                <div class="border p-3 mb-4" style="min-height: 150px;">
-                    <strong>Comentarios y Avances del Docente:</strong>
-                    <p class="mt-2 text-secondary">{{ estudiante.comentarios_avances | default('Sin observaciones registradas.') }}</p>
-                </div>
+        <table style="width: 50%;">
+            <tr>
+                <th colspan="2">SITUACIÓN FINAL DEL ESTUDIANTE</th>
+            </tr>
+            <tr>
+                <td class="text-left">Promovido (P)</td>
+                <td width="20%">{{ 'X' if notas.get('condicion') == 'P' else '' }}</td>
+            </tr>
+            <tr>
+                <td class="text-left">Aplazado (A)</td>
+                <td>{{ 'X' if notas.get('condicion') == 'A' else '' }}</td>
+            </tr>
+            <tr>
+                <td class="text-left">Repitente (R)</td>
+                <td>{{ 'X' if notas.get('condicion') == 'R' else '' }}</td>
+            </tr>
+        </table>
 
-                <!-- Cuadro de Condición Final -->
-                <div class="row mb-5">
-                    <div class="col-6">
-                        <table class="table table-bordered text-start">
-                            <tr>
-                                <th colspan="2">SITUACIÓN FINAL</th>
-                            </tr>
-                            <tr>
-                                <td>Promovido (P)</td>
-                                <td class="text-center">[{{ 'X' if estudiante.condicion == 'P' else ' ' }}]</td>
-                            </tr>
-                            <tr>
-                                <td>Aplazado (A)</td>
-                                <td class="text-center">[{{ 'X' if estudiante.condicion == 'A' else ' ' }}]</td>
-                            </tr>
-                            <tr>
-                                <td>Repitente (R)</td>
-                                <td class="text-center">[{{ 'X' if estudiante.condicion == 'R' else ' ' }}]</td>
-                            </tr>
-                        </table>
-                    </div>
-                </div>
+        <!-- Bloque de Firmas -->
+        <table style="border: none; margin-top: 50px;">
+            <tr style="border: none;">
+                <td style="border: none;" width="33%">
+                    <div class="firma-linea">Firma del Director/a</div>
+                </td>
+                <td style="border: none;" width="33%">
+                    <div class="firma-linea">Firma del Docente</div>
+                </td>
+                <td style="border: none;" width="33%">
+                    <div class="firma-linea">Firma del Padre o Tutor</div>
+                </td>
+            </tr>
+        </table>
 
-                <!-- Bloque de Firmas -->
-                <div class="row mt-5 pt-4 text-center">
-                    <div class="col-4">
-                        <div class="border-top border-dark pt-1">Firma del Director/a</div>
-                    </div>
-                    <div class="col-4">
-                        <div class="border-top border-dark pt-1">Firma del Docente</div>
-                    </div>
-                    <div class="col-4">
-                        <div class="border-top border-dark pt-1">Firma del Padre / Madre o Tutor</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="text-end text-muted small mt-4">
-                <span>Página 2 de 2</span>
-            </div>
-        </div>
+        <div style="text-align: right; font-size: 8pt; margin-top: 40px;">Página 2 de 2</div>
     </div>
 
 </body>
