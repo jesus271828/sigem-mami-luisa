@@ -8,44 +8,44 @@
             box-sizing: border-box;
         }
         @page {
-            size: letter landscape; /* Configurado en horizontal */
-            margin: 8mm 10mm 8mm 10mm;
+            size: letter landscape;
+            margin: 5mm 8mm 5mm 8mm; /* Márgenes ajustados para ocupar toda la página */
             background-color: #ffffff;
         }
         body {
             font-family: Arial, Helvetica, sans-serif;
-            font-size: 9.5pt;
+            font-size: 8.5pt;
             color: #000000;
             margin: 0;
             padding: 0;
-            line-height: 1.15;
+            width: 100%;
         }
         .header-table {
             width: 100%;
             border-collapse: collapse;
             border-bottom: 2px solid #000080;
-            padding-bottom: 4px;
-            margin-bottom: 6px;
+            padding-bottom: 3px;
+            margin-bottom: 4px;
         }
         .header-table td {
             vertical-align: middle;
         }
         .logo-cell {
-            width: 12%;
+            width: 9%;
             text-align: center;
         }
         .logo-img {
-            width: 55px;
+            width: 50px;
             height: auto;
-            max-height: 55px;
+            max-height: 50px;
             object-fit: contain;
         }
         .info-cell {
-            width: 88%;
-            padding-left: 8px;
+            width: 91%;
+            padding-left: 6px;
         }
         .school-title {
-            font-size: 13pt;
+            font-size: 12pt;
             font-weight: bold;
             color: #000080;
             text-transform: uppercase;
@@ -53,56 +53,57 @@
         .school-slogan {
             font-style: italic;
             color: #b22222;
-            font-size: 9pt;
+            font-size: 8.5pt;
             font-family: "Brush Script MT", cursive, sans-serif;
             display: inline-block;
-            margin-left: 10px;
+            margin-left: 8px;
         }
         .school-details {
-            font-size: 7.5pt;
+            font-size: 7pt;
             color: #222222;
-            margin-top: 2px;
+            margin-top: 1px;
         }
         .report-title-bar {
             width: 100%;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
         }
         .report-title-bar table {
             width: 100%;
             border-collapse: collapse;
         }
         .report-title {
-            font-size: 10.5pt;
+            font-size: 10pt;
             font-weight: bold;
             text-transform: uppercase;
         }
         .report-sub {
-            font-size: 9.5pt;
+            font-size: 8.5pt;
             font-weight: bold;
         }
         .date-box {
             text-align: right;
             font-weight: bold;
-            font-size: 9.5pt;
+            font-size: 9pt;
         }
         .section-header {
-            font-size: 9pt;
+            font-size: 8.5pt;
             font-weight: bold;
             color: #000080;
-            margin-top: 6px;
-            margin-bottom: 3px;
+            margin-top: 4px;
+            margin-bottom: 2px;
             text-transform: uppercase;
         }
         table.data-table {
             width: 100%;
+            max-width: 100%;
             border-collapse: collapse;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
         }
         table.data-table th, table.data-table td {
             border: 1px solid #000000;
             padding: 2px 3px;
             text-align: center;
-            font-size: 8pt;
+            font-size: 7.5pt;
         }
         table.data-table th {
             background-color: #f2f2f2;
@@ -129,14 +130,14 @@
             vertical-align: top;
         }
         .signature-line {
-            width: 220px;
+            width: 200px;
             border-top: 1px solid #000000;
-            margin: 20px auto 3px auto;
+            margin: 15px auto 2px auto;
             text-align: center;
         }
         .signature-text {
             text-align: center;
-            font-size: 8.5pt;
+            font-size: 8pt;
             font-weight: bold;
         }
     </style>
@@ -147,7 +148,6 @@
     <table class="header-table">
         <tr>
             <td class="logo-cell">
-                <!-- Usamos la ruta absoluta local en disco para que WeasyPrint pinte el logo sin fallos -->
                 <img src="{{ logo_path }}" class="logo-img" alt="Logo Mami Luisa">
             </td>
             <td class="info-cell">
@@ -159,12 +159,12 @@
                     <strong>Dirección:</strong> C/ Castillo Márquez No. 53, La Romana, Centro Ciudad. 
                     <strong>Teléfono:</strong> 809-813-3675 
                     <strong>WhatsApp:</strong> 809-710-3395 
-                    <strong>Código:</strong> 07121<br>
-                    <strong>Regional de educación:</strong> 05 San Pedro de Macorís. 
-                    <strong>Distrito Educativo:</strong> 05-03 
+                    <strong>Código:</strong> 07121 | 
+                    <strong>Regional:</strong> 05 San Pedro de Macorís. 
+                    <strong>Distrito:</strong> 05-03 | 
                     <strong>Directora:</strong> María Teresa de Jesús Herrero Romero<br>
-                    <strong>Cédula:</strong> 026-0022535 (usuario) / 
-                    <strong>Celular:</strong> 809-710-3395 / 
+                    <strong>Cédula:</strong> 026-0022535 | 
+                    <strong>Celular:</strong> 809-710-3395 | 
                     <strong>Correo:</strong> centropedagogicomamiluisa@gmail.com
                 </div>
             </td>
@@ -180,7 +180,7 @@
                     <div class="report-sub">Año Escolar {{ anio_escolar }} / Jornada Escolar Regular.</div>
                 </td>
                 <td class="date-box">
-                    FECHA: {{ fecha_formateada }} &nbsp;&nbsp;|&nbsp;&nbsp; <span style="font-weight: normal; font-size: 9pt;">Día: {{ dia_semana }}</span>
+                    FECHA: {{ fecha_formateada }} &nbsp;&nbsp;|&nbsp;&nbsp; <span style="font-weight: normal; font-size: 8.5pt;">Día: {{ dia_semana }}</span>
                 </td>
             </tr>
         </table>
@@ -191,18 +191,18 @@
     <table class="data-table">
         <thead>
             <tr>
-                <th rowspan="2" style="width: 12%; vertical-align: middle;">GRADOS</th>
+                <th rowspan="2" style="width: 10%; vertical-align: middle;">GRADOS</th>
                 <th colspan="3">MATRICULADOS</th>
                 <th colspan="3">ASISTENCIA</th>
-                <th rowspan="2" style="width: 55%; vertical-align: middle;">Nombre de los ausentes</th>
+                <th rowspan="2" style="width: 65%; vertical-align: middle;">Nombre de los ausentes</th>
             </tr>
             <tr>
                 <th style="width: 5%;" class="bg-ninos">NIÑOS</th>
                 <th style="width: 5%;" class="bg-ninas">NIÑAS</th>
-                <th style="width: 6%;" class="bg-total">TOTAL</th>
+                <th style="width: 5%;" class="bg-total">TOTAL</th>
                 <th style="width: 5%;">NIÑOS</th>
                 <th style="width: 5%;">NIÑAS</th>
-                <th style="width: 6%;">TOTAL</th>
+                <th style="width: 5%;">TOTAL</th>
             </tr>
         </thead>
         <tbody>
@@ -231,10 +231,10 @@
         </tbody>
     </table>
 
-    <!-- Dos columnas abajo: Nivel Inicial y Personal / Verificaciones -->
+    <!-- Dos columnas abajo -->
     <table class="footer-grid">
         <tr>
-            <td style="width: 55%; padding-right: 10px;">
+            <td style="width: 55%; padding-right: 8px;">
                 <!-- NIVEL INICIAL ML - L2 -->
                 <div class="section-header">NIVEL INICIAL ML – L2</div>
                 <table class="data-table">
@@ -267,7 +267,7 @@
                 </table>
 
                 <!-- TIPO DE PERSONAL -->
-                <div class="section-header" style="margin-top: 4px;">TIPO DE PERSONAL</div>
+                <div class="section-header" style="margin-top: 2px;">TIPO DE PERSONAL</div>
                 <table class="data-table">
                     <thead>
                         <tr>
@@ -311,7 +311,7 @@
                 </table>
             </td>
 
-            <td style="width: 45%; padding-left: 10px; vertical-align: top;">
+            <td style="width: 45%; padding-left: 8px; vertical-align: top;">
                 <!-- Cuadro lateral de verificación -->
                 <table class="data-table" style="margin-top: 15px;">
                     <tr>
@@ -325,7 +325,7 @@
                 </table>
 
                 <!-- Firma -->
-                <div style="margin-top: 35px;">
+                <div style="margin-top: 25px;">
                     <div class="signature-line"></div>
                     <div class="signature-text">Responsable del formulario.</div>
                 </div>

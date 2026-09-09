@@ -1652,6 +1652,7 @@ def guardar_asistencia():
 
 
 import os
+from pathlib import Path
 from flask import render_template, request, make_response, current_app
 from weasyprint import HTML
 from datetime import datetime
@@ -1660,8 +1661,8 @@ from datetime import datetime
 def descargar_reporte_ausencias():
     fecha_str = request.form.get('fecha') or request.args.get('fecha') or datetime.now().strftime('%Y-%m-%d')
     
-    # Definir la ruta absoluta del logo para que WeasyPrint lo renderice sin fallos
-    logo_path = os.path.join(current_app.root_path, 'static', 'img', 'logo2.png')
+    # Ruta absoluta convertida a URI de archivo para que WeasyPrint la reconozca perfectamente
+    logo_path = Path(current_app.root_path, 'static', 'img', 'logo2.png').as_uri()
 
     # Normalizar objeto fecha para el día de la semana
     fecha_obj = datetime.now()
@@ -1685,7 +1686,6 @@ def descargar_reporte_ausencias():
 
     conn = get_db_connection()
     try:
-        # 1. Recuperar o guardar los datos del personal usando la misma conexión
         meta_personal = conn.execute('SELECT * FROM asistencia_personal WHERE fecha = %s', (fecha_str,)).fetchone()
         meta = dict(meta_personal) if meta_personal else {}
 
@@ -1725,7 +1725,7 @@ def descargar_reporte_ausencias():
                 conn.rollback()
                 print(f"Error al guardar personal: {e}")
 
-        # 2. Cursos para la Tabla Superior (Primaria Secciones A) exactamente igual que en la web
+        # Cursos para la Tabla Superior (Primaria Secciones A)
         cursos_resumen = ['1ro A', '2do A', '3ro A', '4to A', '5to A', '6to A']
         grados_primaria = []
         
@@ -1737,7 +1737,6 @@ def descargar_reporte_ausencias():
         tot_asis_total = 0
 
         for curso in cursos_resumen:
-            # Matriculados por género
             mat_db = conn.execute(
                 "SELECT sexo, COUNT(*) FROM estudiantes WHERE grado = %s GROUP BY sexo", 
                 (curso,)
@@ -1754,7 +1753,6 @@ def descargar_reporte_ausencias():
                     m_ninas = count_val
             m_total = m_ninos + m_ninas
 
-            # Asistencia por género usando id_estudiante
             asis_db_curso = conn.execute(
                 """
                 SELECT e.sexo, COUNT(a.id_estudiante) 
@@ -1777,7 +1775,6 @@ def descargar_reporte_ausencias():
                     a_ninas = count_val
             a_total = a_ninos + a_ninas
 
-            # Nombres de ausentes
             ausentes_db = conn.execute(
                 """
                 SELECT e.nombres, e.apellidos 
@@ -1792,7 +1789,6 @@ def descargar_reporte_ausencias():
             nombres_ausentes = [f"{aus['nombres'] if hasattr(aus, 'keys') else aus[0]} {aus['apellidos'] if hasattr(aus, 'keys') else aus[1]}" for aus in ausentes_db]
             str_ausentes = ", ".join(nombres_ausentes)
 
-            # Mapear nombre visual ('1ro.') con su sección correspondiente ('1ro A')
             nombre_corto = curso.split()[0] + "."
 
             grados_primaria.append({
@@ -1813,16 +1809,16 @@ def descargar_reporte_ausencias():
             tot_asis_ninas += a_ninas
             tot_asis_total += a_total
 
-        # 3. Nivel Inicial (Exactamente igual que en tu vista web)
-        cursos_inicial = [
-            'Párvulos', 'Prekínder – A', 'Prekínder – B', 
-            'Kínder – A', 'Kínder – B', 'Preprimario – A', 'Preprimario – B'
-        ]
-        
+        # Nivel Inicial
         tot_mat_ninos_ini = 0
         tot_mat_ninas_ini = 0
         tot_asist_ninos_ini = 0
         tot_asist_ninas_ini = 0
+
+        cursos_inicial = [
+            'Párvulos', 'Prekínder – A', 'Prekínder – B', 
+            'Kínder – A', 'Kínder – B', 'Preprimario – A', 'Preprimario – B'
+        ]
 
         for curso_ini in cursos_inicial:
             mat_ini_db = conn.execute(
@@ -1864,7 +1860,7 @@ def descargar_reporte_ausencias():
         conn.close()
 
     rendered_html = render_template('control_asistencia_pdf.html',
-        logo_path=logo_path,  # Se inyecta la ruta absoluta de la imagen aquí
+        logo_path=logo_path,
         anio_escolar="2026-2027",
         fecha_formateada=fecha_str,
         dia_semana=dia_semana_esp, 
