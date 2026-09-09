@@ -1679,9 +1679,8 @@ def descargar_reporte_ausencias():
     except Exception:
         pass
 
-    # Formatos para consulta robusta en PostgreSQL (Texto y Objeto Date)
-    f_iso = fecha_obj.strftime('%Y-%m-%d')  # 2026-09-09
-    f_slash = fecha_obj.strftime('%d/%m/%Y') # 09/09/2026
+    f_iso = fecha_obj.strftime('%Y-%m-%d')
+    f_slash = fecha_obj.strftime('%d/%m/%Y')
 
     # Traducir día de la semana al español
     dias_semana = {
@@ -1753,20 +1752,15 @@ def descargar_reporte_ausencias():
     tot_asis_total = 0
 
     for nombre_grado, patron in grados_config:
-        sql_estudiantes = text("SELECT id, sexo, apellidos, nombres FROM estudiantes WHERE grado ILIKE :patron")
-        estudiantes_grado = db.session.execute(sql_estudiantes, {"patron": patron}).fetchall()
-        
-        mat_ninos = sum(1 for row in estudiantes_grado if row[1] and 'masculino' in str(row[1]).lower())
-        mat_ninas = sum(1 for row in estudiantes_grado if row[1] and 'femenino' in str(row[1]).lower())
-        mat_total = len(estudiantes_grado)
-        
-        # Consulta SQL mejorada compatible con columnas de tipo DATE y TEXT
+        # Consulta SQL corregida: La fecha va en el ON del LEFT JOIN para no descartar alumnos
         sql_asistencias = text("""
             SELECT e.id, e.sexo, a.estado, e.apellidos, e.nombres 
             FROM estudiantes e
-            LEFT JOIN asistencia a ON (CAST(a.estudiante_id AS VARCHAR) = CAST(e.id AS VARCHAR) OR CAST(a.id_estudiante AS VARCHAR) = CAST(e.id AS VARCHAR))
-            WHERE e.grado ILIKE :patron 
-              AND (CAST(a.fecha AS TEXT) LIKE :f_iso OR CAST(a.fecha AS TEXT) LIKE :f_slash OR a.fecha = :f_date)
+            LEFT JOIN asistencia a ON (
+                (CAST(a.estudiante_id AS VARCHAR) = CAST(e.id AS VARCHAR) OR CAST(a.id_estudiante AS VARCHAR) = CAST(e.id AS VARCHAR))
+                AND (CAST(a.fecha AS TEXT) LIKE :f_iso OR CAST(a.fecha AS TEXT) LIKE :f_slash OR a.fecha = :f_date)
+            )
+            WHERE e.grado ILIKE :patron
         """)
         
         try:
@@ -1780,26 +1774,24 @@ def descargar_reporte_ausencias():
             db.session.rollback()
             resultado = []
 
-        if resultado and any(row[2] is not None for row in resultado):
-            estudiantes_procesados = {}
-            for row in resultado:
-                est_id = row[0]
-                if est_id not in estudiantes_procesados:
-                    estudiantes_procesados[est_id] = row
+        # Procesar estudiantes y contar matrículas y asistencias
+        mat_ninos = sum(1 for row in resultado if row[1] and 'masculino' in str(row[1]).lower())
+        mat_ninas = sum(1 for row in resultado if row[1] and 'femenino' in str(row[1]).lower())
+        mat_total = len(resultado)
 
-            asis_ninos = sum(1 for r in estudiantes_procesados.values() if r[1] and 'masculino' in str(r[1]).lower() and r[2] and any(st in str(r[2]).lower() for st in ['presente', 'asistio', '1', 'true', 'p']))
-            asis_ninas = sum(1 for r in estudiantes_procesados.values() if r[1] and 'femenino' in str(r[1]).lower() and r[2] and any(st in str(r[2]).lower() for st in ['presente', 'asistio', '1', 'true', 'p']))
+        if resultado:
+            asis_ninos = sum(1 for r in resultado if r[1] and 'masculino' in str(r[1]).lower() and r[2] and any(st in str(r[2]).lower() for st in ['presente', 'asistio', '1', 'true', 'p']))
+            asis_ninas = sum(1 for r in resultado if r[1] and 'femenino' in str(r[1]).lower() and r[2] and any(st in str(r[2]).lower() for st in ['presente', 'asistio', '1', 'true', 'p']))
             asis_total = asis_ninos + asis_ninas
             
             ausentes_nombres = []
-            for r in estudiantes_procesados.values():
+            for r in resultado:
                 if r[2] and any(st in str(r[2]).lower() for st in ['ausente', 'tarde', 'falta', 'a', '0', 'false']):
                     nombre_completo = f"{r[3] or ''} {r[4] or ''}".strip()
                     if nombre_completo:
                         ausentes_nombres.append(nombre_completo)
             ausentes_lista = ", ".join(ausentes_nombres)
         else:
-            # Si no hay registros de asistencia guardados aún para esta fecha, inicializamos en 0 o matrícula según prefieras
             asis_ninos = 0
             asis_ninas = 0
             asis_total = 0
@@ -1824,19 +1816,14 @@ def descargar_reporte_ausencias():
         tot_asis_total += asis_total
 
     # 3. Nivel Inicial (L2)
-    sql_inicial_est = text("SELECT id, sexo FROM estudiantes WHERE grado ILIKE :p1 OR grado ILIKE :p2 OR grado ILIKE :p3")
-    estudiantes_inicial = db.session.execute(sql_inicial_est, {"p1": "%inicial%", "p2": "%pre-primario%", "p3": "%kinder%"}).fetchall()
-    
-    ini_mat_ninos = sum(1 for row in estudiantes_inicial if row[1] and 'masculino' in str(row[1]).lower())
-    ini_mat_ninas = sum(1 for row in estudiantes_inicial if row[1] and 'femenino' in str(row[1]).lower())
-    ini_mat_total = len(estudiantes_inicial)
-
     sql_inicial_asis = text("""
         SELECT e.id, e.sexo, a.estado 
         FROM estudiantes e
-        LEFT JOIN asistencia a ON (CAST(a.estudiante_id AS VARCHAR) = CAST(e.id AS VARCHAR) OR CAST(a.id_estudiante AS VARCHAR) = CAST(e.id AS VARCHAR))
-        WHERE (e.grado ILIKE :p1 OR e.grado ILIKE :p2 OR e.grado ILIKE :p3) 
-          AND (CAST(a.fecha AS TEXT) LIKE :f_iso OR CAST(a.fecha AS TEXT) LIKE :f_slash OR a.fecha = :f_date)
+        LEFT JOIN asistencia a ON (
+            (CAST(a.estudiante_id AS VARCHAR) = CAST(e.id AS VARCHAR) OR CAST(a.id_estudiante AS VARCHAR) = CAST(e.id AS VARCHAR))
+            AND (CAST(a.fecha AS TEXT) LIKE :f_iso OR CAST(a.fecha AS TEXT) LIKE :f_slash OR a.fecha = :f_date)
+        )
+        WHERE (e.grado ILIKE :p1 OR e.grado ILIKE :p2 OR e.grado ILIKE :p3)
     """)
     
     try:
@@ -1848,15 +1835,13 @@ def descargar_reporte_ausencias():
         db.session.rollback()
         resultado_inicial = []
 
-    if resultado_inicial and any(row[2] is not None for row in resultado_inicial):
-        ini_procesados = {}
-        for row in resultado_inicial:
-            est_id = row[0]
-            if est_id not in ini_procesados:
-                ini_procesados[est_id] = row
+    ini_mat_ninos = sum(1 for row in resultado_inicial if row[1] and 'masculino' in str(row[1]).lower())
+    ini_mat_ninas = sum(1 for row in resultado_inicial if row[1] and 'femenino' in str(row[1]).lower())
+    ini_mat_total = len(resultado_inicial)
 
-        ini_asis_ninos = sum(1 for r in ini_procesados.values() if r[1] and 'masculino' in str(r[1]).lower() and r[2] and any(st in str(r[2]).lower() for st in ['presente', 'asistio', '1', 'true', 'p']))
-        ini_asis_ninas = sum(1 for r in ini_procesados.values() if r[1] and 'femenino' in str(r[1]).lower() and r[2] and any(st in str(r[2]).lower() for st in ['presente', 'asistio', '1', 'true', 'p']))
+    if resultado_inicial:
+        ini_asis_ninos = sum(1 for r in resultado_inicial if r[1] and 'masculino' in str(r[1]).lower() and r[2] and any(st in str(r[2]).lower() for st in ['presente', 'asistio', '1', 'true', 'p']))
+        ini_asis_ninas = sum(1 for r in resultado_inicial if r[1] and 'femenino' in str(r[1]).lower() and r[2] and any(st in str(r[2]).lower() for st in ['presente', 'asistio', '1', 'true', 'p']))
         ini_asis_total = ini_asis_ninos + ini_asis_ninas
     else:
         ini_asis_ninos = 0
