@@ -1665,41 +1665,32 @@ def descargar_reporte_ausencias():
 
     fecha_str = request.form.get('fecha') or request.args.get('fecha') or datetime.now().strftime('%Y-%m-%d')
     
-    # Manejar formato de fecha flexible para que coincida sin importar si es YYYY-MM-DD o DD/MM/YYYY
-    f1 = fecha_str
-    f2 = fecha_str
+    # Normalizar objeto fecha
     fecha_obj = datetime.now()
     try:
         if '-' in fecha_str:
             p = fecha_str.split('-')
             if len(p) == 3:
-                f2 = f"{p[2]}/{p[1]}/{p[0]}"
                 fecha_obj = datetime(int(p[0]), int(p[1]), int(p[2]))
         elif '/' in fecha_str:
             p = fecha_str.split('/')
             if len(p) == 3:
-                f2 = f"{p[2]}-{p[1]}-{p[0]}"
                 fecha_obj = datetime(int(p[2]), int(p[1]), int(p[0]))
     except Exception:
         pass
 
+    # Formatos para consulta robusta en PostgreSQL (Texto y Objeto Date)
+    f_iso = fecha_obj.strftime('%Y-%m-%d')  # 2026-09-09
+    f_slash = fecha_obj.strftime('%d/%m/%Y') # 09/09/2026
+
     # Traducir día de la semana al español
     dias_semana = {
-        'Monday': 'Lunes',
-        'Tuesday': 'Martes',
-        'Wednesday': 'Miércoles',
-        'Thursday': 'Jueves',
-        'Friday': 'Viernes',
-        'Saturday': 'Sábado',
-        'Sunday': 'Domingo'
+        'Monday': 'Lunes', 'Tuesday': 'Martes', 'Wednesday': 'Miércoles',
+        'Thursday': 'Jueves', 'Friday': 'Viernes', 'Saturday': 'Sábado', 'Sunday': 'Domingo'
     }
-    dia_ingles = fecha_obj.strftime('%A')
-    dia_semana_esp = dias_semana.get(dia_ingles, dia_ingles)
+    dia_semana_esp = dias_semana.get(fecha_obj.strftime('%A'), 'Miércoles')
 
-    like_f1 = f"%{f1}%"
-    like_f2 = f"%{f2}%"
-
-    # 1. Recuperar o guardar los datos del personal enviados desde el formulario
+    # 1. Recuperar o guardar los datos del personal
     meta = RegistroPersonal.query.filter_by(fecha=fecha_str).first()
     
     if request.method == 'POST':
@@ -1728,7 +1719,6 @@ def descargar_reporte_ausencias():
             meta.aux_ni = aux_ni
             meta.doc_np = doc_np
             meta.doc_ni = doc_ni
-            
             meta.adm_presente = adm_p
             meta.adm_ausentes = adm_a
             meta.aux_presente = aux_p
@@ -1740,7 +1730,6 @@ def descargar_reporte_ausencias():
             
             if request.form.get('action') == 'guardar_solo':
                 return "OK", 200
-                
         except Exception as e:
             db.session.rollback()
             print(f"Error al guardar personal: {e}")
@@ -1771,15 +1760,22 @@ def descargar_reporte_ausencias():
         mat_ninas = sum(1 for row in estudiantes_grado if row[1] and 'femenino' in str(row[1]).lower())
         mat_total = len(estudiantes_grado)
         
+        # Consulta SQL mejorada compatible con columnas de tipo DATE y TEXT
         sql_asistencias = text("""
             SELECT e.id, e.sexo, a.estado, e.apellidos, e.nombres 
             FROM estudiantes e
             LEFT JOIN asistencia a ON (CAST(a.estudiante_id AS VARCHAR) = CAST(e.id AS VARCHAR) OR CAST(a.id_estudiante AS VARCHAR) = CAST(e.id AS VARCHAR))
-            WHERE e.grado ILIKE :patron AND (CAST(a.fecha AS TEXT) LIKE :like_f1 OR CAST(a.fecha AS TEXT) LIKE :like_f2)
+            WHERE e.grado ILIKE :patron 
+              AND (CAST(a.fecha AS TEXT) LIKE :f_iso OR CAST(a.fecha AS TEXT) LIKE :f_slash OR a.fecha = :f_date)
         """)
         
         try:
-            resultado = db.session.execute(sql_asistencias, {"patron": patron, "like_f1": like_f1, "like_f2": like_f2}).fetchall()
+            resultado = db.session.execute(sql_asistencias, {
+                "patron": patron, 
+                "f_iso": f"%{f_iso}%", 
+                "f_slash": f"%{f_slash}%",
+                "f_date": f_iso
+            }).fetchall()
         except Exception:
             db.session.rollback()
             resultado = []
@@ -1803,6 +1799,7 @@ def descargar_reporte_ausencias():
                         ausentes_nombres.append(nombre_completo)
             ausentes_lista = ", ".join(ausentes_nombres)
         else:
+            # Si no hay registros de asistencia guardados aún para esta fecha, inicializamos en 0 o matrícula según prefieras
             asis_ninos = 0
             asis_ninas = 0
             asis_total = 0
@@ -1826,7 +1823,7 @@ def descargar_reporte_ausencias():
         tot_asis_ninas += asis_ninas
         tot_asis_total += asis_total
 
-    # 3. Nivel Inicial (L2) - Búsqueda flexible por múltiples posibles nombres de grado
+    # 3. Nivel Inicial (L2)
     sql_inicial_est = text("SELECT id, sexo FROM estudiantes WHERE grado ILIKE :p1 OR grado ILIKE :p2 OR grado ILIKE :p3")
     estudiantes_inicial = db.session.execute(sql_inicial_est, {"p1": "%inicial%", "p2": "%pre-primario%", "p3": "%kinder%"}).fetchall()
     
@@ -1838,11 +1835,15 @@ def descargar_reporte_ausencias():
         SELECT e.id, e.sexo, a.estado 
         FROM estudiantes e
         LEFT JOIN asistencia a ON (CAST(a.estudiante_id AS VARCHAR) = CAST(e.id AS VARCHAR) OR CAST(a.id_estudiante AS VARCHAR) = CAST(e.id AS VARCHAR))
-        WHERE (e.grado ILIKE :p1 OR e.grado ILIKE :p2 OR e.grado ILIKE :p3) AND (CAST(a.fecha AS TEXT) LIKE :like_f1 OR CAST(a.fecha AS TEXT) LIKE :like_f2)
+        WHERE (e.grado ILIKE :p1 OR e.grado ILIKE :p2 OR e.grado ILIKE :p3) 
+          AND (CAST(a.fecha AS TEXT) LIKE :f_iso OR CAST(a.fecha AS TEXT) LIKE :f_slash OR a.fecha = :f_date)
     """)
     
     try:
-        resultado_inicial = db.session.execute(sql_inicial_asis, {"p1": "%inicial%", "p2": "%pre-primario%", "p3": "%kinder%", "like_f1": like_f1, "like_f2": like_f2}).fetchall()
+        resultado_inicial = db.session.execute(sql_inicial_asis, {
+            "p1": "%inicial%", "p2": "%pre-primario%", "p3": "%kinder%", 
+            "f_iso": f"%{f_iso}%", "f_slash": f"%{f_slash}%", "f_date": f_iso
+        }).fetchall()
     except Exception:
         db.session.rollback()
         resultado_inicial = []
