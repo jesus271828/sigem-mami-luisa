@@ -5,7 +5,7 @@
     <title>Informe de Aprendizaje - Centro Educativo Mami Luisa S.R.L.</title>
     <style>
         @page {
-            size: letter portrait;
+            size: letter landscape; /* CAMBIADO A HORIZONTAL */
             margin: 8mm;
         }
 
@@ -13,7 +13,7 @@
             background-color: #ffffff;
             color: #000000;
             font-family: Arial, sans-serif;
-            font-size: 8pt;
+            font-size: 8.5pt;
         }
 
         table {
@@ -29,18 +29,18 @@
             vertical-align: middle;
         }
         .logo-cell {
-            width: 55px;
+            width: 60px;
             text-align: center;
         }
         .title-cell h1 {
-            font-size: 11pt;
+            font-size: 12pt;
             font-weight: bold;
             color: #000;
             margin: 0;
             text-align: center;
         }
         .title-cell p {
-            font-size: 7.5pt;
+            font-size: 8pt;
             line-height: 1.1;
             text-align: center;
             margin: 1px 0;
@@ -48,9 +48,9 @@
         .slogan-cell {
             text-align: right;
             font-style: italic;
-            font-size: 7.5pt;
+            font-size: 8pt;
             color: #444;
-            width: 130px;
+            width: 150px;
         }
 
         /* Datos del estudiante */
@@ -60,21 +60,21 @@
         }
         .student-bar td {
             border: 1px solid #000;
-            padding: 3px 5px;
-            font-size: 8pt;
+            padding: 4px 6px;
+            font-size: 8.5pt;
             font-weight: bold;
         }
 
         /* Tabla Principal de Calificaciones */
         .grades-table {
             border: 1px solid #000;
-            margin-bottom: 5px;
+            margin-bottom: 6px;
         }
         .grades-table th, .grades-table td {
             border: 1px solid #000;
             text-align: center;
-            padding: 2px 1px;
-            font-size: 7.5pt;
+            padding: 3px 2px;
+            font-size: 8pt;
         }
         .grades-table th {
             background-color: #f0f0f0;
@@ -82,9 +82,9 @@
         }
         .subject-name {
             text-align: left;
-            padding-left: 5px;
+            padding-left: 6px;
             font-weight: bold;
-            font-size: 7.5pt;
+            font-size: 8pt;
         }
         .bg-p1 { background-color: #eef3f8; }
 
@@ -99,54 +99,54 @@
         
         .scale-table, .attendance-table, .legend-table {
             border: 1px solid #000;
-            font-size: 7pt;
+            font-size: 7.5pt;
             width: 100%;
         }
         .scale-table th, .scale-table td,
         .attendance-table th, .attendance-table td,
         .legend-table th, .legend-table td {
             border: 1px solid #000;
-            padding: 2px 3px;
+            padding: 3px 4px;
             text-align: center;
         }
         .scale-table th { background-color: #f0f0f0; }
-        .scale-desc { text-align: left; font-size: 6.5pt; line-height: 1.0; }
+        .scale-desc { text-align: left; font-size: 7pt; line-height: 1.1; }
 
         /* PÁGINA 2: Comentarios y Firmas */
         .comments-table {
             border: 1px solid #000;
-            margin-bottom: 5px;
+            margin-bottom: 6px;
         }
         .comments-table th, .comments-table td {
             border: 1px solid #000;
-            padding: 4px;
-            font-size: 8pt;
+            padding: 5px;
+            font-size: 8.5pt;
         }
         .comments-table th {
-            width: 35px;
+            width: 40px;
             text-align: center;
             background-color: #f0f0f0;
             font-weight: bold;
         }
         .comment-box {
-            height: 35px;
+            height: 40px;
             color: #333;
             vertical-align: top;
-            font-size: 7.5pt;
+            font-size: 8pt;
         }
 
         .notice-bar {
             background-color: #f0f0f0;
             border: 1px solid #000;
-            padding: 4px;
+            padding: 5px;
             text-align: center;
             font-weight: bold;
-            font-size: 7.5pt;
-            margin-bottom: 5px;
+            font-size: 8pt;
+            margin-bottom: 6px;
         }
 
         .signatures-grid {
-            margin-bottom: 10px;
+            margin-bottom: 12px;
         }
         .signatures-grid td {
             border: 1px solid #000;
@@ -160,8 +160,8 @@
         .sub-sig-table th, .sub-sig-table td {
             border: 1px solid #000;
             text-align: center;
-            padding: 4px;
-            font-size: 7.5pt;
+            padding: 5px;
+            font-size: 8pt;
         }
         .sub-sig-table th {
             background-color: #f0f0f0;
@@ -170,13 +170,13 @@
         .status-box td {
             border: 1px solid #000;
             text-align: center;
-            padding: 4px;
-            font-size: 7.5pt;
+            padding: 5px;
+            font-size: 8pt;
         }
 
         .final-signatures {
             width: 100%;
-            margin-top: 25px;
+            margin-top: 30px;
         }
         .final-signatures td {
             text-align: center;
@@ -184,17 +184,17 @@
             vertical-align: top;
         }
         .sig-line {
-            width: 65%;
+            width: 50%;
             border-bottom: 1px solid #000;
-            margin: 0 auto 3px auto;
+            margin: 0 auto 4px auto;
             height: 15px;
         }
         .sig-title {
-            font-size: 8pt;
+            font-size: 8.5pt;
             font-weight: bold;
         }
         .sig-subtitle {
-            font-size: 7pt;
+            font-size: 7.5pt;
             color: #444;
         }
     </style>
@@ -224,8 +224,8 @@
 
     <table class="student-bar">
         <tr>
-            <td style="width: 42%;">NOMBRE(S): {{ estudiante.nombres or '' }}</td>
-            <td style="width: 38%;">APELLIDO(S): {{ estudiante.apellidos or '' }}</td>
+            <td style="width: 45%;">NOMBRE(S): {{ estudiante.nombres or '' }}</td>
+            <td style="width: 35%;">APELLIDO(S): {{ estudiante.apellidos or '' }}</td>
             <td style="width: 10%;">NO. DE ORDEN: {{ estudiante.no_orden or notas.get('no_orden', '') }}</td>
             <td style="width: 10%;">ID ESTUDIANTE: {{ estudiante.id_estudiante or '' }}</td>
         </tr>
@@ -234,29 +234,28 @@
     <table class="grades-table">
         <thead>
             <tr>
-                <th rowspan="2" style="width: 19%;">ÁREAS CURRICULARES</th>
+                <th rowspan="2" style="width: 22%;">ÁREAS CURRICULARES</th>
                 <th colspan="12">COMPETENCIAS FUNDAMENTALES</th>
                 <th colspan="3">CALIFICACIÓN FINAL</th>
-                <th rowspan="2" style="width: 4%; font-size: 6.5pt;">DEL ÁREA</th>
-                <th rowspan="2" style="width: 5%; font-size: 6.5pt;">RECUPERACIÓN</th>
+                <th rowspan="2" style="width: 4%; font-size: 7pt;">DEL ÁREA</th>
+                <th rowspan="2" style="width: 5%; font-size: 7pt;">RECUPERACIÓN</th>
             </tr>
             <tr>
-                <th colspan="4" style="font-size: 6.5pt;">C1<br>Comunicativa</th>
-                <th colspan="4" style="font-size: 6.5pt;">C2<br>Pensamiento Lógico Creativo y Crítico; Resolución de Problemas; Científica y Tecnológica</th>
-                <th colspan="4" style="font-size: 6.5pt;">C3<br>Ética y Ciudadanía; Desarrollo Personal y Espiritual; Ambiental y de la Salud</th>
-                <th colspan="3" style="font-size: 6.5pt;">POR COMPETENCIA</th>
+                <th colspan="4" style="font-size: 7pt;">C1<br>Comunicativa</th>
+                <th colspan="4" style="font-size: 7pt;">C2<br>Pensamiento Lógico Creativo y Crítico; Resolución de Problemas; Científica y Tecnológica</th>
+                <th colspan="4" style="font-size: 7pt;">C3<br>Ética y Ciudadanía; Desarrollo Personal y Espiritual; Ambiental y de la Salud</th>
+                <th colspan="3" style="font-size: 7pt;">POR COMPETENCIA</th>
             </tr>
             <tr>
                 <th></th>
-                <th style="font-size:6.5pt;">P1</th><th style="font-size:6.5pt;">P2</th><th style="font-size:6.5pt;">P3</th><th style="font-size:6.5pt;">P4</th>
-                <th style="font-size:6.5pt;">P1</th><th style="font-size:6.5pt;">P2</th><th style="font-size:6.5pt;">P3</th><th style="font-size:6.5pt;">P4</th>
-                <th style="font-size:6.5pt;">P1</th><th style="font-size:6.5pt;">P2</th><th style="font-size:6.5pt;">P3</th><th style="font-size:6.5pt;">P4</th>
-                <th style="font-size:6.5pt;">C1</th><th style="font-size:6.5pt;">C2</th><th style="font-size:6.5pt;">C3</th>
+                <th style="font-size:7pt;">P1</th><th style="font-size:7pt;">P2</th><th style="font-size:7pt;">P3</th><th style="font-size:7pt;">P4</th>
+                <th style="font-size:7pt;">P1</th><th style="font-size:7pt;">P2</th><th style="font-size:7pt;">P3</th><th style="font-size:7pt;">P4</th>
+                <th style="font-size:7pt;">P1</th><th style="font-size:7pt;">P2</th><th style="font-size:7pt;">P3</th><th style="font-size:7pt;">P4</th>
+                <th style="font-size:7pt;">C1</th><th style="font-size:7pt;">C2</th><th style="font-size:7pt;">C3</th>
                 <th></th><th></th>
             </tr>
         </thead>
         <tbody>
-            <!-- Macro para imprimir filas de notas dinámicamente desde el diccionario notas si existen -->
             {% set asignaturas = [
                 ('Lengua Española', 'lengua'),
                 ('Matemática', 'matematica'),
@@ -271,26 +270,21 @@
             {% for nombre_asig, key in asignaturas %}
             <tr>
                 <td class="subject-name">{{ nombre_asig }}</td>
-                <!-- C1 P1-P4 -->
                 <td>{{ notas.get(key + '_c1_p1', '') }}</td>
                 <td>{{ notas.get(key + '_c1_p2', '') }}</td>
                 <td>{{ notas.get(key + '_c1_p3', '') }}</td>
                 <td>{{ notas.get(key + '_c1_p4', '') }}</td>
-                <!-- C2 P1-P4 -->
                 <td>{{ notas.get(key + '_c2_p1', '') }}</td>
                 <td>{{ notas.get(key + '_c2_p2', '') }}</td>
                 <td>{{ notas.get(key + '_c2_p3', '') }}</td>
                 <td>{{ notas.get(key + '_c2_p4', '') }}</td>
-                <!-- C3 P1-P4 -->
                 <td>{{ notas.get(key + '_c3_p1', '') }}</td>
                 <td>{{ notas.get(key + '_c3_p2', '') }}</td>
                 <td>{{ notas.get(key + '_c3_p3', '') }}</td>
                 <td>{{ notas.get(key + '_c3_p4', '') }}</td>
-                <!-- Final C1, C2, C3 -->
                 <td class="bg-p1">{{ notas.get(key + '_final_c1', '') }}</td>
                 <td class="bg-p1">{{ notas.get(key + '_final_c2', '') }}</td>
                 <td class="bg-p1">{{ notas.get(key + '_final_c3', '') }}</td>
-                <!-- Del Área y Recuperación -->
                 <td>{{ notas.get(key + '_del_area', '') }}</td>
                 <td>{{ notas.get(key + '_recuperacion', '') }}</td>
             </tr>
@@ -300,7 +294,7 @@
 
     <table class="bottom-section-table">
         <tr>
-            <td style="width: 40%; padding-right: 4px;">
+            <td style="width: 45%; padding-right: 6px;">
                 <table class="scale-table">
                     <tr>
                         <th style="width: 22%;">Escala numérica</th>
@@ -312,11 +306,11 @@
                     <tr><td><b>Menos de 65</b></td><td class="scale-desc">Evidencia que el estudiante ha alcanzado un desempeño insuficiente...</td></tr>
                 </table>
             </td>
-            <td style="width: 60%;">
-                <table class="attendance-table" style="margin-bottom: 3px;">
-                    <tr><th colspan="6">RESUMEN DE ASISTENCIA DEL ESTUDIANTE</th></tr>
+            <td style="width: 55%;">
+                <table class="attendance-table" style="margin-bottom: 4px;">
+                    <tr><th colspan="5">RESUMEN DE ASISTENCIA DEL ESTUDIANTE</th></tr>
                     <tr>
-                        <td><b>PERÍODO</b></td><td><b>ASITENCIA</b></td><td><b>AUSENCIA</b></td><td><b>% ANUAL ASITENCIA</b></td><td><b>% ANUAL AUSENCIA</b></td>
+                        <td><b>PERÍODO</b></td><td><b>ASISTENCIA</b></td><td><b>AUSENCIA</b></td><td><b>% ANUAL ASISTENCIA</b></td><td><b>% ANUAL AUSENCIA</b></td>
                     </tr>
                     <tr><td><b>P1</b></td><td>{{ notas.get('asist_p1', '') }}</td><td>{{ notas.get('aus_p1', '') }}</td><td>{{ notas.get('porc_asist_p1', '') }}</td><td>{{ notas.get('porc_aus_p1', '') }}</td></tr>
                     <tr><td><b>P2</b></td><td>{{ notas.get('asist_p2', '') }}</td><td>{{ notas.get('aus_p2', '') }}</td><td>{{ notas.get('porc_asist_p2', '') }}</td><td>{{ notas.get('porc_aus_p2', '') }}</td></tr>
@@ -325,9 +319,8 @@
                 </table>
                 <table class="legend-table">
                     <tr>
-                        <td style="text-align: left; padding: 3px; font-size: 6.5pt;">
-                            <b>Leyenda:</b> (P1) Período 1 | (P2) Período 2 | (P3) Período 3 | (P4) Período 4<br>
-                            (C1) Competencia 1 | (C2) Competencia 2 | (C3) Competencia 3
+                        <td style="text-align: left; padding: 4px; font-size: 7pt;">
+                            <b>Leyenda:</b> (P1) Período 1 | (P2) Período 2 | (P3) Período 3 | (P4) Período 4 &nbsp;|&nbsp; (C1-C3) Competencias
                         </td>
                     </tr>
                 </table>
@@ -360,10 +353,10 @@
                         <td style="width: 55%;"><b>Periodos de reportes de calificaciones</b></td>
                         <td style="width: 45%;"><b>FIRMA DEL PADRE, MADRE O TUTOR</b></td>
                     </tr>
-                    <tr><td>Septiembre – Octubre</td><td style="height: 22px;"></td></tr>
-                    <tr><td>Noviembre – Diciembre – Enero</td><td style="height: 22px;"></td></tr>
-                    <tr><td>Febrero – Marzo</td><td style="height: 22px;"></td></tr>
-                    <tr><td>Abril – Mayo – Junio</td><td style="height: 22px;"></td></tr>
+                    <tr><td>Septiembre – Octubre</td><td style="height: 25px;"></td></tr>
+                    <tr><td>Noviembre – Diciembre – Enero</td><td style="height: 25px;"></td></tr>
+                    <tr><td>Febrero – Marzo</td><td style="height: 25px;"></td></tr>
+                    <tr><td>Abril – Mayo – Junio</td><td style="height: 25px;"></td></tr>
                 </table>
             </td>
             <td style="width: 50%;">
@@ -377,9 +370,9 @@
                         <td style="width: 34%;">Repitente<br>[ &nbsp; {{ 'X' if notas.get('estado') == 'Repitente' else ' ' }} &nbsp; ]</td>
                     </tr>
                     <tr>
-                        <td colspan="3" style="padding: 5px; border-top: 1px solid #000;">
-                            <span style="font-size: 7pt;">Condición final del/de la estudiante</span>
-                            <div style="border-bottom: 1px solid #999; width: 85%; margin: 3px auto 0 auto; text-align: center; color: #333; font-size: 7.5pt;">{{ notas.get('condicion_final', 'Escribir condición...') }}</div>
+                        <td colspan="3" style="padding: 8px; border-top: 1px solid #000;">
+                            <span style="font-size: 7.5pt;">Condición final del/de la estudiante</span>
+                            <div style="border-bottom: 1px solid #999; width: 80%; margin: 4px auto 0 auto; text-align: center; color: #333; font-size: 8pt;">{{ notas.get('condicion_final', 'Escribir condición...') }}</div>
                         </td>
                     </tr>
                 </table>
