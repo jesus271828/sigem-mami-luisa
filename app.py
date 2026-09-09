@@ -2042,6 +2042,11 @@ def notas1():
                            docente_nombre=docente_guardado)
 
 
+import json
+from io import BytesIO
+from flask import render_template, session, redirect, url_for, make_response
+from xhtml2pdf import pisa
+
 # --- RUTA PARA EL BOTÓN DE PDF (USANDO STRING PARA EL ID DE SUPABASE) ---
 @app.route('/notas1/pdf/<string:id_estudiante>')
 def general_pdf_notas1(id_estudiante):
@@ -2058,61 +2063,43 @@ def general_pdf_notas1(id_estudiante):
         try:
             notas = json.loads(registro_notas.datos_formulario)
             docente_guardado = notas.get('_docente_registro', docente_guardado)
-        except:
+        except Exception:
             notas = {}
 
-    # CAMBIO AQUÍ: Ahora llama correctamente a general_pdf_notas1.html
-    html_crudo = render_template('general_pdf_notas1.html',
-                                 estudiante=estudiante,
-                                 lista_estudiantes=[estudiante],
-                                 notas=notas,
-                                 docente_nombre=docente_guardado,
-                                 modo_pdf=True)
+    # Renderizamos directamente el template con las variables necesarias para el PDF
+    try:
+        html_crudo = render_template(
+            'general_pdf_notas1.html',
+            estudiante=estudiante,
+            lista_estudiantes=[estudiante],
+            notas=notas,
+            docente_nombre=docente_guardado,
+            modo_pdf=True
+        )
+    except Exception as e:
+        return f"Error al renderizar la plantilla HTML: {str(e)}", 500
 
-    # Forzamos un contenedor estricto que evite anchos negativos en ReportLab
-    html_renderizado = f"""
-    <html>
-    <head>
-    <meta charset="utf-8">
-    <style>
-        @page {{
-            size: letter;
-            margin: 1cm;
-        }}
-        body {{
-            font-family: Helvetica, Arial, sans-serif;
-            font-size: 10pt;
-        }}
-        table {{
-            width: 100% !important;
-            max-width: 100% !important;
-            table-layout: fixed;
-        }}
-        td, th {{
-            word-wrap: break-word;
-            overflow: hidden;
-        }}
-    </style>
-    </head>
-    <body>
-    {html_crudo}
-    </body>
-    </html>
-    """
-
+    # Generación segura del PDF utilizando BytesIO y xhtml2pdf
     pdf_buffer = BytesIO()
-    pisa_status = pisa.CreatePDF(
-        html_renderizado.encode('utf-8'), 
-        dest=pdf_buffer,
-        encoding='utf-8'
-    )
+    
+    try:
+        pisa_status = pisa.CreatePDF(
+            html_crudo.encode('utf-8'), 
+            dest=pdf_buffer,
+            encoding='utf-8'
+        )
+    except Exception as e:
+        return f"Error crítico procesando xhtml2pdf: {str(e)}", 500
 
     if pisa_status.err:
-        return f"Error al generar el PDF (pisa_status.err): {pisa_status.err}", 500
+        return f"Error interno de xhtml2pdf (Código de error: {pisa_status.err}). Es posible que existan estilos CSS no compatibles (como display: flex) en la plantilla.", 500
+
+    # Limpiar nombre de archivo de caracteres especiales si es necesario
+    nombre_archivo = f"informe_notas_{getattr(estudiante, 'nombres', 'estudiante')}.pdf".replace(" ", "_")
 
     response = make_response(pdf_buffer.getvalue())
     response.headers['Content-Type'] = 'application/pdf'
-    response.headers['Content-Disposition'] = f'inline; filename=informe_notas_{estudiante.nombres}.pdf'
+    response.headers['Content-Disposition'] = f'inline; filename={nombre_archivo}'
     
     return response
 
