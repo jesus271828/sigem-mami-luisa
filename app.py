@@ -2246,6 +2246,14 @@ def ver_pdf_planificacion(id):
 
     return render_template('pdf_planificacion_diaria.html', plan=planificacion)
 
+@app.route('/planificacion_diaria', methods=['GET', 'POST'])
+def planificacion_diaria():
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+        
+    # Lógica de tu planificación (mensual o diaria según corresponda)
+    return render_template('planificacion_diaria.html')
+
 @app.route('/registrar_usuario', methods=['GET', 'POST'])
 def registrar_usuario():
     if session.get('rol') not in ['oficina', 'admin']:
