@@ -133,7 +133,7 @@
 </head>
 <body>
 
-    <!-- BARRA DE ACCIÓN SUPERIOR (Se oculta en modo PDF) -->
+    <!-- BARRA DE ACCIÓN SUPERIOR -->
     {% if not modo_pdf %}
     <div class="action-bar">
         <div class="left-group">
@@ -143,7 +143,7 @@
         <div class="right-group">
             <button type="submit" form="form-informe" class="btn btn-save">💾 Guardar Cambios</button>
             {% if estudiante %}
-           <a href="{{ url_for('general_pdf_notas1', id_estudiante=estudiante.id_estudiante) }}" class="btn btn-danger" target="_blank">Generar PDF</a>
+             <a href="{{ url_for('general_pdf_notas1', id_estudiante=estudiante.id_estudiante) }}" class="btn btn-pdf" target="_blank">🖨️ Generar PDF</a>
             {% else %}
                 <button type="button" class="btn btn-pdf" onclick="window.print()">🖨️ Generar PDF</button>
             {% endif %}
@@ -165,7 +165,7 @@
     {% endwith %}
     {% endif %}
 
-<!-- SELECTOR DE ESTUDIANTE (Se oculta en modo PDF) -->
+    <!-- SELECTOR DE ESTUDIANTE -->
     {% if not modo_pdf %}
     <div class="selector-container">
         <form method="GET" action="{{ url_for('notas1') }}" style="display: flex; align-items: center; width: 100%; gap: 10px; margin: 0;">
@@ -185,7 +185,8 @@
     <!-- FORMULARIO PRINCIPAL DE DATOS Y NOTAS -->
     <form id="form-informe" method="POST" action="{{ url_for('notas1') }}">
         {% if estudiante %}
-        <input type="hidden" name="id_estudiante" value="{{ estudiante.id }}">
+        <!-- CORREGIDO: Usando id_estudiante para que Flask lo reciba correctamente -->
+        <input type="hidden" name="id_estudiante" value="{{ estudiante.id_estudiante }}">
         {% endif %}
 
         <!-- Campo oculto para registrar el nombre del docente que guardó el informe -->
@@ -214,7 +215,7 @@
             </div>
         </div>
 
-<!-- TABLA DATOS ESTUDIANTE -->
+        <!-- TABLA DATOS ESTUDIANTE -->
         <table id="tabla-datos" style="width: 100%; border-collapse: collapse;">
             <tr>
                 <td class="bold" style="width: 9%;">NOMBRE(S):</td>
@@ -452,13 +453,12 @@
     </form>
 
     <script>
-function calcular(el) {
+        function calcular(el) {
             let row = el.closest('tr');
             
             function aplicarRegla(num) {
                 let entero = Math.floor(num);
                 let decimal = num - entero;
-                // Cambiamos '>' por '>=' para que el .5 se redondee hacia arriba
                 return (decimal >= 0.5) ? (entero + 1) : entero;
             }
 
@@ -485,12 +485,10 @@ function calcular(el) {
 
         function limpiarFormulario() {
             if (confirm("¿Estás seguro de que deseas limpiar todos los campos ingresados en este informe?")) {
-                // Selecciona todos los inputs y textareas dentro del formulario y los vacía
                 const form = document.getElementById('form-informe');
                 const inputs = form.querySelectorAll('input[type="text"], textarea');
                 inputs.forEach(input => input.value = '');
                 
-                // Desmarca todos los checkboxes
                 const checkboxes = form.querySelectorAll('input[type="checkbox"]');
                 checkboxes.forEach(cb => cb.checked = false);
             }
