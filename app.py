@@ -1663,7 +1663,7 @@ def descargar_reporte_ausencias():
     except Exception:
         pass
 
-    fecha_str = request.form.get('fecha') or request.args.get('fecha') or datetime.date.today().strftime('%Y-%m-%d')
+    fecha_str = request.form.get('fecha') or request.args.get('fecha') or datetime.now().strftime('%Y-%m-%d')
     
     # Manejar formato de fecha flexible para que coincida sin importar si es YYYY-MM-DD o DD/MM/YYYY
     f1 = fecha_str
@@ -1803,9 +1803,9 @@ def descargar_reporte_ausencias():
                         ausentes_nombres.append(nombre_completo)
             ausentes_lista = ", ".join(ausentes_nombres)
         else:
-            asis_ninos = mat_ninos
-            asis_ninas = mat_ninas
-            asis_total = mat_total
+            asis_ninos = 0
+            asis_ninas = 0
+            asis_total = 0
             ausentes_lista = ""
 
         grados_primaria.append({
@@ -1826,9 +1826,9 @@ def descargar_reporte_ausencias():
         tot_asis_ninas += asis_ninas
         tot_asis_total += asis_total
 
-    # 3. Nivel Inicial (L2) - Con cálculo de asistencia integrado
-    sql_inicial_est = text("SELECT id, sexo FROM estudiantes WHERE grado ILIKE :inicial")
-    estudiantes_inicial = db.session.execute(sql_inicial_est, {"inicial": "%inicial%"}).fetchall()
+    # 3. Nivel Inicial (L2) - Búsqueda flexible por múltiples posibles nombres de grado
+    sql_inicial_est = text("SELECT id, sexo FROM estudiantes WHERE grado ILIKE :p1 OR grado ILIKE :p2 OR grado ILIKE :p3")
+    estudiantes_inicial = db.session.execute(sql_inicial_est, {"p1": "%inicial%", "p2": "%pre-primario%", "p3": "%kinder%"}).fetchall()
     
     ini_mat_ninos = sum(1 for row in estudiantes_inicial if row[1] and 'masculino' in str(row[1]).lower())
     ini_mat_ninas = sum(1 for row in estudiantes_inicial if row[1] and 'femenino' in str(row[1]).lower())
@@ -1838,11 +1838,11 @@ def descargar_reporte_ausencias():
         SELECT e.id, e.sexo, a.estado 
         FROM estudiantes e
         LEFT JOIN asistencia a ON (CAST(a.estudiante_id AS VARCHAR) = CAST(e.id AS VARCHAR) OR CAST(a.id_estudiante AS VARCHAR) = CAST(e.id AS VARCHAR))
-        WHERE e.grado ILIKE :inicial AND (CAST(a.fecha AS TEXT) LIKE :like_f1 OR CAST(a.fecha AS TEXT) LIKE :like_f2)
+        WHERE (e.grado ILIKE :p1 OR e.grado ILIKE :p2 OR e.grado ILIKE :p3) AND (CAST(a.fecha AS TEXT) LIKE :like_f1 OR CAST(a.fecha AS TEXT) LIKE :like_f2)
     """)
     
     try:
-        resultado_inicial = db.session.execute(sql_inicial_asis, {"inicial": "%inicial%", "like_f1": like_f1, "like_f2": like_f2}).fetchall()
+        resultado_inicial = db.session.execute(sql_inicial_asis, {"p1": "%inicial%", "p2": "%pre-primario%", "p3": "%kinder%", "like_f1": like_f1, "like_f2": like_f2}).fetchall()
     except Exception:
         db.session.rollback()
         resultado_inicial = []
@@ -1858,9 +1858,9 @@ def descargar_reporte_ausencias():
         ini_asis_ninas = sum(1 for r in ini_procesados.values() if r[1] and 'femenino' in str(r[1]).lower() and r[2] and any(st in str(r[2]).lower() for st in ['presente', 'asistio', '1', 'true', 'p']))
         ini_asis_total = ini_asis_ninos + ini_asis_ninas
     else:
-        ini_asis_ninos = ini_mat_ninos
-        ini_asis_ninas = ini_mat_ninas
-        ini_asis_total = ini_mat_total
+        ini_asis_ninos = 0
+        ini_asis_ninas = 0
+        ini_asis_total = 0
 
     rendered_html = render_template('control_asistencia_pdf.html',
         anio_escolar="2026-2027",
