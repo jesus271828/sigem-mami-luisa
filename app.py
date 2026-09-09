@@ -1668,17 +1668,33 @@ def descargar_reporte_ausencias():
     # Manejar formato de fecha flexible para que coincida sin importar si es YYYY-MM-DD o DD/MM/YYYY
     f1 = fecha_str
     f2 = fecha_str
+    fecha_obj = datetime.now()
     try:
         if '-' in fecha_str:
             p = fecha_str.split('-')
             if len(p) == 3:
                 f2 = f"{p[2]}/{p[1]}/{p[0]}"
+                fecha_obj = datetime(int(p[0]), int(p[1]), int(p[2]))
         elif '/' in fecha_str:
             p = fecha_str.split('/')
             if len(p) == 3:
                 f2 = f"{p[2]}-{p[1]}-{p[0]}"
+                fecha_obj = datetime(int(p[2]), int(p[1]), int(p[0]))
     except Exception:
         pass
+
+    # Traducir día de la semana al español
+    dias_semana = {
+        'Monday': 'Lunes',
+        'Tuesday': 'Martes',
+        'Wednesday': 'Miércoles',
+        'Thursday': 'Jueves',
+        'Friday': 'Viernes',
+        'Saturday': 'Sábado',
+        'Sunday': 'Domingo'
+    }
+    dia_ingles = fecha_obj.strftime('%A')
+    dia_semana_esp = dias_semana.get(dia_ingles, dia_ingles)
 
     like_f1 = f"%{f1}%"
     like_f2 = f"%{f2}%"
@@ -1729,7 +1745,7 @@ def descargar_reporte_ausencias():
             db.session.rollback()
             print(f"Error al guardar personal: {e}")
 
-    # 2. Obtener datos estadísticos por grado sincronizados con la vista web
+    # 2. Obtener datos estadísticos por grado de primaria sincronizados
     grados_config = [
         ('1ro.', '1ro%'),
         ('2do.', '2do%'),
@@ -1748,7 +1764,6 @@ def descargar_reporte_ausencias():
     tot_asis_total = 0
 
     for nombre_grado, patron in grados_config:
-        # Obtener estudiantes matriculados en el grado
         sql_estudiantes = text("SELECT id, sexo, apellidos, nombres FROM estudiantes WHERE grado ILIKE :patron")
         estudiantes_grado = db.session.execute(sql_estudiantes, {"patron": patron}).fetchall()
         
@@ -1756,7 +1771,6 @@ def descargar_reporte_ausencias():
         mat_ninas = sum(1 for row in estudiantes_grado if row[1] and 'femenino' in str(row[1]).lower())
         mat_total = len(estudiantes_grado)
         
-        # Consulta robusta utilizando LEFT JOIN para traer los nombres y estados reales de asistencia
         sql_asistencias = text("""
             SELECT e.id, e.sexo, a.estado, e.apellidos, e.nombres 
             FROM estudiantes e
@@ -1812,17 +1826,46 @@ def descargar_reporte_ausencias():
         tot_asis_ninas += asis_ninas
         tot_asis_total += asis_total
 
-    # Nivel Inicial (L2)
-    sql_inicial = text("SELECT sexo FROM estudiantes WHERE grado ILIKE :inicial")
-    estudiantes_inicial = db.session.execute(sql_inicial, {"inicial": "%inicial%"}).fetchall()
-    ini_mat_ninos = sum(1 for row in estudiantes_inicial if row[0] and 'masculino' in str(row[0]).lower())
-    ini_mat_ninas = sum(1 for row in estudiantes_inicial if row[0] and 'femenino' in str(row[0]).lower())
+    # 3. Nivel Inicial (L2) - Con cálculo de asistencia integrado
+    sql_inicial_est = text("SELECT id, sexo FROM estudiantes WHERE grado ILIKE :inicial")
+    estudiantes_inicial = db.session.execute(sql_inicial_est, {"inicial": "%inicial%"}).fetchall()
+    
+    ini_mat_ninos = sum(1 for row in estudiantes_inicial if row[1] and 'masculino' in str(row[1]).lower())
+    ini_mat_ninas = sum(1 for row in estudiantes_inicial if row[1] and 'femenino' in str(row[1]).lower())
     ini_mat_total = len(estudiantes_inicial)
+
+    sql_inicial_asis = text("""
+        SELECT e.id, e.sexo, a.estado 
+        FROM estudiantes e
+        LEFT JOIN asistencia a ON (CAST(a.estudiante_id AS VARCHAR) = CAST(e.id AS VARCHAR) OR CAST(a.id_estudiante AS VARCHAR) = CAST(e.id AS VARCHAR))
+        WHERE e.grado ILIKE :inicial AND (CAST(a.fecha AS TEXT) LIKE :like_f1 OR CAST(a.fecha AS TEXT) LIKE :like_f2)
+    """)
+    
+    try:
+        resultado_inicial = db.session.execute(sql_inicial_asis, {"inicial": "%inicial%", "like_f1": like_f1, "like_f2": like_f2}).fetchall()
+    except Exception:
+        db.session.rollback()
+        resultado_inicial = []
+
+    if resultado_inicial and any(row[2] is not None for row in resultado_inicial):
+        ini_procesados = {}
+        for row in resultado_inicial:
+            est_id = row[0]
+            if est_id not in ini_procesados:
+                ini_procesados[est_id] = row
+
+        ini_asis_ninos = sum(1 for r in ini_procesados.values() if r[1] and 'masculino' in str(r[1]).lower() and r[2] and any(st in str(r[2]).lower() for st in ['presente', 'asistio', '1', 'true', 'p']))
+        ini_asis_ninas = sum(1 for r in ini_procesados.values() if r[1] and 'femenino' in str(r[1]).lower() and r[2] and any(st in str(r[2]).lower() for st in ['presente', 'asistio', '1', 'true', 'p']))
+        ini_asis_total = ini_asis_ninos + ini_asis_ninas
+    else:
+        ini_asis_ninos = ini_mat_ninos
+        ini_asis_ninas = ini_mat_ninas
+        ini_asis_total = ini_mat_total
 
     rendered_html = render_template('control_asistencia_pdf.html',
         anio_escolar="2026-2027",
         fecha_formateada=fecha_str,
-        dia_semana="Viernes", 
+        dia_semana=dia_semana_esp, 
         grados_primaria=grados_primaria,
         total_primaria_mat_ninos=tot_mat_ninos,
         total_primaria_mat_ninas_f=tot_mat_ninas,
@@ -1833,9 +1876,9 @@ def descargar_reporte_ausencias():
         inicial_mat_ninos=ini_mat_ninos,
         inicial_mat_ninas_f=ini_mat_ninas,
         inicial_mat_total=ini_mat_total,
-        inicial_asis_ninos="",
-        inicial_asis_ninas_f="",
-        inicial_asis_total="",
+        inicial_asis_ninos=ini_asis_ninos,
+        inicial_asis_ninas_f=ini_asis_ninas,
+        inicial_asis_total=ini_asis_total,
         personal_adm_contratado=10,
         personal_doc_contratado=9,
         total_personal_presente=(meta.adm_presente or 0) + (meta.aux_presente or 0) + (meta.doc_presente or 0) if meta else 0,
