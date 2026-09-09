@@ -19,23 +19,23 @@
             print-color-adjust: exact;
         }
 
-        /* 1. ENCABEZADO CON LOGO Y LETRAS GRANDES */
-        .header { display: flex; align-items: center; border-bottom: 2px solid #000; margin-bottom: 6px; padding-bottom: 4px; }
-        .logo { width: 75px; margin-right: 12px; }
-        .header-content { flex-grow: 1; }
-        .header-row-1 { display: flex; justify-content: space-between; align-items: baseline; }
-        .title-school { font-size: 20px; font-weight: bold; color: #5b739e; margin: 0; font-family: 'Times New Roman', serif; }
-        .lema { font-size: 12px; font-style: italic; color: #b87a42; font-family: 'Times New Roman', serif; }
+        /* ENCABEZADO CON TABLA PARA ASEGURAR LOGO Y TEXTOS */
+        .header-table { width: 100%; border: none; margin-bottom: 4px; border-bottom: 2px solid #000; padding-bottom: 4px; }
+        .header-table td { border: none; padding: 0; vertical-align: middle; }
+        .logo-cell { width: 90px; text-align: left; padding-right: 10px !important; }
+        .logo { width: 85px; height: auto; display: block; }
+        .title-school { font-size: 21px; font-weight: bold; color: #5b739e; margin: 0; font-family: 'Times New Roman', serif; }
+        .lema { font-size: 12.5px; font-style: italic; color: #b87a42; font-family: 'Times New Roman', serif; float: right; }
         .info-line { font-size: 11.5px; margin: 2px 0; }
-        .info-row-2 { display: flex; justify-content: space-between; margin-top: 3px; font-size: 12px; font-weight: bold; }
+        .info-row-2 { font-size: 12.5px; font-weight: bold; margin-top: 3px; }
 
         /* TABLAS GENERALES */
-        table { border-collapse: collapse; width: 100%; border: 2px solid #000; margin-bottom: 6px; }
+        table { border-collapse: collapse; width: 100%; border: 2px solid #000; margin-bottom: 5px; }
         th, td { border: 1px solid #000; padding: 4px 3px; text-align: center; vertical-align: middle; font-size: 11px; }
         .bold { font-weight: bold; }
         .bg-grey { background-color: #f2f2f2 !important; }
         
-        /* 2. DATOS DEL ESTUDIANTE EN UNA SOLA FILA */
+        /* DATOS DEL ESTUDIANTE EN UNA SOLA FILA */
         #tabla-datos td { 
             text-align: left; 
             padding: 6px 8px; 
@@ -43,41 +43,41 @@
             white-space: nowrap; 
         }
 
-        /* 3. TABLA DE CALIFICACIONES */
+        /* TABLA DE CALIFICACIONES */
         #tabla-notas th { padding: 5px 2px; font-size: 10.5px; }
         #tabla-notas td { padding: 3px 2px; height: 28px; }
-        .col-area { width: 22%; text-align: left; padding-left: 8px; font-size: 12px; font-weight: bold; }
+        .col-area { width: 21%; text-align: left; padding-left: 8px; font-size: 12px; font-weight: bold; }
         .valor-celda { width: 100%; font-size: 12px; font-weight: bold; text-align: center; display: block; }
         .res { font-weight: bold; color: blue; background-color: #e8f0fe !important; }
         .area-res { font-weight: bold; color: green; background-color: #e6ffed !important; }
         
-        /* Texto vertical ajustado para DEL ÁREA y RECUP. EVAL. */
+        /* COLUMNAS VERTICALES CORREGIDAS Y AMPLIADAS */
         .col-vertical { 
-            width: 45px; 
+            width: 32px; 
             font-size: 10px; 
             font-weight: bold; 
             text-align: center;
-            padding: 2px;
+            padding: 0;
             vertical-align: middle;
         }
-        .col-vertical div {
+        .rotar-texto {
             writing-mode: vertical-rl;
             transform: rotate(180deg);
-            margin: 0 auto;
+            display: inline-block;
             white-space: nowrap;
-            line-height: 1.2;
-            padding: 2px 0;
-            max-height: 90px;
+            line-height: 1.1;
+            margin: auto;
+            padding: 4px 0;
         }
 
-        /* 4. TABLA DE ASISTENCIA Y ESCALA (DESCRIPCIÓN MÁS GRANDE Y CLARA) */
+        /* TABLA DE ASISTENCIA Y ESCALA (DESCRIPCIÓN GRANDE Y CLARA) */
         #tabla-asistencia th { padding: 5px 3px; font-size: 11px; }
-        #tabla-asistencia td { height: 36px; padding: 5px; }
+        #tabla-asistencia td { padding: 6px; }
         .desc-cell { 
             text-align: left; 
-            font-size: 11.5px; 
-            line-height: 1.4; 
-            padding: 6px 10px !important; 
+            font-size: 12px !important; 
+            line-height: 1.45; 
+            padding: 8px 10px !important; 
         }
         .leyenda-cell { text-align: left; font-size: 10.5px; width: 165px; vertical-align: top; padding: 6px 8px !important; line-height: 1.3; }
 
@@ -92,28 +92,32 @@
 </head>
 <body onload="window.print()">
 
-    <!-- ENCABEZADO CON LOGO -->
-    <div class="header">
-        <img src="{{ url_for('static', filename='img/logo2.png') }}" class="logo" alt="Logo Centro Educativo">
-        <div class="header-content">
-            <div class="header-row-1">
-                <span class="title-school">Centro Educativo Mami Luisa S.R.L</span>
-                <span class="lema">"Educando con amor para un mundo mejor"</span>
-            </div>
-            <div class="info-line">
-                <b>Dirección:</b> C/Castillo Márquez #53. La Romana, Centro Ciudad. <b>Teléfono:</b> 809-550-7385 / 809-710-3395
-            </div>
-            <div class="info-line">
-                <b>Regional de Educación:</b> 05 San Pedro de Macorís. <b>Distrito Educativo:</b> 05-03 La Romana. <b>Código:</b> 07121
-            </div>
-            <div class="info-row-2">
-                <span>INFORME DE APRENDIZAJE. Primer Grado del Nivel Primario, Sección A.</span>
-            </div>
-            <div class="info-line" style="color: #333; font-weight: bold;">
-                Año Escolar 2026-2027 / Jornada Escolar Regular. Tanda Matutina.
-            </div>
-        </div>
-    </div>
+    <!-- ENCABEZADO CON TABLA FIJA -->
+    <table class="header-table">
+        <tr>
+            <td class="logo-cell">
+                <img src="{{ url_for('static', filename='img/logo2.png') }}" class="logo" alt="Logo">
+            </td>
+            <td>
+                <div style="width: 100%; overflow: hidden; margin-bottom: 2px;">
+                    <span class="title-school">Centro Educativo Mami Luisa S.R.L</span>
+                    <span class="lema">"Educando con amor para un mundo mejor"</span>
+                </div>
+                <div class="info-line">
+                    <b>Dirección:</b> C/Castillo Márquez #53. La Romana, Centro Ciudad. <b>Teléfono:</b> 809-550-7385 / 809-710-3395
+                </div>
+                <div class="info-line">
+                    <b>Regional de Educación:</b> 05 San Pedro de Macorís. <b>Distrito Educativo:</b> 05-03 La Romana. <b>Código:</b> 07121
+                </div>
+                <div class="info-row-2">
+                    INFORME DE APRENDIZAJE. Primer Grado del Nivel Primario, Sección A.
+                </div>
+                <div class="info-line" style="color: #333; font-weight: bold; margin-top: 1px;">
+                    Año Escolar 2026-2027 / Jornada Escolar Regular. Tanda Matutina.
+                </div>
+            </td>
+        </tr>
+    </table>
 
     <!-- TABLA DATOS ESTUDIANTE (UNA SOLA FILA) -->
     <table id="tabla-datos">
@@ -143,11 +147,11 @@
     <table id="tabla-notas">
         <thead class="bg-grey">
             <tr>
-                <th rowspan="3" style="width: 20%;">ÁREAS CURRICULARES</th>
+                <th rowspan="3" style="width: 21%;">ÁREAS CURRICULARES</th>
                 <th colspan="12">COMPETENCIAS FUNDAMENTALES</th>
                 <th colspan="3" rowspan="2">CALIFICACIÓN FINAL<br><span style="font-size: 10px; font-weight: normal;">POR COMPETENCIA</span></th>
-                <th rowspan="3" class="col-vertical"><div>DEL ÁREA</div></th>
-                <th rowspan="3" class="col-vertical"><div>RECUP. EVAL.</div></th>
+                <th rowspan="3" class="col-vertical"><span class="rotar-texto">DEL ÁREA</span></th>
+                <th rowspan="3" class="col-vertical"><span class="rotar-texto">RECUP. EVAL.</span></th>
             </tr>
             <tr>
                 <th colspan="4" style="width: 15%;">
@@ -305,7 +309,7 @@
                         <td style="height: 30px;"></td>
                     </tr>
                     <tr>
-                        <td class="text-left bold" style="font-size: 11.5px;">Abril – Mayo – Junio</td>
+                        <td class="text-left bold" style="font-size: 11.5px;">April – Mayo – Junio</td>
                         <td style="height: 30px;"></td>
                     </tr>
                 </table>
