@@ -1665,7 +1665,7 @@ def descargar_reporte_ausencias():
 
     fecha_str = request.form.get('fecha') or request.args.get('fecha') or datetime.now().strftime('%Y-%m-%d')
     
-    # Normalizar objeto fecha
+    # Normalizar objeto fecha para el día de la semana
     fecha_obj = datetime.now()
     try:
         if '-' in fecha_str:
@@ -1682,7 +1682,6 @@ def descargar_reporte_ausencias():
     f_iso = fecha_obj.strftime('%Y-%m-%d')
     f_slash = fecha_obj.strftime('%d/%m/%Y')
 
-    # Traducir día de la semana al español
     dias_semana = {
         'Monday': 'Lunes', 'Tuesday': 'Martes', 'Wednesday': 'Miércoles',
         'Thursday': 'Jueves', 'Friday': 'Viernes', 'Saturday': 'Sábado', 'Sunday': 'Domingo'
@@ -1733,14 +1732,14 @@ def descargar_reporte_ausencias():
             db.session.rollback()
             print(f"Error al guardar personal: {e}")
 
-    # 2. Obtener datos estadísticos por grado de primaria sincronizados
+    # 2. Obtener datos estadísticos por grado de primaria usando los nombres reales exactos ('1ro A', etc.)
     grados_config = [
-        ('1ro.', '1ro%'),
-        ('2do.', '2do%'),
-        ('3ro.', '3ro%'),
-        ('4to.', '4to%'),
-        ('5to.', '5to%'),
-        ('6to.', '6to%')
+        ('1ro.', '1ro A'),
+        ('2do.', '2do A'),
+        ('3ro.', '3ro A'),
+        ('4to.', '4to A'),
+        ('5to.', '5to A'),
+        ('6to.', '6to A')
     ]
     
     grados_primaria = []
@@ -1751,54 +1750,53 @@ def descargar_reporte_ausencias():
     tot_asis_ninas = 0
     tot_asis_total = 0
 
-    for nombre_grado, patron in grados_config:
-        # Consulta SQL corregida: La fecha va en el ON del LEFT JOIN para no descartar alumnos
+    for nombre_grado_pdf, nombre_grado_db in grados_config:
+        # Consulta directa por grado exacto y trayendo la asistencia de esa fecha
         sql_asistencias = text("""
             SELECT e.id, e.sexo, a.estado, e.apellidos, e.nombres 
             FROM estudiantes e
             LEFT JOIN asistencia a ON (
                 (CAST(a.estudiante_id AS VARCHAR) = CAST(e.id AS VARCHAR) OR CAST(a.id_estudiante AS VARCHAR) = CAST(e.id AS VARCHAR))
-                AND (CAST(a.fecha AS TEXT) LIKE :f_iso OR CAST(a.fecha AS TEXT) LIKE :f_slash OR a.fecha = :f_date)
+                AND (CAST(a.fecha AS TEXT) LIKE :f_iso OR CAST(a.fecha AS TEXT) LIKE :f_slash)
             )
-            WHERE e.grado ILIKE :patron
+            WHERE e.grado ILIKE :grado_db
         """)
         
         try:
             resultado = db.session.execute(sql_asistencias, {
-                "patron": patron, 
+                "grado_db": nombre_grado_db,
                 "f_iso": f"%{f_iso}%", 
-                "f_slash": f"%{f_slash}%",
-                "f_date": f_iso
+                "f_slash": f"%{f_slash}%"
             }).fetchall()
         except Exception:
             db.session.rollback()
             resultado = []
 
-        # Procesar estudiantes y contar matrículas y asistencias
-        mat_ninos = sum(1 for row in resultado if row[1] and 'masculino' in str(row[1]).lower())
-        mat_ninas = sum(1 for row in resultado if row[1] and 'femenino' in str(row[1]).lower())
-        mat_total = len(resultado)
+        # Calcular matriculados únicos y asistencias
+        estudiantes_unicos = {}
+        for r in resultado:
+            est_id = r[0]
+            if est_id not in estudiantes_unicos:
+                estudiantes_unicos[est_id] = {'sexo': r[1], 'estado': r[2], 'apellidos': r[3], 'nombres': r[4]}
 
-        if resultado:
-            asis_ninos = sum(1 for r in resultado if r[1] and 'masculino' in str(r[1]).lower() and r[2] and any(st in str(r[2]).lower() for st in ['presente', 'asistio', '1', 'true', 'p']))
-            asis_ninas = sum(1 for r in resultado if r[1] and 'femenino' in str(r[1]).lower() and r[2] and any(st in str(r[2]).lower() for st in ['presente', 'asistio', '1', 'true', 'p']))
-            asis_total = asis_ninos + asis_ninas
-            
-            ausentes_nombres = []
-            for r in resultado:
-                if r[2] and any(st in str(r[2]).lower() for st in ['ausente', 'tarde', 'falta', 'a', '0', 'false']):
-                    nombre_completo = f"{r[3] or ''} {r[4] or ''}".strip()
-                    if nombre_completo:
-                        ausentes_nombres.append(nombre_completo)
-            ausentes_lista = ", ".join(ausentes_nombres)
-        else:
-            asis_ninos = 0
-            asis_ninas = 0
-            asis_total = 0
-            ausentes_lista = ""
+        mat_ninos = sum(1 for e in estudiantes_unicos.values() if e['sexo'] and 'masculino' in str(e['sexo']).lower())
+        mat_ninas = sum(1 for e in estudiantes_unicos.values() if e['sexo'] and 'femenino' in str(e['sexo']).lower())
+        mat_total = len(estudiantes_unicos)
+
+        asis_ninos = sum(1 for e in estudiantes_unicos.values() if e['sexo'] and 'masculino' in str(e['sexo']).lower() and e['estado'] and any(st in str(e['estado']).lower() for st in ['presente', 'asistio', '1', 'true', 'p']))
+        asis_ninas = sum(1 for e in estudiantes_unicos.values() if e['sexo'] and 'femenino' in str(e['sexo']).lower() and e['estado'] and any(st in str(e['estado']).lower() for st in ['presente', 'asistio', '1', 'true', 'p']))
+        asis_total = asis_ninos + asis_ninas
+
+        ausentes_nombres = []
+        for e in estudiantes_unicos.values():
+            if e['estado'] and any(st in str(e['estado']).lower() for st in ['ausente', 'tarde', 'falta', 'a', '0', 'false']):
+                nombre_completo = f"{e['apellidos'] or ''} {e['nombres'] or ''}".strip()
+                if nombre_completo:
+                    ausentes_nombres.append(nombre_completo)
+        ausentes_lista = ", ".join(ausentes_nombres)
 
         grados_primaria.append({
-            'nombre': nombre_grado,
+            'nombre': nombre_grado_pdf,
             'mat_ninos': mat_ninos,
             'mat_ninas_f': mat_ninas,
             'mat_total': mat_total,
@@ -1821,32 +1819,33 @@ def descargar_reporte_ausencias():
         FROM estudiantes e
         LEFT JOIN asistencia a ON (
             (CAST(a.estudiante_id AS VARCHAR) = CAST(e.id AS VARCHAR) OR CAST(a.id_estudiante AS VARCHAR) = CAST(e.id AS VARCHAR))
-            AND (CAST(a.fecha AS TEXT) LIKE :f_iso OR CAST(a.fecha AS TEXT) LIKE :f_slash OR a.fecha = :f_date)
+            AND (CAST(a.fecha AS TEXT) LIKE :f_iso OR CAST(a.fecha AS TEXT) LIKE :f_slash)
         )
-        WHERE (e.grado ILIKE :p1 OR e.grado ILIKE :p2 OR e.grado ILIKE :p3)
+        WHERE e.grado ILIKE :p1 OR e.grado ILIKE :p2
     """)
     
     try:
         resultado_inicial = db.session.execute(sql_inicial_asis, {
-            "p1": "%inicial%", "p2": "%pre-primario%", "p3": "%kinder%", 
-            "f_iso": f"%{f_iso}%", "f_slash": f"%{f_slash}%", "f_date": f_iso
+            "p1": "%inicial%", "p2": "%kinder%", 
+            "f_iso": f"%{f_iso}%", "f_slash": f"%{f_slash}%"
         }).fetchall()
     except Exception:
         db.session.rollback()
         resultado_inicial = []
 
-    ini_mat_ninos = sum(1 for row in resultado_inicial if row[1] and 'masculino' in str(row[1]).lower())
-    ini_mat_ninas = sum(1 for row in resultado_inicial if row[1] and 'femenino' in str(row[1]).lower())
-    ini_mat_total = len(resultado_inicial)
+    ini_unicos = {}
+    for r in resultado_inicial:
+        est_id = r[0]
+        if est_id not in ini_unicos:
+            ini_unicos[est_id] = {'sexo': r[1], 'estado': r[2]}
 
-    if resultado_inicial:
-        ini_asis_ninos = sum(1 for r in resultado_inicial if r[1] and 'masculino' in str(r[1]).lower() and r[2] and any(st in str(r[2]).lower() for st in ['presente', 'asistio', '1', 'true', 'p']))
-        ini_asis_ninas = sum(1 for r in resultado_inicial if r[1] and 'femenino' in str(r[1]).lower() and r[2] and any(st in str(r[2]).lower() for st in ['presente', 'asistio', '1', 'true', 'p']))
-        ini_asis_total = ini_asis_ninos + ini_asis_ninas
-    else:
-        ini_asis_ninos = 0
-        ini_asis_ninas = 0
-        ini_asis_total = 0
+    ini_mat_ninos = sum(1 for e in ini_unicos.values() if e['sexo'] and 'masculino' in str(e['sexo']).lower())
+    ini_mat_ninas = sum(1 for e in ini_unicos.values() if e['sexo'] and 'femenino' in str(e['sexo']).lower())
+    ini_mat_total = len(ini_unicos)
+
+    ini_asis_ninos = sum(1 for e in ini_unicos.values() if e['sexo'] and 'masculino' in str(e['sexo']).lower() and e['estado'] and any(st in str(e['estado']).lower() for st in ['presente', 'asistio', '1', 'true', 'p']))
+    ini_asis_ninas = sum(1 for e in ini_unicos.values() if e['sexo'] and 'femenino' in str(e['sexo']).lower() and e['estado'] and any(st in str(e['estado']).lower() for st in ['presente', 'asistio', '1', 'true', 'p']))
+    ini_asis_total = ini_asis_ninos + ini_asis_ninas
 
     rendered_html = render_template('control_asistencia_pdf.html',
         anio_escolar="2026-2027",
