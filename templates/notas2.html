@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <title>Informe de Aprendizaje - SIGEM Mami Luisa</title>
+    <!-- Librerías para generar y descargar el PDF directamente -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         @page {
             size: letter landscape;
@@ -169,7 +172,7 @@
         </div>
         <div class="right-group">
             <button type="submit" form="form-informe" class="btn btn-save">💾 Guardar</button>
-            <button type="button" class="btn btn-pdf" onclick="window.print()">🖨️ PDF</button>
+            <button type="button" class="btn btn-pdf" onclick="descargarPDF()">📥 Descargar PDF</button>
         </div>
     </div>
 
@@ -228,12 +231,12 @@
                         <div class="info-row-2 info-line" style="font-weight: bold;">
                          <span class="title-school" style="font-size: 15px;">
                          INFORME DE APRENDIZAJE. 
-                            {% if estudiante and estudiante.grado %}
-                            {{ estudiante.grado }} del Nivel Primario, Sección A.
-                            {% else %}
-                            Primer Grado del Nivel Primario, Sección A.
-                            {% endif %}
-                       </span>
+                             {% if estudiante and estudiante.grado %}
+                             {{ estudiante.grado }} del Nivel Primario, Sección A.
+                             {% else %}
+                             Primer Grado del Nivel Primario, Sección A.
+                             {% endif %}
+                         </span>
                         </div>
                         <div class="info-line" style="color: #444;">
                             Año Escolar 2026-2027 / Jornada Escolar Regular. Tanda Matutina.
@@ -537,6 +540,60 @@
             if (confirm("¿Estás seguro de que deseas limpiar todos los campos ingresados en este informe?")) {
                 document.getElementById('form-informe').reset();
             }
+        }
+
+        async function descargarPDF() {
+            const { jsPDF } = window.jspdf;
+            
+            // Ocultar elementos de interfaz no deseados antes de capturar
+            const actionBar = document.querySelector('.action-bar');
+            const selectorContainer = document.querySelector('.selector-container');
+            if (actionBar) actionBar.style.display = 'none';
+            if (selectorContainer) selectorContainer.style.display = 'none';
+
+            // Seleccionamos las páginas completas
+            const paginas = document.querySelectorAll('.pagina-completa');
+            
+            // Crear instancia de jsPDF en formato Carta Horizontal (Letter, landscape)
+            const pdf = new jsPDF('l', 'mm', 'letter');
+            
+            for (let i = 0; i < paginas.length; i++) {
+                const pagina = paginas[i];
+                
+                // Convertir la página HTML en un canvas de alta resolución
+                const canvas = await html2canvas(pagina, {
+                    scale: 2, // Mejora la nitidez del texto
+                    useCORS: true
+                });
+                
+                const imgData = canvas.toDataURL('image/jpeg', 0.95);
+                
+                // Dimensiones estándar para hoja Letter en horizontal (279.4 x 215.9 mm)
+                const pdfWidth = 279.4;
+                const pdfHeight = 215.9;
+                
+                // Si no es la primera página, agregamos una nueva hoja en el PDF
+                if (i > 0) {
+                    pdf.addPage('letter', 'l');
+                }
+                
+                // Añadir la imagen capturada al PDF ajustada al tamaño de la página
+                pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+            }
+
+            // Restaurar la visibilidad de los elementos de la interfaz
+            if (actionBar) actionBar.style.display = 'flex';
+            if (selectorContainer) selectorContainer.style.display = 'flex';
+
+            // Obtener el nombre del estudiante para personalizar el archivo descargado
+            let nombreEstudiante = "Informe_Aprendizaje";
+            const selectEst = document.getElementById('id_estudiante');
+            if (selectEst && selectEst.selectedIndex > 0) {
+                nombreEstudiante = "Informe_" + selectEst.options[selectEst.selectedIndex].text.trim().replace(/[^a-zA-Z0-9]/g, "_");
+            }
+
+            // Descargar el archivo PDF generado
+            pdf.save(nombreEstudiante + ".pdf");
         }
     </script>
 </body>
