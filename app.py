@@ -2262,21 +2262,25 @@ def planificacion():
     }
     return render_template('planificacion.html', usuario=usuario_actual)
 
-@app.route('/planificacion_diaria')
+@app.route('/planificacion_diaria', methods=['GET', 'POST'])
 def planificacion_diaria():
     if 'nombre_completo' not in session:
         return redirect(url_for('login'))
     
-    # Extraemos los datos de la sesión actual
+    # Obtenemos los datos directamente de la sesión del usuario actual
     docente_nombre = session.get('nombre_completo', '')
-    grado_seccion = session.get('curso_asignado', '') # Usamos la columna exacta de tu base de datos
+    grado_curso = session.get('curso_asignado', '') # Coincide con la columna de Supabase
     
+    if request.method == 'POST':
+        # Aquí va la lógica para guardar en la base de datos si la tienes implementada
+        pass
+
     return render_template(
         'planificacion_diaria.html', 
         docente=docente_nombre, 
-        grado=grado_seccion
+        grado_seccion=grado_curso
     )
-
+    
 @app.route('/ver_planificaciones_diarias')
 def ver_planificaciones_diarias():
     if 'nombre_completo' not in session:
