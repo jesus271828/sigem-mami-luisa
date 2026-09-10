@@ -6,12 +6,12 @@
     <style>
         @page {
             size: A4 landscape;
-            margin: 8mm 6mm;
+            margin: 6mm;
         }
         *, *::before, *::after { box-sizing: border-box; }
         body { 
             font-family: 'Helvetica', 'Arial', sans-serif; 
-            font-size: 10px; 
+            font-size: 9.5px; 
             color: #000; 
             margin: 0; 
             padding: 0; 
@@ -19,84 +19,70 @@
             print-color-adjust: exact;
         }
 
-        /* CONTENEDOR GENERAL PARA EVITAR DESPLAZAMIENTOS */
         .page-container { width: 100%; margin: 0 auto; }
 
         /* ENCABEZADO */
-        .header-table { width: 100%; border-collapse: collapse; border: none; margin-bottom: 4px; border-bottom: 2px solid #000; padding-bottom: 4px; }
+        .header-table { width: 100%; border-collapse: collapse; border: none; margin-bottom: 3px; border-bottom: 2px solid #000; padding-bottom: 3px; }
         .header-table td { border: none; padding: 0; vertical-align: middle; }
-        .logo-cell { width: 90px; text-align: left; }
-        .logo { width: 75px; height: auto; display: block; }
-        .title-school { font-size: 17px; font-weight: bold; color: #1a365d; font-family: 'Times New Roman', serif; }
-        .lema { font-size: 11px; font-style: italic; color: #b87a42; font-family: 'Times New Roman', serif; text-align: right; }
-        .info-line { font-size: 10px; margin: 1px 0; }
-        .info-row-2 { font-size: 11px; font-weight: bold; margin-top: 2px; }
+        .logo-cell { width: 75px; text-align: left; }
+        .logo { width: 65px; height: auto; display: block; }
+        .title-school { font-size: 16px; font-weight: bold; color: #1a365d; font-family: 'Times New Roman', serif; }
+        .lema { font-size: 10px; font-style: italic; color: #b87a42; font-family: 'Times New Roman', serif; text-align: right; }
+        .info-line { font-size: 9.5px; margin: 1px 0; }
+        .info-row-2 { font-size: 10.5px; font-weight: bold; margin-top: 2px; }
 
         /* TABLAS GENERALES */
-        table { border-collapse: collapse; width: 100%; border: 2px solid #000; margin-bottom: 4px; }
-        th, td { border: 1px solid #000; padding: 3px 2px; text-align: center; vertical-align: middle; font-size: 9.5px; }
+        table { border-collapse: collapse; width: 100%; border: 2px solid #000; margin-bottom: 3px; table-layout: fixed; }
+        th, td { border: 1px solid #000; padding: 2px 1px; text-align: center; vertical-align: middle; font-size: 9px; word-wrap: break-word; }
         .bold { font-weight: bold; }
         .bg-grey { background-color: #f2f2f2 !important; }
-        .text-left { text-align: left !important; padding-left: 6px !important; }
+        .text-left { text-align: left !important; padding-left: 5px !important; }
         
         /* DATOS DEL ESTUDIANTE */
         #tabla-datos td { 
             text-align: left; 
-            padding: 5px 6px; 
-            font-size: 10.5px; 
+            padding: 4px 5px; 
+            font-size: 10px; 
         }
 
         /* TABLA DE CALIFICACIONES */
-        #tabla-notas th { padding: 4px 1px; font-size: 9px; }
-        #tabla-notas td { padding: 2px 1px; height: 24px; }
-        .col-area { width: 20%; text-align: left; padding-left: 6px; font-size: 10.5px; font-weight: bold; }
-        .valor-celda { width: 100%; font-size: 10.5px; font-weight: bold; text-align: center; display: block; }
+        #tabla-notas th { padding: 3px 1px; font-size: 8.5px; }
+        #tabla-notas td { padding: 2px 1px; height: 22px; }
+        .col-area { text-align: left; padding-left: 5px; font-size: 9.5px; font-weight: bold; }
+        .valor-celda { width: 100%; font-size: 9.5px; font-weight: bold; text-align: center; display: block; }
         .res { font-weight: bold; color: #0000cc; background-color: #e8f0fe !important; }
         .area-res { font-weight: bold; color: #006600; background-color: #e6ffed !important; }
         
-        /* COLUMNAS VERTICALES */
-        .col-vertical { 
-            width: 26px; 
-            font-size: 8.5px; 
-            font-weight: bold; 
-            text-align: center;
-            padding: 0;
-            vertical-align: middle;
-        }
-        .rotar-texto {
-            writing-mode: vertical-rl;
-            transform: rotate(180deg);
-            display: block;
-            margin: 0 auto;
-            line-height: 1;
-            padding: 2px 0;
+        /* TEXTO HORIZONTAL PARA CABECERAS VERTICALES ANTERIORES */
+        .header-vertical {
+            font-size: 8px;
+            font-weight: bold;
+            line-height: 1.1;
         }
 
         /* TABLA DE ASISTENCIA Y ESCALA */
-        #tabla-asistencia th { padding: 4px 2px; font-size: 9.5px; }
-        #tabla-asistencia td { padding: 4px 3px; }
+        #tabla-asistencia th { padding: 3px 2px; font-size: 9px; }
+        #tabla-asistencia td { padding: 3px; }
         .desc-cell { 
             text-align: left; 
-            font-size: 9.5px; 
-            line-height: 1.3; 
-            padding: 4px 6px !important; 
+            font-size: 9px; 
+            line-height: 1.25; 
+            padding: 3px 5px !important; 
         }
-        .leyenda-cell { text-align: left; font-size: 9px; width: 140px; vertical-align: top; padding: 4px 6px !important; line-height: 1.2; }
+        .leyenda-cell { text-align: left; font-size: 8.5px; width: 130px; vertical-align: top; padding: 3px 5px !important; line-height: 1.2; }
 
         /* SEGUNDA PÁGINA (PARTE TRASERA) */
         .salto-pagina { page-break-before: always; }
-        .tabla-avances td { height: 44px; vertical-align: middle; text-align: left; padding: 4px 6px; }
-        .titulo-avances { background-color: #f2f2f2 !important; font-size: 10.5px; font-weight: bold; text-align: left; padding: 5px 6px; border: 2px solid #000; border-top: none; margin-bottom: 4px; }
-        .texto-area-impresion { width: 100%; font-size: 10px; white-space: pre-wrap; word-break: break-word; }
+        .tabla-avances td { height: 42px; vertical-align: middle; text-align: left; padding: 3px 5px; }
+        .titulo-avances { background-color: #f2f2f2 !important; font-size: 10px; font-weight: bold; text-align: left; padding: 4px 5px; border: 2px solid #000; border-top: none; margin-bottom: 3px; }
+        .texto-area-impresion { width: 100%; font-size: 9.5px; white-space: pre-wrap; word-break: break-word; }
         
-        /* TABLA DE FIRMAS Y SITUACIÓN */
-        .tabla-inferior { width: 100%; border: none; margin-top: 4px; }
+        .tabla-inferior { width: 100%; border: none; margin-top: 3px; }
         .tabla-inferior td { border: none; padding: 0; vertical-align: top; }
         
-        /* PIE DE FIRMAS INSTITUCIONALES */
-        .pie-firmas-table { width: 100%; border: none; margin-top: 40px; }
+        .pie-firmas-table { width: 100%; border: none; margin-top: 30px; }
         .pie-firmas-table td { border: none; text-align: center; vertical-align: bottom; }
-        .linea-firma { width: 260px; margin: 0 auto; border-top: 1px solid #000; padding-top: 4px; font-size: 10.5px; }
+        .linea-firma { width: 250px; margin: 0 auto; border-top: 1px solid #000; padding-top: 3px; font-size: 10px; }
     </style>
 </head>
 <body onload="window.print()">
@@ -116,7 +102,7 @@
                         <td style="border:none; padding:0;"><span class="lema">"Educando con amor para un mundo mejor"</span></td>
                     </tr>
                 </table>
-                <div class="info-line" style="margin-top: 2px;">
+                <div class="info-line" style="margin-top: 1px;">
                     <b>Dirección:</b> C/Castillo Márquez #53. La Romana, Centro Ciudad. <b>Teléfono:</b> 809-550-7385 / 809-710-3395
                 </div>
                 <div class="info-line">
@@ -156,26 +142,29 @@
         </tr>
     </table>
 
-    <!-- TABLA CALIFICACIONES -->
+    <!-- TABLA CALIFICACIONES CON COLGROUP ESTRICTO -->
     <table id="tabla-notas">
+        <colgroup>
+            <col style="width: 19%;">
+            <col style="width: 3.5%;"><col style="width: 3.5%;"><col style="width: 3.5%;"><col style="width: 3.5%;">
+            <col style="width: 3.5%;"><col style="width: 3.5%;"><col style="width: 3.5%;"><col style="width: 3.5%;">
+            <col style="width: 3.5%;"><col style="width: 3.5%;"><col style="width: 3.5%;"><col style="width: 3.5%;">
+            <col style="width: 4.5%;"><col style="width: 4.5%;"><col style="width: 4.5%;">
+            <col style="width: 6%;">
+            <col style="width: 6%;">
+        </colgroup>
         <thead>
             <tr class="bg-grey">
-                <th rowspan="3" style="width: 20%;">ÁREAS CURRICULARES</th>
+                <th rowspan="3">ÁREAS CURRICULARES</th>
                 <th colspan="12">COMPETENCIAS FUNDAMENTALES</th>
-                <th colspan="3" rowspan="2">CALIFICACIÓN FINAL<br><span style="font-size: 8.5px; font-weight: normal;">POR COMPETENCIA</span></th>
-                <th rowspan="3" class="col-vertical"><span class="rotar-texto">DEL ÁREA</span></th>
-                <th rowspan="3" class="col-vertical"><span class="rotar-texto">RECUPERACIÓN</span></th>
+                <th colspan="3" rowspan="2">CALIFICACIÓN FINAL<br><span style="font-size: 8px; font-weight: normal;">POR COMPETENCIA</span></th>
+                <th rowspan="3"><span class="header-vertical">CALIF.<br>ÁREA</span></th>
+                <th rowspan="3"><span class="header-vertical">RECUP.<br>CUID.</span></th>
             </tr>
             <tr class="bg-grey">
-                <th colspan="4" style="width: 15%;">
-                    C1<br><span style="font-size: 8.5px; font-weight: normal;">Comunicativa</span>
-                </th>
-                <th colspan="4" style="width: 19%;">
-                    C2<br><span style="font-size: 7.5px; font-weight: normal;">Pensamiento Lógico Creativo y Crítico; Resolución de Problemas; Científica y Tecnológica</span>
-                </th>
-                <th colspan="4" style="width: 19%;">
-                    C3<br><span style="font-size: 7.5px; font-weight: normal;">Ética y Ciudadana; Desarrollo Personal y Espiritual; Ambiental y de la Salud</span>
-                </th>
+                <th colspan="4">C1<br><span style="font-size: 7.5px; font-weight: normal;">Comunicativa</span></th>
+                <th colspan="4">C2<br><span style="font-size: 7px; font-weight: normal;">Lógico-Crítica / Científica</span></th>
+                <th colspan="4">C3<br><span style="font-size: 7px; font-weight: normal;">Ética / Ambiental / Personal</span></th>
             </tr>
             <tr class="bg-grey">
                 <th>P1</th><th>P2</th><th>P3</th><th>P4</th>
@@ -218,22 +207,22 @@
     <table id="tabla-asistencia">
         <thead>
             <tr class="bg-grey">
-                <th rowspan="2" style="width: 9%;">Escala numérica</th>
-                <th rowspan="2" style="width: 35%;">DESCRIPCIÓN</th>
-                <th rowspan="2" style="width: 6%;">PERÍODO</th>
-                <th rowspan="2" style="width: 8%;">RESUMEN DE ASISTENCIA</th>
+                <th rowspan="2" style="width: 8%;">Escala numérica</th>
+                <th rowspan="2" style="width: 36%;">DESCRIPCIÓN</th>
+                <th rowspan="2" style="width: 5%;">PERÍODO</th>
+                <th rowspan="2" style="width: 8%;">RESUMEN ASIST.</th>
                 <th rowspan="2" style="width: 8%;">AUSENCIA</th>
-                <th colspan="2" style="width: 18%;">ASISTENCIA DEL ESTUDIANTE<br>% ANUAL</th>
+                <th colspan="2" style="width: 18%;">ASISTENCIA ESTUDIANTE<br>% ANUAL</th>
                 <th rowspan="2" class="leyenda-cell">LEYENDA</th>
             </tr>
             <tr class="bg-grey">
-                <th>ASISTENCIA</th>
-                <th>AUSENCIA</th>
+                <th>ASIST.</th>
+                <th>AUS.</th>
             </tr>
         </thead>
         <tbody>
             <tr>
-                <td class="bold" style="font-size: 10.5px;">89-100</td>
+                <td class="bold" style="font-size: 10px;">89-100</td>
                 <td class="desc-cell">Evidencia que el estudiante ha alcanzado un desempeño destacado con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
                 <td class="bold">P1</td>
                 <td><span class="valor-celda">{{ notas.get('asist_p1', '') }}</span></td>
@@ -241,12 +230,12 @@
                 <td><span class="valor-celda">{{ notas.get('pct_asist_p1', '') }}</span></td>
                 <td><span class="valor-celda">{{ notas.get('pct_aus_p1', '') }}</span></td>
                 <td rowspan="4" class="leyenda-cell">
-                    <b>(P1)</b> Período 1<br><b>(P2)</b> Período 2<br><b>(P3)</b> Período 3<br><b>(P4)</b> Período 4<br><br>
-                    <b>(C1)</b> Competencia 1<br><b>(C2)</b> Competencia 2<br><b>(C3)</b> Competencia 3
+                    <b>(P1-P4)</b> Períodos 1 al 4<br>
+                    <b>(C1-C3)</b> Competencias Fund.
                 </td>
             </tr>
             <tr>
-                <td class="bold" style="font-size: 10.5px;">77-88</td>
+                <td class="bold" style="font-size: 10px;">77-88</td>
                 <td class="desc-cell">Evidencia que el estudiante ha logrado, en general, los aprendizajes esperados con relación a los aspectos evaluados de las competencias de cada área, durante los periodos y al finalizar el año escolar.</td>
                 <td class="bold">P2</td>
                 <td><span class="valor-celda">{{ notas.get('asist_p2', '') }}</span></td>
@@ -255,7 +244,7 @@
                 <td><span class="valor-celda">{{ notas.get('pct_aus_p2', '') }}</span></td>
             </tr>
             <tr>
-                <td class="bold" style="font-size: 10.5px;">65-76</td>
+                <td class="bold" style="font-size: 10px;">65-76</td>
                 <td class="desc-cell">Evidencia que el estudiante aún se encuentra en proceso con relación a los aspectos evaluados de las competencias de cada área, durante los periodos y al finalizar el año escolar, mostrando un logro muy básico.</td>
                 <td class="bold">P3</td>
                 <td><span class="valor-celda">{{ notas.get('asist_p3', '') }}</span></td>
@@ -264,7 +253,7 @@
                 <td><span class="valor-celda">{{ notas.get('pct_aus_p3', '') }}</span></td>
             </tr>
             <tr>
-                <td class="bold" style="font-size: 10.5px;">Menos de 65</td>
+                <td class="bold" style="font-size: 10px;">Menos de 65</td>
                 <td class="desc-cell">Evidencia que el estudiante ha alcanzado un desempeño insuficiente con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
                 <td class="bold">P4</td>
                 <td><span class="valor-celda">{{ notas.get('asist_p4', '') }}</span></td>
@@ -284,7 +273,7 @@
 
     <table class="tabla-avances">
         <tr>
-            <td class="bold bg-grey" style="width: 6%; text-align: center;">P1</td>
+            <td class="bold bg-grey" style="width: 5%; text-align: center;">P1</td>
             <td><div class="texto-area-impresion">{{ notas.get('avance_p1', '') }}</div></td>
         </tr>
         <tr>
@@ -307,27 +296,27 @@
 
     <table class="tabla-inferior">
         <tr>
-            <td style="width: 58%; padding-right: 6px;">
+            <td style="width: 58%; padding-right: 5px;">
                 <table>
                     <tr class="bg-grey">
                         <th style="width: 45%;">Períodos de reportes de calificaciones</th>
                         <th style="width: 55%;">FIRMA DEL PADRE, MADRE O TUTOR</th>
                     </tr>
                     <tr>
-                        <td class="text-left bold" style="font-size: 10px;">Septiembre - Octubre</td>
-                        <td style="height: 25px;"></td>
+                        <td class="text-left bold" style="font-size: 9.5px;">Septiembre - Octubre</td>
+                        <td style="height: 24px;"></td>
                     </tr>
                     <tr>
-                        <td class="text-left bold" style="font-size: 10px;">Noviembre - Diciembre - Enero</td>
-                        <td style="height: 25px;"></td>
+                        <td class="text-left bold" style="font-size: 9.5px;">Noviembre - Diciembre - Enero</td>
+                        <td style="height: 24px;"></td>
                     </tr>
                     <tr>
-                        <td class="text-left bold" style="font-size: 10px;">Febrero - Marzo</td>
-                        <td style="height: 25px;"></td>
+                        <td class="text-left bold" style="font-size: 9.5px;">Febrero - Marzo</td>
+                        <td style="height: 24px;"></td>
                     </tr>
                     <tr>
-                        <td class="text-left bold" style="font-size: 10px;">Abril - Mayo - Junio</td>
-                        <td style="height: 25px;"></td>
+                        <td class="text-left bold" style="font-size: 9.5px;">Abril - Mayo - Junio</td>
+                        <td style="height: 24px;"></td>
                     </tr>
                 </table>
             </td>
@@ -336,21 +325,21 @@
                     <tr class="bg-grey">
                         <th colspan="3">SITUACIÓN DEL/DE LA ESTUDIANTE</th>
                     </tr>
-                    <tr class="bg-grey" style="font-size: 9px;">
+                    <tr class="bg-grey" style="font-size: 8.5px;">
                         <th style="width: 33%;">Promovido/a</th>
                         <th style="width: 33%;">Aplazado/a</th>
                         <th style="width: 34%;">Repitente</th>
                     </tr>
                     <tr>
-                        <td style="height: 25px; text-align: center; font-weight: bold; font-size: 13px;">{% if notas.get('promovido') == '1' %}X{% endif %}</td>
-                        <td style="text-align: center; font-weight: bold; font-size: 13px;">{% if notas.get('aplazado') == '1' %}X{% endif %}</td>
-                        <td style="text-align: center; font-weight: bold; font-size: 13px;">{% if notas.get('repitente') == '1' %}X{% endif %}</td>
+                        <td style="height: 24px; text-align: center; font-weight: bold; font-size: 12px;">{% if notas.get('promovido') == '1' %}X{% endif %}</td>
+                        <td style="text-align: center; font-weight: bold; font-size: 12px;">{% if notas.get('aplazado') == '1' %}X{% endif %}</td>
+                        <td style="text-align: center; font-weight: bold; font-size: 12px;">{% if notas.get('repitente') == '1' %}X{% endif %}</td>
                     </tr>
                     <tr>
-                        <td colspan="3" class="bg-grey text-left bold" style="font-size: 9px; padding: 3px 5px;">Condición final del/de la estudiante</td>
+                        <td colspan="3" class="bg-grey text-left bold" style="font-size: 8.5px; padding: 2px 4px;">Condición final del/de la estudiante</td>
                     </tr>
                     <tr>
-                        <td colspan="3" style="height: 25px; text-align: center; font-weight: bold; font-size: 11.5px;">{{ notas.get('condicion_final', '') }}</td>
+                        <td colspan="3" style="height: 24px; text-align: center; font-weight: bold; font-size: 11px;">{{ notas.get('condicion_final', '') }}</td>
                     </tr>
                 </table>
             </td>
