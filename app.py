@@ -2248,16 +2248,26 @@ def notas2():
 
 @app.route('/menu_planificacion')
 def menu_planificacion():
-    # Asegúrate de validar si el usuario ha iniciado sesión si usas control de acceso
+    # Valida si el usuario ha iniciado sesión
     if 'nombre_completo' not in session:
         return redirect(url_for('login'))
     return render_template('menu_planificacion.html')
 
-
 @app.route('/planificacion')
 def planificacion():
-    usuario_actual = {'nombre': session.get('usuario_nombre', 'Jesus Maria Alfonseca Duverge'), 'rol': session.get('rol', 'maestro')}
+    # Valida sesión opcionalmente o usa valores predeterminados
+    usuario_actual = {
+        'nombre': session.get('usuario_nombre', 'Jesus Maria Alfonseca Duverge'), 
+        'rol': session.get('rol', 'maestro')
+    }
     return render_template('planificacion.html', usuario=usuario_actual)
+
+# Ruta agregada para solucionar el error 404 en /planificacion_diaria
+@app.route('/planificacion_diaria')
+def planificacion_diaria():
+    if 'nombre_completo' not in session:
+        return redirect(url_for('login'))
+    return render_template('planificacion_diaria.html')
 
 
 @app.route('/registrar_usuario', methods=['GET', 'POST'])
