@@ -2269,6 +2269,12 @@ def planificacion_diaria():
         return redirect(url_for('login'))
     return render_template('planificacion_diaria.html')
 
+@app.route('/ver_planificaciones_diarias')
+def ver_planificaciones_diarias():
+    if 'nombre_completo' not in session:
+        return redirect(url_for('login'))
+    return render_template('ver_planificaciones_diarias.html') # Asegúrate de tener este HTML
+
 
 @app.route('/registrar_usuario', methods=['GET', 'POST'])
 def registrar_usuario():
