@@ -2267,14 +2267,14 @@ def planificacion_diaria():
     if 'nombre_completo' not in session:
         return redirect(url_for('login'))
     
-    # Capturamos los datos del usuario logueado (ajusta las llaves según cómo guardes el grado en tu sesión)
-    docente_nombre = session.get('nombre_completo', 'Jesus Maria Alfonseca Duverge')
-    grado_seccion = session.get('curso_asignado', 'No especificado') # O la clave que uses en tu base de datos/sesión para el grado
+    # Extraemos los datos de la sesión actual
+    docente_nombre = session.get('nombre_completo', '')
+    grado_seccion = session.get('curso_asignado', '') # Usamos la columna exacta de tu base de datos
     
     return render_template(
         'planificacion_diaria.html', 
         docente=docente_nombre, 
-        grado=grado_seccion    
+        grado=grado_seccion
     )
 
 @app.route('/ver_planificaciones_diarias')
