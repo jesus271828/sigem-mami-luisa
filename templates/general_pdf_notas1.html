@@ -6,7 +6,7 @@
     <style>
         @page {
             size: A4 landscape;
-            margin: 6mm;
+            margin: 5mm;
         }
         *, *::before, *::after { box-sizing: border-box; }
         body { 
@@ -21,7 +21,7 @@
 
         .page-container { width: 100%; margin: 0 auto; }
 
-        /* ENCABEZADO */
+        /* ENCABEZADO OFICIAL */
         .header-table { width: 100%; border-collapse: collapse; border: none; margin-bottom: 3px; border-bottom: 2px solid #000; padding-bottom: 3px; }
         .header-table td { border: none; padding: 0; vertical-align: middle; }
         .logo-cell { width: 75px; text-align: left; }
@@ -32,12 +32,12 @@
         .info-row-2 { font-size: 10.5px; font-weight: bold; margin-top: 2px; }
 
         /* TABLAS GENERALES */
-        table { border-collapse: collapse; width: 100%; border: 2px solid #000; margin-bottom: 3px; table-layout: fixed; }
-        th, td { border: 1px solid #000; padding: 2px 1px; text-align: center; vertical-align: middle; font-size: 9px; word-wrap: break-word; }
+        table { border-collapse: collapse; width: 100%; border: 2px solid #000; margin-bottom: 3px; }
+        th, td { border: 1px solid #000; padding: 2px 2px; text-align: center; vertical-align: middle; font-size: 9px; }
         .bold { font-weight: bold; }
         .bg-grey { background-color: #f2f2f2 !important; }
         .text-left { text-align: left !important; padding-left: 5px !important; }
-        
+
         /* DATOS DEL ESTUDIANTE */
         #tabla-datos td { 
             text-align: left; 
@@ -47,28 +47,16 @@
 
         /* TABLA DE CALIFICACIONES */
         #tabla-notas th { padding: 3px 1px; font-size: 8.5px; }
-        #tabla-notas td { padding: 2px 1px; height: 22px; }
-        .col-area { text-align: left; padding-left: 5px; font-size: 9.5px; font-weight: bold; }
+        #tabla-notas td { padding: 2px 1px; height: 21px; }
+        .col-area { text-align: left; padding-left: 5px; font-size: 9.5px; font-weight: bold; width: 19%; }
         .valor-celda { width: 100%; font-size: 9.5px; font-weight: bold; text-align: center; display: block; }
         .res { font-weight: bold; color: #0000cc; background-color: #e8f0fe !important; }
         .area-res { font-weight: bold; color: #006600; background-color: #e6ffed !important; }
-        
-        /* TEXTO HORIZONTAL PARA CABECERAS VERTICALES ANTERIORES */
-        .header-vertical {
-            font-size: 8px;
-            font-weight: bold;
-            line-height: 1.1;
-        }
 
         /* TABLA DE ASISTENCIA Y ESCALA */
         #tabla-asistencia th { padding: 3px 2px; font-size: 9px; }
         #tabla-asistencia td { padding: 3px; }
-        .desc-cell { 
-            text-align: left; 
-            font-size: 9px; 
-            line-height: 1.25; 
-            padding: 3px 5px !important; 
-        }
+        .desc-cell { text-align: left; font-size: 9px; line-height: 1.25; padding: 3px 5px !important; }
         .leyenda-cell { text-align: left; font-size: 8.5px; width: 130px; vertical-align: top; padding: 3px 5px !important; line-height: 1.2; }
 
         /* SEGUNDA PÁGINA (PARTE TRASERA) */
@@ -142,35 +130,26 @@
         </tr>
     </table>
 
-    <!-- TABLA CALIFICACIONES CON COLGROUP ESTRICTO -->
+    <!-- TABLA CALIFICACIONES -->
     <table id="tabla-notas">
-        <colgroup>
-            <col style="width: 19%;">
-            <col style="width: 3.5%;"><col style="width: 3.5%;"><col style="width: 3.5%;"><col style="width: 3.5%;">
-            <col style="width: 3.5%;"><col style="width: 3.5%;"><col style="width: 3.5%;"><col style="width: 3.5%;">
-            <col style="width: 3.5%;"><col style="width: 3.5%;"><col style="width: 3.5%;"><col style="width: 3.5%;">
-            <col style="width: 4.5%;"><col style="width: 4.5%;"><col style="width: 4.5%;">
-            <col style="width: 6%;">
-            <col style="width: 6%;">
-        </colgroup>
         <thead>
             <tr class="bg-grey">
-                <th rowspan="3">ÁREAS CURRICULARES</th>
+                <th rowspan="3" style="width: 19%;">ÁREAS CURRICULARES</th>
                 <th colspan="12">COMPETENCIAS FUNDAMENTALES</th>
-                <th colspan="3" rowspan="2">CALIFICACIÓN FINAL<br><span style="font-size: 8px; font-weight: normal;">POR COMPETENCIA</span></th>
-                <th rowspan="3"><span class="header-vertical">CALIF.<br>ÁREA</span></th>
-                <th rowspan="3"><span class="header-vertical">RECUP.<br>CUID.</span></th>
+                <th colspan="3" rowspan="2">CALIFICACIÓN FINAL<br>POR COMPETENCIA</th>
+                <th rowspan="3" style="width: 5.5%;">CALIF. ÁREA</th>
+                <th rowspan="3" style="width: 5.5%;">RECUP.</th>
             </tr>
             <tr class="bg-grey">
-                <th colspan="4">C1<br><span style="font-size: 7.5px; font-weight: normal;">Comunicativa</span></th>
-                <th colspan="4">C2<br><span style="font-size: 7px; font-weight: normal;">Lógico-Crítica / Científica</span></th>
-                <th colspan="4">C3<br><span style="font-size: 7px; font-weight: normal;">Ética / Ambiental / Personal</span></th>
+                <th colspan="4" style="width: 14%;">C1<br><span style="font-size: 7.5px; font-weight: normal;">Comunicativa</span></th>
+                <th colspan="4" style="width: 18%;">C2<br><span style="font-size: 7px; font-weight: normal;">Lógico-Crítica / Científica</span></th>
+                <th colspan="4" style="width: 18%;">C3<br><span style="font-size: 7px; font-weight: normal;">Ética / Ambiental / Personal</span></th>
             </tr>
             <tr class="bg-grey">
-                <th>P1</th><th>P2</th><th>P3</th><th>P4</th>
-                <th>P1</th><th>P2</th><th>P3</th><th>P4</th>
-                <th>P1</th><th>P2</th><th>P3</th><th>P4</th>
-                <th>C1</th><th>C2</th><th>C3</th>
+                <th style="width: 3.5%;">P1</th><th style="width: 3.5%;">P2</th><th style="width: 3.5%;">P3</th><th style="width: 3.5%;">P4</th>
+                <th style="width: 4.5%;">P1</th><th style="width: 4.5%;">P2</th><th style="width: 4.5%;">P3</th><th style="width: 4.5%;">P4</th>
+                <th style="width: 4.5%;">P1</th><th style="width: 4.5%;">P2</th><th style="width: 4.5%;">P3</th><th style="width: 4.5%;">P4</th>
+                <th style="width: 4.5%;">C1</th><th style="width: 4.5%;">C2</th><th style="width: 4.5%;">C3</th>
             </tr>
         </thead>
         <tbody>
@@ -230,7 +209,7 @@
                 <td><span class="valor-celda">{{ notas.get('pct_asist_p1', '') }}</span></td>
                 <td><span class="valor-celda">{{ notas.get('pct_aus_p1', '') }}</span></td>
                 <td rowspan="4" class="leyenda-cell">
-                    <b>(P1-P4)</b> Períodos 1 al 4<br>
+                    <b>(P1)</b> Período 1<br><b>(P2)</b> Período 2<br><b>(P3)</b> Período 3<br><b>(P4)</b> Período 4<br><br>
                     <b>(C1-C3)</b> Competencias Fund.
                 </td>
             </tr>
