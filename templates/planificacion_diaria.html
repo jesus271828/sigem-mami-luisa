@@ -81,7 +81,7 @@
                 <p><i class="fas fa-user-circle"></i> {{ session['nombre_completo'] }} ({{ session['rol'] }})</p>
                 <hr>
                 <a href="{{ url_for('menu_planificacion') }}" class="btn btn-outline-light w-100 mb-3"><i class="fas fa-arrow-left me-2"></i>Volver al Menú</a>
-                <a href="{{ url_for('ver_planificaciones_diarias') }}" class="btn btn-warning w-100 mb-3 text-dark fw-bold"><i class="fas fa-list-alt me-2"></i>Ver Diarias Guardadas</a>
+                <a href="{{ url_for('planificacion_diaria') }}">Ver Planificaciones</a>
                 <a href="{{ url_for('logout') }}" class="btn btn-danger w-100">Cerrar Sesión</a>
             </div>
 
