@@ -2262,12 +2262,20 @@ def planificacion():
     }
     return render_template('planificacion.html', usuario=usuario_actual)
 
-# Ruta agregada para solucionar el error 404 en /planificacion_diaria
 @app.route('/planificacion_diaria')
 def planificacion_diaria():
     if 'nombre_completo' not in session:
         return redirect(url_for('login'))
-    return render_template('planificacion_diaria.html')
+    
+    # Capturamos los datos del usuario logueado (ajusta las llaves según cómo guardes el grado en tu sesión)
+    docente_nombre = session.get('nombre_completo', 'Jesus Maria Alfonseca Duverge')
+    grado_seccion = session.get('grado_seccion', 'No especificado') # O la clave que uses en tu base de datos/sesión para el grado
+    
+    return render_template(
+        'planificacion_diaria.html', 
+        docente=docente_nombre, 
+        grado=grado_seccion
+    )
 
 @app.route('/ver_planificaciones_diarias')
 def ver_planificaciones_diarias():
