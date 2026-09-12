@@ -2245,6 +2245,87 @@ def notas2():
                            grado_activo=grado_activo,
                            docente_nombre=docente_guardado)
 
+import os
+import base64
+from flask import session, redirect, url_for, render_template, make_response, request
+from weasyprint import HTML
+
+@app.route('/generar_pdf_notas/<path:id_estudiante>')
+def generar_pdf_notas(id_estudiante):
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+        
+    conexion = get_db_connection()
+    estudiante = None
+    lista_estudiantes = []
+    notas = {}
+
+    try:
+        # Obtener lista general de estudiantes (por si la plantilla la necesita para el selector o conteo)
+        cursor_est = conexion.execute("SELECT * FROM inscripciones")
+        filas = cursor_est.fetchall()
+        
+        for fila in filas:
+            est_dict = dict(fila) if not isinstance(fila, dict) else fila
+            lista_estudiantes.append(est_dict)
+            # Buscar el estudiante actual por su identificador único (ajusta el índice o campo según tu BD)
+            valores = list(fila.values()) if isinstance(fila, dict) else list(fila)
+            if len(valores) >= 4 and str(valores[3]).strip() == str(id_estudiante).strip():
+                estudiante = est_dict
+
+        if estudiante:
+            # Obtener el ID real o cédula para buscar sus calificaciones guardadas
+            valores_est = list(estudiante.values()) if isinstance(estudiante, dict) else list(estudiante)
+            id_real_estudiante = valores_est[3]
+            
+            # Suponiendo que tienes una tabla de notas o calificaciones en tu base de datos
+            cursor_notas = conexion.execute("SELECT * FROM notas WHERE id_estudiante = ?", (str(id_real_estudiante),))
+            resultado_notas = cursor_notas.fetchone()
+            
+            if resultado_notas:
+                notas = dict(resultado_notas) if not isinstance(resultado_notas, dict) else resultado_notas
+
+    except Exception as e:
+        print("--- ERROR CRÍTICO AL OBTENER DATOS DE NOTAS:", e)
+        estudiante = None
+    finally:
+        conexion.close()
+    
+    if not estudiante:
+        return f"No se encontró el estudiante con ID: {id_estudiante}", 404
+
+    # Procesar Logo en Base64 (mismo procedimiento que usabas)
+    logo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'img', 'logo2.png')
+    logo_src = ""
+    if os.path.exists(logo_path):
+        with open(logo_path, "rb") as image_file:
+            logo_base64 = base64.b64encode(image_file.read()).decode('utf-8')
+        logo_src = f"data:image/png;base64,{logo_base64}"
+        
+    docente_nombre = session.get('nombre_usuario', 'Docente Titular')
+
+    # Renderizar el archivo HTML de notas que estructuramos para las 2 páginas
+    html_content = render_template(
+        'notas2.html', 
+        estudiante=estudiante, 
+        lista_estudiantes=lista_estudiantes, 
+        notas=notas, 
+        docente_nombre=docente_nombre,
+        logo_src=logo_src
+    )
+    
+    try:
+        # Generar el PDF horizontal (landscape) respetando los estilos de página definidos en el HTML
+        pdf_bytes = HTML(string=html_content, base_url=request.url_root).write_pdf()
+        
+        response = make_response(pdf_bytes)
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = f'inline; filename=informe_aprendizaje_{id_estudiante}.pdf'
+        return response
+        
+    except Exception as e:
+        print("--- ERROR AL GENERAR PDF DE NOTAS CON WEASYPRINT:", e)
+        return 'Hubo un error al generar el PDF de notas', 500
 
 @app.route('/menu_planificacion')
 def menu_planificacion():
