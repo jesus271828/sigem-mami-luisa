@@ -6,177 +6,128 @@
     <style>
         @page {
             size: A4 landscape;
-            margin: 8mm;
+            margin: 6mm;
+            @bottom-right {
+                content: "Página " counter(page) " de " counter(pages);
+                font-family: 'Tw Cen MT', Arial, sans-serif;
+                font-size: 8pt;
+                color: #000;
+            }
         }
         *, *::before, *::after { box-sizing: border-box; }
         body { 
-            font-family: 'Tw Cen MT', sans-serif; 
-            font-size: 12px; 
+            font-family: 'Tw Cen MT', Arial, sans-serif; 
+            font-size: 11px; 
             color: #000; 
             margin: 0; 
             padding: 0; 
+            background-color: #ffffff;
+            line-height: 1.15;
         }
         
-        /* BARRA DE ACCIONES / BOTONES */
+        /* BARRA DE ACCIONES (Visible en web, oculta en PDF) */
         .action-bar {
             background: #2c3e50;
-            padding: 10px 15px;
+            padding: 8px 15px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px;
-            border-radius: 6px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-        .action-bar .left-group, .action-bar .right-group {
-            display: flex;
-            gap: 10px;
-            align-items: center;
+            margin-bottom: 8px;
+            border-radius: 4px;
         }
         .btn {
-            padding: 8px 14px;
-            font-size: 13px;
+            padding: 6px 12px;
+            font-size: 12px;
             font-weight: bold;
             border: none;
             border-radius: 4px;
             cursor: pointer;
             text-decoration: none;
+            color: #fff;
             display: inline-flex;
             align-items: center;
             gap: 5px;
-            color: #fff;
-            transition: background 0.2s;
         }
         .btn-pdf { background-color: #e74c3c; }
-        .btn-pdf:hover { background-color: #c0392b; }
         .btn-save { background-color: #27ae60; }
-        .btn-save:hover { background-color: #219653; }
-        .btn-clear { background-color: #f39c12; }
-        .btn-clear:hover { background-color: #d68910; }
-        .btn-menu { background-color: #34495e; border: 1px solid #7f8c8d; }
-        .btn-menu:hover { background-color: #2c3e50; }
+        .btn-menu { background-color: #34495e; }
 
-        /* REGLAS DE IMPRESIÓN (OCULTAR INTERFAZ) */
         @media print {
-            .action-bar, .selector-container, .alert-flash { 
-                display: none !important; 
-            }
-            body {
-                margin: 0;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-            .salto-pagina { 
-                page-break-before: always; 
-            }
+            .action-bar, .selector-container, .alert-flash { display: none !important; }
+            body { margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
 
-        /* ALERTAS / MENSAJES FLASH */
-        .alert-flash {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-            padding: 10px 15px;
-            margin-bottom: 10px;
-            border-radius: 4px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .alert-close {
-            background: transparent;
-            border: none;
-            font-size: 16px;
-            cursor: pointer;
-            color: #155724;
-        }
-
-        /* ENCABEZADO */
-        .header { display: flex; align-items: flex-start; border-bottom: 2px solid #000; margin-bottom: 8px; padding-bottom: 5px; }
-        .logo { width: 85px; margin-right: 12px; }
+        /* ENCABEZADO INSTITUCIONAL OFICIAL */
+        .header { display: flex; align-items: flex-start; border-bottom: 2px solid #000; margin-bottom: 6px; padding-bottom: 4px; }
+        .logo { width: 75px; margin-right: 10px; flex-shrink: 0; }
         .header-content { flex-grow: 1; }
         .header-row-1 { display: flex; justify-content: space-between; align-items: baseline; }
-        .title-school { font-size: 20px; font-weight: bold; color: #5b739e; margin: 0; font-family: 'Tw Cen MT', serif; }
-        .lema { font-size: 12px; font-style: italic; color: #b87a42; font-family: 'Tw Cen MT', serif; font-weight: normal; }
-        .info-line { font-size: 11px; margin: 2px 0; }
-        .info-row-2 { display: flex; justify-content: space-between; margin-top: 3px; }
+        .title-school { font-size: 18px; font-weight: bold; color: #5b739e; margin: 0; font-family: 'Tw Cen MT', serif; }
+        .lema { font-size: 11px; font-style: italic; color: #b87a42; font-family: 'Tw Cen MT', serif; }
+        .info-line { font-size: 10px; margin: 1px 0; color: #000; }
+        .info-row-2 { display: flex; justify-content: space-between; margin-top: 2px; font-weight: bold; }
 
-        /* TABLAS GENERALES */
-        table { border-collapse: collapse; width: 100%; border: 2px solid #000; margin-bottom: 8px; }
-        th, td { border: 1px solid #000; padding: 4px 3px; text-align: center; vertical-align: middle; font-size: 11px; }
+        /* TABLAS GENERALES ESTILO OFICIAL */
+        table { border-collapse: collapse; width: 100%; border: 2px solid #000; margin-bottom: 6px; }
+        th, td { border: 1px solid #000; padding: 3px 4px; text-align: center; vertical-align: middle; font-size: 10px; }
         .bold { font-weight: bold; }
-        .bg-grey { background-color: #f2f2f2; }
+        .bg-grey { background-color: #f2f2f2; color: #000; font-weight: bold; }
         
-        #tabla-datos td { text-align: left; padding: 5px 6px; font-size: 11px; }
+        #tabla-datos td { text-align: left; padding: 4px 6px; font-size: 10px; border: 1px solid #000; background: #fff; }
 
-        /* CALIFICACIONES */
-        #tabla-notas th { padding: 4px 3px; }
-        #tabla-notas td { padding: 3px; height: 28px; }
-        #tabla-notas .input-text { border: none; width: 100%; font-size: 12px; text-align: center; outline: none; background: transparent; font-family: 'Tw Cen MT', sans-serif; }
-        #tabla-notas .res { font-weight: bold; color: blue; background-color: #e8f0fe; }
-        #tabla-notas .area-res { font-weight: bold; color: green; background-color: #e6ffed; }
-        #tabla-notas .text-left { text-align: left; padding-left: 6px; }
-        #tabla-notas .vertical-text { writing-mode: vertical-rl; transform: rotate(180deg); white-space: nowrap; padding: 4px; font-size: 10.5px; }
+        /* TABLA CALIFICACIONES */
+        #tabla-notas th { padding: 4px 2px; background-color: #f2f2f2; color: #000; font-size: 9.5px; border: 1px solid #000; }
+        #tabla-notas td { padding: 2px; height: 24px; border: 1px solid #000; }
+        .cell-val { font-size: 11px; text-align: center; outline: none; border: none; width: 100%; background: transparent; font-family: 'Tw Cen MT', Arial, sans-serif; }
+        .res { font-weight: bold; color: #000; background-color: #f9f9f9; }
+        .area-res { font-weight: bold; color: #000; background-color: #f2f2f2; }
+        .text-left { text-align: left; padding-left: 5px; }
+        .vertical-text { writing-mode: vertical-rl; transform: rotate(180deg); white-space: nowrap; padding: 2px; font-size: 9px; height: 50px; }
 
-        /* ASISTENCIA */
-        #tabla-asistencia td { height: 34px; padding: 4px; }
-        #tabla-asistencia .input-text { border: none; width: 100%; font-size: 11px; text-align: center; outline: none; background: transparent; font-family: 'Tw Cen MT', sans-serif; }
-        .desc-cell { text-align: left; font-size: 10px; line-height: 1.25; padding: 4px 6px !important; }
-        .leyenda-cell { text-align: left; font-size: 10px; width: 165px; vertical-align: top; padding: 6px 8px !important; line-height: 1.3; }
+        /* ASISTENCIA Y LEYENDA */
+        #tabla-asistencia th { background-color: #f2f2f2; color: #000; font-size: 9.5px; }
+        #tabla-asistencia td { height: 26px; padding: 3px; }
+        .desc-cell { text-align: left; font-size: 9px; line-height: 1.2; padding: 3px 5px !important; }
+        .leyenda-cell { text-align: left; font-size: 9px; width: 155px; vertical-align: top; padding: 4px 6px !important; line-height: 1.25; background: #fff; }
 
         /* PARTE TRASERA */
-        .salto-pagina { page-break-before: always; margin-top: 15px; }
-        .tabla-avances td { height: 48px; vertical-align: middle; text-align: left; padding: 4px 6px; }
-        .titulo-avances { background-color: #f2f2f2; font-size: 11.5px; font-weight: bold; text-align: left; padding: 6px 10px; border: 2px solid #000; border-top: none; }
-        .input-text-area { border: none; width: 100%; height: 40px; font-size: 11px; outline: none; background: transparent; resize: none; font-family: 'Tw Cen MT', sans-serif; }
-        .pie-firmas { display: flex; justify-content: space-between; margin-top: 90px; padding: 0 40px; }
-        .linea-firma { width: 300px; text-align: center; border-top: 1px solid #000; padding-top: 6px; font-size: 11.5px; }
+        .salto-pagina { page-break-before: always; margin-top: 10px; }
+        .titulo-avances { background-color: #f2f2f2; color: #000; font-size: 10px; font-weight: bold; text-align: left; padding: 5px 8px; border: 2px solid #000; border-bottom: none; margin-top: 10px; }
+        .tabla-avances { border: 2px solid #000; margin-bottom: 8px; }
+        .tabla-avances td { height: 44px; vertical-align: middle; text-align: left; padding: 4px 6px; background: #fff; border: 1px solid #000; }
+        .avance-text { font-size: 10px; border: none; width: 100%; height: 38px; resize: none; background: transparent; font-family: 'Tw Cen MT', Arial, sans-serif; outline: none; }
+        
+        .pie-firmas { display: flex; justify-content: space-around; margin-top: 50px; padding: 0 20px; page-break-inside: avoid; }
+        .linea-firma { width: 280px; text-align: center; border-top: 1px solid #000; padding-top: 5px; font-size: 10px; }
 
-        .selector-container { margin-bottom: 8px; background: #f8f9fa; padding: 8px; border: 1px solid #ccc; display: flex; align-items: center; gap: 10px; border-radius: 4px; }
+        .selector-container { margin-bottom: 6px; background: #f8f9fa; padding: 6px; border: 1px solid #ccc; display: flex; align-items: center; gap: 10px; }
     </style>
 </head>
 <body>
 
-    <!-- BARRA DE ACCIÓN SUPERIOR -->
+    <!-- BARRA DE ACCIÓN (Interfaz Web) -->
     {% if not modo_pdf %}
     <div class="action-bar">
-        <div class="left-group">
-            <a href="{{ url_for('menu_notas') }}" class="btn btn-menu">⬅ Salir al Menú de Notas</a>
-            <button type="button" class="btn btn-clear" onclick="limpiarFormulario()">🧹 Borrar Datos</button>
+        <div style="display: flex; gap: 10px;">
+            <a href="{{ url_for('menu_notas') }}" class="btn btn-menu">⬅ Menú</a>
         </div>
-        <div class="right-group">
-            <button type="submit" form="form-informe" class="btn btn-save">💾 Guardar Cambios</button>
+        <div>
             {% if estudiante %}
-             <a href="{{ url_for('general_pdf_notas1', id_estudiante=estudiante.id_estudiante) }}" class="btn btn-pdf" target="_blank">🖨️ Generar PDF</a>
+             <a href="{{ url_for('general_pdf_notas1', id_estudiante=estudiante.id_estudiante) }}" class="btn btn-pdf" target="_blank">🖨️ Generar PDF Oficial</a>
             {% else %}
-                <button type="button" class="btn btn-pdf" onclick="window.print()">🖨️ Generar PDF</button>
+                <button type="button" class="btn btn-pdf" onclick="window.print()">🖨️ Generar PDF Oficial</button>
             {% endif %}
         </div>
     </div>
     {% endif %}
 
-    <!-- MENSAJES FLASH DE ÉXITO -->
-    {% if not modo_pdf %}
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert-flash">
-                    <span>✅ {{ message }}</span>
-                    <button type="button" class="alert-close" onclick="this.parentElement.style.display='none'">&times;</button>
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-    {% endif %}
-
-    <!-- SELECTOR DE ESTUDIANTE -->
+    <!-- SELECTOR -->
     {% if not modo_pdf %}
     <div class="selector-container">
         <form method="GET" action="{{ url_for('notas1') }}" style="display: flex; align-items: center; width: 100%; gap: 10px; margin: 0;">
-            <label for="id_estudiante" style="font-weight: bold;">SELECCIONAR ESTUDIANTE:</label>
-            <select name="id_estudiante" id="id_estudiante" onchange="this.form.submit()" style="padding: 4px; font-size: 11px; flex-grow: 1; border: 1px solid #000; background: #fff; font-family: 'Tw Cen MT', sans-serif;">
-                <option value="" disabled {% if not estudiante %}selected{% endif %}>-- Seleccione un estudiante --</option>
+            <label for="id_estudiante" style="font-weight: bold; font-size: 11px;">ESTUDIANTE:</label>
+            <select name="id_estudiante" id="id_estudiante" onchange="this.form.submit()" style="padding: 3px; font-size: 11px; flex-grow: 1; border: 1px solid #000;">
+                <option value="" disabled {% if not estudiante %}selected{% endif %}>-- Seleccionar --</option>
                 {% for est in lista_estudiantes %}
                     <option value="{{ est.id_estudiante }}" {% if estudiante and estudiante.id_estudiante|string == est.id_estudiante|string %}selected{% endif %}>
                         {{ loop.index }}. {{ est.nombres }} {{ est.apellidos }}
@@ -187,13 +138,11 @@
     </div>
     {% endif %}
 
-    <!-- FORMULARIO PRINCIPAL DE DATOS Y NOTAS -->
+    <!-- FORMULARIO OFICIAL -->
     <form id="form-informe" method="POST" action="{{ url_for('notas1') }}">
         {% if estudiante %}
         <input type="hidden" name="id_estudiante" value="{{ estudiante.id_estudiante }}">
         {% endif %}
-
-        <input type="hidden" name="docente_registra" value="{{ docente_nombre }}">
 
         <!-- PARTE DELANTERA -->
         <div class="header">
@@ -209,24 +158,24 @@
                 <div class="info-line">
                     <b>Regional de Educación:</b> 05 San Pedro de Macorís. <b>Distrito Educativo:</b> 05-03 La Romana. <b>Código:</b> 07121
                 </div>
-                <div class="info-row-2 info-line" style="font-weight: bold;">
+                <div class="info-row-2 info-line">
                     <span>INFORME DE APRENDIZAJE. Primer Grado del Nivel Primario, Sección A.</span>
                 </div>
-                <div class="info-line" style="color: #444;">
+                <div class="info-line" style="color: #000;">
                     Año Escolar 2026-2027 / Jornada Escolar Regular. Tanda Matutina.
                 </div>
             </div>
         </div>
 
         <!-- TABLA DATOS ESTUDIANTE -->
-        <table id="tabla-datos" style="width: 100%; border-collapse: collapse;">
+        <table id="tabla-datos">
             <tr>
-                <td class="bold" style="width: 9%;">NOMBRE(S):</td>
-                <td style="width: 26%; font-weight: bold; color: #1a73e8;">{{ estudiante.nombres if estudiante else '' }}</td>
+                <td class="bold" style="width: 8%;">NOMBRE(S):</td>
+                <td style="width: 28%; font-weight: bold;">{{ estudiante.nombres if estudiante else '' }}</td>
                 <td class="bold" style="width: 9%;">APELLIDO(S):</td>
-                <td style="width: 26%; font-weight: bold; color: #1a73e8;">{{ estudiante.apellidos if estudiante else '' }}</td>
+                <td style="width: 28%; font-weight: bold;">{{ estudiante.apellidos if estudiante else '' }}</td>
                 <td class="bold" style="width: 11%;">NO. DE ORDEN:</td>
-                <td style="width: 5%; text-align: center; font-weight: bold;">
+                <td style="width: 6%; text-align: center; font-weight: bold;">
                     {% if estudiante %}
                         {% set ns = namespace(index=0) %}
                         {% for est in lista_estudiantes %}
@@ -237,14 +186,14 @@
                         {{ ns.index }}
                     {% endif %}
                 </td>
-                <td class="bold" style="width: 9%;">ID ESTUDIANTE:</td>
-                <td style="width: 5%; text-align: center; font-weight: bold; font-size: 7.5pt;">{{ estudiante.id_estudiante if estudiante else '' }}</td>
+                <td class="bold" style="width: 10%;">ID ESTUDIANTE:</td>
+                <td style="width: 10%; text-align: center; font-weight: bold; font-size: 8.5pt;">{{ estudiante.id_estudiante if estudiante else '' }}</td>
             </tr>
         </table>
 
-        <!-- TABLA CALIFICACIONES -->
+        <!-- TABLA CALIFICACIONES ESTILO OFICIAL -->
         <table id="tabla-notas">
-            <thead class="bg-grey">
+            <thead>
                 <tr>
                     <th rowspan="3" style="width: 18%;">ÁREAS CURRICULARES</th>
                     <th colspan="12">COMPETENCIAS FUNDAMENTALES</th>
@@ -253,18 +202,9 @@
                     <th rowspan="3" class="vertical-text">RECUPERACIÓN</th>
                 </tr>
                 <tr>
-                    <th colspan="4">
-                        C1<br>
-                        <span style="font-size: 10px; font-weight: normal;">Comunicativa</span>
-                    </th>
-                    <th colspan="4">
-                        C2<br>
-                        <span style="font-size: 10px; font-weight: normal;">Pensamiento Lógico Creativo y Crítico; Resolución de Problemas; Científica y Tecnológica</span>
-                    </th>
-                    <th colspan="4">
-                        C3<br>
-                        <span style="font-size: 10px; font-weight: normal;">Ética y Ciudadana; Desarrollo Personal y Espiritual; Ambiental y de la Salud</span>
-                    </th>
+                    <th colspan="4">C1<br><span style="font-size: 8px; font-weight: normal;">Comunicativa</span></th>
+                    <th colspan="4">C2<br><span style="font-size: 8px; font-weight: normal;">Pensamiento Lógico Creativo y Crítico; Resolución de Problemas; Científica y Tecnológica</span></th>
+                    <th colspan="4">C3<br><span style="font-size: 8px; font-weight: normal;">Ética y Ciudadana; Desarrollo Personal y Espiritual; Ambiental y de la Salud</span></th>
                     <th colspan="3">POR COMPETENCIA</th>
                 </tr>
                 <tr>
@@ -278,35 +218,35 @@
                 {% for m in ['Lengua Española', 'Matemática', 'Ciencias Sociales', 'Ciencias de la Naturaleza', 'Educacion Física', 'Formación Integral, Humana y Religiosa', 'Educación Artística', 'Inglés'] %}
                 <tr>
                     <td class="text-left bold">{{ m }}</td>
-                    <td><input class="input-text c1-p" name="{{ m }}_c1_p1" value="{{ notas.get(m + '_c1_p1', '') }}" oninput="calcular(this)"></td>
-                    <td><input class="input-text c1-p" name="{{ m }}_c1_p2" value="{{ notas.get(m + '_c1_p2', '') }}" oninput="calcular(this)"></td>
-                    <td><input class="input-text c1-p" name="{{ m }}_c1_p3" value="{{ notas.get(m + '_c1_p3', '') }}" oninput="calcular(this)"></td>
-                    <td><input class="input-text c1-p" name="{{ m }}_c1_p4" value="{{ notas.get(m + '_c1_p4', '') }}" oninput="calcular(this)"></td>
+                    <td><input class="cell-val c1-p" name="{{ m }}_c1_p1" value="{{ notas.get(m + '_c1_p1', '') }}" oninput="calcular(this)"></td>
+                    <td><input class="cell-val c1-p" name="{{ m }}_c1_p2" value="{{ notas.get(m + '_c1_p2', '') }}" oninput="calcular(this)"></td>
+                    <td><input class="cell-val c1-p" name="{{ m }}_c1_p3" value="{{ notas.get(m + '_c1_p3', '') }}" oninput="calcular(this)"></td>
+                    <td><input class="cell-val c1-p" name="{{ m }}_c1_p4" value="{{ notas.get(m + '_c1_p4', '') }}" oninput="calcular(this)"></td>
                     
-                    <td><input class="input-text c2-p" name="{{ m }}_c2_p1" value="{{ notas.get(m + '_c2_p1', '') }}" oninput="calcular(this)"></td>
-                    <td><input class="input-text c2-p" name="{{ m }}_c2_p2" value="{{ notas.get(m + '_c2_p2', '') }}" oninput="calcular(this)"></td>
-                    <td><input class="input-text c2-p" name="{{ m }}_c2_p3" value="{{ notas.get(m + '_c2_p3', '') }}" oninput="calcular(this)"></td>
-                    <td><input class="input-text c2-p" name="{{ m }}_c2_p4" value="{{ notas.get(m + '_c2_p4', '') }}" oninput="calcular(this)"></td>
+                    <td><input class="cell-val c2-p" name="{{ m }}_c2_p1" value="{{ notas.get(m + '_c2_p1', '') }}" oninput="calcular(this)"></td>
+                    <td><input class="cell-val c2-p" name="{{ m }}_c2_p2" value="{{ notas.get(m + '_c2_p2', '') }}" oninput="calcular(this)"></td>
+                    <td><input class="cell-val c2-p" name="{{ m }}_c2_p3" value="{{ notas.get(m + '_c2_p3', '') }}" oninput="calcular(this)"></td>
+                    <td><input class="cell-val c2-p" name="{{ m }}_c2_p4" value="{{ notas.get(m + '_c2_p4', '') }}" oninput="calcular(this)"></td>
                     
-                    <td><input class="input-text c3-p" name="{{ m }}_c3_p1" value="{{ notas.get(m + '_c3_p1', '') }}" oninput="calcular(this)"></td>
-                    <td><input class="input-text c3-p" name="{{ m }}_c3_p2" value="{{ notas.get(m + '_c3_p2', '') }}" oninput="calcular(this)"></td>
-                    <td><input class="input-text c3-p" name="{{ m }}_c3_p3" value="{{ notas.get(m + '_c3_p3', '') }}" oninput="calcular(this)"></td>
-                    <td><input class="input-text c3-p" name="{{ m }}_c3_p4" value="{{ notas.get(m + '_c3_p4', '') }}" oninput="calcular(this)"></td>
+                    <td><input class="cell-val c3-p" name="{{ m }}_c3_p1" value="{{ notas.get(m + '_c3_p1', '') }}" oninput="calcular(this)"></td>
+                    <td><input class="cell-val c3-p" name="{{ m }}_c3_p2" value="{{ notas.get(m + '_c3_p2', '') }}" oninput="calcular(this)"></td>
+                    <td><input class="cell-val c3-p" name="{{ m }}_c3_p3" value="{{ notas.get(m + '_c3_p3', '') }}" oninput="calcular(this)"></td>
+                    <td><input class="cell-val c3-p" name="{{ m }}_c3_p4" value="{{ notas.get(m + '_c3_p4', '') }}" oninput="calcular(this)"></td>
                     
-                    <td><input class="input-text res c1-res" name="{{ m }}_c1_res" value="{{ notas.get(m + '_c1_res', '') }}" readonly></td>
-                    <td><input class="input-text res c2-res" name="{{ m }}_c2_res" value="{{ notas.get(m + '_c2_res', '') }}" readonly></td>
-                    <td><input class="input-text res c3-res" name="{{ m }}_c3_res" value="{{ notas.get(m + '_c3_res', '') }}" readonly></td>
+                    <td><input class="cell-val res c1-res" name="{{ m }}_c1_res" value="{{ notas.get(m + '_c1_res', '') }}" readonly></td>
+                    <td><input class="cell-val res c2-res" name="{{ m }}_c2_res" value="{{ notas.get(m + '_c2_res', '') }}" readonly></td>
+                    <td><input class="cell-val res c3-res" name="{{ m }}_c3_res" value="{{ notas.get(m + '_c3_res', '') }}" readonly></td>
                     
-                    <td><input class="input-text area-res" name="{{ m }}_area_res" value="{{ notas.get(m + '_area_res', '') }}" readonly></td>
-                    <td><input class="input-text" name="{{ m }}_recup" value="{{ notas.get(m + '_recup', '') }}"></td>
+                    <td><input class="cell-val area-res" name="{{ m }}_area_res" value="{{ notas.get(m + '_area_res', '') }}" readonly></td>
+                    <td><input class="cell-val" name="{{ m }}_recup" value="{{ notas.get(m + '_recup', '') }}"></td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
 
-        <!-- TABLA DE ASISTENCIA Y LEYENDA -->
+        <!-- TABLA ASISTENCIA OFICIAL -->
         <table id="tabla-asistencia">
-            <thead class="bg-grey">
+            <thead>
                 <tr>
                     <th rowspan="2" style="width: 8%;">Escala numérica</th>
                     <th rowspan="2" style="width: 38%;">DESCRIPCIÓN</th>
@@ -324,12 +264,12 @@
             <tbody>
                 <tr>
                     <td class="bold">89-100</td>
-                    <td class="desc-cell">Evidencia que el estudiante ha alcanzado un desempeño destacado con relación aos aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
+                    <td class="desc-cell">Evidencia que el estudiante ha alcanzado un desempeño destacado con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
                     <td class="bold">P1</td>
-                    <td><input class="input-text" name="asist_p1" value="{{ notas.get('asist_p1', '') }}"></td>
-                    <td><input class="input-text" name="aus_p1" value="{{ notas.get('aus_p1', '') }}"></td>
-                    <td><input class="input-text" name="pct_asist_p1" value="{{ notas.get('pct_asist_p1', '') }}"></td>
-                    <td><input class="input-text" name="pct_aus_p1" value="{{ notas.get('pct_aus_p1', '') }}"></td>
+                    <td><input class="cell-val" name="asist_p1" value="{{ notas.get('asist_p1', '') }}"></td>
+                    <td><input class="cell-val" name="aus_p1" value="{{ notas.get('aus_p1', '') }}"></td>
+                    <td><input class="cell-val" name="pct_asist_p1" value="{{ notas.get('pct_asist_p1', '') }}"></td>
+                    <td><input class="cell-val" name="pct_aus_p1" value="{{ notas.get('pct_aus_p1', '') }}"></td>
                     <td rowspan="4" class="leyenda-cell">
                         (P1) Período 1<br>(P2) Período 2<br>(P3) Período 3<br>(P4) Período 4<br><br>
                         (C1) Competencia 1<br>(C2) Competencia 2<br>(C3) Competencia 3
@@ -339,28 +279,28 @@
                     <td class="bold">77-88</td>
                     <td class="desc-cell">Evidencia que el estudiante ha logrado, en general, los aprendizajes esperados con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
                     <td class="bold">P2</td>
-                    <td><input class="input-text" name="asist_p2" value="{{ notas.get('asist_p2', '') }}"></td>
-                    <td><input class="input-text" name="aus_p2" value="{{ notas.get('aus_p2', '') }}"></td>
-                    <td><input class="input-text" name="pct_asist_p2" value="{{ notas.get('pct_asist_p2', '') }}"></td>
-                    <td><input class="input-text" name="pct_aus_p2" value="{{ notas.get('pct_aus_p2', '') }}"></td>
+                    <td><input class="cell-val" name="asist_p2" value="{{ notas.get('asist_p2', '') }}"></td>
+                    <td><input class="cell-val" name="aus_p2" value="{{ notas.get('aus_p2', '') }}"></td>
+                    <td><input class="cell-val" name="pct_asist_p2" value="{{ notas.get('pct_asist_p2', '') }}"></td>
+                    <td><input class="cell-val" name="pct_aus_p2" value="{{ notas.get('pct_aus_p2', '') }}"></td>
                 </tr>
                 <tr>
                     <td class="bold">65 - 76</td>
                     <td class="desc-cell">Evidencia que el estudiante aún se encuentra en proceso con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar, mostrando un logro muy básico.</td>
                     <td class="bold">P3</td>
-                    <td><input class="input-text" name="asist_p3" value="{{ notas.get('asist_p3', '') }}"></td>
-                    <td><input class="input-text" name="aus_p3" value="{{ notas.get('aus_p3', '') }}"></td>
-                    <td><input class="input-text" name="pct_asist_p3" value="{{ notas.get('pct_asist_p3', '') }}"></td>
-                    <td><input class="input-text" name="pct_aus_p3" value="{{ notas.get('pct_aus_p3', '') }}"></td>
+                    <td><input class="cell-val" name="asist_p3" value="{{ notas.get('asist_p3', '') }}"></td>
+                    <td><input class="cell-val" name="aus_p3" value="{{ notas.get('aus_p3', '') }}"></td>
+                    <td><input class="cell-val" name="pct_asist_p3" value="{{ notas.get('pct_asist_p3', '') }}"></td>
+                    <td><input class="cell-val" name="pct_aus_p3" value="{{ notas.get('pct_aus_p3', '') }}"></td>
                 </tr>
                 <tr>
                     <td class="bold">Menos de 65</td>
                     <td class="desc-cell">Evidencia que el estudiante ha alcanzado un desempeño insuficiente con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
                     <td class="bold">P4</td>
-                    <td><input class="input-text" name="asist_p4" value="{{ notas.get('asist_p4', '') }}"></td>
-                    <td><input class="input-text" name="aus_p4" value="{{ notas.get('aus_p4', '') }}"></td>
-                    <td><input class="input-text" name="pct_asist_p4" value="{{ notas.get('pct_asist_p4', '') }}"></td>
-                    <td><input class="input-text" name="pct_aus_p4" value="{{ notas.get('pct_aus_p4', '') }}"></td>
+                    <td><input class="cell-val" name="asist_p4" value="{{ notas.get('asist_p4', '') }}"></td>
+                    <td><input class="cell-val" name="aus_p4" value="{{ notas.get('aus_p4', '') }}"></td>
+                    <td><input class="cell-val" name="pct_asist_p4" value="{{ notas.get('pct_asist_p4', '') }}"></td>
+                    <td><input class="cell-val" name="pct_aus_p4" value="{{ notas.get('pct_aus_p4', '') }}"></td>
                 </tr>
             </tbody>
         </table>
@@ -370,30 +310,30 @@
 
         <table class="tabla-avances">
             <tr>
-                <td class="bold" style="width: 6%; text-align: center;">P1</td>
-                <td><textarea class="input-text-area" name="avance_p1" placeholder="Comentarios del período 1...">{{ notas.get('avance_p1', '') }}</textarea></td>
+                <td class="bold" style="width: 6%; text-align: center; background: #f2f2f2;">P1</td>
+                <td><textarea class="avance-text" name="avance_p1" placeholder="Comentarios del período 1...">{{ notas.get('avance_p1', '') }}</textarea></td>
             </tr>
             <tr>
-                <td class="bold" style="text-align: center;">P2</td>
-                <td><textarea class="input-text-area" name="avance_p2" placeholder="Comentarios del período 2...">{{ notas.get('avance_p2', '') }}</textarea></td>
+                <td class="bold" style="text-align: center; background: #f2f2f2;">P2</td>
+                <td><textarea class="avance-text" name="avance_p2" placeholder="Comentarios del período 2...">{{ notas.get('avance_p2', '') }}</textarea></td>
             </tr>
             <tr>
-                <td class="bold" style="text-align: center;">P3</td>
-                <td><textarea class="input-text-area" name="avance_p3" placeholder="Comentarios del período 3...">{{ notas.get('avance_p3', '') }}</textarea></td>
+                <td class="bold" style="text-align: center; background: #f2f2f2;">P3</td>
+                <td><textarea class="avance-text" name="avance_p3" placeholder="Comentarios del período 3...">{{ notas.get('avance_p3', '') }}</textarea></td>
             </tr>
             <tr>
-                <td class="bold" style="text-align: center;">P4</td>
-                <td><textarea class="input-text-area" name="avance_p4" placeholder="Comentarios del período 4...">{{ notas.get('avance_p4', '') }}</textarea></td>
+                <td class="bold" style="text-align: center; background: #f2f2f2;">P4</td>
+                <td><textarea class="avance-text" name="avance_p4" placeholder="Comentarios del período 4...">{{ notas.get('avance_p4', '') }}</textarea></td>
             </tr>
         </table>
 
-        <div class="titulo-avances" style="margin-top: -8px; margin-bottom: 8px;">
+        <div class="titulo-avances" style="margin-top: -6px; margin-bottom: 6px;">
             Información sobre el nivel de avances de los aprendizajes y los apoyos que necesita para la mejora de sus aprendizajes.
         </div>
 
         <table style="width: 100%; margin-bottom: 0;">
             <tr>
-                <td style="width: 58%; vertical-align: top; padding: 0;">
+                <td style="width: 58%; vertical-align: top; padding: 0; border: none;">
                     <table style="margin-bottom: 0;">
                         <tr class="bg-grey">
                             <th style="width: 45%;">Períodos de reportes de calificaciones</th>
@@ -401,42 +341,42 @@
                         </tr>
                         <tr>
                             <td class="text-left bold">Septiembre – Octubre</td>
-                            <td style="height: 25px;"></td>
+                            <td style="height: 24px;"></td>
                         </tr>
                         <tr>
                             <td class="text-left bold">Noviembre – Diciembre – Enero</td>
-                            <td style="height: 25px;"></td>
+                            <td style="height: 24px;"></td>
                         </tr>
                         <tr>
                             <td class="text-left bold">Febrero – Marzo</td>
-                            <td style="height: 25px;"></td>
+                            <td style="height: 24px;"></td>
                         </tr>
                         <tr>
                             <td class="text-left bold">Abril – Mayo – Junio</td>
-                            <td style="height: 25px;"></td>
+                            <td style="height: 24px;"></td>
                         </tr>
                     </table>
                 </td>
-                <td style="width: 42%; vertical-align: top; padding: 0; padding-left: 8px;">
+                <td style="width: 42%; vertical-align: top; padding: 0; padding-left: 6px; border: none;">
                     <table style="margin-bottom: 0;">
                         <tr class="bg-grey">
                             <th colspan="3">SITUACION DEL/DE LA ESTUDIANTE</th>
                         </tr>
-                        <tr class="bg-grey" style="font-size: 9.5px;">
+                        <tr class="bg-grey" style="font-size: 9px;">
                             <th style="width: 33%;">Promovido/a</th>
                             <th style="width: 33%;">Aplazado/a</th>
                             <th style="width: 34%;">Repitente</th>
                         </tr>
                         <tr>
-                            <td style="height: 25px;"><input type="checkbox" name="promovido" value="1" {% if notas.get('promovido') == '1' %}checked{% endif %} style="transform: scale(1.1);"></td>
-                            <td><input type="checkbox" name="aplazado" value="1" {% if notas.get('aplazado') == '1' %}checked{% endif %} style="transform: scale(1.1);"></td>
-                            <td><input type="checkbox" name="repitente" value="1" {% if notas.get('repitente') == '1' %}checked{% endif %} style="transform: scale(1.1);"></td>
+                            <td style="height: 24px;"><input type="checkbox" name="promovido" value="1" {% if notas.get('promovido') == '1' %}checked{% endif %}></td>
+                            <td><input type="checkbox" name="aplazado" value="1" {% if notas.get('aplazado') == '1' %}checked{% endif %}></td>
+                            <td><input type="checkbox" name="repitente" value="1" {% if notas.get('repitente') == '1' %}checked{% endif %}></td>
                         </tr>
                         <tr>
-                            <td colspan="3" class="bg-grey text-left bold" style="font-size: 9.5px; padding: 2px 4px;">Condición final del/de la estudiante</td>
+                            <td colspan="3" class="bg-grey text-left bold" style="font-size: 9px; padding: 2px 4px;">Condición final del/de la estudiante</td>
                         </tr>
                         <tr>
-                            <td colspan="3" style="height: 28px;"><input class="input-text" name="condicion_final" value="{{ notas.get('condicion_final', '') }}" style="text-align: center;" placeholder="Escribir condición..."></td>
+                            <td colspan="3" style="height: 26px;"><input class="cell-val" name="condicion_final" value="{{ notas.get('condicion_final', '') }}" style="text-align: center;" placeholder="Escribir condición..."></td>
                         </tr>
                     </table>
                 </td>
@@ -458,13 +398,11 @@
     <script>
         function calcular(el) {
             let row = el.closest('tr');
-            
             function aplicarRegla(num) {
                 let entero = Math.floor(num);
                 let decimal = num - entero;
                 return (decimal >= 0.5) ? (entero + 1) : entero;
             }
-
             function promediar(clase) {
                 let inputs = row.querySelectorAll('.' + clase + '-p');
                 let suma = 0, count = 0;
@@ -472,10 +410,8 @@
                 if(count > 0) { row.querySelector('.' + clase + '-res').value = aplicarRegla(suma / count); } 
                 else { row.querySelector('.' + clase + '-res').value = ""; }
             }
-
             promediar('c1'); promediar('c2'); promediar('c3');
             let hayDatosC3 = Array.from(row.querySelectorAll('.c3-p')).some(i => i.value !== "");
-            
             if (hayDatosC3) {
                 let c1 = parseFloat(row.querySelector('.c1-res').value) || 0;
                 let c2 = parseFloat(row.querySelector('.c2-res').value) || 0;
@@ -483,17 +419,6 @@
                 row.querySelector('.area-res').value = aplicarRegla((c1 + c2 + c3) / 3);
             } else { 
                 row.querySelector('.area-res').value = ""; 
-            }
-        }
-
-        function limpiarFormulario() {
-            if (confirm("¿Estás seguro de que deseas limpiar todos los campos ingresados en este informe?")) {
-                const form = document.getElementById('form-informe');
-                const inputs = form.querySelectorAll('input[type="text"], textarea');
-                inputs.forEach(input => input.value = '');
-                
-                const checkboxes = form.querySelectorAll('input[type="checkbox"]');
-                checkboxes.forEach(cb => cb.checked = false);
             }
         }
     </script>
