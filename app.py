@@ -758,20 +758,7 @@ def inscripcion():
 
 @app.route('/inscripcion-publica', methods=['GET', 'POST'])
 def inscripcion_publica():
-    if request.method == 'POST':
-        import base64
 
-        def guardar_archivo(input_name):
-            file = request.files.get(input_name)
-            if file and file.filename != '':
-                # Leer los bytes del archivo cargado y convertirlos a Base64
-                file_bytes = file.read()
-                if file_bytes:
-                    encoded = base64.b64encode(file_bytes).decode('utf-8')
-                    # Detectar el tipo MIME básico o por defecto usar jpeg
-                    mime = file.mimetype or 'image/jpeg'
-                    return f"data:{mime};base64,{encoded}"
-            return None
 
         # Captura de datos generales del formulario
         anio_escolar = request.form.get('anio_escolar')
