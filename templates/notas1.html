@@ -56,13 +56,18 @@
         .btn-menu { background-color: #34495e; border: 1px solid #7f8c8d; }
         .btn-menu:hover { background-color: #2c3e50; }
 
+        /* REGLAS DE IMPRESIÓN (OCULTAR INTERFAZ) */
         @media print {
-            .action-bar, .selector-container, .alert-flash { display: none !important; }
-            .salto-pagina { page-break-before: always; }
+            .action-bar, .selector-container, .alert-flash { 
+                display: none !important; 
+            }
             body {
                 margin: 0;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
+            }
+            .salto-pagina { 
+                page-break-before: always; 
             }
         }
 
@@ -319,7 +324,7 @@
             <tbody>
                 <tr>
                     <td class="bold">89-100</td>
-                    <td class="desc-cell">Evidencia que el estudiante ha alcanzado un desempeño destacado con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
+                    <td class="desc-cell">Evidencia que el estudiante ha alcanzado un desempeño destacado con relación aos aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
                     <td class="bold">P1</td>
                     <td><input class="input-text" name="asist_p1" value="{{ notas.get('asist_p1', '') }}"></td>
                     <td><input class="input-text" name="aus_p1" value="{{ notas.get('aus_p1', '') }}"></td>
