@@ -13,11 +13,31 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from google import genai
 from google.genai import types
 
+from PIL import Image
+import io
+import base64
+
+def guardar_archivo(input_name):
+    file = request.files.get(input_name)
+    if file and file.filename != '':
+        try:
+            imagen = Image.open(file)
+            if imagen.mode in ('RGBA', 'P'):
+                imagen = imagen.convert('RGB')
+            imagen.thumbnail((800, 800))
+            buffer = io.BytesIO()
+            imagen.save(buffer, format="JPEG", quality=75)
+            file_bytes = buffer.getvalue()
+            encoded = base64.b64encode(file_bytes).decode('utf-8')
+            return encoded
+        except Exception as e:
+            print(f"Error procesando la imagen {input_name}: {e}")
+            return None
+    return None
+
 
 app = Flask(__name__)
 app.secret_key = 'tu_clave_secreta_aqui'
-
-app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # Limita las subidas a 5 Megabytes máximo
 
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
