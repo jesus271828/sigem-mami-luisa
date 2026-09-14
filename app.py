@@ -17,6 +17,8 @@ from google.genai import types
 app = Flask(__name__)
 app.secret_key = 'tu_clave_secreta_aqui'
 
+app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # Limita las subidas a 5 Megabytes máximo
+
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
