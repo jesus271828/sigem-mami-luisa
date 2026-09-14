@@ -2,369 +2,1047 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Informe de Aprendizaje - Mami Luisa</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Informe de Aprendizaje - Centro Educativo Mami Luisa</title>
+
     <style>
-        @page {
-            size: A4 landscape;
-            margin: 5mm;
-        }
-        * { box-sizing: border-box; }
-        body {
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: 9.5px;
-            color: #000;
-            margin: 0;
-            padding: 0;
-            background: #fff;
-            line-height: 1.1;
+        * {
+            box-sizing: border-box;
         }
 
-        /* --- BARRA DE ACCIÓN (BOTONES) --- */
-        .action-bar {
-            background-color: #f1f3f5;
-            padding: 10px 15px;
-            border-bottom: 2px solid #ccc;
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            justify-content: flex-end;
-            margin-bottom: 10px;
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #eeeeee;
+            font-family: Arial, Helvetica, sans-serif;
+            color: #111;
         }
-        .btn {
-            padding: 6px 14px;
+
+        .hoja {
+            width: 100%;
+            max-width: 1100px;
+            margin: auto;
+            background: white;
+            padding: 18px;
+            border: 1px solid #ccc;
+        }
+
+        /* =========================
+           ENCABEZADO
+        ========================== */
+
+        .encabezado {
+            display: grid;
+            grid-template-columns: 80px 1fr 220px;
+            align-items: center;
+            border-bottom: 1px solid #333;
+            padding-bottom: 8px;
+        }
+
+        .logo {
+            width: 65px;
+            height: 65px;
+            border: 2px solid #7d8fb2;
+            border-radius: 45%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #6e82aa;
+            font-weight: bold;
+            font-size: 20px;
+        }
+
+        .datos-centro {
+            padding-left: 5px;
+        }
+
+        .nombre-centro {
+            font-family: Georgia, serif;
+            font-size: 22px;
+            font-weight: bold;
+            color: #7185ad;
+        }
+
+        .nombre-centro span {
+            color: #999;
+        }
+
+        .datos-centro p {
+            margin: 2px 0;
+            font-size: 9px;
+        }
+
+        .lema {
+            text-align: center;
+            color: #d89579;
+            font-family: cursive;
+            font-size: 13px;
+        }
+
+        .titulo {
+            text-align: left;
             font-size: 12px;
             font-weight: bold;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            color: #fff;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
+            margin-top: 3px;
         }
-        .btn-save { background-color: #2b8a3e; }
-        .btn-save:hover { background-color: #2b8a3e; }
-        .btn-clear { background-color: #e03131; }
-        .btn-pdf { background-color: #1971c2; }
-        .btn-exit { background-color: #495057; }
 
-        /* Ocultar la barra de botones al imprimir o generar PDF */
+        .subtitulo {
+            font-size: 10px;
+            margin-top: 2px;
+        }
+
+        /* =========================
+           DATOS DEL ESTUDIANTE
+        ========================== */
+
+        .datos-estudiante {
+            margin-top: 8px;
+            display: grid;
+            grid-template-columns: 1fr 1fr 130px 80px 140px;
+            border: 1px solid #222;
+        }
+
+        .campo {
+            border-right: 1px solid #222;
+            min-height: 25px;
+        }
+
+        .campo:last-child {
+            border-right: none;
+        }
+
+        .campo label {
+            display: inline-block;
+            font-size: 8px;
+            font-weight: bold;
+            padding: 3px 5px;
+        }
+
+        .campo input {
+            border: none;
+            border-left: 1px solid #222;
+            outline: none;
+            height: 23px;
+            width: calc(100% - 50px);
+            font-size: 11px;
+            padding: 3px;
+        }
+
+        /* =========================
+           TABLA PRINCIPAL
+        ========================== */
+
+        .tabla-notas {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px;
+            table-layout: fixed;
+        }
+
+        .tabla-notas th,
+        .tabla-notas td {
+            border: 1px solid #222;
+            text-align: center;
+            font-size: 9px;
+            padding: 3px;
+        }
+
+        .tabla-notas th {
+            background: #fafafa;
+        }
+
+        .area {
+            width: 190px;
+            text-align: left !important;
+            padding-left: 6px !important;
+        }
+
+        .competencia {
+            font-size: 8px !important;
+            font-weight: bold;
+            height: 70px;
+            vertical-align: middle;
+        }
+
+        .competencia small {
+            display: block;
+            font-weight: normal;
+            line-height: 1.15;
+            margin-top: 3px;
+        }
+
+        .periodo {
+            background: #f5f5f5;
+            font-weight: bold;
+        }
+
+        .nota {
+            height: 28px;
+            background: white;
+        }
+
+        .nota input {
+            width: 100%;
+            height: 24px;
+            border: none;
+            outline: none;
+            text-align: center;
+            font-size: 10px;
+            background: transparent;
+        }
+
+        .final {
+            width: 90px;
+        }
+
+        .recuperacion {
+            width: 45px;
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            font-size: 8px !important;
+        }
+
+        .area-final {
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            font-size: 8px !important;
+        }
+
+        /* =========================
+           PARTE INFERIOR
+        ========================== */
+
+        .inferior {
+            display: grid;
+            grid-template-columns: 1fr 1.3fr;
+            gap: 0;
+            margin-top: 10px;
+        }
+
+        .escala {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        .escala th,
+        .escala td {
+            border: 1px solid #222;
+            font-size: 8px;
+            padding: 4px;
+        }
+
+        .escala th {
+            background: #f5f5f5;
+            text-align: center;
+        }
+
+        .numero {
+            width: 55px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .asistencia {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .asistencia th,
+        .asistencia td {
+            border: 1px solid #222;
+            font-size: 8px;
+            padding: 4px;
+            text-align: center;
+        }
+
+        .asistencia th {
+            background: #f5f5f5;
+        }
+
+        .asistencia input {
+            width: 100%;
+            border: none;
+            outline: none;
+            text-align: center;
+        }
+
+        .leyenda {
+            margin-top: 8px;
+            border: 1px solid #222;
+            padding: 7px;
+            font-size: 8px;
+            line-height: 1.5;
+        }
+
+        .leyenda strong {
+            display: block;
+            margin-bottom: 3px;
+        }
+
+        /* =========================
+           BOTONES
+        ========================== */
+
+        .acciones {
+            max-width: 1100px;
+            margin: 15px auto 0;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        button {
+            border: none;
+            padding: 10px 18px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            color: white;
+        }
+
+        .guardar {
+            background: #496fa8;
+        }
+
+        .imprimir {
+            background: #555;
+        }
+
+        .limpiar {
+            background: #b94a48;
+        }
+
+        button:hover {
+            opacity: .85;
+        }
+
+        /* =========================
+           IMPRESIÓN
+        ========================== */
+
         @media print {
-            .action-bar {
-                display: none !important;
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .hoja {
+                border: none;
+                max-width: none;
+                padding: 5mm;
+            }
+
+            .acciones {
+                display: none;
+            }
+
+            input {
+                color: black;
+            }
+
+            @page {
+                size: A4 landscape;
+                margin: 8mm;
             }
         }
 
-        /* ENCABEZADO INSTITUCIONAL */
-        .header {
-            display: flex;
-            align-items: center;
-            border-bottom: 2px solid #000;
-            padding-bottom: 3px;
-            margin-bottom: 4px;
-        }
-        .logo {
-            width: 70px;
-            height: auto;
-            margin-right: 10px;
-            flex-shrink: 0;
-        }
-        .header-info {
-            flex-grow: 1;
-        }
-        .header-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-        }
-        .school-title {
-            font-size: 17px;
-            font-weight: bold;
-            color: #586e95;
-            font-family: 'Times New Roman', serif;
-            margin: 0;
-        }
-        .school-lema {
-            font-size: 10.5px;
-            font-style: italic;
-            color: #b87a42;
-            font-family: 'Times New Roman', serif;
-        }
-        .text-row {
-            font-size: 9px;
-            margin: 1px 0;
-        }
-        .text-main-title {
-            font-weight: bold;
-            font-size: 9.5px;
-            margin-top: 1px;
-        }
+        /* =========================
+           RESPONSIVE
+        ========================== */
 
-        /* ESTILO GENERAL DE TABLAS */
-        table {
-            border-collapse: collapse;
-            width: 100%;
-            border: 2px solid #000;
-            margin-bottom: 4px;
-            table-layout: fixed;
-        }
-        th, td {
-            border: 1px solid #000;
-            padding: 2px;
-            text-align: center;
-            vertical-align: middle;
-            font-size: 9px;
-            overflow: hidden;
-            word-wrap: break-word;
-        }
-        .bold { font-weight: bold; }
-        .text-left { text-align: left; padding-left: 4px; }
+        @media (max-width: 800px) {
+            body {
+                padding: 5px;
+            }
 
-        /* TABLA DATOS ESTUDIANTE */
-        #tabla-datos td {
-            height: 20px;
-            font-size: 9px;
-            background: #fff;
-        }
+            .hoja {
+                overflow-x: auto;
+            }
 
-        /* TABLA DE CALIFICACIONES */
-        #tabla-notas th {
-            background-color: #f5f5f5;
-            font-size: 8px;
-            font-weight: bold;
-            padding: 2px 1px;
-        }
-        #tabla-notas td {
-            height: 19px;
-            padding: 0;
-        }
-        .cell-input {
-            width: 100%;
-            height: 100%;
-            border: none;
-            text-align: center;
-            font-size: 9.5px;
-            background: transparent;
-            font-family: inherit;
-            outline: none;
-        }
-        .vertical-text {
-            writing-mode: vertical-rl;
-            transform: rotate(180deg);
-            white-space: nowrap;
-            font-size: 8px;
-            padding: 2px 0;
-            height: 52px;
-        }
-        .read-only {
-            background-color: #fafafa;
-            font-weight: bold;
-        }
+            .encabezado {
+                grid-template-columns: 60px 1fr;
+            }
 
-        /* TABLA DE ASISTENCIA */
-        #tabla-asistencia th {
-            background-color: #f5f5f5;
-            font-size: 8px;
-        }
-        #tabla-asistencia td {
-            height: 25px;
-            padding: 2px;
-        }
-        .desc-text {
-            text-align: left;
-            font-size: 7.5px;
-            line-height: 1.15;
-            padding: 2px 4px !important;
-        }
-        .leyenda-box {
-            text-align: left;
-            font-size: 7.5px;
-            vertical-align: top;
-            line-height: 1.2;
-            padding: 3px 4px !important;
+            .lema {
+                display: none;
+            }
+
+            .datos-estudiante {
+                min-width: 850px;
+            }
+
+            .tabla-notas {
+                min-width: 1000px;
+            }
+
+            .inferior {
+                min-width: 850px;
+            }
         }
     </style>
 </head>
+
 <body>
 
-    <!-- FORMULARIO PRINCIPAL PARA GUARDAR -->
-    <form action="{{ url_for('guardar_notas', id_estudiante=estudiante.id_estudiante) }}" method="POST">
+<div class="hoja">
 
-        <!-- BARRA DE BOTONES (No sale en el PDF ni al imprimir) -->
-        <div class="action-bar">
-            <button type="submit" class="btn btn-save">💾 Guardar</button>
-            <button type="reset" class="btn btn-clear">🧹 Limpiar</button>
-            <a href="{{ url_for('descargar_pdf', id_estudiante=estudiante.id_estudiante) }}" class="btn btn-pdf" target="_blank">📄 PDF</a>
-            <a href="{{ url_for('index') }}" class="btn btn-exit">🚪 Salir</a>
+    <!-- =========================================
+         ENCABEZADO
+    ========================================== -->
+
+    <div class="encabezado">
+
+        <div class="logo">
+            M<br>L
         </div>
 
-        <!-- ENCABEZADO -->
-        <div class="header">
-            <img src="{{ url_for('static', filename='img/logo2.png') }}" class="logo" alt="Logo">
-            <div class="header-info">
-                <div class="header-top">
-                    <span class="school-title">Centro Educativo Mami Luisa S.R.L</span>
-                    <span class="school-lema">"Educando con amor para un mundo mejor"</span>
-                </div>
-                <div class="text-row">
-                    <b>Dirección:</b> C/Castillo Márquez #53. La Romana, Centro Ciudad. <b>Teléfono:</b> 809-550-7385 / 809-710-3395
-                </div>
-                <div class="text-row">
-                    <b>Regional de Educación:</b> 05 San Pedro de Macorís. <b>Distrito Educativo:</b> 05-03 La Romana. <b>Código:</b> 07121
-                </div>
-                <div class="text-main-title">
-                    INFORME DE APRENDIZAJE. Primer Grado del Nivel Primario, Sección A.
-                </div>
-                <div class="text-row">
-                    Año Escolar 2025-2026 / Jornada Escolar Regular. Tanda Matutina.
-                </div>
+        <div class="datos-centro">
+
+            <div class="nombre-centro">
+                Centro Educativo Mami Luisa <span>S.R.L.</span>
             </div>
+
+            <p>
+                <b>Dirección:</b> C/ Castillo Mami #53. Los Romanes, Centro Ciudad.
+            </p>
+
+            <p>
+                <b>Teléfono:</b> 809-550-7385 / 809-710-3395
+            </p>
+
+            <p>
+                <b>Regional de Educación:</b> 05 San Pedro de Macorís.
+                <b>Distrito Educativo:</b> 05-03 La Romana.
+            </p>
+
+            <div class="titulo">
+                INFORME DE APRENDIZAJE. Primer Grado del Nivel Primario, Sección A
+            </div>
+
+            <div class="subtitulo">
+                Año Escolar 2025-2026 / Jornada Escolar Regular. Tanda Matutina.
+            </div>
+
         </div>
 
-        <!-- DATOS DEL ESTUDIANTE -->
-        <table id="tabla-datos">
+        <div class="lema">
+            "Educando con amor para un mundo mejor"
+        </div>
+
+    </div>
+
+
+    <!-- =========================================
+         DATOS DEL ESTUDIANTE
+    ========================================== -->
+
+    <div class="datos-estudiante">
+
+        <div class="campo">
+            <label>NOMBRE(S):</label>
+            <input type="text" id="nombre">
+        </div>
+
+        <div class="campo">
+            <label>APELLIDO(S):</label>
+            <input type="text" id="apellido">
+        </div>
+
+        <div class="campo">
+            <label>NO. DE ORDEN:</label>
+            <input type="text" id="orden">
+        </div>
+
+        <div class="campo">
+            <label>01</label>
+        </div>
+
+        <div class="campo">
+            <label>ID ESTUDIANTE:</label>
+            <input type="text" id="idEstudiante">
+        </div>
+
+    </div>
+
+
+    <!-- =========================================
+         TABLA DE NOTAS
+    ========================================== -->
+
+    <table class="tabla-notas">
+
+        <thead>
+
             <tr>
-                <td class="bold" style="width: 8%;">NOMBRE(S):</td>
-                <td style="width: 28%;" class="text-left bold">{{ estudiante.nombres if estudiante else '' }}</td>
-                <td class="bold" style="width: 9%;">APELLIDO(S):</td>
-                <td style="width: 29%;" class="text-left bold">{{ estudiante.apellidos if estudiante else '' }}</td>
-                <td class="bold" style="width: 10%;">NO. DE ORDEN:</td>
-                <td style="width: 6%;" class="bold">
-                    {% if estudiante %}
-                        {% set ns = namespace(index=0) %}
-                        {% for est in lista_estudiantes %}
-                            {% if est.id_estudiante == estudiante.id_estudiante %}
-                                {% set ns.index = loop.index %}
-                            {% endif %}
-                        {% endfor %}
-                        {{ ns.index }}
-                    {% endif %}
-                </td>
-                <td class="bold" style="width: 10%;">ID ESTUDENATE:</td>
-                <td style="width: 10%;" class="bold">{{ estudiante.id_estudiante if estudiante else '' }}</td>
+
+                <th rowspan="3" class="area">
+                    ÁREAS CURRICULARES
+                </th>
+
+                <th colspan="4" class="competencia">
+                    C1
+                    <small>
+                        Comunicativa
+                    </small>
+                </th>
+
+                <th colspan="4" class="competencia">
+                    C2
+                    <small>
+                        Pensamiento Lógico,<br>
+                        Creativo y Crítico;<br>
+                        Resolución de Problemas;
+                        Científica y Tecnológica
+                    </small>
+                </th>
+
+                <th colspan="4" class="competencia">
+                    C3
+                    <small>
+                        Ética y Ciudadanía;<br>
+                        Desarrollo Personal y<br>
+                        Espiritual; Ambiental y<br>
+                        de la Salud
+                    </small>
+                </th>
+
+                <th colspan="3" class="competencia">
+                    CALIFICACIÓN FINAL
+                </th>
+
+                <th rowspan="3" class="area-final">
+                    DEL ÁREA
+                </th>
+
+                <th rowspan="3" class="recuperacion">
+                    RECUPERACIÓN
+                </th>
+
             </tr>
-        </table>
 
-        <!-- TABLA DE CALIFICACIONES -->
-        <table id="tabla-notas">
-            <thead>
-                <tr>
-                    <th rowspan="3" style="width: 18%; font-size: 11px;">ÁREAS CURRICULARES</th>
-                    <th colspan="12" style="width: 60%;">COMPETENCIAS FUNDAMENTALES</th>
-                    <th colspan="3" style="width: 13%;">CALIFICACION FINAL</th>
-                    <th rowspan="3" style="width: 4.5%;" class="vertical-text">DEL ÁREA</th>
-                    <th rowspan="3" style="width: 4.5%;" class="vertical-text">RECUPERACIÓN</th>
-                </tr>
-                <tr>
-                    <th colspan="4" style="width: 20%;">C1<br><span style="font-size:7px; font-weight:normal;">Comunicativa</span></th>
-                    <th colspan="4" style="width: 20%;">C2<br><span style="font-size:6px; font-weight:normal;">Pensamiento Lógico Creativo y Crítico; Resolución de Problemas; Científica y Tecnológica</span></th>
-                    <th colspan="4" style="width: 20%;">C3<br><span style="font-size:6px; font-weight:normal;">Ética y Ciudadana; Desarrollo Personal y Espiritual; Ambiental y de la Salud</span></th>
-                    <th colspan="3" style="width: 13%;">POR COMPETENCIA</th>
-                </tr>
-                <tr>
-                    <!-- C1 -->
-                    <th style="width: 5%;">P1</th><th style="width: 5%;">P2</th><th style="width: 5%;">P3</th><th style="width: 5%;">P4</th>
-                    <!-- C2 -->
-                    <th style="width: 5%;">P1</th><th style="width: 5%;">P2</th><th style="width: 5%;">P3</th><th style="width: 5%;">P4</th>
-                    <!-- C3 -->
-                    <th style="width: 5%;">P1</th><th style="width: 5%;">P2</th><th style="width: 5%;">P3</th><th style="width: 5%;">P4</th>
-                    <!-- Final -->
-                    <th style="width: 4.3%;">C1</th><th style="width: 4.3%;">C2</th><th style="width: 4.3%;">C3</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for m in ['Lengua Española', 'Matemática', 'Ciencias Sociales', 'Ciencias de la Naturaleza', 'Educación Física', 'Formación Integral, Humana y Religiosa', 'Educación Artística', 'Inglés'] %}
-                <tr>
-                    <td class="text-left bold" style="font-size: 8.5px;">{{ m }}</td>
-                    <!-- C1 Períodos -->
-                    <td><input class="cell-input" name="{{ m }}_c1_p1" value="{{ notas.get(m + '_c1_p1', '') }}"></td>
-                    <td><input class="cell-input" name="{{ m }}_c1_p2" value="{{ notas.get(m + '_c1_p2', '') }}"></td>
-                    <td><input class="cell-input" name="{{ m }}_c1_p3" value="{{ notas.get(m + '_c1_p3', '') }}"></td>
-                    <td><input class="cell-input" name="{{ m }}_c1_p4" value="{{ notas.get(m + '_c1_p4', '') }}"></td>
-                    <!-- C2 Períodos -->
-                    <td><input class="cell-input" name="{{ m }}_c2_p1" value="{{ notas.get(m + '_c2_p1', '') }}"></td>
-                    <td><input class="cell-input" name="{{ m }}_c2_p2" value="{{ notas.get(m + '_c2_p2', '') }}"></td>
-                    <td><input class="cell-input" name="{{ m }}_c2_p3" value="{{ notas.get(m + '_c2_p3', '') }}"></td>
-                    <td><input class="cell-input" name="{{ m }}_c2_p4" value="{{ notas.get(m + '_c2_p4', '') }}"></td>
-                    <!-- C3 Períodos -->
-                    <td><input class="cell-input" name="{{ m }}_c3_p1" value="{{ notas.get(m + '_c3_p1', '') }}"></td>
-                    <td><input class="cell-input" name="{{ m }}_c3_p2" value="{{ notas.get(m + '_c3_p2', '') }}"></td>
-                    <td><input class="cell-input" name="{{ m }}_c3_p3" value="{{ notas.get(m + '_c3_p3', '') }}"></td>
-                    <td><input class="cell-input" name="{{ m }}_c3_p4" value="{{ notas.get(m + '_c3_p4', '') }}"></td>
-                    <!-- Calificación Final -->
-                    <td><input class="cell-input read-only" name="{{ m }}_c1_res" value="{{ notas.get(m + '_c1_res', '') }}" readonly></td>
-                    <td><input class="cell-input read-only" name="{{ m }}_c2_res" value="{{ notas.get(m + '_c2_res', '') }}" readonly></td>
-                    <td><input class="cell-input read-only" name="{{ m }}_c3_res" value="{{ notas.get(m + '_c3_res', '') }}" readonly></td>
-                    <!-- Del Área y Recuperación -->
-                    <td><input class="cell-input read-only" name="{{ m }}_area_res" value="{{ notas.get(m + '_area_res', '') }}" readonly></td>
-                    <td><input class="cell-input" name="{{ m }}_recup" value="{{ notas.get(m + '_recup', '') }}"></td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+            <tr>
 
-        <!-- TABLA DE ASISTENCIA -->
-        <table id="tabla-asistencia">
-            <thead>
-                <tr>
-                    <th rowspan="2" style="width: 8%;">Escala numérica</th>
-                    <th rowspan="2" style="width: 39%;">DESCRIPCIÓN</th>
-                    <th colspan="5" style="width: 38%;">RESUMEN DE ASISTENCIA DEL ESTUDIANTE</th>
-                    <th rowspan="2" class="leyenda-box" style="width: 15%;">LEYENDA</th>
-                </tr>
-                <tr>
-                    <th style="width: 6%;">PERÍODO</th>
-                    <th style="width: 8%;">ASITENCIA</th>
-                    <th style="width: 8%;">AUSENCIA</th>
-                    <th style="width: 8%;">% ANUAL ASITENCIA</th>
-                    <th style="width: 8%;">% ANUAL AUSENCIA</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td class="bold">89-100</td>
-                    <td class="desc-text">Evidencia que el estudiante ha alcanzado un desempeño destacado con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
-                    <td class="bold">P1</td>
-                    <td><input class="cell-input" name="asist_p1" value="{{ notas.get('asist_p1', '') }}"></td>
-                    <td><input class="cell-input" name="aus_p1" value="{{ notas.get('aus_p1', '') }}"></td>
-                    <td><input class="cell-input" name="pct_asist_p1" value="{{ notas.get('pct_asist_p1', '') }}"></td>
-                    <td><input class="cell-input" name="pct_aus_p1" value="{{ notas.get('pct_aus_p1', '') }}"></td>
-                    <td rowspan="4" class="leyenda-box">
-                        (P1) Período 1<br>(P2) Período 2<br>(P3) Período 3<br>(P4) Período 4<br><br>
-                        (C1) Competencia 1<br>(C2) Competencia 2<br>(C3) Competencia 3
-                    </td>
-                </tr>
-                <tr>
-                    <td class="bold">77-88</td>
-                    <td class="desc-text">Evidencia que el estudiante ha logrado, en general, los aprendizajes esperados con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
-                    <td class="bold">P2</td>
-                    <td><input class="cell-input" name="asist_p2" value="{{ notas.get('asist_p2', '') }}"></td>
-                    <td><input class="cell-input" name="aus_p2" value="{{ notas.get('aus_p2', '') }}"></td>
-                    <td><input class="cell-input" name="pct_asist_p2" value="{{ notas.get('pct_asist_p2', '') }}"></td>
-                    <td><input class="cell-input" name="pct_aus_p2" value="{{ notas.get('pct_aus_p2', '') }}"></td>
-                </tr>
-                <tr>
-                    <td class="bold">65 - 76</td>
-                    <td class="desc-text">Evidencia que el estudiante aún se encuentra en proceso con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar, mostrando un logro muy básico.</td>
-                    <td class="bold">P3</td>
-                    <td><input class="cell-input" name="asist_p3" value="{{ notas.get('asist_p3', '') }}"></td>
-                    <td><input class="cell-input" name="aus_p3" value="{{ notas.get('aus_p3', '') }}"></td>
-                    <td><input class="cell-input" name="pct_asist_p3" value="{{ notas.get('pct_asist_p3', '') }}"></td>
-                    <td><input class="cell-input" name="pct_aus_p3" value="{{ notas.get('pct_aus_p3', '') }}"></td>
-                </tr>
-                <tr>
-                    <td class="bold">Menos de 65</td>
-                    <td class="desc-text">Evidencia que el estudiante ha alcanzado un desempeño insuficiente con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
-                    <td class="bold">P4</td>
-                    <td><input class="cell-input" name="asist_p4" value="{{ notas.get('asist_p4', '') }}"></td>
-                    <td><input class="cell-input" name="aus_p4" value="{{ notas.get('aus_p4', '') }}"></td>
-                    <td><input class="cell-input" name="pct_asist_p4" value="{{ notas.get('pct_asist_p4', '') }}"></td>
-                    <td><input class="cell-input" name="pct_aus_p4" value="{{ notas.get('pct_aus_p4', '') }}"></td>
-                </tr>
-            </tbody>
-        </table>
+                <th class="periodo">P1</th>
+                <th class="periodo">P2</th>
+                <th class="periodo">P3</th>
+                <th class="periodo">P4</th>
 
-    </form>
+                <th class="periodo">P1</th>
+                <th class="periodo">P2</th>
+                <th class="periodo">P3</th>
+                <th class="periodo">P4</th>
+
+                <th class="periodo">P1</th>
+                <th class="periodo">P2</th>
+                <th class="periodo">P3</th>
+                <th class="periodo">P4</th>
+
+                <th>C1</th>
+                <th>C2</th>
+                <th>C3</th>
+
+            </tr>
+
+            <tr>
+                <th colspan="4"></th>
+                <th colspan="4"></th>
+                <th colspan="4"></th>
+                <th colspan="3"></th>
+            </tr>
+
+        </thead>
+
+        <tbody>
+
+            <!-- LENGUA ESPAÑOLA -->
+            <tr>
+                <td class="area">Lengua Española</td>
+
+                <td class="nota"><input type="number" min="0" max="100"></td>
+                <td class="nota"><input type="number" min="0" max="100"></td>
+                <td class="nota"><input type="number" min="0" max="100"></td>
+                <td class="nota"><input type="number" min="0" max="100"></td>
+
+                <td class="nota"><input type="number" min="0" max="100"></td>
+                <td class="nota"><input type="number" min="0" max="100"></td>
+                <td class="nota"><input type="number" min="0" max="100"></td>
+                <td class="nota"><input type="number" min="0" max="100"></td>
+
+                <td class="nota"><input type="number" min="0" max="100"></td>
+                <td class="nota"><input type="number" min="0" max="100"></td>
+                <td class="nota"><input type="number" min="0" max="100"></td>
+                <td class="nota"><input type="number" min="0" max="100"></td>
+
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+            </tr>
+
+
+            <!-- MATEMÁTICA -->
+            <tr>
+                <td class="area">Matemática</td>
+
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+            </tr>
+
+
+            <!-- CIENCIAS SOCIALES -->
+            <tr>
+                <td class="area">Ciencias Sociales</td>
+
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+            </tr>
+
+
+            <!-- CIENCIAS DE LA NATURALEZA -->
+            <tr>
+                <td class="area">Ciencias de la Naturaleza</td>
+
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+            </tr>
+
+
+            <!-- EDUCACIÓN FÍSICA -->
+            <tr>
+                <td class="area">Educación Física</td>
+
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+            </tr>
+
+
+            <!-- FORMACIÓN INTEGRAL -->
+            <tr>
+                <td class="area">
+                    Formación Integral, Humana y Religiosa
+                </td>
+
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+            </tr>
+
+
+            <!-- EDUCACIÓN ARTÍSTICA -->
+            <tr>
+                <td class="area">Educación Artística</td>
+
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+            </tr>
+
+
+            <!-- INGLÉS -->
+            <tr>
+                <td class="area">Inglés</td>
+
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+
+                <td class="nota"><input type="number"></td>
+                <td class="nota"><input type="number"></td>
+            </tr>
+
+        </tbody>
+
+    </table>
+
+
+    <!-- =========================================
+         PARTE INFERIOR
+    ========================================== -->
+
+    <div class="inferior">
+
+        <!-- ESCALA -->
+        <div>
+
+            <table class="escala">
+
+                <thead>
+                    <tr>
+                        <th class="numero">
+                            Escala<br>numérica
+                        </th>
+                        <th>
+                            DESCRIPCIÓN
+                        </th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    <tr>
+                        <td class="numero">89-100</td>
+                        <td>
+                            Evidencia que el estudiante ha alcanzado un desempeño
+                            destacado con relación a los aspectos evaluados de las
+                            competencias de cada área, durante los períodos y al
+                            finalizar el año escolar.
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td class="numero">77-88</td>
+                        <td>
+                            Evidencia que el estudiante ha logrado, en general, los
+                            aprendizajes esperados con relación a las competencias
+                            evaluadas de cada área, durante los períodos y al finalizar
+                            el año escolar.
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td class="numero">65-76</td>
+                        <td>
+                            Evidencia que el estudiante aún encuentra con proceso
+                            con relación a los aspectos evaluados de las competencias
+                            de cada área, durante los períodos y al finalizar el año escolar.
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td class="numero">
+                            Menos de<br>65
+                        </td>
+                        <td>
+                            Evidencia que el estudiante ha alcanzado un desempeño
+                            insuficiente con relación a los aspectos evaluados de las
+                            competencias de cada área, durante los períodos y al finalizar
+                            el año escolar.
+                        </td>
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+        <!-- ASISTENCIA -->
+        <div>
+
+            <table class="asistencia">
+
+                <thead>
+
+                    <tr>
+                        <th colspan="5">
+                            RESUMEN DE ASISTENCIA DEL ESTUDIANTE
+                        </th>
+                    </tr>
+
+                    <tr>
+                        <th rowspan="2">PERÍODO</th>
+
+                        <th colspan="2">
+                            % ANUAL
+                        </th>
+
+                        <th colspan="2">
+                            ASISTENCIA
+                        </th>
+                    </tr>
+
+                    <tr>
+                        <th>ASISTENCIA</th>
+                        <th>AUSENCIA</th>
+                        <th>ASISTENCIA</th>
+                        <th>AUSENCIA</th>
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    <tr>
+                        <td>P1</td>
+                        <td><input type="number"></td>
+                        <td><input type="number"></td>
+                        <td><input type="number"></td>
+                        <td><input type="number"></td>
+                    </tr>
+
+                    <tr>
+                        <td>P2</td>
+                        <td><input type="number"></td>
+                        <td><input type="number"></td>
+                        <td><input type="number"></td>
+                        <td><input type="number"></td>
+                    </tr>
+
+                    <tr>
+                        <td>P3</td>
+                        <td><input type="number"></td>
+                        <td><input type="number"></td>
+                        <td><input type="number"></td>
+                        <td><input type="number"></td>
+                    </tr>
+
+                    <tr>
+                        <td>P4</td>
+                        <td><input type="number"></td>
+                        <td><input type="number"></td>
+                        <td><input type="number"></td>
+                        <td><input type="number"></td>
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+
+            <div class="leyenda">
+
+                <strong>LEYENDA</strong>
+
+                (P1) Período 1<br>
+                (P2) Período 2<br>
+                (P3) Período 3<br>
+                (P4) Período 4<br><br>
+
+                (C1) Competencia 1<br>
+                (C2) Competencia 2<br>
+                (C3) Competencia 3
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================
+     BOTONES
+========================================== -->
+
+<div class="acciones">
+
+    <button class="guardar" onclick="guardarNotas()">
+        💾 Guardar
+    </button>
+
+    <button class="imprimir" onclick="window.print()">
+        🖨️ Imprimir
+    </button>
+
+    <button class="limpiar" onclick="limpiarFormulario()">
+        🗑️ Limpiar
+    </button>
+
+</div>
+
+
+<script>
+
+    /* =========================
+       GUARDAR DATOS
+    ========================== */
+
+    function guardarNotas() {
+
+        const datos = {
+            nombre: document.getElementById("nombre").value,
+            apellido: document.getElementById("apellido").value,
+            orden: document.getElementById("orden").value,
+            idEstudiante: document.getElementById("idEstudiante").value
+        };
+
+        localStorage.setItem(
+            "boletaEstudiante",
+            JSON.stringify(datos)
+        );
+
+        alert("Los datos del estudiante fueron guardados.");
+    }
+
+
+    /* =========================
+       CARGAR DATOS
+    ========================== */
+
+    window.addEventListener("load", function () {
+
+        const datosGuardados =
+            localStorage.getItem("boletaEstudiante");
+
+        if (!datosGuardados) {
+            return;
+        }
+
+        const datos = JSON.parse(datosGuardados);
+
+        document.getElementById("nombre").value =
+            datos.nombre || "";
+
+        document.getElementById("apellido").value =
+            datos.apellido || "";
+
+        document.getElementById("orden").value =
+            datos.orden || "";
+
+        document.getElementById("idEstudiante").value =
+            datos.idEstudiante || "";
+    });
+
+
+    /* =========================
+       LIMPIAR
+    ========================== */
+
+    function limpiarFormulario() {
+
+        if (!confirm("¿Seguro que deseas limpiar todos los datos?")) {
+            return;
+        }
+
+        document.querySelectorAll("input").forEach(input => {
+            input.value = "";
+        });
+
+        localStorage.removeItem("boletaEstudiante");
+    }
+
+</script>
+
 </body>
 </html>
