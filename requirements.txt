@@ -10,3 +10,4 @@ pytesseract
 pillow
 google-api-core
 weasyprint
+Pillow
