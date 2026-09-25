@@ -4,10 +4,10 @@ Flask-Login
 gunicorn
 xhtml2pdf
 psycopg2-binary
+psycopg
 google-genai
 google-generativeai
 pytesseract
 pillow
 google-api-core
 weasyprint
-Pillow
