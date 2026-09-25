@@ -1520,16 +1520,26 @@ def asistencia():
 
             ausentes_db = conn.execute(
                 """
-                SELECT e.nombres, e.apellidos 
+                SELECT e.nombres, e.apellidos, a.estado 
                 FROM estudiantes e
                 JOIN asistencia a ON e.id_estudiante = a.id_estudiante
-                WHERE a.fecha = %s AND e.grado = %s AND a.estado = 'Ausente'
+                WHERE a.fecha = %s AND e.grado = %s AND a.estado IN ('Ausente', 'Excusa')
                 ORDER BY e.nombres ASC
                 """,
                 (fecha_actual, curso)
             ).fetchall()
 
-            nombres_ausentes = [f"{aus['nombres'] if hasattr(aus, 'keys') else aus[0]} {aus['apellidos'] if hasattr(aus, 'keys') else aus[1]}" for aus in ausentes_db]
+            nombres_ausentes = []
+            for aus in ausentes_db:
+                nombre = aus['nombres'] if hasattr(aus, 'keys') else aus[0]
+                apellido = aus['apellidos'] if hasattr(aus, 'keys') else aus[1]
+                estado_val = aus['estado'] if hasattr(aus, 'keys') else aus[2]
+                
+                if estado_val == 'Excusa':
+                    nombres_ausentes.append(f"{nombre} {apellido} (Excusa)")
+                else:
+                    nombres_ausentes.append(f"{nombre} {apellido}")
+
             str_ausentes = ", ".join(nombres_ausentes)
 
             resumen_grados.append({
@@ -1656,7 +1666,8 @@ def guardar_asistencia():
 import os
 from pathlib import Path
 from flask import render_template, request, make_response, current_app
-from weasyprint import HTML
+from xhtml2pdf import pisa
+import io
 from datetime import datetime
 
 @app.route('/descargar_reporte_ausencias', methods=['POST', 'GET'])
