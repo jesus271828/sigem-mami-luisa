@@ -1788,18 +1788,29 @@ def descargar_reporte_ausencias():
                     a_ninas = count_val
             a_total = a_ninos + a_ninas
 
+            # Modificado para incluir también los estados con Excusa
             ausentes_db = conn.execute(
                 """
-                SELECT e.nombres, e.apellidos 
+                SELECT e.nombres, e.apellidos, a.estado 
                 FROM estudiantes e
                 JOIN asistencia a ON e.id_estudiante = a.id_estudiante
-                WHERE a.fecha = %s AND e.grado = %s AND a.estado = 'Ausente'
+                WHERE a.fecha = %s AND e.grado = %s AND a.estado IN ('Ausente', 'Excusa')
                 ORDER BY e.nombres ASC
                 """,
                 (fecha_str, curso)
             ).fetchall()
 
-            nombres_ausentes = [f"{aus['nombres'] if hasattr(aus, 'keys') else aus[0]} {aus['apellidos'] if hasattr(aus, 'keys') else aus[1]}" for aus in ausentes_db]
+            nombres_ausentes = []
+            for aus in ausentes_db:
+                nombre = aus['nombres'] if hasattr(aus, 'keys') else aus[0]
+                apellido = aus['apellidos'] if hasattr(aus, 'keys') else aus[1]
+                estado_val = aus['estado'] if hasattr(aus, 'keys') else aus[2]
+                
+                if estado_val == 'Excusa':
+                    nombres_ausentes.append(f"{nombre} {apellido} (Excusa)")
+                else:
+                    nombres_ausentes.append(f"{nombre} {apellido}")
+
             str_ausentes = ", ".join(nombres_ausentes)
 
             nombre_corto = curso.split()[0] + "."
