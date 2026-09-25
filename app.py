@@ -1674,10 +1674,8 @@ from datetime import datetime
 def descargar_reporte_ausencias():
     fecha_str = request.form.get('fecha') or request.args.get('fecha') or datetime.now().strftime('%Y-%m-%d')
     
-    # Ruta absoluta convertida a URI de archivo para que WeasyPrint la reconozca perfectamente
     logo_path = Path(current_app.root_path, 'static', 'img', 'logo2.png').as_uri()
 
-    # Normalizar objeto fecha para el día de la semana
     fecha_obj = datetime.now()
     try:
         if '-' in fecha_str:
@@ -1704,6 +1702,7 @@ def descargar_reporte_ausencias():
 
         if request.method == 'POST':
             try:
+                # Personal existente
                 adm_np = request.form.get('adm_np', '')
                 adm_ni = request.form.get('adm_ni', '')
                 aux_np = request.form.get('aux_np', '')
@@ -1718,17 +1717,31 @@ def descargar_reporte_ausencias():
                 doc_p = int(request.form.get('doc_presente') or 0)
                 doc_a = request.form.get('doc_ausentes', '')
                 
+                # Nuevos campos del Resumen General Global introducidos manualmente
+                gral_mat_ninos = int(request.form.get('gral_mat_ninos') or 0)
+                gral_mat_ninas = int(request.form.get('gral_mat_ninas') or 0)
+                gral_asis_ninos = int(request.form.get('gral_asis_ninos') or 0)
+                gral_asis_ninas = int(request.form.get('gral_asis_ninas') or 0)
+
                 if not meta_personal:
                     conn.execute(
-                        '''INSERT INTO asistencia_personal (fecha, adm_np, adm_ni, aux_np, aux_ni, doc_np, doc_ni, adm_presente, adm_ausentes, aux_presente, aux_ausentes, doc_presente, doc_ausentes) 
-                           VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
-                        (fecha_str, adm_np, adm_ni, aux_np, aux_ni, doc_np, doc_ni, adm_p, adm_a, aux_p, aux_a, doc_p, doc_a)
+                        '''INSERT INTO asistencia_personal (
+                            fecha, adm_np, adm_ni, aux_np, aux_ni, doc_np, doc_ni, 
+                            adm_presente, adm_ausentes, aux_presente, aux_ausentes, doc_presente, doc_ausentes,
+                            gral_mat_ninos, gral_mat_ninas, gral_asis_ninos, gral_asis_ninas
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
+                        (fecha_str, adm_np, adm_ni, aux_np, aux_ni, doc_np, doc_ni, adm_p, adm_a, aux_p, aux_a, doc_p, doc_a,
+                         gral_mat_ninos, gral_mat_ninas, gral_asis_ninos, gral_asis_ninas)
                     )
                 else:
                     conn.execute(
-                        '''UPDATE asistencia_personal SET adm_np=%s, adm_ni=%s, aux_np=%s, aux_ni=%s, doc_np=%s, doc_ni=%s, 
-                           adm_presente=%s, adm_ausentes=%s, aux_presente=%s, aux_ausentes=%s, doc_presente=%s, doc_ausentes=%s WHERE fecha=%s''',
-                        (adm_np, adm_ni, aux_np, aux_ni, doc_np, doc_ni, adm_p, adm_a, aux_p, aux_a, doc_p, doc_a, fecha_str)
+                        '''UPDATE asistencia_personal SET 
+                            adm_np=%s, adm_ni=%s, aux_np=%s, aux_ni=%s, doc_np=%s, doc_ni=%s, 
+                            adm_presente=%s, adm_ausentes=%s, aux_presente=%s, aux_ausentes=%s, doc_presente=%s, doc_ausentes=%s,
+                            gral_mat_ninos=%s, gral_mat_ninas=%s, gral_asis_ninos=%s, gral_asis_ninas=%s 
+                           WHERE fecha=%s''',
+                        (adm_np, adm_ni, aux_np, aux_ni, doc_np, doc_ni, adm_p, adm_a, aux_p, aux_a, doc_p, doc_a,
+                         gral_mat_ninos, gral_mat_ninas, gral_asis_ninos, gral_asis_ninas, fecha_str)
                     )
                 conn.commit()
                 
@@ -1736,7 +1749,7 @@ def descargar_reporte_ausencias():
                     return "OK", 200
             except Exception as e:
                 conn.rollback()
-                print(f"Error al guardar personal: {e}")
+                print(f"Error al guardar personal/resumen: {e}")
 
         # Cursos para la Tabla Superior (Primaria Secciones A)
         cursos_resumen = ['1ro A', '2do A', '3ro A', '4to A', '5to A', '6to A']
@@ -1788,7 +1801,6 @@ def descargar_reporte_ausencias():
                     a_ninas = count_val
             a_total = a_ninos + a_ninas
 
-            # Modificado para incluir también los estados con Excusa
             ausentes_db = conn.execute(
                 """
                 SELECT e.nombres, e.apellidos, a.estado 
@@ -1833,49 +1845,11 @@ def descargar_reporte_ausencias():
             tot_asis_ninas += a_ninas
             tot_asis_total += a_total
 
-        # Nivel Inicial
-        tot_mat_ninos_ini = 0
-        tot_mat_ninas_ini = 0
-        tot_asist_ninos_ini = 0
-        tot_asist_ninas_ini = 0
-
-        cursos_inicial = [
-            'Párvulos', 'Prekínder – A', 'Prekínder – B', 
-            'Kínder – A', 'Kínder – B', 'Preprimario – A', 'Preprimario – B'
-        ]
-
-        for curso_ini in cursos_inicial:
-            mat_ini_db = conn.execute(
-                "SELECT sexo, COUNT(*) FROM estudiantes WHERE grado = %s GROUP BY sexo", 
-                (curso_ini,)
-            ).fetchall()
-            
-            for row in mat_ini_db:
-                sexo_val = row['sexo'] if hasattr(row, 'keys') else row[0]
-                count_val = row['count'] if hasattr(row, 'keys') else row[1]
-                if sexo_val == 'Masculino':
-                    tot_mat_ninos_ini += count_val
-                elif sexo_val == 'Femenino':
-                    tot_mat_ninas_ini += count_val
-
-            asis_ini_db = conn.execute(
-                """
-                SELECT e.sexo, COUNT(a.id_estudiante) 
-                FROM asistencia a
-                JOIN estudiantes e ON a.id_estudiante = e.id_estudiante
-                WHERE a.fecha = %s AND e.grado = %s AND a.estado IN ('Presente', 'Tarde')
-                GROUP BY e.sexo
-                """,
-                (fecha_str, curso_ini)
-            ).fetchall()
-
-            for row in asis_ini_db:
-                sexo_val = row['sexo'] if hasattr(row, 'keys') else row[0]
-                count_val = row['count'] if hasattr(row, 'keys') else row[1]
-                if sexo_val == 'Masculino':
-                    tot_asist_ninos_ini += count_val
-                elif sexo_val == 'Femenino':
-                    tot_asist_ninas_ini += count_val
+        # Obtener valores manuales del Resumen General Global (desde DB / meta)
+        tot_mat_ninos_ini = meta.get('gral_mat_ninos', 0)
+        tot_mat_ninas_ini = meta.get('gral_mat_ninas', 0)
+        tot_asist_ninos_ini = meta.get('gral_asis_ninos', 0)
+        tot_asist_ninas_ini = meta.get('gral_asis_ninas', 0)
 
         tot_mat_total_ini = tot_mat_ninos_ini + tot_mat_ninas_ini
         tot_asist_total_ini = tot_asist_ninos_ini + tot_asist_ninas_ini
