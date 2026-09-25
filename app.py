@@ -413,12 +413,36 @@ def inscripcion():
         return redirect(url_for('menu')) 
 
     if request.method == 'POST':
+        from PIL import Image
+        import io
+
         def guardar_archivo(input_name):
             file = request.files.get(input_name)
             if file and file.filename != '':
-                file_bytes = file.read()
-                encoded = base64.b64encode(file_bytes).decode('utf-8')
-                return encoded
+                try:
+                    # Abrir la imagen subida con Pillow
+                    img = Image.open(file)
+                    
+                    # Convertir a RGB si viene con transparencia o formato particular
+                    if img.mode in ("RGBA", "P"):
+                        img = img.convert("RGB")
+                        
+                    # Redimensionar la imagen para que no supere los 800px manteniendo proporción
+                    img.thumbnail((800, 800))
+                    
+                    # Guardar comprimida en memoria como JPEG con calidad del 65%
+                    buffer = io.BytesIO()
+                    img.save(buffer, format="JPEG", quality=65, optimize=True)
+                    buffer.seek(0)
+                    
+                    # Codificar en base64 los bytes ya comprimidos y ligeros
+                    encoded = base64.b64encode(buffer.read()).decode('utf-8')
+                    return encoded
+                except Exception as img_err:
+                    print(f"--- Error al comprimir imagen {input_name}: {img_err}")
+                    # Fallback por si acaso el archivo no es una imagen procesable
+                    file.seek(0)
+                    return base64.b64encode(file.read()).decode('utf-8')
             return None
 
         # Captura de datos generales del formulario
@@ -538,7 +562,7 @@ def inscripcion():
                     existe_en_db = resultado_existe[0] > 0
 
             if existe_en_db:
-                # --- ACTUALIZAR REGISTRO EXISTENTE (Incluyendo sexo) ---
+                # --- ACTUALIZAR REGISTRO EXISTENTE ---
                 conexion.execute('''
                     UPDATE estudiantes 
                     SET nombres = ?, apellidos = ?, grado = ?, sexo = ?, foto_estudiante_cedula = ?
@@ -620,7 +644,7 @@ def inscripcion():
                 ))
                 flash('¡Los datos del estudiante existente fueron actualizados correctamente!', 'success')
             else:
-                # --- INSERTAR NUEVO REGISTRO (Incluyendo sexo) ---
+                # --- INSERTAR NUEVO REGISTRO ---
                 conexion.execute('''
                     INSERT INTO estudiantes (nombres, apellidos, id_estudiante, grado, sexo, foto_estudiante_cedula)
                     VALUES (?, ?, ?, ?, ?, ?)
