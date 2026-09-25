@@ -208,8 +208,8 @@
                         </table>
                     </div>
 
-                    <!-- TABLA 2: Resumen Global de Estudiantes (AHORA EDITABLE) -->
-                    <h6 class="font-weight-bold text-secondary mt-4">Resumen General Global (Nivel Inicial / Primario)</h6>
+<!-- TABLA 2: Resumen  (AHORA EDITABLE) -->
+                    <h6 class="font-weight-bold text-secondary mt-4">Resumen  (Nivel Inicial)</h6>
                     <div class="table-responsive mb-4">
                         <table class="table table-bordered text-center">
                             <thead class="thead-light">
@@ -228,6 +228,34 @@
                                 </tr>
                             </thead>
                             <tbody>
+                                <tr>
+                                    <td class="font-weight-bold align-middle">TOTAL</td>
+                                    <!-- Matriculados Niños -->
+                                    <td class="bg-light">
+                                        <input type="number" name="gral_mat_ninos" value="{{ meta.get('gral_mat_ninos', 0) }}" class="form-control text-center font-weight-bold" min="0">
+                                    </td>
+                                    <!-- Matriculados Niñas -->
+                                    <td class="bg-light">
+                                        <input type="number" name="gral_mat_ninas" value="{{ meta.get('gral_mat_ninas', 0) }}" class="form-control text-center font-weight-bold" min="0">
+                                    </td>
+                                    <!-- Total Matriculados (calculado visualmente o estático) -->
+                                    <td class="bg-warning text-dark font-weight-bold align-middle">
+                                        {{ (meta.get('gral_mat_ninos', 0) | int) + (meta.get('gral_mat_ninas', 0) | int) }}
+                                    </td>
+                                    <!-- Asistencia Niños -->
+                                    <td>
+                                        <input type="number" name="gral_asis_ninos" value="{{ meta.get('gral_asis_ninos', 0) }}" class="form-control text-center font-weight-bold" min="0">
+                                    </td>
+                                    <!-- Asistencia Niñas -->
+                                    <td>
+                                        <input type="number" name="gral_asis_ninas" value="{{ meta.get('gral_asis_ninas', 0) }}" class="form-control text-center font-weight-bold" min="0">
+                                    </td>
+                                    <!-- Total Asistencia -->
+                                    <td class="bg-success text-white font-weight-bold align-middle">
+                                        {{ (meta.get('gral_asis_ninos', 0) | int) + (meta.get('gral_asis_ninas', 0) | int) }}
+                                    </td>
+                                </tr>
+                            </tbody>
                                 <tr>
                                     <td class="font-weight-bold bg-light align-middle">TOTAL</td>
                                     <td style="background-color: #cce6ff;">
