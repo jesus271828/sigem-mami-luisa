@@ -14,8 +14,9 @@
             <h2><i class="fas fa-calendar-check"></i> Control de Asistencia</h2>
             <a href="{{ url_for('menu') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Volver al Menú</a>
         </div>
-<!-- Aquí aparecerá la alerta bonita -->
-<div id="contenedor-alertas"></div>
+        <!-- Aquí aparecerá la alerta bonita -->
+        <div id="contenedor-alertas"></div>
+        
         <!-- Mensajes Flash -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
@@ -81,19 +82,16 @@
                             <thead class="thead-light">
                                 <tr>
                                     <th style="width: 8%; text-align: center;">No.</th>
-                                    <!-- Cambiamos el título de la columna de ID a ID Estudiante -->
                                     <th style="width: 15%;">ID Estudiante</th>
                                     <th>Nombres y Apellidos</th>
-                                    <th style="width: 30%; text-align: center;">Estado de Asistencia</th>
+                                    <th style="width: 35%; text-align: center;">Estado de Asistencia</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for est in estudiantes %}
                                 <tr>
                                     <td class="text-center font-weight-bold">{{ loop.index }}</td>
-                                    <!-- Aquí mostramos el id_estudiante en lugar del id numérico -->
                                     <td>{{ est.id_estudiante }}</td>
-                                    <!-- Nombres primero y luego Apellidos -->
                                     <td>{{ est.nombres }} {{ est.apellidos }}</td>
                                     <td class="text-center">
                                         {% set estado_actual = asistencia_dict.get(est.id_estudiante, 'Presente') %}
@@ -103,6 +101,9 @@
                                             </label>
                                             <label class="btn btn-outline-warning btn-sm {% if estado_actual == 'Tarde' %}active{% endif %}">
                                                 <input type="radio" name="estado_{{ est.id_estudiante }}" value="Tarde" autocomplete="off" {% if estado_actual == 'Tarde' %}checked{% endif %}> Tarde
+                                            </label>
+                                            <label class="btn btn-outline-info btn-sm {% if estado_actual == 'Excusa' %}active{% endif %}">
+                                                <input type="radio" name="estado_{{ est.id_estudiante }}" value="Excusa" autocomplete="off" {% if estado_actual == 'Excusa' %}checked{% endif %}> Excusa
                                             </label>
                                             <label class="btn btn-outline-danger btn-sm {% if estado_actual == 'Ausente' %}active{% endif %}">
                                                 <input type="radio" name="estado_{{ est.id_estudiante }}" value="Ausente" autocomplete="off" {% if estado_actual == 'Ausente' %}checked{% endif %}> Ausente
@@ -207,7 +208,7 @@
                         </table>
                     </div>
 
-                    <!-- TABLA 2: Resumen Global de Estudiantes -->
+                    <!-- TABLA 2: Resumen Global de Estudiantes (AHORA EDITABLE) -->
                     <h6 class="font-weight-bold text-secondary mt-4">Resumen General Global (Nivel Inicial / Primario)</h6>
                     <div class="table-responsive mb-4">
                         <table class="table table-bordered text-center">
@@ -228,13 +229,25 @@
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td class="font-weight-bold bg-light">TOTAL</td>
-                                    <td class="font-weight-bold text-info align-middle" style="background-color: #cce6ff;">{{ totales.mat_ninos }}</td>
-                                    <td class="font-weight-bold text-danger align-middle" style="background-color: #ffcce6;">{{ totales.mat_ninas }}</td>
-                                    <td class="font-weight-bold bg-warning text-dark align-middle">{{ totales.mat_total }}</td>
-                                    <td class="font-weight-bold text-success align-middle">{{ totales.asist_ninos }}</td>
-                                    <td class="font-weight-bold text-success align-middle">{{ totales.asist_ninas }}</td>
-                                    <td class="font-weight-bold bg-success text-white align-middle">{{ totales.asist_total }}</td>
+                                    <td class="font-weight-bold bg-light align-middle">TOTAL</td>
+                                    <td style="background-color: #cce6ff;">
+                                        <input type="text" name="global_mat_ninos" class="form-control text-center font-weight-bold text-info" value="{{ meta.global_mat_ninos if meta and meta.global_mat_ninos is not none else (resumen_grados | sum(attribute='mat_ninos')) }}">
+                                    </td>
+                                    <td style="background-color: #ffcce6;">
+                                        <input type="text" name="global_mat_ninas" class="form-control text-center font-weight-bold text-danger" value="{{ meta.global_mat_ninas if meta and meta.global_mat_ninas is not none else (resumen_grados | sum(attribute='asist_ninas')) if resumen_grados else (resumen_grados | sum(attribute='mat_ninas')) }}">
+                                    </td>
+                                    <td style="background-color: #ffc107;">
+                                        <input type="text" name="global_mat_total" class="form-control text-center font-weight-bold text-dark bg-warning" value="{{ meta.global_mat_total if meta and meta.global_mat_total is not none else (resumen_grados | sum(attribute='mat_total')) }}">
+                                    </td>
+                                    <td>
+                                        <input type="text" name="global_asist_ninos" class="form-control text-center font-weight-bold text-success" value="{{ meta.global_asist_ninos if meta and meta.global_asist_ninos is not none else (resumen_grados | sum(attribute='asist_ninos')) }}">
+                                    </td>
+                                    <td>
+                                        <input type="text" name="global_asist_ninas" class="form-control text-center font-weight-bold text-success" value="{{ meta.global_asist_ninas if meta and meta.global_asist_ninas is not none else (resumen_grados | sum(attribute='asist_ninas')) }}">
+                                    </td>
+                                    <td style="background-color: #28a745;">
+                                        <input type="text" name="global_asist_total" class="form-control text-center font-weight-bold text-white bg-success" value="{{ meta.global_asist_total if meta and meta.global_asist_total is not none else (resumen_grados | sum(attribute='asist_total')) }}">
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>
@@ -284,7 +297,7 @@
                 <div class="row mt-4">
                     <div class="col-md-6 mb-2">
                         <button type="button" onclick="guardarPersonalSolo()" class="btn btn-success btn-lg btn-block shadow-sm">
-                            <i class="fas fa-save"></i> Guardar Asistencia del Personal
+                            <i class="fas fa-save"></i> Guardar Asistencia del Personal y Resumen
                         </button>
                     </div>
                     <div class="col-md-6 mb-2">
@@ -354,7 +367,6 @@ function guardarPersonalSolo() {
         const contenedor = document.getElementById('contenedor-alertas');
         
         if (response.ok) {
-            // Mensaje de éxito con el diseño idéntico a tus alertas flash
             contenedor.innerHTML = `
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                     ¡Datos guardados exitosamente!
@@ -364,7 +376,6 @@ function guardarPersonalSolo() {
                 </div>
             `;
         } else {
-            // Mensaje de error si algo falla
             contenedor.innerHTML = `
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
                     Hubo un error al guardar los datos.
@@ -379,6 +390,6 @@ function guardarPersonalSolo() {
         alert('Error de conexión al intentar guardar.');
     });
 }
-    </script>
+</script>
 </body>
 </html>
