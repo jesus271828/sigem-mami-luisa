@@ -1457,7 +1457,6 @@ def asistencia():
         asistencia_dict = {}
 
         if grado_seleccionado:
-            # Consultamos incluyendo id_estudiante y ordenados alfabéticamente por NOMBRE
             estudiantes_db = conn.execute(
                 "SELECT id_estudiante, nombres, apellidos FROM estudiantes WHERE grado = %s ORDER BY nombres ASC", 
                 (grado_seleccionado,)
@@ -1468,7 +1467,6 @@ def asistencia():
                 for e in estudiantes_db
             ]
 
-            # Buscar asistencia existente para ese curso y fecha usando id_estudiante
             asis_db = conn.execute(
                 "SELECT id_estudiante, estado FROM asistencia WHERE grado = %s AND fecha = %s",
                 (grado_seleccionado, fecha_actual)
@@ -1482,7 +1480,6 @@ def asistencia():
         # --- CÁLCULO DETALLADO PARA LA TABLA SUPERIOR (Primaria Secciones A) ---
         resumen_grados = []
         for curso in cursos_resumen:
-            # Matriculados por género
             mat_db = conn.execute(
                 "SELECT sexo, COUNT(*) FROM estudiantes WHERE grado = %s GROUP BY sexo", 
                 (curso,)
@@ -1499,13 +1496,12 @@ def asistencia():
                     m_ninas = count_val
             m_total = m_ninos + m_ninas
 
-            # Asistencia por género (relacionando por id_estudiante)
             asis_db_curso = conn.execute(
                 """
                 SELECT e.sexo, COUNT(a.id_estudiante) 
                 FROM asistencia a
                 JOIN estudiantes e ON a.id_estudiante = e.id_estudiante
-                WHERE a.fecha = %s AND e.grado = %s AND a.estado IN ('Presente', 'Tarde')
+                WHERE a.fecha = %s AND e.grado = %s AND a.estado IN ('Presente', 'Tarde', 'Excusa')
                 GROUP BY e.sexo
                 """,
                 (fecha_actual, curso)
@@ -1522,7 +1518,6 @@ def asistencia():
                     a_ninas = count_val
             a_total = a_ninos + a_ninas
 
-            # Nombres de ausentes
             ausentes_db = conn.execute(
                 """
                 SELECT e.nombres, e.apellidos 
@@ -1573,7 +1568,7 @@ def asistencia():
                 SELECT e.sexo, COUNT(a.id_estudiante) 
                 FROM asistencia a
                 JOIN estudiantes e ON a.id_estudiante = e.id_estudiante
-                WHERE a.fecha = %s AND e.grado = %s AND a.estado IN ('Presente', 'Tarde')
+                WHERE a.fecha = %s AND e.grado = %s AND a.estado IN ('Presente', 'Tarde', 'Excusa')
                 GROUP BY e.sexo
                 """,
                 (fecha_actual, curso_ini)
@@ -1626,12 +1621,11 @@ def guardar_asistencia():
         for key, value in request.form.items():
             if key.startswith('estado_'):
                 id_estudiante = key.split('_')[1]
-                estado = value
+                estado = value  # Aquí capturará 'Presente', 'Tarde', 'Ausente' o 'Excusa'
                 
                 if not id_estudiante or id_estudiante.strip() == "":
                     continue
                 
-                # Búsqueda usando id_estudiante (código personalizado)
                 existing = conn.execute(
                     "SELECT id FROM asistencia WHERE id_estudiante = %s AND fecha = %s",
                     (id_estudiante, fecha)
@@ -1656,7 +1650,6 @@ def guardar_asistencia():
     finally:
         conn.close()
         
-    # Al no pasar el grado, el selector volverá limpio para elegir el siguiente curso
     return redirect(url_for('asistencia', fecha=fecha))
 
 
