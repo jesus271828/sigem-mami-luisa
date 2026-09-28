@@ -1947,31 +1947,43 @@ def generar_pdf(id_estudiante):
     if not estudiante:
         return f"No se encontró ninguna inscripción para el ID: {id_estudiante}", 404
 
-    # 1. Procesar Logo (Ruta absoluta física para xhtml2pdf)
+    # 1. Procesar Logo en Base64 seguro para xhtml2pdf
     logo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'img', 'logo2.png')
-    logo_src = logo_path if os.path.exists(logo_path) else ""
+    logo_src = ""
+    if os.path.exists(logo_path):
+        with open(logo_path, "rb") as image_file:
+            logo_base64 = base64.b64encode(image_file.read()).decode('utf-8')
+        logo_src = f"data:image/png;base64,{logo_base64}"
         
-    # 2. Procesar la foto desde la columna correcta: foto_estudiante_cedula
+    # 2. Procesar la foto del estudiante desde la columna correcta: foto_estudiante_cedula
     foto_valor = estudiante.get('foto_estudiante_cedula') if isinstance(estudiante, dict) else estudiante['foto_estudiante_cedula'] if 'foto_estudiante_cedula' in estudiante.keys() else None
-    foto_path_final = ""
+    foto_base64_src = ""
     
     if foto_valor:
         foto_str = str(foto_valor).strip()
-        # Si ya viene como base64 o ruta externa por alguna razón, se maneja, pero si es local se busca en disco:
+        
+        # Caso A: Viene directamente en formato Base64 (empezando con /9j/ o data:image)
         if foto_str.startswith('/9j/') or foto_str.startswith('data:image'):
-            foto_path_final = foto_str 
-        else:
-            # Obtener la ruta absoluta física en el disco del servidor para que xhtml2pdf la lea directo
-            nombre_archivo = foto_str.replace('uploads/', '')
+            mime = 'image/jpeg' if foto_str.startswith('/9j/') else 'image/png'
+            foto_base64_src = foto_str if foto_str.startswith('data:') else f"data:{mime};base64,{foto_str}"
+        
+        # Caso B: Viene como ruta tipo 'uploads/nombre.jpg' o contiene extensión/pleca de archivo
+        elif '/' in foto_str or '.' in foto_str:
+            nombre_archivo = foto_str.replace('uploads/', '').replace('static/', '').replace('\\', '/').split('/')[-1]
             disk_foto_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'uploads', nombre_archivo)
+            
             if os.path.exists(disk_foto_path):
-                foto_path_final = disk_foto_path
+                with open(disk_foto_path, "rb") as foto_file:
+                    foto_encoded = base64.b64encode(foto_file.read()).decode('utf-8')
+                    ext = nombre_archivo.split('.')[-1].lower()
+                    mime_type = 'image/png' if ext == 'png' else 'image/jpeg'
+                    foto_base64_src = f"data:{mime_type};base64,{foto_encoded}"
 
     if not isinstance(estudiante, dict):
         estudiante = dict(estudiante)
     
-    # Inyectamos la ruta absoluta en el diccionario del estudiante
-    estudiante['foto_ruta_absoluta'] = foto_path_final
+    # Inyectamos la variable lista al diccionario del estudiante
+    estudiante['foto_base64'] = foto_base64_src
     
     # Renderizar la plantilla HTML para el PDF
     html = render_template('pdf_ficha.html', estudiante=estudiante, autorizados=autorizados, logo_src=logo_src)
@@ -1986,7 +1998,6 @@ def generar_pdf(id_estudiante):
         return 'Hubo un error al generar el PDF', 500
         
     return response
-
 
 
 @app.route('/menu_notas')
