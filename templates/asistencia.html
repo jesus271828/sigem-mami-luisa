@@ -207,7 +207,59 @@
                             </tbody>
                         </table>
                     </div>
-
+<!-- TABLA 2: NIVEL INICIAL (La nueva tabla que quieres añadir) -->
+<div class="card mb-4">
+    <div class="card-header bg-light font-weight-bold">
+        NIVEL INICIAL ML – L2 (Resumen por Grados)
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered table-striped">
+            <thead class="thead-light">
+                <tr>
+                    <th rowspan="2" class="align-middle text-center">GRADOS</th>
+                    <th colspan="3" class="text-center">MATRICULADOS</th>
+                    <th colspan="3" class="text-center">ASISTENCIA</th>
+                    <th rowspan="2" class="align-middle text-center">Nombre de los ausentes</th>
+                </tr>
+                <tr>
+                    <th class="text-center text-primary">NIÑOS</th>
+                    <th class="text-center text-danger">NIÑAS</th>
+                    <th class="text-center text-warning">TOTAL</th>
+                    <th class="text-center">NIÑOS</th>
+                    <th class="text-center">NIÑAS</th>
+                    <th class="text-center">TOTAL</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Iteración de grados de Inicial (Párvulos, Prekínder, Kínder, Preprimario)[cite: 2] -->
+                {% for grado in grados_inicial %}
+                <tr>
+                    <td>{{ grado.nombre }}</td>
+                    <td class="text-center table-primary">{{ grado.mat_ninos }}</td>
+                    <td class="text-center table-danger">{{ grado.mat_ninas }}</td>
+                    <td class="text-center table-warning font-weight-bold">{{ grado.mat_total }}</td>
+                    <td class="text-center">{{ grado.asist_ninos }}</td>
+                    <td class="text-center">{{ grado.asist_ninas }}</td>
+                    <td class="text-center">{{ grado.asist_total }}</td>
+                    <td>{{ grado.ausentes_nombres }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr class="bg-dark text-white font-weight-bold">
+                    <td>TOTAL</td>
+                    <td class="text-center">{{ total_inicial_ninos }}</td>
+                    <td class="text-center">{{ total_inicial_ninas }}</td>
+                    <td class="text-center">{{ total_inicial_general }}</td>
+                    <td class="text-center"></td>
+                    <td class="text-center"></td>
+                    <td class="text-center bg-success text-white"></td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
 <!-- TABLA 2: Resumen  (AHORA EDITABLE) -->
                     <h6 class="font-weight-bold text-secondary mt-4">Resumen  (Nivel Inicial)</h6>
                     <div class="table-responsive mb-4">
