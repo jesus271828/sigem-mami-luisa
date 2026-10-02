@@ -1577,25 +1577,24 @@ def asistencia():
                 'ausentes': str_ausentes
             })
 
-        # --- CÁLCULO PARA LA TABLA INFERIOR (Resumen Global Nivel Inicial) ---
-        tot_mat_ninos_ini = 0
-        tot_mat_ninas_ini = 0
-        tot_asist_ninos_ini = 0
-        tot_asist_ninas_ini = 0
-
+        # --- CÁLCULO DETALLADO PARA LA TABLA INFERIOR (Nivel Inicial) ---
+        resumen_inicial = []
         for curso_ini in cursos_inicial:
             mat_ini_db = conn.execute(
                 "SELECT sexo, COUNT(*) FROM estudiantes WHERE grado = %s GROUP BY sexo", 
                 (curso_ini,)
             ).fetchall()
             
+            m_ninos_ini = 0
+            m_ninas_ini = 0
             for row in mat_ini_db:
                 sexo_val = row['sexo'] if hasattr(row, 'keys') else row[0]
                 count_val = row['count'] if hasattr(row, 'keys') else row[1]
                 if sexo_val == 'Masculino':
-                    tot_mat_ninos_ini += count_val
+                    m_ninos_ini = count_val
                 elif sexo_val == 'Femenino':
-                    tot_mat_ninas_ini += count_val
+                    m_ninas_ini = count_val
+            m_total_ini = m_ninos_ini + m_ninas_ini
 
             asis_ini_db = conn.execute(
                 """
@@ -1608,21 +1607,60 @@ def asistencia():
                 (fecha_actual, curso_ini)
             ).fetchall()
 
+            a_ninos_ini = 0
+            a_ninas_ini = 0
             for row in asis_ini_db:
                 sexo_val = row['sexo'] if hasattr(row, 'keys') else row[0]
                 count_val = row['count'] if hasattr(row, 'keys') else row[1]
                 if sexo_val == 'Masculino':
-                    tot_asist_ninos_ini += count_val
+                    a_ninos_ini = count_val
                 elif sexo_val == 'Femenino':
-                    tot_asist_ninas_ini += count_val
+                    a_ninas_ini = count_val
+            a_total_ini = a_ninos_ini + a_ninas_ini
 
+            ausentes_ini_db = conn.execute(
+                """
+                SELECT e.nombres, e.apellidos, a.estado 
+                FROM estudiantes e
+                JOIN asistencia a ON e.id_estudiante = a.id_estudiante
+                WHERE a.fecha = %s AND e.grado = %s AND a.estado IN ('Ausente', 'Excusa')
+                ORDER BY e.nombres ASC
+                """,
+                (fecha_actual, curso_ini)
+            ).fetchall()
+
+            nombres_ausentes_ini = []
+            for aus in ausentes_ini_db:
+                nombre = aus['nombres'] if hasattr(aus, 'keys') else aus[0]
+                apellido = aus['apellidos'] if hasattr(aus, 'keys') else aus[1]
+                estado_val = aus['estado'] if hasattr(aus, 'keys') else aus[2]
+                
+                if estado_val == 'Excusa':
+                    nombres_ausentes_ini.append(f"{nombre} {apellido} (Excusa)")
+                else:
+                    nombres_ausentes_ini.append(f"{nombre} {apellido}")
+
+            str_ausentes_ini = ", ".join(nombres_ausentes_ini)
+
+            resumen_inicial.append({
+                'grado': curso_ini,
+                'mat_ninos': m_ninos_ini,
+                'mat_ninas': m_ninas_ini,
+                'mat_total': m_total_ini,
+                'asist_ninos': a_ninos_ini,
+                'asist_ninas': a_ninas_ini,
+                'asist_total': a_total_ini,
+                'ausentes': str_ausentes_ini
+            })
+
+        # Totales generales de la tabla de inicial (calculados directamente de las filas generadas)
         totales_inicial = {
-            'mat_ninos': tot_mat_ninos_ini,
-            'mat_ninas': tot_mat_ninas_ini,
-            'mat_total': tot_mat_ninos_ini + tot_mat_ninas_ini,
-            'asist_ninos': tot_asist_ninos_ini,
-            'asist_ninas': tot_asist_ninas_ini,
-            'asist_total': tot_asist_ninos_ini + tot_asist_ninas_ini
+            'mat_ninos': sum(g['mat_ninos'] for g in resumen_inicial),
+            'mat_ninas': sum(g['mat_ninas'] for g in resumen_inicial),
+            'mat_total': sum(g['mat_total'] for g in resumen_inicial),
+            'asist_ninos': sum(g['asist_ninos'] for g in resumen_inicial),
+            'asist_ninas': sum(g['asist_ninas'] for g in resumen_inicial),
+            'asist_total': sum(g['asist_total'] for g in resumen_inicial)
         }
 
         meta_personal = conn.execute('SELECT * FROM asistencia_personal WHERE fecha = %s', (fecha_actual,)).fetchone()
@@ -1638,6 +1676,7 @@ def asistencia():
                            estudiantes=estudiantes,
                            asistencia_dict=asistencia_dict,
                            resumen_grados=resumen_grados,
+                           grados_inicial=resumen_inicial,  # <--- Pasamos la lista de filas para la tabla inferior
                            totales_grales=totales_inicial,
                            totales=totales_inicial,
                            meta=meta)
