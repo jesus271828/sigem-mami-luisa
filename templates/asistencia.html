@@ -207,7 +207,8 @@
                             </tbody>
                         </table>
                     </div>
-<!-- TABLA 2: NIVEL INICIAL (La nueva tabla que quieres añadir) -->
+<!-- TABLA 2: NIVEL INICIAL ML – L2             -->
+<!-- ========================================== -->
 <div class="card mb-4">
     <div class="card-header bg-light font-weight-bold">
         NIVEL INICIAL ML – L2 (Resumen por Grados)
@@ -231,7 +232,6 @@
                 </tr>
             </thead>
             <tbody>
-                <!-- Iteración de grados de Inicial (Párvulos, Prekínder, Kínder, Preprimario)[cite: 2] -->
                 {% for grado in grados_inicial %}
                 <tr>
                     <td>{{ grado.nombre }}</td>
@@ -251,9 +251,9 @@
                     <td class="text-center">{{ total_inicial_ninos }}</td>
                     <td class="text-center">{{ total_inicial_ninas }}</td>
                     <td class="text-center">{{ total_inicial_general }}</td>
-                    <td class="text-center"></td>
-                    <td class="text-center"></td>
-                    <td class="text-center bg-success text-white"></td>
+                    <td class="text-center">{{ total_inicial_asist_ninos }}</td>
+                    <td class="text-center">{{ total_inicial_asist_ninas }}</td>
+                    <td class="text-center bg-success text-white">{{ total_inicial_asist_general }}</td>
                     <td></td>
                 </tr>
             </tfoot>
