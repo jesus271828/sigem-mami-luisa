@@ -2522,6 +2522,34 @@ def registrar_usuario():
 
     return render_template('registrar_usuario.html', maestros=maestros, maestro_a_editar=maestro_a_editar)
 
+@app.route('/eliminar_usuario/<int:id>', methods=['POST', 'GET'])
+def eliminar_usuario(id):
+    if session.get('rol') not in ['oficina', 'admin']:
+        flash('Acceso denegado.', 'danger')
+        return redirect(url_for('menu'))
+        
+    conexion = get_db_connection()
+    is_postgres = DATABASE_URL is not None
+    
+    try:
+        if is_postgres:
+            cur = conexion.conn.cursor()
+            cur.execute("DELETE FROM usuarios WHERE id = %s", (id,))
+            conexion.conn.commit()
+            cur.close()
+        else:
+            conexion.execute("DELETE FROM usuarios WHERE id = ?", (id,))
+            conexion.commit()
+            
+        flash('Maestro eliminado exitosamente.', 'success')
+    except Exception as e:
+        print("--- ERROR AL ELIMINAR USUARIO:", e)
+        flash('Ocurrió un error al intentar eliminar el usuario.', 'danger')
+    finally:
+        conexion.close()
+        
+    return redirect(url_for('registrar_usuario'))
+
 @app.route('/menu_viejo')
 def menu_viejo():
     if 'usuario' not in session:
