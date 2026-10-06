@@ -29,7 +29,7 @@
         <div class="card shadow p-4 mb-5">
             <h3 class="mb-3 text-center">{% if maestro_a_editar %}Editar Usuario{% else %}Registrar Nuevo Maestro / Personal{% endif %}</h3>
             
-            <!-- Mensajes Flash -->
+            <!-- Mensajes Flash limpios y corregidos -->
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
@@ -38,7 +38,7 @@
                             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         </div>
                     {% endfor %}
-                % endif %}
+                {% endif %}
             {% endwith %}
 
             <form method="POST" action="{{ url_for('registrar_usuario') }}">
@@ -107,7 +107,7 @@
             </div>
         </div>
 
-        <!-- Tabla de Maestros Registrados -->
+        <!-- Tabla de Personal Registrado -->
         <div class="card shadow p-4">
             <h4 class="mb-3">Personal Registrado</h4>
             <div class="table-responsive">

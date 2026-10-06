@@ -2466,7 +2466,7 @@ def registrar_usuario():
             password = request.form['contrasena']
             rol = request.form['rol']
             
-            # Si es maestro de área, no lleva curso asignado; si es regular, se toma el curso
+            # Si es maestro de área, guardamos el área especializada y dejamos curso como None
             if rol == 'maestro_area':
                 curso_asignado = None
                 area_especializada = request.form.get('area_especializada')
@@ -2488,9 +2488,9 @@ def registrar_usuario():
                     conexion.execute("UPDATE usuarios SET nombre_completo = ?, username = ?, password = ?, rol = ?, curso_asignado = ?, area_especializada = ? WHERE id = ?",
                                      (nombre_completo, username, password, rol, curso_asignado, area_especializada, id_usuario))
                     conexion.commit()
-                flash('Maestro actualizado.', 'success')
+                flash('Maestro actualizado con éxito.', 'success')
             else:
-                # Insertar nuevo usuario
+                # Insertar nuevo usuario (manejando correctamente los IDs autoincrementables en PostgreSQL y SQLite)
                 if is_postgres:
                     cur = conexion.conn.cursor()
                     cur.execute("INSERT INTO usuarios (nombre_completo, username, password, rol, curso_asignado, area_especializada) VALUES (%s, %s, %s, %s, %s, %s)",
@@ -2501,22 +2501,23 @@ def registrar_usuario():
                     conexion.execute("INSERT INTO usuarios (nombre_completo, username, password, rol, curso_asignado, area_especializada) VALUES (?, ?, ?, ?, ?, ?)",
                                      (nombre_completo, username, password, rol, curso_asignado, area_especializada))
                     conexion.commit()
-                flash('Maestro registrado.', 'success')
+                flash('Maestro registrado con éxito.', 'success')
                 
             return redirect(url_for('registrar_usuario'))
         
         # Obtener lista de todos los maestros (tanto regulares como de área)
         if is_postgres:
             cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-            cur.execute("SELECT * FROM usuarios WHERE LOWER(rol) IN ('maestro', 'maestro_area')")
+            cur.execute("SELECT * FROM usuarios WHERE LOWER(rol) IN ('maestro', 'maestro_area') ORDER BY id DESC")
             maestros = cur.fetchall()
             cur.close()
         else:
             conexion.row_factory = sqlite3.Row
-            maestros = conexion.execute("SELECT * FROM usuarios WHERE LOWER(rol) IN ('maestro', 'maestro_area')").fetchall()
+            maestros = conexion.execute("SELECT * FROM usuarios WHERE LOWER(rol) IN ('maestro', 'maestro_area') ORDER BY id DESC").fetchall()
 
     except Exception as e:
         print("--- ERROR EN REGISTRAR USUARIO:", e)
+        flash(f'Error al procesar la solicitud: {e}', 'danger')
     finally:
         conexion.close()
 
