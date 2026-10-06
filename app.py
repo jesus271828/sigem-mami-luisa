@@ -2490,7 +2490,7 @@ def registrar_usuario():
                     conexion.commit()
                 flash('Maestro actualizado con éxito.', 'success')
             else:
-                # Insertar nuevo usuario (manejando correctamente los IDs autoincrementables en PostgreSQL y SQLite)
+                # Insertar NUEVO usuario (Sin tocar ni enviar la columna id para que use el autoincremental de la secuencia)
                 if is_postgres:
                     cur = conexion.conn.cursor()
                     cur.execute("INSERT INTO usuarios (nombre_completo, username, password, rol, curso_asignado, area_especializada) VALUES (%s, %s, %s, %s, %s, %s)",
