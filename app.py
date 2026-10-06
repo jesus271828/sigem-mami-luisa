@@ -2420,6 +2420,94 @@ def planificacion():
     }
     return render_template('planificacion.html', usuario=usuario_actual)
 
+@app.route('/guardar_planificacion', methods=['POST'])
+def guardar_planificacion():
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+        
+    try:
+        # Recogemos los datos del formulario
+        docente = request.form.get('docente')
+        grado = request.form.get('grado')
+        # Los checkboxes de 'areas', 'estrategias' y 'tecnicas' se unen por comas
+        areas = ", ".join(request.form.getlist('areas'))
+        modalidad = request.form.get('modalidad')
+        areas_art = request.form.get('areas_art')
+        ejes = request.form.get('ejes')
+        estrategias = ", ".join(request.form.getlist('estrategias'))
+        tecnicas = ", ".join(request.form.getlist('tecnicas'))
+        duracion = request.form.get('duracion') or None
+        f_inicio = request.form.get('f_inicio') or None
+        f_cierre = request.form.get('f_cierre') or None
+        situacion = request.form.get('situacion')
+        competencias = request.form.get('competencias')
+        contenidos = request.form.get('contenidos')
+        actividades = request.form.get('actividades')
+        indicadores = request.form.get('indicadores')
+        recursos = request.form.get('recursos')
+        evaluacion = request.form.get('evaluacion')
+
+        conexion = get_db_connection()
+        is_postgres = DATABASE_URL is not None
+
+        if is_postgres:
+            cur = conexion.conn.cursor()
+            cur.execute("""
+                INSERT INTO planificaciones (docente, grado, areas, modalidad, areas_art, ejes, estrategias, tecnicas, duracion, f_inicio, f_cierre, situacion, competencias, contenidos, actividades, indicadores, recursos, evaluacion)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (docente, grado, areas, modalidad, areas_art, ejes, estrategias, tecnicas, duracion, f_inicio, f_cierre, situacion, competencias, contenidos, actividades, indicadores, recursos, evaluacion))
+            conexion.conn.commit()
+            cur.close()
+        else:
+            conexion.execute("""
+                INSERT INTO planificaciones (docente, grado, areas, modalidad, areas_art, ejes, estrategias, tecnicas, duracion, f_inicio, f_cierre, situacion, competencias, contenidos, actividades, indicadores, recursos, evaluacion)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (docente, grado, areas, modalidad, areas_art, ejes, estrategias, tecnicas, duracion, f_inicio, f_cierre, situacion, competencias, contenidos, actividades, indicadores, recursos, evaluacion))
+            conexion.commit()
+            
+        conexion.close()
+        flash('Planificación guardada exitosamente.', 'success')
+    except Exception as e:
+        print("--- ERROR AL GUARDAR PLANIFICACIÓN:", e)
+        flash(f'Error al guardar la planificación: {e}', 'danger')
+        
+    return redirect(url_for('mis_planificaciones'))
+
+@app.route('/mis_planificaciones')
+def mis_planificaciones():
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+        
+    usuario_actual = session.get('nombre_completo')
+    rol_actual = session.get('rol')
+    
+    conexion = get_db_connection()
+    is_postgres = DATABASE_URL is not None
+    planificaciones = []
+
+    try:
+        if is_postgres:
+            cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            # Si es admin u oficina ve todas, si es maestro solo ve las suyas
+            if rol_actual in ['admin', 'oficina']:
+                cur.execute("SELECT * FROM planificaciones ORDER BY id DESC")
+            else:
+                cur.execute("SELECT * FROM planificaciones WHERE docente = %s ORDER BY id DESC", (usuario_actual,))
+            planificaciones = cur.fetchall()
+            cur.close()
+        else:
+            conexion.row_factory = sqlite3.Row
+            if rol_actual in ['admin', 'oficina']:
+                planificaciones = conexion.execute("SELECT * FROM planificaciones ORDER BY id DESC").fetchall()
+            else:
+                planificaciones = conexion.execute("SELECT * FROM planificaciones WHERE docente = ? ORDER BY id DESC", (usuario_actual,)).fetchall()
+    except Exception as e:
+        print("--- ERROR AL CARGAR PLANIFICACIONES:", e)
+    finally:
+        conexion.close()
+
+    return render_template('mis_planificaciones.html', planificaciones=planificaciones)
+
 @app.route('/planificacion_diaria', methods=['GET', 'POST'])
 def planificacion_diaria():
     if 'nombre_completo' not in session:

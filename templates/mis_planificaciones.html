@@ -2,48 +2,70 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Mis Planificaciones - SIGEM</title>
+    <title>Mis Planificaciones - SIGEM Mami Luisa</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body class="bg-light p-4">
-    <div class="container bg-white border p-4 shadow-sm">
+<body class="bg-light">
+    <div class="container mt-5">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h3>Mis Planificaciones Guardadas</h3>
+            <h2>📂 Historial de Planificaciones</h2>
             <div>
-                <a href="/planificacion" class="btn btn-outline-secondary">Nueva Planificación</a>
-                <a href="/menu" class="btn btn-primary">Ir al Menú</a>
+                <a href="{{ url_for('planificacion') }}" class="btn btn-primary">➕ Nueva Planificación</a>
+                <a href="{{ url_for('menu') }}" class="btn btn-secondary">⬅ Volver al Menú</a>
             </div>
         </div>
-        
-        <table class="table table-hover table-bordered">
-            <thead class="table-dark">
-                <tr>
-                    <th>Fecha Inicio</th>
-                    <th>Grado</th>
-                    <th>Áreas</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for p in planificaciones %}
-                <tr>
-                    <td>{{ p.f_inicio }}</td>
-                    <td>{{ p.grado_seccion }}</td>
-                    <td>{{ p.areas }}</td>
-                    <td>
-                        <!-- Botón que llama a la ruta que acabamos de crear en app.py -->
-                        <a href="/imprimir_planificacion/{{ p.id }}" class="btn btn-success btn-sm">
-                            Imprimir PDF
-                        </a>
-                    </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="4" class="text-center">No hay planificaciones guardadas aún.</td>
-                </tr>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
                 {% endfor %}
-            </tbody>
-        </table>
+            {% endif %}
+        {% endwith %}
+
+        <div class="card shadow p-4">
+            <div class="table-responsive">
+                <table class="table table-striped table-bordered align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>ID</th>
+                            <th>Docente</th>
+                            <th>Grado</th>
+                            <th>Modalidad</th>
+                            <th>Duración (Días)</th>
+                            <th>Fechas</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if planificaciones %}
+                            {% for p in planificaciones %}
+                            <tr>
+                                <td>{{ p.id }}</td>
+                                <td>{{ p.docente }}</td>
+                                <td>{{ p.grado }}</td>
+                                <td>{{ p.modalidad or 'N/A' }}</td>
+                                <td>{{ p.duracion or 'N/A' }}</td>
+                                <td>{{ p.f_inicio }} al {{ p.f_cierre }}</td>
+                                <td>
+                                    <a href="{{ url_for('ver_planificacion_detalle', id=p.id) }}" class="btn btn-sm btn-info text-white">Ver / Imprimir</a>
+                                    <a href="{{ url_for('eliminar_planificacion', id=p.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('¿Estás seguro de eliminar esta planificación?');">Eliminar</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="7" class="text-center text-muted">No hay planificaciones registradas todavía.</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
