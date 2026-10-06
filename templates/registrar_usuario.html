@@ -51,7 +51,7 @@
                            value="{{ maestro_a_editar['password'] if maestro_a_editar else '' }}" required>
                 </div>
                 
-                <!-- Selector de Rol Modificado -->
+                <!-- Selector de Rol -->
                 <div class="mb-3">
                     <label for="rol" class="form-label">Rol del Usuario</label>
                     <select class="form-control" id="rol" name="rol" required onchange="manejarCambioRol()">
@@ -72,7 +72,7 @@
                     </select>
                 </div>
                 
-                <!-- Selector de Curso Asignado (Aplica para maestros regulares, o general) -->
+                <!-- Selector de Curso Asignado (Se oculta si es maestro de área) -->
                 <div class="mb-3" id="seccion_curso_asignado">
                     <label for="curso_asignado" class="form-label">Curso Asignado</label>
                     <select class="form-control" id="curso_asignado" name="curso_asignado">
@@ -169,24 +169,37 @@
         </div>
     </div>
 
-    <!-- Script para alternar visibilidad según el rol -->
+    <!-- Script actualizado para ocultar curso si es maestro de área -->
     <script>
         function manejarCambioRol() {
             const rolSelect = document.getElementById('rol');
             const seccionArea = document.getElementById('seccion_area_especializada');
             const areaSelect = document.getElementById('area_especializada');
+            const seccionCurso = document.getElementById('seccion_curso_asignado');
+            const cursoSelect = document.getElementById('curso_asignado');
             
             if (rolSelect.value === 'maestro_area') {
+                // Mostrar área y hacerla obligatoria
                 seccionArea.style.display = 'block';
                 areaSelect.setAttribute('required', 'required');
+                
+                // Ocultar curso y quitar obligatoriedad
+                seccionCurso.style.display = 'none';
+                cursoSelect.removeAttribute('required');
+                cursoSelect.value = ''; // Limpiar selección
             } else {
+                // Ocultar área y quitar obligatoriedad
                 seccionArea.style.display = 'none';
                 areaSelect.removeAttribute('required');
                 areaSelect.value = '';
+                
+                // Mostrar curso y hacerlo obligatorio
+                seccionCurso.style.display = 'block';
+                cursoSelect.setAttribute('required', 'required');
             }
         }
 
-        // Ejecutar al cargar la página por si se está editando un usuario que ya es maestro de área
+        // Ejecutar al cargar la página por si se está editando un usuario existente
         window.addEventListener('DOMContentLoaded', (event) => {
             manejarCambioRol();
         });
