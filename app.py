@@ -2411,6 +2411,12 @@ def menu_planificacion():
         return redirect(url_for('login'))
     return render_template('menu_planificacion.html')
 
+@app.route('/planificacion')
+def planificacion():
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+    return render_template('planificacion.html', usuario=session)
+
 @app.route('/ver_planificacion/<int:id>')
 def ver_planificacion(id):
     if 'usuario' not in session:
