@@ -1986,6 +1986,21 @@ def generar_pdf(id_estudiante):
     if not estudiante:
         return f"No se encontró ninguna inscripción para el ID: {id_estudiante}", 404
 
+    # Función auxiliar para limpiar valores NaN, None o cadenas vacías extrañas
+    def limpiar_nan(val):
+        if val is None:
+            return ""
+        val_str = str(val).strip()
+        if val_str.lower() in ['nan', 'none', 'nat']:
+            return ""
+        return val_str
+
+    # Convertimos a diccionario y limpiamos todos los campos del estudiante
+    if not isinstance(estudiante, dict):
+        estudiante = dict(estudiante)
+    
+    estudiante = {k: limpiar_nan(v) for k, v in estudiante.items()}
+
     # 1. Procesar Logo en Base64 seguro para xhtml2pdf
     logo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'img', 'logo2.png')
     logo_src = ""
@@ -1995,7 +2010,7 @@ def generar_pdf(id_estudiante):
         logo_src = f"data:image/png;base64,{logo_base64}"
         
     # 2. Procesar la foto del estudiante desde la columna correcta: foto_estudiante_cedula
-    foto_valor = estudiante.get('foto_estudiante_cedula') if isinstance(estudiante, dict) else estudiante['foto_estudiante_cedula'] if 'foto_estudiante_cedula' in estudiante.keys() else None
+    foto_valor = estudiante.get('foto_estudiante_cedula', '')
     foto_base64_src = ""
     
     if foto_valor:
@@ -2017,11 +2032,8 @@ def generar_pdf(id_estudiante):
                     ext = nombre_archivo.split('.')[-1].lower()
                     mime_type = 'image/png' if ext == 'png' else 'image/jpeg'
                     foto_base64_src = f"data:{mime_type};base64,{foto_encoded}"
-
-    if not isinstance(estudiante, dict):
-        estudiante = dict(estudiante)
     
-    # Inyectamos la variable lista al diccionario del estudiante
+    # Inyectamos la foto procesada al diccionario del estudiante
     estudiante['foto_base64'] = foto_base64_src
     
     # Renderizar la plantilla HTML para el PDF
