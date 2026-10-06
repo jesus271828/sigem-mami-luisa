@@ -51,7 +51,7 @@
                                 <td>{{ p.duracion or 'N/A' }}</td>
                                 <td>{{ p.f_inicio }} al {{ p.f_cierre }}</td>
                                 <td>
-                                    <a href="{{ url_for('ver_planificacion_detalle', id=p.id) }}" class="btn btn-sm btn-info text-white">Ver / Imprimir</a>
+                                    <a href="{{ url_for('ver_planificacion', id=p.id) }}" class="btn btn-sm btn-info text-white">Ver / Imprimir</a>
                                     <a href="{{ url_for('eliminar_planificacion', id=p.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('¿Estás seguro de eliminar esta planificación?');">Eliminar</a>
                                 </td>
                             </tr>
