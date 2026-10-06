@@ -2445,7 +2445,7 @@ def registrar_usuario():
     edit_id = request.args.get('edit_id')
     
     maestro_a_editar = None
-     maestros = []
+    maestros = []
 
     try:
         # Obtener el usuario a editar si existe
@@ -2477,7 +2477,7 @@ def registrar_usuario():
             id_usuario = request.form.get('id_usuario')
 
             if id_usuario:
-                # Actualizar usuario existente (incluyendo area_especializada)
+                # Actualizar usuario existente
                 if is_postgres:
                     cur = conexion.conn.cursor()
                     cur.execute("UPDATE usuarios SET nombre_completo = %s, username = %s, password = %s, rol = %s, curso_asignado = %s, area_especializada = %s WHERE id = %s",
@@ -2521,15 +2521,6 @@ def registrar_usuario():
         conexion.close()
 
     return render_template('registrar_usuario.html', maestros=maestros, maestro_a_editar=maestro_a_editar)
-
-@app.route('/eliminar_usuario/<int:id>', methods=['POST', 'GET'])
-def eliminar_usuario(id):
-    conn = get_db_connection()
-    conn.execute("DELETE FROM usuarios WHERE id = ?", (id,))
-    conn.commit()
-    conn.close()
-    flash('Maestro eliminado.', 'success')
-    return redirect(url_for('registrar_usuario'))
 
 @app.route('/menu_viejo')
 def menu_viejo():
