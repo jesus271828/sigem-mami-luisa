@@ -2411,14 +2411,59 @@ def menu_planificacion():
         return redirect(url_for('login'))
     return render_template('menu_planificacion.html')
 
-@app.route('/planificacion')
-def planificacion():
-    # Valida sesión opcionalmente o usa valores predeterminados
-    usuario_actual = {
-        'nombre': session.get('usuario_nombre', 'Jesus Maria Alfonseca Duverge'), 
-        'rol': session.get('rol', 'maestro')
-    }
-    return render_template('planificacion.html', usuario=usuario_actual)
+@app.route('/ver_planificacion/<int:id>')
+def ver_planificacion(id):
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+        
+    conexion = get_db_connection()
+    is_postgres = DATABASE_URL is not None
+    planificacion = None
+
+    try:
+        if is_postgres:
+            cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute("SELECT * FROM planificaciones WHERE id = %s", (id,))
+            planificacion = cur.fetchone()
+            cur.close()
+        else:
+            conexion.row_factory = sqlite3.Row
+            planificacion = conexion.execute("SELECT * FROM planificaciones WHERE id = ?", (id,)).fetchone()
+    except Exception as e:
+        print("--- ERROR AL VER PLANIFICACIÓN:", e)
+    finally:
+        conexion.close()
+
+    if not planificacion:
+        return "Planificación no encontrada", 404
+
+    return render_template('ver_planificacion.html', planificacion=planificacion)
+
+@app.route('/eliminar_planificacion/<int:id>')
+def eliminar_planificacion(id):
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+        
+    conexion = get_db_connection()
+    is_postgres = DATABASE_URL is not None
+
+    try:
+        if is_postgres:
+            cur = conexion.conn.cursor()
+            cur.execute("DELETE FROM planificaciones WHERE id = %s", (id,))
+            conexion.conn.commit()
+            cur.close()
+        else:
+            conexion.execute("DELETE FROM planificaciones WHERE id = ?", (id,))
+            conexion.commit()
+        flash('Planificación eliminada con éxito.', 'success')
+    except Exception as e:
+        print("--- ERROR AL ELIMINAR PLANIFICACIÓN:", e)
+        flash(f'Error al eliminar: {e}', 'danger')
+    finally:
+        conexion.close()
+
+    return redirect(url_for('mis_planificaciones'))
 
 @app.route('/guardar_planificacion', methods=['POST'])
 def guardar_planificacion():
