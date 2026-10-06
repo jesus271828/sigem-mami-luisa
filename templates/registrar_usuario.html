@@ -2,126 +2,114 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Registrar Nuevo Maestro | SIGEM</title>
+    <title>Registrar Usuario - SIGEM Mami Luisa</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script>
+        function toggleAreaField() {
+            const rolSelect = document.getElementById('rol');
+            const divCurso = document.getElementById('div_curso_asignado');
+            const divArea = document.getElementById('div_area_especializada');
+            
+            if (rolSelect.value === 'maestro_area') {
+                divCurso.style.display = 'none';
+                divArea.style.display = 'block';
+            } else if (rolSelect.value === 'maestro') {
+                divCurso.style.display = 'block';
+                divArea.style.display = 'none';
+            } else {
+                divCurso.style.display = 'none';
+                divArea.style.display = 'none';
+            }
+        }
+        window.onload = toggleAreaField;
+    </script>
 </head>
 <body class="bg-light">
-
-    <div class="container mt-4 mb-5">
-        
-        <!-- Mensajes Flash -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-
-        <!-- Formulario de Registro / Edición -->
-        <div class="card shadow p-4 mx-auto" style="max-width: 600px;">
-            <h3 class="mb-3 text-center">
-                {% if maestro_a_editar %} Editar Maestro {% else %} Registrar Nuevo Maestro {% endif %}
-            </h3>
+    <div class="container mt-5">
+        <div class="card shadow p-4 mb-5">
+            <h3 class="mb-3 text-center">{% if maestro_a_editar %}Editar Usuario{% else %}Registrar Nuevo Maestro / Personal{% endif %}</h3>
             
-            <form action="{{ url_for('registrar_usuario') }}" method="POST">
-                <!-- Campo oculto para llevar el ID si estamos editando -->
+            <!-- Mensajes Flash -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                % endif %}
+            {% endwith %}
+
+            <form method="POST" action="{{ url_for('registrar_usuario') }}">
                 {% if maestro_a_editar %}
-                    <input type="hidden" name="id_usuario" value="{{ maestro_a_editar['id'] }}">
+                    <input type="hidden" name="id_usuario" value="{{ maestro_a_editar.id }}">
                 {% endif %}
 
                 <div class="mb-3">
                     <label for="nombre_completo" class="form-label">Nombre Completo</label>
-                    <input type="text" class="form-control" id="nombre_completo" name="nombre_completo" 
-                           value="{{ maestro_a_editar['nombre_completo'] if maestro_a_editar else '' }}" placeholder="Ej. Juan Pérez" required>
+                    <input type="text" class="form-control" id="nombre_completo" name="nombre_completo" value="{{ maestro_a_editar.nombre_completo if maestro_a_editar else '' }}" required>
                 </div>
-                
+
                 <div class="mb-3">
                     <label for="nombre_usuario" class="form-label">Nombre de Usuario</label>
-                    <input type="text" class="form-control" id="nombre_usuario" name="nombre_usuario" 
-                           value="{{ maestro_a_editar['username'] if maestro_a_editar else '' }}" required>
+                    <input type="text" class="form-control" id="nombre_usuario" name="nombre_usuario" value="{{ maestro_a_editar.username if maestro_a_editar else '' }}" required>
                 </div>
-                
+
                 <div class="mb-3">
                     <label for="contrasena" class="form-label">Contraseña</label>
-                    <input type="password" class="form-control" id="contrasena" name="contrasena" 
-                           value="{{ maestro_a_editar['password'] if maestro_a_editar else '' }}" required>
+                    <input type="text" class="form-control" id="contrasena" name="contrasena" value="{{ maestro_a_editar.password if maestro_a_editar else '' }}" required>
                 </div>
-                
-                <!-- Selector de Rol -->
+
                 <div class="mb-3">
                     <label for="rol" class="form-label">Rol del Usuario</label>
-                    <select class="form-control" id="rol" name="rol" required onchange="manejarCambioRol()">
-                        <option value="" disabled {% if not maestro_a_editar %}selected{% endif %}>Selecciona un rol...</option>
-                        <option value="maestro" {% if maestro_a_editar and maestro_a_editar['rol'] == 'maestro' %}selected{% endif %}>Maestro de Grado / Regular</option>
-                        <option value="maestro_area" {% if maestro_a_editar and maestro_a_editar['rol'] == 'maestro_area' %}selected{% endif %}>Maestro de Área (Especialidad)</option>
+                    <select class="form-select" id="rol" name="rol" onchange="toggleAreaField()" required>
+                        <option value="">Selecciona un rol...</option>
+                        <option value="maestro" {% if maestro_a_editar and maestro_a_editar.rol == 'maestro' %}selected{% endif %}>Maestro (Grado Fijo)</option>
+                        <option value="maestro_area" {% if maestro_a_editar and maestro_a_editar.rol == 'maestro_area' %}selected{% endif %}>Maestro de Área (Especialidad)</option>
+                        <option value="oficina" {% if maestro_a_editar and maestro_a_editar.rol == 'oficina' %}selected{% endif %}>Oficina</option>
+                        <option value="admin" {% if maestro_a_editar and maestro_a_editar.rol == 'admin' %}selected{% endif %}>Administrador</option>
                     </select>
                 </div>
 
-                <!-- Campo de Área Especializada (Aparece solo si el rol es maestro_area) -->
-                <div class="mb-3" id="seccion_area_especializada" style="display: none;">
-                    <label for="area_especializada" class="form-label">Área Especializada</label>
-                    <select class="form-control" id="area_especializada" name="area_especializada">
-                        <option value="" disabled {% if not maestro_a_editar or not maestro_a_editar.get('area_especializada') %}selected{% endif %}>Selecciona el área...</option>
-                        <option value="Informática" {% if maestro_a_editar and maestro_a_editar.get('area_especializada') == 'Informática' %}selected{% endif %}>Informática</option>
-                        <option value="Inglés" {% if maestro_a_editar and maestro_a_editar.get('area_especializada') == 'Inglés' %}selected{% endif %}>Inglés</option>
-                        <option value="Educación Física" {% if maestro_a_editar and maestro_a_editar.get('area_especializada') == 'Educación Física' %}selected{% endif %}>Educación Física</option>
-                    </select>
-                </div>
-                
-                <!-- Selector de Curso Asignado (Se oculta si es maestro de área) -->
-                <div class="mb-3" id="seccion_curso_asignado">
+                <!-- Campo dinámico para Curso Asignado (Maestros regulares) -->
+                <div class="mb-3" id="div_curso_asignado">
                     <label for="curso_asignado" class="form-label">Curso Asignado</label>
-                    <select class="form-control" id="curso_asignado" name="curso_asignado">
-                        <option value="" disabled {% if not maestro_a_editar %}selected{% endif %}>Selecciona un curso...</option>
-                        
-                        <!-- Nivel Inicial ML – L2 -->
-                        <optgroup label="Nivel Inicial ML – L2">
-                            <option value="Párvulos" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == 'Párvulos' %}selected{% endif %}>Párvulos</option>
-                            <option value="Prekínder – A" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == 'Prekínder – A' %}selected{% endif %}>Prekínder – A</option>
-                            <option value="Prekínder – B" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == 'Prekínder – B' %}selected{% endif %}>Prekínder – B</option>
-                            <option value="Kínder – A" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == 'Kínder – A' %}selected{% endif %}>Kínder – A</option>
-                            <option value="Kínder – B" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == 'Kínder – B' %}selected{% endif %}>Kínder – B</option>
-                            <option value="Preprimario – A" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == 'Preprimario – A' %}selected{% endif %}>Preprimario – A</option>
-                            <option value="Preprimario – B" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == 'Preprimario – B' %}selected{% endif %}>Preprimario – B</option>
-                        </optgroup>
-
-                        <!-- Primaria -->
-                        <optgroup label="Primaria">
-                            <option value="1ro A" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '1ro A' %}selected{% endif %}>1ro A</option>
-                            <option value="1ro B" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '1ro B' %}selected{% endif %}>1ro B</option>
-                            <option value="2do A" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '2do A' %}selected{% endif %}>2do A</option>
-                            <option value="2do B" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '2do B' %}selected{% endif %}>2do B</option>
-                            <option value="3ro A" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '3ro A' %}selected{% endif %}>3ro A</option>
-                            <option value="3ro B" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '3ro B' %}selected{% endif %}>3ro B</option>
-                            <option value="4to A" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '4to A' %}selected{% endif %}>4to A</option>
-                            <option value="4to B" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '4to B' %}selected{% endif %}>4to B</option>
-                            <option value="5to A" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '5to A' %}selected{% endif %}>5to A</option>
-                            <option value="5to B" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '5to B' %}selected{% endif %}>5to B</option>
-                            <option value="6to A" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '6to A' %}selected{% endif %}>6to A</option>
-                            <option value="6to B" {% if maestro_a_editar and maestro_a_editar['curso_asignado'] == '6to B' %}selected{% endif %}>6to B</option>
-                        </optgroup>
+                    <select class="form-select" name="curso_asignado" id="curso_asignado">
+                        <option value="">Selecciona un curso...</option>
+                        <option value="Pre-Primario" {% if maestro_a_editar and maestro_a_editar.curso_asignado == 'Pre-Primario' %}selected{% endif %}>Pre-Primario</option>
+                        <option value="Primero" {% if maestro_a_editar and maestro_a_editar.curso_asignado == 'Primero' %}selected{% endif %}>Primero</option>
+                        <option value="Segundo" {% if maestro_a_editar and maestro_a_editar.curso_asignado == 'Segundo' %}selected{% endif %}>Segundo</option>
+                        <option value="Tercero" {% if maestro_a_editar and maestro_a_editar.curso_asignado == 'Tercero' %}selected{% endif %}>Tercero</option>
+                        <option value="Cuarto" {% if maestro_a_editar and maestro_a_editar.curso_asignado == 'Cuarto' %}selected{% endif %}>Cuarto</option>
+                        <option value="Quinto" {% if maestro_a_editar and maestro_a_editar.curso_asignado == 'Quinto' %}selected{% endif %}>Quinto</option>
+                        <option value="Sexto" {% if maestro_a_editar and maestro_a_editar.curso_asignado == 'Sexto' %}selected{% endif %}>Sexto</option>
                     </select>
                 </div>
-                
-                <button type="submit" class="btn {% if maestro_a_editar %}btn-warning{% else %}btn-primary{% endif %} w-100 mb-2">
-                    {% if maestro_a_editar %} Guardar Cambios {% else %} Registrar {% endif %}
-                </button>
-                
-                {% if maestro_a_editar %}
-                    <a href="{{ url_for('registrar_usuario') }}" class="btn btn-secondary w-100 mb-2">Cancelar Edición</a>
-                {% endif %}
-                
-                <a href="{{ url_for('index') }}" class="btn btn-light w-100">← Volver al Menú</a>
+
+                <!-- Campo dinámico para Área Especializada (Maestros de área) -->
+                <div class="mb-3" id="div_area_especializada" style="display: none;">
+                    <label for="area_especializada" class="form-label">Área Especializada</label>
+                    <select class="form-select" name="area_especializada" id="area_especializada">
+                        <option value="">Selecciona el área...</option>
+                        <option value="Educación Física" {% if maestro_a_editar and maestro_a_editar.area_especializada == 'Educación Física' %}selected{% endif %}>Educación Física</option>
+                        <option value="Inglés" {% if maestro_a_editar and maestro_a_editar.area_especializada == 'Inglés' %}selected{% endif %}>Inglés</option>
+                        <option value="Educación Artística" {% if maestro_a_editar and maestro_a_editar.area_especializada == 'Educación Artística' %}selected{% endif %}>Educación Artística</option>
+                        <option value="Informática" {% if maestro_a_editar and maestro_a_editar.area_especializada == 'Informática' %}selected{% endif %}>Informática</option>
+                        <option value="Formación Integral" {% if maestro_a_editar and maestro_a_editar.area_especializada == 'Formación Integral' %}selected{% endif %}>Formación Integral, Humana y Religiosa</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100">{% if maestro_a_editar %}Actualizar Usuario{% else %}Registrar{% endif %}</button>
             </form>
+            <div class="text-center mt-3">
+                <a href="{{ url_for('menu') }}" class="btn btn-secondary btn-sm">← Volver al Menú</a>
+            </div>
         </div>
 
         <!-- Tabla de Maestros Registrados -->
-        <div class="card shadow p-4 mt-5">
-            <h4 class="mb-3">Maestros Registrados</h4>
+        <div class="card shadow p-4">
+            <h4 class="mb-3">Personal Registrado</h4>
             <div class="table-responsive">
                 <table class="table table-striped table-bordered align-middle">
                     <thead class="table-dark">
@@ -129,80 +117,44 @@
                             <th>ID</th>
                             <th>Nombre Completo</th>
                             <th>Usuario</th>
-                            <th>Contraseña</th>
                             <th>Rol / Área</th>
-                            <th>Curso Asignado</th>
+                            <th>Asignación</th>
                             <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for maestro in maestros %}
-                        <tr>
-                            <td>{{ maestro['id'] }}</td>
-                            <td>{{ maestro['nombre_completo'] }}</td>
-                            <td>{{ maestro['username'] }}</td>
-                            <td>{{ maestro['password'] }}</td>
-                            <td>
-                                {% if maestro['rol'] == 'maestro_area' %}
-                                    <span class="badge bg-info text-dark">Área: {{ maestro.get('area_especializada', 'No especificada') }}</span>
-                                {% else %}
-                                    <span class="badge bg-secondary">Maestro Regular</span>
-                                {% endif %}
-                            </td>
-                            <td>{{ maestro['curso_asignado'] if maestro['curso_asignado'] else 'N/A (Área)' }}</td>
-                            <td>
-                                <!-- Botón Editar -->
-                                <a href="{{ url_for('registrar_usuario', edit_id=maestro['id']) }}" class="btn btn-sm btn-warning">Editar</a>
-                                
-                                <!-- Botón Eliminar -->
-                                <a href="{{ url_for('eliminar_usuario', id=maestro['id']) }}" class="btn btn-sm btn-danger" onclick="return confirm('¿Estás seguro de que deseas eliminar a este maestro?');">Eliminar</a>
-                            </td>
-                        </tr>
+                        {% if maestros %}
+                            {% for m in maestros %}
+                            <tr>
+                                <td>{{ m.id }}</td>
+                                <td>{{ m.nombre_completo }}</td>
+                                <td>{{ m.username }}</td>
+                                <td>
+                                    <span class="badge bg-info text-dark">{{ m.rol }}</span>
+                                </td>
+                                <td>
+                                    {% if m.rol == 'maestro_area' %}
+                                        <em>{{ m.area_especializada or 'No asignada' }}</em>
+                                    {% else %}
+                                        {{ m.curso_asignado or 'N/A' }}
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('registrar_usuario', edit_id=m.id) }}" class="btn btn-sm btn-warning">Editar</a>
+                                    <a href="{{ url_for('eliminar_usuario', id=m.id) }}" class="btn btn-sm btn-danger" onclick="return confirm('¿Estás seguro de que deseas eliminar este usuario?');">Eliminar</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
                         {% else %}
-                        <tr>
-                            <td colspan="7" class="text-center text-muted">No hay maestros registrados todavía.</td>
-                        </tr>
-                        {% endfor %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted">No hay maestros registrados todavía.</td>
+                            </tr>
+                        {% endif %}
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
-
-    <!-- Script actualizado para ocultar curso si es maestro de área -->
-    <script>
-        function manejarCambioRol() {
-            const rolSelect = document.getElementById('rol');
-            const seccionArea = document.getElementById('seccion_area_especializada');
-            const areaSelect = document.getElementById('area_especializada');
-            const seccionCurso = document.getElementById('seccion_curso_asignado');
-            const cursoSelect = document.getElementById('curso_asignado');
-            
-            if (rolSelect.value === 'maestro_area') {
-                // Mostrar área y hacerla obligatoria
-                seccionArea.style.display = 'block';
-                areaSelect.setAttribute('required', 'required');
-                
-                // Ocultar curso y quitar obligatoriedad
-                seccionCurso.style.display = 'none';
-                cursoSelect.removeAttribute('required');
-                cursoSelect.value = ''; // Limpiar selección
-            } else {
-                // Ocultar área y quitar obligatoriedad
-                seccionArea.style.display = 'none';
-                areaSelect.removeAttribute('required');
-                areaSelect.value = '';
-                
-                // Mostrar curso y hacerlo obligatorio
-                seccionCurso.style.display = 'block';
-                cursoSelect.setAttribute('required', 'required');
-            }
-        }
-
-        // Ejecutar al cargar la página por si se está editando un usuario existente
-        window.addEventListener('DOMContentLoaded', (event) => {
-            manejarCambioRol();
-        });
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
