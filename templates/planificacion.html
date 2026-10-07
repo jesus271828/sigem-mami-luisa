@@ -218,7 +218,7 @@
                         <div class="section-box">
                             <label>Estrategias de enseñanza y de aprendizaje:</label>
                             <div class="d-flex flex-column gap-2 mt-2">
-                                {% for est in ['ABP', 'Indagación', 'Resolución de problemas', 'Sociodrama', 'Juego'] %}
+                                {% for est in ['Aprendizaje basado en proyectos', 'Aprendizaje basado en problemas', 'El juego', 'Aprendizaje por descubrimiento', 'Indagacion dialogica'] %}
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" name="estrategias" value="{{ est }}" id="est_{{ loop.index }}">
                                     <label class="form-check-label fw-normal text-dark" for="est_{{ loop.index }}">{{ est }}</label>
