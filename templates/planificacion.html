@@ -119,4 +119,305 @@
                 <a href="/mis_planificaciones" class="btn-custom btn-view">📂 Ver Planificaciones</a>
             </div>
             <div class="right-group">
-                <button type="submit" form="form-planificacion"
+                <button type="submit" form="form-planificacion" class="btn-custom btn-save">💾 Guardar Planificación</button>
+                <button type="button" class="btn-custom btn-pdf" onclick="window.print()">🖨️ Generar PDF / Imprimir</button>
+            </div>
+        </div>
+
+        <div class="main-container">
+            <form id="form-planificacion" action="/guardar_planificacion" method="POST">
+                
+                <!-- ENCABEZADO -->
+                <div class="header">
+                    <img src="{{ url_for('static', filename='img/logo2.png') }}" class="logo" alt="Logo">
+                    <div class="header-content">
+                        <div class="header-row-1">
+                            <span class="title-school">Centro Educativo Mami Luisa S.R.L</span>
+                            <span class="lema">"Educando con amor para un mundo mejor"</span>
+                        </div>
+                        <div class="info-line">
+                            <b>Dirección:</b> C/Castillo Márquez #53. La Romana. &nbsp;|&nbsp; <b>Tel:</b> 809-550-7385
+                        </div>
+                        <div class="info-line">
+                            <b>Regional:</b> 05 San Pedro &nbsp;|&nbsp; <b>Distrito:</b> 05-03 La Romana &nbsp;|&nbsp; <b>Código:</b> 07121
+                        </div>
+                        <div class="info-line" style="font-weight: bold; color: #1d4ed8; margin-top: 4px;">
+                            UNIDAD DE APRENDIZAJE - NIVEL PRIMARIO | Tanda Matutina
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 1. IDENTIFICACIÓN -->
+                <div class="section-box">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label>Centro:</label>
+                            <input type="text" class="form-control" value="Mami Luisa" readonly>
+                        </div>
+                        <div class="col-md-4">
+                            <label>Tanda:</label>
+                            <input type="text" class="form-control" value="Matutina" readonly>
+                        </div>
+                        <div class="col-md-4">
+                            <label>Grado:</label>
+                            <input type="text" name="grado" class="form-control fw-bold text-primary" value="{{ usuario['curso_asignado'] }}" readonly>
+                        </div>
+                        <div class="col-md-12">
+                            <label>Docente:</label>
+                            <input type="text" name="docente" class="form-control fw-bold" value="{{ usuario['nombre_completo'] }}" readonly>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. ÁREAS Y ARTICULACIÓN -->
+                <div class="row">
+                    <div class="col-md-7">
+                        <div class="section-box">
+                            <label>Áreas Curriculares:</label>
+                            <div class="row mt-2">
+                                {% for area in ['Lengua española', 'Matemáticas', 'Ciencias Sociales', 'Ciencias de la Naturaleza', 'Educación Física', 'Educación Artística', 'Formación Integral', 'Lenguas Extranjeras'] %}
+                                <div class="col-6 mb-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="areas" value="{{ area }}" id="area_{{ loop.index }}">
+                                        <label class="form-check-label fw-normal text-dark" for="area_{{ loop.index }}">{{ area }}</label>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-5">
+                        <div class="section-box">
+                            <label>Modalidad de Articulación:</label>
+                            <div class="d-flex flex-column gap-2 mt-2">
+                                {% for mod in ['Intradisciplinar', 'Multidisciplinar', 'Interdisciplinar', 'Transdisciplinar'] %}
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="modalidad" value="{{ mod }}" id="mod_{{ loop.index }}">
+                                    <label class="form-check-label fw-normal text-dark" for="mod_{{ loop.index }}">{{ mod }}</label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. EJES Y ÁREAS ARTICULADAS -->
+                <div class="section-box">
+                    <div class="mb-3">
+                        <label>Áreas articuladas:</label>
+                        <input type="text" name="areas_art" class="form-control" placeholder="Especifique las áreas articuladas...">
+                    </div>
+                    <div>
+                        <label>Ejes transversales:</label>
+                        <textarea name="ejes" class="form-control" rows="2" placeholder="Describa los ejes transversales..."></textarea>
+                    </div>
+                </div>
+
+                <!-- 4. ESTRATEGIAS, TÉCNICAS Y TIEMPO -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="section-box">
+                            <label>Estrategias de enseñanza y de aprendizaje:</label>
+                            <div class="d-flex flex-column gap-2 mt-2">
+                                {% for est in ['Aprendizaje basado en proyectos', 'Aprendizaje basado en problemas', 'El juego', 'Aprendizaje por descubrimiento', 'Indagacion dialogica'] %}
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="estrategias" value="{{ est }}" id="est_{{ loop.index }}">
+                                    <label class="form-check-label fw-normal text-dark" for="est_{{ loop.index }}">{{ est }}</label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="section-box">
+                            <label>Técnicas:</label>
+                            <div class="d-flex flex-column gap-2 mt-2">
+                                {% for tec in ['Sociagrama o dramatizacion', 'Estudio de casos', 'El debate'] %}
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="tecnicas" value="{{ tec }}" id="tec_{{ loop.index }}">
+                                    <label class="form-check-label fw-normal text-dark" for="tec_{{ loop.index }}">{{ tec }}</label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-box">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label>Duración (días):</label>
+                            <input type="number" name="duracion" class="form-control" placeholder="Ej. 15">
+                        </div>
+                        <div class="col-md-4">
+                            <label>Fecha de Inicio:</label>
+                            <input type="date" name="f_inicio" class="form-control">
+                        </div>
+                        <div class="col-md-4">
+                            <label>Fecha de Cierre:</label>
+                            <input type="date" name="f_cierre" class="form-control">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. VALOR DEL MES, EFEMÉRIDES Y SITUACIÓN DE APRENDIZAJE -->
+                <div class="section-box">
+                    <label>Valor del mes:</label>
+                    <textarea name="valor_mes" class="form-control mb-3" rows="2" placeholder="Escriba el valor del mes..."></textarea>
+                    
+                    <label>Conmemoraciones / Efemérides:</label>
+                    <textarea name="efemerides" class="form-control mb-3" rows="2" placeholder="Escriba las conmemoraciones o efemérides..."></textarea>
+                    
+                    <label>Situación de aprendizaje:</label>
+                    <textarea name="situacion" class="form-control" rows="4" placeholder="Redacte detalladamente la situación de aprendizaje que orienta la unidad..."></textarea>
+                </div>
+
+                <!-- 6. DESGLOSE CURRICULAR INTEGRAL -->
+                <div class="section-box p-3 border rounded">
+                    <h5 class="mb-3" style="color: #1d4ed8; font-size: 16px; font-weight: bold;">
+                        Desglose Curricular (Competencias, Contenidos, Actividades y Evaluación)
+                    </h5>
+
+                    <!-- TABLA 1: COMPETENCIAS -->
+                    <div class="table-responsive mb-4">
+                        <table class="table table-bordered align-middle">
+                            <thead class="table-light text-center">
+                                <tr>
+                                    <th style="width: 35%;">Competencias Fundamentales</th>
+                                    <th style="width: 65%;">Competencia específica del grado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="fw-bold bg-light">Comunicativa</td>
+                                    <td>
+                                        <textarea name="comp_comunicativa" class="form-control" rows="3" placeholder="Escriba la competencia específica..."></textarea>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold bg-light">
+                                        Pensamiento lógico, creativo y crítico;<br>
+                                        Resolución de problemas;<br>
+                                        Científica y tecnológica.
+                                    </td>
+                                    <td>
+                                        <textarea name="comp_pensamiento" class="form-control" rows="4" placeholder="Escriba la competencia específica..."></textarea>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold bg-light">
+                                        Ética y ciudadanía;<br>
+                                        Desarrollo personal y espiritual;<br>
+                                        Ambiental y de la salud.
+                                    </td>
+                                    <td>
+                                        <textarea name="comp_etica" class="form-control" rows="4" placeholder="Escriba la competencia específica..."></textarea>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- TABLA 2: CONTENIDOS -->
+                    <div class="table-responsive mb-4">
+                        <table class="table table-bordered align-middle">
+                            <thead class="table-light text-center">
+                                <tr>
+                                    <th colspan="3" class="fw-bold text-uppercase" style="background-color: #f8f9fa;">Contenidos</th>
+                                </tr>
+                                <tr>
+                                    <th style="width: 33.33%;">Conceptos</th>
+                                    <th style="width: 33.33%;">Procedimientos</th>
+                                    <th style="width: 33.33%;">Actitudes y valores</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <textarea name="contenidos_conceptos" class="form-control" rows="8" placeholder="Escriba los conceptos..."></textarea>
+                                    </td>
+                                    <td>
+                                        <textarea name="contenidos_procedimientos" class="form-control" rows="8" placeholder="Escriba los procedimientos..."></textarea>
+                                    </td>
+                                    <td>
+                                        <textarea name="contenidos_actitudes" class="form-control" rows="8" placeholder="Escriba las actitudes y valores..."></textarea>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- TABLA 3: ACTIVIDADES, MEDIOS Y RECURSOS -->
+                    <div class="table-responsive mb-4">
+                        <table class="table table-bordered align-middle">
+                            <thead class="table-light text-center">
+                                <tr>
+                                    <th colspan="3" class="fw-bold text-uppercase" style="background-color: #f8f9fa;">ACTIVIDADES</th>
+                                    <th rowspan="2" class="fw-bold text-center align-middle" style="width: 25%; background-color: #f8f9fa;">
+                                        Medios y recursos
+                                    </th>
+                                </tr>
+                                <tr>
+                                    <th style="width: 25%;">De enseñanza</th>
+                                    <th style="width: 25%;">De aprendizaje</th>
+                                    <th style="width: 25%;">De evaluación</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <textarea name="actividades_ensenanza" class="form-control" rows="8" placeholder="Escriba las actividades de enseñanza..."></textarea>
+                                    </td>
+                                    <td>
+                                        <textarea name="actividades_aprendizaje" class="form-control" rows="8" placeholder="Escriba las actividades de aprendizaje..."></textarea>
+                                    </td>
+                                    <td>
+                                        <textarea name="actividades_evaluacion" class="form-control" rows="8" placeholder="Escriba las actividades de evaluación..."></textarea>
+                                    </td>
+                                    <td>
+                                        <textarea name="medios_recursos" class="form-control" rows="8" placeholder="Escriba los medios y recursos..."></textarea>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- TABLA 4: EVALUACIÓN -->
+                    <div class="table-responsive mb-3">
+                        <table class="table table-bordered align-middle">
+                            <thead class="table-light text-center">
+                                <tr>
+                                    <th colspan="2" class="fw-bold text-uppercase" style="background-color: #f8f9fa;">EVALUACION</th>
+                                </tr>
+                                <tr>
+                                    <th style="width: 50%;">Criterios</th>
+                                    <th style="width: 50%;">Tipo, técnicas e instrumentos.</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <textarea name="evaluacion_criterios" class="form-control" rows="6" placeholder="Escriba los criterios de evaluación..."></textarea>
+                                    </td>
+                                    <td>
+                                        <textarea name="evaluacion_tecnicas" class="form-control" rows="6" placeholder="Escriba los tipos, técnicas e instrumentos..."></textarea>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- INDICADORES DE LOGRO -->
+                    <div class="mt-3">
+                        <label>Indicadores de logro:</label>
+                        <textarea name="indicadores" class="form-control" rows="3" placeholder="Escriba los indicadores de logro..."></textarea>
+                    </div>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
