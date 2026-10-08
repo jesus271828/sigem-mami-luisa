@@ -11,7 +11,7 @@
         .sidebar { background: var(--primary-color); color: white; min-height: 100vh; padding: 20px; }
         .plan-container { background: white; border-radius: 15px; padding: 25px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
         .table-bordered { border-color: #000 !important; }
-        .table-bordered th, .table-bordered td { border-color: #000 !important; padding: 4px 8px !important; }
+        .table-bordered th, .table-bordered td { border-color: #000 !important; padding: 6px 8px !important; }
         .form-control, .form-control:focus { background-color: transparent; border: none; box-shadow: none; font-size: 0.85rem; }
         .input-line { border-bottom: 1px solid #333; border-radius: 0; padding: 2px 5px; }
 
@@ -81,7 +81,7 @@
                 <p><i class="fas fa-user-circle"></i> {{ session['nombre_completo'] }} ({{ session['rol'] }})</p>
                 <hr>
                 <a href="{{ url_for('menu_planificacion') }}" class="btn btn-outline-light w-100 mb-3"><i class="fas fa-arrow-left me-2"></i>Volver al Menú</a>
-                <a href="{{ url_for('planificacion_diaria') }}">Ver Planificaciones</a>
+                <a href="{{ url_for('planificacion_diaria') }}" class="btn btn-light w-100 mb-3">Ver Planificaciones</a>
                 <a href="{{ url_for('logout') }}" class="btn btn-danger w-100">Cerrar Sesión</a>
             </div>
 
@@ -104,18 +104,17 @@
                                 <div class="row">
                                     <div class="col-md-7 mb-1">
                                         <label class="fw-bold">Grado y Sección:</label>
-                                        <!-- Se carga automáticamente según el usuario logueado -->
                                         <input type="text" name="grado_seccion" class="form-control input-line d-inline-block w-50 fw-bold" value="{{ grado_seccion }}" required>
                                     </div>
                                     <div class="col-md-5 mb-1">
                                         <label class="fw-bold">Fecha:</label>
-                                        <input type="date" name="fecha" class="form-control input-line d-inline-block w-50" required>
+                                        <input type="date" name="fecha" class="form-control input-line d-inline-block w-60" required>
                                     </div>
                                 </div>
                             </div>
                             <div class="col-md-5 text-end">
-                                <h4 class="text-primary fw-bold mb-0" style="font-size: 1.4rem;">Esquema de Planificación Diaria</h4>
-                                <h5 class="text-secondary" style="font-size: 1.1rem;">Nivel Primario</h5>
+                                <h4 class="text-primary fw-bold mb-0" style="font-size: 1.4rem; color: #003366 !important;">Esquema de Planificación Diaria</h4>
+                                <h5 class="text-secondary fw-bold" style="font-size: 1.1rem; color: #003366 !important;">Nivel Primario</h5>
                             </div>
                         </div>
 
@@ -123,59 +122,63 @@
                         <table class="table table-bordered border-dark align-middle mb-2">
                             <tbody>
                                 <tr>
-                                    <td colspan="3">
-                                        <strong class="d-block mb-0" style="font-size: 0.85rem;">Estrategias de enseñanza – aprendizaje:</strong>
-                                        <textarea name="estrategias" class="form-control py-0" rows="1" placeholder="Escribe las estrategias..."></textarea>
+                                    <td colspan="4">
+                                        <strong class="d-block mb-1" style="font-size: 0.85rem;">Estrategias de enseñanza – aprendizaje:</strong>
+                                        <textarea name="estrategias" class="form-control py-0" rows="2" placeholder="Escribe las estrategias..."></textarea>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td colspan="3">
-                                        <strong class="d-block mb-0" style="font-size: 0.85rem;">Intención pedagógica del día:</strong>
-                                        <textarea name="intencion_pedagogica" class="form-control py-0" rows="1" placeholder="¿Cuál es el propósito de hoy?"></textarea>
+                                    <td colspan="4">
+                                        <strong class="d-block mb-1" style="font-size: 0.85rem;">Intención pedagógica del día:</strong>
+                                        <textarea name="intencion_pedagogica" class="form-control py-0" rows="2" placeholder="¿Cuál es el propósito de hoy?"></textarea>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td colspan="3">
-                                        <strong class="d-block mb-0" style="font-size: 0.85rem;">Indicador de logro:</strong>
-                                        <textarea name="indicador_logro" class="form-control py-0" rows="1" placeholder="Indica el logro esperado..."></textarea>
+                                    <td colspan="4">
+                                        <strong class="d-block mb-1" style="font-size: 0.85rem;">Indicador de logro:</strong>
+                                        <textarea name="indicador_logro" class="form-control py-0" rows="2" placeholder="Indica el logro esperado..."></textarea>
                                     </td>
                                 </tr>
-                                <tr class="table-light text-center fw-bold" style="font-size: 0.85rem;">
-                                    <td style="width: 25%;">Competencia específica</td>
-                                    <td style="width: 15%;">Momentos</td>
-                                    <td style="width: 60%;">Actividades / Duración</td>
+                                
+                                <!-- Encabezados de la grilla principal -->
+                                <tr class="text-start fw-bold" style="font-size: 0.85rem; background-color: #f8f9fa;">
+                                    <td style="width: 20%;">Competencia específica</td>
+                                    <td style="width: 12%;">Momentos</td>
+                                    <td style="width: 48%;">Actividades / Duración</td>
+                                    <td style="width: 20%;">Recursos:</td>
                                 </tr>
+
+                                <!-- Filas de Momentos con Columna de Recursos -->
                                 <tr>
                                     <td rowspan="3" class="align-top">
-                                        <textarea name="competencia_especifica" class="form-control" rows="6" placeholder="Competencias específicas..."></textarea>
+                                        <textarea name="competencia_especifica" class="form-control" rows="8" placeholder="Competencias específicas..."></textarea>
                                     </td>
-                                    <td><strong>Inicio</strong></td>
-                                    <td>
+                                    <td class="align-top"><strong>Inicio</strong></td>
+                                    <td class="align-top">
                                         <textarea name="actividad_inicio" class="form-control py-0" rows="2" placeholder="Actividades de inicio..."></textarea>
+                                    </td>
+                                    <td rowspan="3" class="align-top">
+                                        <textarea name="recursos" class="form-control py-0" rows="8" placeholder="Pizarra, cuaderno, proyector..."></textarea>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Desarrollo</strong></td>
-                                    <td>
+                                    <td class="align-top"><strong>Desarrollo</strong></td>
+                                    <td class="align-top">
                                         <textarea name="actividad_desarrollo" class="form-control py-0" rows="3" placeholder="Actividades centrales..."></textarea>
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td><strong>Cierre</strong></td>
-                                    <td>
+                                    <td class="align-top"><strong>Cierre</strong></td>
+                                    <td class="align-top">
                                         <textarea name="actividad_cierre" class="form-control py-0" rows="2" placeholder="Metacognición y cierre..."></textarea>
                                     </td>
                                 </tr>
+
+                                <!-- Fila final de Recuperación Pedagógica -->
                                 <tr>
-                                    <td colspan="3">
-                                        <strong class="d-block mb-0" style="font-size: 0.85rem;">Recursos:</strong>
-                                        <input type="text" name="recursos" class="form-control py-0" placeholder="Pizarra, cuaderno, proyector...">
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td colspan="3">
-                                        <strong class="d-block mb-0" style="font-size: 0.85rem;">Actividades de recuperación pedagógica:</strong>
-                                        <textarea name="recuperacion_pedagogica" class="form-control py-0" rows="1" placeholder="Actividades de reforzamiento..."></textarea>
+                                    <td colspan="4">
+                                        <strong class="d-block mb-1" style="font-size: 0.85rem;">Actividades de recuperación pedagógica:</strong>
+                                        <textarea name="recuperacion_pedagogica" class="form-control py-0" rows="2" placeholder="Actividades de reforzamiento..."></textarea>
                                     </td>
                                 </tr>
                             </tbody>
