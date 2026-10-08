@@ -81,7 +81,9 @@
                 <p><i class="fas fa-user-circle"></i> {{ session['nombre_completo'] }} ({{ session['rol'] }})</p>
                 <hr>
                 <a href="{{ url_for('menu_planificacion') }}" class="btn btn-outline-light w-100 mb-3"><i class="fas fa-arrow-left me-2"></i>Volver al Menú</a>
-                <a href="{{ url_for('planificacion_diaria') }}" class="btn btn-light w-100 mb-3">Ver Planificaciones</a>
+                <a href="{{ url_for('ver_planificaciones_diarias') }}" class="btn btn-light w-100 mb-3">
+                  <i class="fas fa-folder-open me-2"></i>Ver Planificaciones
+                </a>
                 <a href="{{ url_for('logout') }}" class="btn btn-danger w-100">Cerrar Sesión</a>
             </div>
 
