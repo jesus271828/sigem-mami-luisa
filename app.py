@@ -2584,43 +2584,52 @@ def ver_planificaciones_diarias():
         return redirect(url_for('login'))
     return render_template('ver_planificaciones_diarias.html')
 
-    from flask import request, redirect, url_for, flash, session
+from flask import request, redirect, url_for, flash, session
+
+# ------------------------------------------------------------------
+# NOTA: Asegúrate de que las credenciales de Supabase estén 
+# declaradas arriba en tu app.py. Si tu cliente de Supabase se llama 
+# diferente (por ejemplo: 'db' o 'supabase_client'), cambia la variable 'supabase'
+# ------------------------------------------------------------------
 
 @app.route('/guardar_planificacion_diaria', methods=['POST'])
 def guardar_planificacion_diaria():
-    # Verificar si el usuario ha iniciado sesión
-    if 'usuario' not in session and 'nombre_completo' not in session:
-        flash('Debes iniciar sesión para realizar esta acción.', 'danger')
-        return redirect(url_for('login'))
+    global supabase  # <--- Agrega esta línea para asegurarte de acceder a la instancia global
+    if request.method == 'POST':
+        print("--- DATOS RECIBIDOS DEL FORMULARIO ---")
+        print(request.form)
 
-    try:
-        # Capturar todos los campos enviados desde el formulario diario
-        datos_planificacion = {
-            "docente": request.form.get("docente"),
-            "area": request.form.get("area"),
-            "grado_seccion": request.form.get("grado_seccion"),
-            "fecha": request.form.get("fecha"),
-            "estrategias": request.form.get("estrategias"),
-            "intencion_pedagogica": request.form.get("intencion_pedagogica"),
-            "indicador_logro": request.form.get("indicador_logro"),
-            "competencia_especifica": request.form.get("competencia_especifica"),
-            "actividad_inicio": request.form.get("actividad_inicio"),
-            "actividad_desarrollo": request.form.get("actividad_desarrollo"),
-            "actividad_cierre": request.form.get("actividad_cierre"),
-            "recursos": request.form.get("recursos"),
-            "recuperacion_pedagogica": request.form.get("recuperacion_pedagogica")
-        }
+        try:
+            datos_planificacion = {
+                "docente": request.form.get("docente"),
+                "area": request.form.get("area"),
+                "grado_seccion": request.form.get("grado_seccion"),
+                "fecha": request.form.get("fecha"),
+                "estrategias": request.form.get("estrategias"),
+                "intencion_pedagogica": request.form.get("intencion_pedagogica"),
+                "indicador_logro": request.form.get("indicador_logro"),
+                "competencia_especifica": request.form.get("competencia_especifica"),
+                "actividad_inicio": request.form.get("actividad_inicio"),
+                "actividad_desarrollo": request.form.get("actividad_desarrollo"),
+                "actividad_cierre": request.form.get("actividad_cierre"),
+                "recursos": request.form.get("recursos"),
+                "recuperacion_pedagogica": request.form.get("recuperacion_pedagogica")
+            }
 
-       
+            res = supabase.table('planificaciones_diarias').insert(datos_planificacion).execute()
+            
+            print("--- RESPUESTA DE BASE DE DATOS ---")
+            print(res)
 
-        # Si todo sale bien, enviar mensaje de éxito y redireccionar a la lista
-        flash('¡Planificación diaria guardada con éxito!', 'success')
-        return redirect(url_for('ver_planificaciones_diarias'))
+            flash('¡Planificación diaria guardada con éxito!', 'success')
+            return redirect(url_for('ver_planificaciones_diarias'))
 
-    except Exception as e:
-        print(f"Error al guardar planificación diaria: {e}")
-        flash('Ocurrió un error al intentar guardar la planificación.', 'danger')
-        return redirect(url_for('planificacion_diaria'))
+        except Exception as e:
+            print("❌ ERROR AL GUARDAR EN BASE DE DATOS:", e)
+            flash(f'Error al guardar en la base de datos: {e}', 'danger')
+            return redirect(url_for('planificacion_diaria'))
+
+    return redirect(url_for('planificacion_diaria'))
 
 
 @app.route('/registrar_usuario', methods=['GET', 'POST'])
