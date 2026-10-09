@@ -2464,52 +2464,6 @@ def eliminar_planificacion(id):
 
     return redirect(url_for('mis_planificaciones'))
 
-@app.route('/guardar_planificacion_diaria', methods=['POST'])
-def guardar_planificacion_diaria():
-    if request.method == 'POST':
-        try:
-            # Conexión directa a PostgreSQL usando la URL de Supabase configurada
-            conn = psycopg2.connect(DATABASE_URL)
-            cursor = PostgresCursorWrapper(conn)
-
-            # Insert usando las columnas exactas de Supabase con tildes
-            query = """
-                INSERT INTO planificaciones_diarias (
-                    docente, "área", grado_seccion, fecha, estrategias,
-                    "intención_pedagógica", indicador_logro, competencia_especifica,
-                    actividad_inicio, actividad_desarrollo, actividad_cierre,
-                    recursos, "recuperación_pedagógica"
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """
-
-            params = (
-                request.form.get("docente"),
-                request.form.get("area"),
-                request.form.get("grado_seccion"),
-                request.form.get("fecha"),
-                request.form.get("estrategias"),
-                request.form.get("intencion_pedagogica"),
-                request.form.get("indicador_logro"),
-                request.form.get("competencia_especifica"),
-                request.form.get("actividad_inicio"),
-                request.form.get("actividad_desarrollo"),
-                request.form.get("actividad_cierre"),
-                request.form.get("recursos"),
-                request.form.get("recuperacion_pedagogica")
-            )
-
-            cursor.execute(query, params)
-            cursor.close(commit_changes=True)
-
-            flash('¡Planificación diaria guardada con éxito!', 'success')
-            return redirect(url_for('ver_planificaciones_diarias'))
-
-        except Exception as e:
-            print("❌ ERROR AL GUARDAR EN BASE DE DATOS:", e)
-            flash(f'Error al guardar en la base de datos: {e}', 'danger')
-            return redirect(url_for('planificacion_diaria'))
-
-    return redirect(url_for('planificacion_diaria'))
 
 @app.route('/mis_planificaciones')
 def mis_planificaciones():
@@ -2577,35 +2531,44 @@ from flask import request, redirect, url_for, flash, session
 
 @app.route('/guardar_planificacion_diaria', methods=['POST'])
 def guardar_planificacion_diaria():
-    global supabase  # Asegura el acceso a la variable global declarada al inicio de app.py
-    
     if request.method == 'POST':
         try:
-            # Captura de campos mapeados a las columnas exactas de Supabase
-            datos_planificacion = {
-                "docente": request.form.get("docente"),
-                "área": request.form.get("area"),
-                "grado_seccion": request.form.get("grado_seccion"),
-                "fecha": request.form.get("fecha"),
-                "estrategias": request.form.get("estrategias"),
-                "intención_pedagógica": request.form.get("intencion_pedagogica"),
-                "indicador_logro": request.form.get("indicador_logro"),
-                "competencia_especifica": request.form.get("competencia_especifica"),
-                "actividad_inicio": request.form.get("actividad_inicio"),
-                "actividad_desarrollo": request.form.get("actividad_desarrollo"),
-                "actividad_cierre": request.form.get("actividad_cierre"),
-                "recursos": request.form.get("recursos"),
-                "recuperación_pedagogica": request.form.get("recuperacion_pedagogica")
-            }
+            conn = psycopg2.connect(DATABASE_URL)
+            cursor = PostgresCursorWrapper(conn)
 
-            # Inserción en la tabla 'planificaciones_diarias'
-            res = supabase.table('planificaciones_diarias').insert(datos_planificacion).execute()
+            query = """
+                INSERT INTO planificaciones_diarias (
+                    docente, "área", grado_seccion, fecha, estrategias,
+                    "intención_pedagógica", indicador_logro, competencia_especifica,
+                    actividad_inicio, actividad_desarrollo, actividad_cierre,
+                    recursos, "recuperación_pedagógica"
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """
+
+            params = (
+                request.form.get("docente"),
+                request.form.get("area"),
+                request.form.get("grado_seccion"),
+                request.form.get("fecha"),
+                request.form.get("estrategias"),
+                request.form.get("intencion_pedagogica"),
+                request.form.get("indicador_logro"),
+                request.form.get("competencia_especifica"),
+                request.form.get("actividad_inicio"),
+                request.form.get("actividad_desarrollo"),
+                request.form.get("actividad_cierre"),
+                request.form.get("recursos"),
+                request.form.get("recuperacion_pedagogica")
+            )
+
+            cursor.execute(query, params)
+            cursor.close(commit_changes=True)
 
             flash('¡Planificación diaria guardada con éxito!', 'success')
             return redirect(url_for('ver_planificaciones_diarias'))
 
         except Exception as e:
-            print("❌ ERROR AL GUARDAR EN SUPABASE:", e)
+            print("❌ ERROR AL GUARDAR EN BASE DE DATOS:", e)
             flash(f'Error al guardar en la base de datos: {e}', 'danger')
             return redirect(url_for('planificacion_diaria'))
 
