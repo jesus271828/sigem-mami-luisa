@@ -2417,27 +2417,30 @@ def planificacion():
         return redirect(url_for('login'))
     return render_template('planificacion.html', usuario=session)
 
-@app.route('/ver_planificaciones_diarias')
-def ver_planificaciones_diarias():
+@app.route('/ver_detalle_planificacion_diaria/<int:id>')
+def ver_detalle_planificacion_diaria(id):
     if 'usuario' not in session and 'nombre_completo' not in session:
         return redirect(url_for('login'))
-        
-    docente = session.get('nombre_completo')
-    
+
     try:
         conn = psycopg2.connect(DATABASE_URL)
         cursor = PostgresCursorWrapper(conn)
-        
-        # Usamos '?' para mantener compatibilidad con PostgresCursorWrapper
-        query = 'SELECT * FROM planificaciones_diarias WHERE docente = ? ORDER BY fecha DESC'
-        cursor.execute(query, (docente,))
-        planificaciones = cursor.fetchall()
-        cursor.close()
-    except Exception as e:
-        print("❌ Error obteniendo planificaciones diarias:", e)
-        planificaciones = []
 
-    return render_template('ver_planificaciones_diarias.html', planificaciones=planificaciones)
+        query = 'SELECT * FROM planificaciones_diarias WHERE identificacion = ?'
+        cursor.execute(query, (id,))
+        planificacion = cursor.fetchone()
+        cursor.close()
+
+        if not planificacion:
+            flash('Planificación no encontrada.', 'danger')
+            return redirect(url_for('ver_planificaciones_diarias'))
+
+        return render_template('planificacion_diaria_detalle.html', plan=planificacion)
+
+    except Exception as e:
+        print("❌ Error cargando detalle de planificación:", e)
+        flash('Error al cargar la planificación.', 'danger')
+        return redirect(url_for('ver_planificaciones_diarias'))
 
 @app.route('/eliminar_planificacion/<int:id>')
 def eliminar_planificacion(id):
