@@ -2417,33 +2417,26 @@ def planificacion():
         return redirect(url_for('login'))
     return render_template('planificacion.html', usuario=session)
 
-@app.route('/ver_planificacion/<int:id>')
-def ver_planificacion(id):
-    if 'usuario' not in session:
+@app.route('/ver_planificaciones_diarias')
+def ver_planificaciones_diarias():
+    if 'usuario' not in session and 'nombre_completo' not in session:
         return redirect(url_for('login'))
         
-    conexion = get_db_connection()
-    is_postgres = DATABASE_URL is not None
-    planificacion = None
-
+    docente = session.get('nombre_completo')
+    
     try:
-        if is_postgres:
-            cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-            cur.execute("SELECT * FROM planificaciones WHERE id = %s", (id,))
-            planificacion = cur.fetchone()
-            cur.close()
-        else:
-            conexion.row_factory = sqlite3.Row
-            planificacion = conexion.execute("SELECT * FROM planificaciones WHERE id = ?", (id,)).fetchone()
+        conn = psycopg2.connect(DATABASE_URL)
+        cursor = PostgresCursorWrapper(conn)
+        
+        query = 'SELECT * FROM planificaciones_diarias WHERE docente = ? ORDER BY fecha DESC'
+        cursor.execute(query, (docente,))
+        planificaciones = cursor.fetchall()
+        cursor.close()
     except Exception as e:
-        print("--- ERROR AL VER PLANIFICACIÓN:", e)
-    finally:
-        conexion.close()
+        print("Error obteniendo planificaciones:", e)
+        planificaciones = []
 
-    if not planificacion:
-        return "Planificación no encontrada", 404
-
-    return render_template('ver_planificacion.html', planificacion=planificacion)
+    return render_template('ver_planificaciones_diarias.html', planificaciones=planificaciones)
 
 @app.route('/eliminar_planificacion/<int:id>')
 def eliminar_planificacion(id):
@@ -2471,58 +2464,52 @@ def eliminar_planificacion(id):
 
     return redirect(url_for('mis_planificaciones'))
 
-@app.route('/guardar_planificacion', methods=['POST'])
-def guardar_planificacion():
-    if 'usuario' not in session:
-        return redirect(url_for('login'))
-        
-    try:
-        # Recogemos los datos del formulario
-        docente = request.form.get('docente')
-        grado = request.form.get('grado')
-        # Los checkboxes de 'areas', 'estrategias' y 'tecnicas' se unen por comas
-        areas = ", ".join(request.form.getlist('areas'))
-        modalidad = request.form.get('modalidad')
-        areas_art = request.form.get('areas_art')
-        ejes = request.form.get('ejes')
-        estrategias = ", ".join(request.form.getlist('estrategias'))
-        tecnicas = ", ".join(request.form.getlist('tecnicas'))
-        duracion = request.form.get('duracion') or None
-        f_inicio = request.form.get('f_inicio') or None
-        f_cierre = request.form.get('f_cierre') or None
-        situacion = request.form.get('situacion')
-        competencias = request.form.get('competencias')
-        contenidos = request.form.get('contenidos')
-        actividades = request.form.get('actividades')
-        indicadores = request.form.get('indicadores')
-        recursos = request.form.get('recursos')
-        evaluacion = request.form.get('evaluacion')
+@app.route('/guardar_planificacion_diaria', methods=['POST'])
+def guardar_planificacion_diaria():
+    if request.method == 'POST':
+        try:
+            # Conexión directa a PostgreSQL usando la URL de Supabase configurada
+            conn = psycopg2.connect(DATABASE_URL)
+            cursor = PostgresCursorWrapper(conn)
 
-        conexion = get_db_connection()
-        is_postgres = DATABASE_URL is not None
+            # Insert usando las columnas exactas de Supabase con tildes
+            query = """
+                INSERT INTO planificaciones_diarias (
+                    docente, "área", grado_seccion, fecha, estrategias,
+                    "intención_pedagógica", indicador_logro, competencia_especifica,
+                    actividad_inicio, actividad_desarrollo, actividad_cierre,
+                    recursos, "recuperación_pedagógica"
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """
 
-        if is_postgres:
-            cur = conexion.conn.cursor()
-            cur.execute("""
-                INSERT INTO planificaciones (docente, grado, areas, modalidad, areas_art, ejes, estrategias, tecnicas, duracion, f_inicio, f_cierre, situacion, competencias, contenidos, actividades, indicadores, recursos, evaluacion)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """, (docente, grado, areas, modalidad, areas_art, ejes, estrategias, tecnicas, duracion, f_inicio, f_cierre, situacion, competencias, contenidos, actividades, indicadores, recursos, evaluacion))
-            conexion.conn.commit()
-            cur.close()
-        else:
-            conexion.execute("""
-                INSERT INTO planificaciones (docente, grado, areas, modalidad, areas_art, ejes, estrategias, tecnicas, duracion, f_inicio, f_cierre, situacion, competencias, contenidos, actividades, indicadores, recursos, evaluacion)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (docente, grado, areas, modalidad, areas_art, ejes, estrategias, tecnicas, duracion, f_inicio, f_cierre, situacion, competencias, contenidos, actividades, indicadores, recursos, evaluacion))
-            conexion.commit()
-            
-        conexion.close()
-        flash('Planificación guardada exitosamente.', 'success')
-    except Exception as e:
-        print("--- ERROR AL GUARDAR PLANIFICACIÓN:", e)
-        flash(f'Error al guardar la planificación: {e}', 'danger')
-        
-    return redirect(url_for('mis_planificaciones'))
+            params = (
+                request.form.get("docente"),
+                request.form.get("area"),
+                request.form.get("grado_seccion"),
+                request.form.get("fecha"),
+                request.form.get("estrategias"),
+                request.form.get("intencion_pedagogica"),
+                request.form.get("indicador_logro"),
+                request.form.get("competencia_especifica"),
+                request.form.get("actividad_inicio"),
+                request.form.get("actividad_desarrollo"),
+                request.form.get("actividad_cierre"),
+                request.form.get("recursos"),
+                request.form.get("recuperacion_pedagogica")
+            )
+
+            cursor.execute(query, params)
+            cursor.close(commit_changes=True)
+
+            flash('¡Planificación diaria guardada con éxito!', 'success')
+            return redirect(url_for('ver_planificaciones_diarias'))
+
+        except Exception as e:
+            print("❌ ERROR AL GUARDAR EN BASE DE DATOS:", e)
+            flash(f'Error al guardar en la base de datos: {e}', 'danger')
+            return redirect(url_for('planificacion_diaria'))
+
+    return redirect(url_for('planificacion_diaria'))
 
 @app.route('/mis_planificaciones')
 def mis_planificaciones():
