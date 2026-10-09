@@ -2536,12 +2536,13 @@ def guardar_planificacion_diaria():
             conn = psycopg2.connect(DATABASE_URL)
             cursor = PostgresCursorWrapper(conn)
 
+            # Consulta SQL ajustada a PostgreSQL puro (columnas sin tildes)
             query = """
                 INSERT INTO planificaciones_diarias (
-                    docente, "área", grado_seccion, fecha, estrategias,
-                    "intención_pedagógica", indicador_logro, competencia_especifica,
+                    docente, area, grado_seccion, fecha, estrategias,
+                    intencion_pedagogica, indicador_logro, competencia_especifica,
                     actividad_inicio, actividad_desarrollo, actividad_cierre,
-                    recursos, "recuperación_pedagógica"
+                    recursos, recuperacion_pedagogica
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """
 
