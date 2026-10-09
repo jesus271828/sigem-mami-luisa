@@ -2411,6 +2411,34 @@ def menu_planificacion():
         return redirect(url_for('login'))
     return render_template('menu_planificacion.html')
 
+@app.route('/ver_planificaciones_diarias')
+def ver_planificaciones_diarias():
+    if 'usuario' not in session and 'nombre_completo' not in session:
+        return redirect(url_for('login'))
+        
+    docente = session.get('nombre_completo')
+    
+    try:
+        conn = psycopg2.connect(DATABASE_URL)
+        cursor = PostgresCursorWrapper(conn)
+        
+        # Si es admin u oficina ve todas, de lo contrario filtra por docente
+        rol_actual = session.get('rol')
+        if rol_actual in ['admin', 'oficina']:
+            query = 'SELECT * FROM planificaciones_diarias ORDER BY fecha DESC'
+            cursor.execute(query)
+        else:
+            query = 'SELECT * FROM planificaciones_diarias WHERE docente = ? ORDER BY fecha DESC'
+            cursor.execute(query, (docente,))
+            
+        planificaciones = cursor.fetchall()
+        cursor.close()
+    except Exception as e:
+        print("❌ Error obteniendo planificaciones diarias:", e)
+        planificaciones = []
+
+    return render_template('ver_planificaciones_diarias.html', planificaciones=planificaciones)
+
 @app.route('/ver_detalle_planificacion_diaria/<int:id>')
 def ver_detalle_planificacion_diaria(id):
     if 'usuario' not in session and 'nombre_completo' not in session:
@@ -2429,7 +2457,7 @@ def ver_detalle_planificacion_diaria(id):
             flash('Planificación no encontrada.', 'danger')
             return redirect(url_for('ver_planificaciones_diarias'))
 
-        return render_template('planificacion_diaria.html', plan=planificacion)
+        return render_template('planificacion_diaria.html', plan=planificacion, docente=planificacion.get('docente'), grado_seccion=planificacion.get('grado_seccion'))
 
     except Exception as e:
         print("❌ Error cargando detalle:", e)
@@ -2462,7 +2490,6 @@ def eliminar_planificacion(id):
 
     return redirect(url_for('mis_planificaciones'))
 
-
 @app.route('/mis_planificaciones')
 def mis_planificaciones():
     if 'usuario' not in session:
@@ -2478,7 +2505,6 @@ def mis_planificaciones():
     try:
         if is_postgres:
             cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-            # Si es admin u oficina ve todas, si es maestro solo ve las suyas
             if rol_actual in ['admin', 'oficina']:
                 cur.execute("SELECT * FROM planificaciones ORDER BY id DESC")
             else:
@@ -2503,29 +2529,14 @@ def planificacion_diaria():
     if 'nombre_completo' not in session:
         return redirect(url_for('login'))
     
-    # Obtenemos los datos directamente de la sesión del usuario actual
     docente_nombre = session.get('nombre_completo', '')
-    grado_curso = session.get('curso_asignado', '') # Coincide con la columna de Supabase
-    
-    if request.method == 'POST':
-        # Aquí va la lógica para guardar en la base de datos si la tienes implementada
-        pass
+    grado_curso = session.get('curso_asignado', '')
 
     return render_template(
         'planificacion_diaria.html', 
         docente=docente_nombre, 
         grado_seccion=grado_curso
     )
-    
-
-
-from flask import request, redirect, url_for, flash, session
-
-# ------------------------------------------------------------------
-# NOTA: Asegúrate de que las credenciales de Supabase estén 
-# declaradas arriba en tu app.py. Si tu cliente de Supabase se llama 
-# diferente (por ejemplo: 'db' o 'supabase_client'), cambia la variable 'supabase'
-# ------------------------------------------------------------------
 
 @app.route('/guardar_planificacion_diaria', methods=['POST'])
 def guardar_planificacion_diaria():
@@ -2534,7 +2545,6 @@ def guardar_planificacion_diaria():
             conn = psycopg2.connect(DATABASE_URL)
             cursor = PostgresCursorWrapper(conn)
 
-            # Consulta SQL ajustada a PostgreSQL puro (columnas sin tildes)
             query = """
                 INSERT INTO planificaciones_diarias (
                     docente, area, grado_seccion, fecha, estrategias,
