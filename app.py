@@ -2428,12 +2428,13 @@ def ver_planificaciones_diarias():
         conn = psycopg2.connect(DATABASE_URL)
         cursor = PostgresCursorWrapper(conn)
         
-        query = 'SELECT * FROM planificaciones_diarias WHERE docente = %s ORDER BY fecha DESC'
+        # Usamos '?' para mantener compatibilidad con PostgresCursorWrapper
+        query = 'SELECT * FROM planificaciones_diarias WHERE docente = ? ORDER BY fecha DESC'
         cursor.execute(query, (docente,))
         planificaciones = cursor.fetchall()
         cursor.close()
     except Exception as e:
-        print("Error obteniendo planificaciones:", e)
+        print("❌ Error obteniendo planificaciones diarias:", e)
         planificaciones = []
 
     return render_template('ver_planificaciones_diarias.html', planificaciones=planificaciones)
