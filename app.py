@@ -2584,6 +2584,44 @@ def ver_planificaciones_diarias():
         return redirect(url_for('login'))
     return render_template('ver_planificaciones_diarias.html')
 
+    from flask import request, redirect, url_for, flash, session
+
+@app.route('/guardar_planificacion_diaria', methods=['POST'])
+def guardar_planificacion_diaria():
+    # Verificar si el usuario ha iniciado sesión
+    if 'usuario' not in session and 'nombre_completo' not in session:
+        flash('Debes iniciar sesión para realizar esta acción.', 'danger')
+        return redirect(url_for('login'))
+
+    try:
+        # Capturar todos los campos enviados desde el formulario diario
+        datos_planificacion = {
+            "docente": request.form.get("docente"),
+            "area": request.form.get("area"),
+            "grado_seccion": request.form.get("grado_seccion"),
+            "fecha": request.form.get("fecha"),
+            "estrategias": request.form.get("estrategias"),
+            "intencion_pedagogica": request.form.get("intencion_pedagogica"),
+            "indicador_logro": request.form.get("indicador_logro"),
+            "competencia_especifica": request.form.get("competencia_especifica"),
+            "actividad_inicio": request.form.get("actividad_inicio"),
+            "actividad_desarrollo": request.form.get("actividad_desarrollo"),
+            "actividad_cierre": request.form.get("actividad_cierre"),
+            "recursos": request.form.get("recursos"),
+            "recuperacion_pedagogica": request.form.get("recuperacion_pedagogica")
+        }
+
+       
+
+        # Si todo sale bien, enviar mensaje de éxito y redireccionar a la lista
+        flash('¡Planificación diaria guardada con éxito!', 'success')
+        return redirect(url_for('ver_planificaciones_diarias'))
+
+    except Exception as e:
+        print(f"Error al guardar planificación diaria: {e}")
+        flash('Ocurrió un error al intentar guardar la planificación.', 'danger')
+        return redirect(url_for('planificacion_diaria'))
+
 
 @app.route('/registrar_usuario', methods=['GET', 'POST'])
 def registrar_usuario():
