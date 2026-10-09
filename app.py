@@ -2428,7 +2428,7 @@ def ver_planificaciones_diarias():
         conn = psycopg2.connect(DATABASE_URL)
         cursor = PostgresCursorWrapper(conn)
         
-        query = 'SELECT * FROM planificaciones_diarias WHERE docente = ? ORDER BY fecha DESC'
+        query = 'SELECT * FROM planificaciones_diarias WHERE docente = %s ORDER BY fecha DESC'
         cursor.execute(query, (docente,))
         planificaciones = cursor.fetchall()
         cursor.close()
