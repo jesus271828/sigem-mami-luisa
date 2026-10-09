@@ -2594,38 +2594,35 @@ from flask import request, redirect, url_for, flash, session
 
 @app.route('/guardar_planificacion_diaria', methods=['POST'])
 def guardar_planificacion_diaria():
-    global supabase  # <--- Agrega esta línea para asegurarte de acceder a la instancia global
+    global supabase  # Asegura el acceso a la variable global declarada al inicio de app.py
+    
     if request.method == 'POST':
-        print("--- DATOS RECIBIDOS DEL FORMULARIO ---")
-        print(request.form)
-
         try:
+            # Captura de campos mapeados a las columnas exactas de Supabase
             datos_planificacion = {
                 "docente": request.form.get("docente"),
-                "area": request.form.get("area"),
+                "área": request.form.get("area"),
                 "grado_seccion": request.form.get("grado_seccion"),
                 "fecha": request.form.get("fecha"),
                 "estrategias": request.form.get("estrategias"),
-                "intencion_pedagogica": request.form.get("intencion_pedagogica"),
+                "intención_pedagógica": request.form.get("intencion_pedagogica"),
                 "indicador_logro": request.form.get("indicador_logro"),
                 "competencia_especifica": request.form.get("competencia_especifica"),
                 "actividad_inicio": request.form.get("actividad_inicio"),
                 "actividad_desarrollo": request.form.get("actividad_desarrollo"),
                 "actividad_cierre": request.form.get("actividad_cierre"),
                 "recursos": request.form.get("recursos"),
-                "recuperacion_pedagogica": request.form.get("recuperacion_pedagogica")
+                "recuperación_pedagogica": request.form.get("recuperacion_pedagogica")
             }
 
+            # Inserción en la tabla 'planificaciones_diarias'
             res = supabase.table('planificaciones_diarias').insert(datos_planificacion).execute()
-            
-            print("--- RESPUESTA DE BASE DE DATOS ---")
-            print(res)
 
             flash('¡Planificación diaria guardada con éxito!', 'success')
             return redirect(url_for('ver_planificaciones_diarias'))
 
         except Exception as e:
-            print("❌ ERROR AL GUARDAR EN BASE DE DATOS:", e)
+            print("❌ ERROR AL GUARDAR EN SUPABASE:", e)
             flash(f'Error al guardar en la base de datos: {e}', 'danger')
             return redirect(url_for('planificacion_diaria'))
 
