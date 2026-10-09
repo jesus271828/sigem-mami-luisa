@@ -2565,11 +2565,7 @@ def planificacion_diaria():
         grado_seccion=grado_curso
     )
     
-@app.route('/ver_planificaciones_diarias')
-def ver_planificaciones_diarias():
-    if 'nombre_completo' not in session:
-        return redirect(url_for('login'))
-    return render_template('ver_planificaciones_diarias.html')
+
 
 from flask import request, redirect, url_for, flash, session
 
