@@ -2455,8 +2455,7 @@ def guardar_planificacion():
 
     docente = session.get('nombre_completo')
     
-    # 1. Datos generales e identificación
-    mes = request.form.get('mes')
+    # 1. Datos de Identificación y Configuración
     grado = request.form.get('grado')
     modalidad = request.form.get('modalidad')
     areas_art = request.form.get('areas_art')
@@ -2468,28 +2467,38 @@ def guardar_planificacion():
     efemerides = request.form.get('efemerides')
     situacion = request.form.get('situacion')
     
-    # 2. Competencias específicas
-    comp_comunicativa = request.form.get('comp_comunicativa')
-    comp_pensamiento = request.form.get('comp_pensamiento')
-    comp_etica = request.form.get('comp_etica')
+    # 2. Competencias
+    comp_comunicativa = request.form.get('comp_comunicativa') or ''
+    comp_pensamiento = request.form.get('comp_pensamiento') or ''
+    comp_etica = request.form.get('comp_etica') or ''
+    
+    # Unificamos competencias para la columna general 'competencias' y 'competencias_especificas'
+    comp_unificadas = f"Comunicativa: {comp_comunicativa}\nPensamiento: {comp_pensamiento}\nÉtica: {comp_etica}".strip()
     
     # 3. Contenidos
-    contenidos_conceptos = request.form.get('contenidos_conceptos')
-    contenidos_procedimientos = request.form.get('contenidos_procedimientos')
-    contenidos_actitudes = request.form.get('contenidos_actitudes')
+    contenidos_conceptos = request.form.get('contenidos_conceptos') or ''
+    contenidos_procedimientos = request.form.get('contenidos_procedimientos') or ''
+    contenidos_actitudes = request.form.get('contenidos_actitudes') or ''
     
-    # 4. Indicador y Actividades / Recursos
+    # Unificamos contenidos para la columna general 'contenidos'
+    contenidos_unificados = f"Conceptos: {contenidos_conceptos}\nProcedimientos: {contenidos_procedimientos}\nActitudes: {contenidos_actitudes}".strip()
+    
+    # 4. Indicadores, Actividades y Recursos
     indicadores = request.form.get('indicadores')
-    actividades_ensenanza = request.form.get('actividades_ensenanza')
-    actividades_aprendizaje = request.form.get('actividades_aprendizaje')
-    actividades_evaluacion = request.form.get('actividades_evaluacion')
+    actividades_ensenanza = request.form.get('actividades_ensenanza') or ''
+    actividades_aprendizaje = request.form.get('actividades_aprendizaje') or ''
+    actividades_evaluacion = request.form.get('actividades_evaluacion') or ''
     medios_recursos = request.form.get('medios_recursos')
     
+    # Unificamos actividades para la columna general 'actividades'
+    actividades_unificadas = f"Enseñanza: {actividades_ensenanza}\nAprendizaje: {actividades_aprendizaje}\nEvaluación: {actividades_evaluacion}".strip()
+    
     # 5. Evaluación
-    evaluacion_criterios = request.form.get('evaluacion_criterios')
-    evaluacion_tecnicas = request.form.get('evaluacion_tecnicas')
+    evaluacion_criterios = request.form.get('evaluacion_criterios') or ''
+    evaluacion_tecnicas = request.form.get('evaluacion_tecnicas') or ''
+    evaluacion_unificada = f"Criterios: {evaluacion_criterios}\nTécnicas: {evaluacion_tecnicas}".strip()
 
-    # 6. Checkbox múltiples (convertidos a texto separado por comas)
+    # 6. Selección múltiple (Checkboxes)
     areas_list = request.form.getlist('areas')
     areas = ", ".join(areas_list) if areas_list else ""
     
@@ -2505,23 +2514,39 @@ def guardar_planificacion():
         
         query = '''
             INSERT INTO planificaciones 
-            (docente, mes, grado, modalidad, areas_art, ejes, duracion, f_inicio, f_cierre, valor_mes, efemerides, situacion, 
-             comp_comunicativa, comp_pensamiento, comp_etica, contenidos_conceptos, contenidos_procedimientos, contenidos_actitudes, 
-             indicadores, actividades_ensenanza, actividades_aprendizaje, actividades_evaluacion, medios_recursos, 
-             evaluacion_criterios, evaluacion_tecnicas, areas, estrategias, tecnicas)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (
+                docente, grado, modalidad, areas_art, ejes, duracion, f_inicio, f_cierre, 
+                valor_mes, efemerides, situacion, situacion_aprendizaje,
+                comp_comunicativa, comp_pensamiento, comp_etica, competencias, competencias_especificas,
+                contenidos_conceptos, contenidos_procedimientos, contenidos_actitudes, contenidos, contenidos_conceptuales, contenidos_procedimentales, contenidos_actitudinales,
+                indicadores, actividades_ensenanza, actividades_aprendizaje, actividades_evaluacion, actividades,
+                medios_recursos, recursos, evaluacion_criterios, evaluacion_tecnicas, evaluacion,
+                areas, estrategias, tecnicas, grado_seccion
+            )
+            VALUES (
+                ?, ?, ?, ?, ?, ?, ?, ?, 
+                ?, ?, ?, ?,
+                ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?,
+                ?, ?, ?, ?
+            )
         '''
         cursor.execute(query, (
-            docente, mes, grado, modalidad, areas_art, ejes, duracion, f_inicio, f_cierre, valor_mes, efemerides, situacion,
-            comp_comunicativa, comp_pensamiento, comp_etica, contenidos_conceptos, contenidos_procedimientos, contenidos_actitudes,
-            indicadores, actividades_ensenanza, actividades_aprendizaje, actividades_evaluacion, medios_recursos,
-            evaluacion_criterios, evaluacion_tecnicas, areas, estrategias, tecnicas
+            docente, grado, modalidad, areas_art, ejes, duracion, f_inicio, f_cierre,
+            valor_mes, efemerides, situacion, situacion,
+            comp_comunicativa, comp_pensamiento, comp_etica, comp_unificadas, comp_unificadas,
+            contenidos_conceptos, contenidos_procedimientos, contenidos_actitudes, contenidos_unificados, contenidos_conceptos, contenidos_procedimientos, contenidos_actitudes,
+            indicadores, actividades_ensenanza, actividades_aprendizaje, actividades_evaluacion, actividades_unificadas,
+            medios_recursos, medios_recursos, evaluacion_criterios, evaluacion_tecnicas, evaluacion_unificada,
+            areas, estrategias, tecnicas, grado
         ))
         conn.commit()
         cursor.close()
         flash('¡Planificación guardada con éxito!', 'success')
     except Exception as e:
-        print("❌ Error al guardar planificación completa:", e)
+        print("❌ Error al guardar planificación:", e)
         flash('Error al guardar el registro en la base de datos.', 'danger')
 
     return redirect(url_for('mis_planificaciones'))
