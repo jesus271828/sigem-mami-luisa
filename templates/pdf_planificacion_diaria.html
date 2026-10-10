@@ -6,11 +6,11 @@
     <style>
         @page {
             size: letter landscape;
-            margin: 0.7cm;
+            margin: 0.5cm; /* Márgenes mínimos para aprovechar toda la hoja */
         }
         body {
             font-family: Helvetica, Arial, sans-serif;
-            font-size: 9.5px;
+            font-size: 10px;
             color: #000;
             background-color: #fff;
             margin: 0;
@@ -18,10 +18,11 @@
         }
         .container {
             width: 100%;
+            height: 100%;
         }
         .header-table {
             width: 100%;
-            margin-bottom: 8px;
+            margin-bottom: 10px;
             border-collapse: collapse;
         }
         .title-block {
@@ -29,38 +30,38 @@
             vertical-align: top;
         }
         .title {
-            font-size: 17px;
+            font-size: 19px;
             font-weight: bold;
             color: #003366;
             margin: 0;
         }
         .subtitle {
-            font-size: 11px;
+            font-size: 12px;
             font-weight: bold;
             color: #003366;
-            margin-top: 2px;
+            margin-top: 3px;
         }
         .info-label {
             font-weight: bold;
-            font-size: 10px;
+            font-size: 10.5px;
             color: #000;
         }
         .info-line {
             border-bottom: 1px solid #000;
-            padding-bottom: 1px;
-            margin-top: 2px;
-            min-height: 12px;
-            font-size: 10px;
+            padding-bottom: 2px;
+            margin-top: 3px;
+            min-height: 15px;
+            font-size: 10.5px;
             color: #333;
         }
         .main-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 4px;
+            margin-top: 5px;
         }
         .main-table td {
             border: 1px solid #000;
-            padding: 5px;
+            padding: 8px; /* Mayor espacio interno para expandir las celdas */
             vertical-align: top;
         }
         .header-row {
@@ -70,33 +71,33 @@
         }
         .field-title {
             font-weight: bold;
-            font-size: 9.5px;
+            font-size: 10.5px;
             color: #000;
-            margin-bottom: 2px;
+            margin-bottom: 4px;
         }
         .field-content {
-            font-size: 9.5px;
+            font-size: 10.5px;
             color: #333;
-            min-height: 20px;
+            min-height: 30px; /* Altura mínima para que las cajas ocupen más espacio vertical */
         }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <!-- Encabezado idéntico al formulario -->
+        <!-- Encabezado extendido -->
         <table class="header-table">
             <tr>
                 <td style="width: 58%; border: none; vertical-align: top;">
                     <table style="width: 100%; border-collapse: collapse;">
                         <tr>
-                            <td style="border: none; padding-bottom: 6px;">
+                            <td style="border: none; padding-bottom: 8px;">
                                 <span class="info-label">Docente:</span>
                                 <div class="info-line">{{ plan.get('docente', '') }}</div>
                             </td>
                         </tr>
                         <tr>
-                            <td style="border: none; padding-bottom: 6px;">
+                            <td style="border: none; padding-bottom: 8px;">
                                 <span class="info-label">Área:</span>
                                 <div class="info-line">{{ plan.get('area', '') }}</div>
                             </td>
@@ -128,7 +129,7 @@
             </tr>
         </table>
 
-        <!-- Tabla principal de contenidos -->
+        <!-- Tabla principal expandida para cubrir toda la página -->
         <table class="main-table">
             <tr>
                 <td colspan="4">
@@ -158,21 +159,21 @@
 
             <tr>
                 <td rowspan="3" style="vertical-align: top;">
-                    <div class="field-content">{{ plan.get('competencia_especifica', '') }}</div>
+                    <div class="field-content" style="min-height: 120px;">{{ plan.get('competencia_especifica', '') }}</div>
                 </td>
                 <td><strong>Inicio</strong></td>
-                <td><div class="field-content">{{ plan.get('actividad_inicio', '') }}</div></td>
+                <td><div class="field-content" style="min-height: 35px;">{{ plan.get('actividad_inicio', '') }}</div></td>
                 <td rowspan="3" style="vertical-align: top;">
-                    <div class="field-content">{{ plan.get('recursos', '') }}</div>
+                    <div class="field-content" style="min-height: 120px;">{{ plan.get('recursos', '') }}</div>
                 </td>
             </tr>
             <tr>
                 <td><strong>Desarrollo</strong></td>
-                <td><div class="field-content">{{ plan.get('actividad_desarrollo', '') }}</div></td>
+                <td><div class="field-content" style="min-height: 50px;">{{ plan.get('actividad_desarrollo', '') }}</div></td>
             </tr>
             <tr>
                 <td><strong>Cierre</strong></td>
-                <td><div class="field-content">{{ plan.get('actividad_cierre', '') }}</div></td>
+                <td><div class="field-content" style="min-height: 35px;">{{ plan.get('actividad_cierre', '') }}</div></td>
             </tr>
 
             <tr>
