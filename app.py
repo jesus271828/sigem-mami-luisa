@@ -2566,9 +2566,7 @@ def descargar_pdf_planificacion(id):
         # Usamos el cursor nativo de psycopg2 directamente para tener .description disponible
         cursor = conn.cursor()
         
-        # Como psycopg2 usa %s en lugar de ?, adaptamos la consulta para el cursor nativo
-        cursor.execute("SELECT * FROM planificaciones WHERE %s = %s", (psycopg2.sql.Identifier('id'), id))
-        # O de forma directa y segura:
+        # Consulta limpia y directa sin referencias a módulos faltantes
         cursor.execute("SELECT * FROM planificaciones WHERE id = %s", (id,))
         
         row = cursor.fetchone()
