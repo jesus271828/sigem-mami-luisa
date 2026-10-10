@@ -2448,6 +2448,45 @@ def mis_planificaciones():
     # AQUÍ ESTÁ LA CLAVE: Usamos el nombre exacto de tu archivo HTML
     return render_template('mis_planificaciones.html', planificaciones=planificaciones)
 
+@app.route('/guardar_planificacion', methods=['POST'])
+def guardar_planificacion():
+    if 'usuario' not in session and 'nombre_completo' not in session:
+        return redirect(url_for('login'))
+
+    docente = session.get('nombre_completo')
+    mes = request.form.get('mes')
+    area = request.form.get('area')
+    grado_seccion = request.form.get('grado') or request.form.get('grado_seccion')
+    competencias_fundamentales = request.form.get('competencias_fundamentales')
+    competencias_especificas = request.form.get('competencias_especificas')
+    contenidos_conceptuales = request.form.get('contenidos_conceptuales')
+    contenidos_procedimentales = request.form.get('contenidos_procedimentales')
+    contenidos_actitudinales = request.form.get('contenidos_actitudinales')
+    situacion_aprendizaje = request.form.get('situacion_aprendizaje')
+
+    try:
+        conn = psycopg2.connect(DATABASE_URL)
+        cursor = PostgresCursorWrapper(conn)
+        
+        query = '''
+            INSERT INTO planificaciones 
+            (docente, mes, area, grado_seccion, competencias_fundamentales, competencias_especificas, contenidos_conceptuales, contenidos_procedimentales, contenidos_actitudinales, situacion_aprendizaje)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        '''
+        cursor.execute(query, (
+            docente, mes, area, grado_seccion, competencias_fundamentales, 
+            competencias_especificas, contenidos_conceptuales, contenidos_procedimentales, 
+            contenidos_actitudinales, situacion_aprendizaje
+        ))
+        conn.commit()
+        cursor.close()
+        flash('¡Planificación guardada con éxito!', 'success')
+    except Exception as e:
+        print("❌ Error al guardar planificación:", e)
+        flash('Error al guardar el registro en la base de datos.', 'danger')
+
+    return redirect(url_for('mis_planificaciones'))
+
 @app.route('/ver_planificaciones_diarias')
 def ver_planificaciones_diarias():
     if 'usuario' not in session and 'nombre_completo' not in session:
