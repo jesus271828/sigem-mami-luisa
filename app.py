@@ -2430,7 +2430,8 @@ def mis_planificaciones():
         conn = psycopg2.connect(DATABASE_URL)
         cursor = PostgresCursorWrapper(conn)
 
-        # Si es admin u oficina ve todo, si es docente ve solo lo suyo
+        # Si el usuario es de oficina o admin, ve todas las planificaciones
+        # Si es docente, ve únicamente las creadas por él
         if rol_actual in ['admin', 'oficina']:
             query = 'SELECT * FROM planificaciones ORDER BY id DESC'
             cursor.execute(query)
@@ -2444,7 +2445,8 @@ def mis_planificaciones():
         print("❌ Error obteniendo planificaciones:", e)
         planificaciones = []
 
-    return render_template('ver_planificaciones_mensuales.html', planificaciones=planificaciones)
+    # AQUÍ ESTÁ LA CLAVE: Usamos el nombre exacto de tu archivo HTML
+    return render_template('mis_planificaciones.html', planificaciones=planificaciones)
 
 @app.route('/ver_planificaciones_diarias')
 def ver_planificaciones_diarias():
