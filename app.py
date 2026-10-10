@@ -2552,6 +2552,52 @@ def guardar_planificacion():
 
     return redirect(url_for('mis_planificaciones'))
 
+from io import BytesIO
+from xhtml2pdf import pisa
+from flask import make_response, render_template
+
+@app.route('/descargar_pdf_planificacion/<int:id>')
+def descargar_pdf_planificacion(id):
+    if 'usuario' not in session and 'nombre_completo' not in session:
+        return redirect(url_for('login'))
+
+    try:
+        conn = psycopg2.connect(DATABASE_URL)
+        cursor = PostgresCursorWrapper(conn)
+        cursor.execute("SELECT * FROM planificaciones WHERE id = ?", (id,))
+        row = cursor.fetchone()
+        
+        if not row:
+            flash("Planificación no encontrada.", "danger")
+            return redirect(url_for('mis_planificaciones'))
+            
+        # Convertir tupla de la base de datos a diccionario según las columnas de la tabla
+        columns = [desc[0] for desc in cursor.description]
+        plan = dict(zip(columns, row))
+        
+        cursor.close()
+        conn.close()
+
+        # Renderizar la plantilla HTML para el PDF
+        html = render_template('pdf_planificacion.html', plan=plan)
+        
+        # Generar el PDF en memoria usando xhtml2pdf
+        pdf = BytesIO()
+        pisa_status = pisa.CreatePDF(BytesIO(html.encode("utf-8")), dest=pdf)
+        
+        if pisa_status.err:
+            return "Error al generar el PDF", 500
+            
+        response = make_response(pdf.getvalue())
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = f'inline; filename=Planificacion_{id}.pdf'
+        return response
+
+    except Exception as e:
+        print("❌ Error al generar PDF:", e)
+        flash("Error al generar el documento PDF.", "danger")
+        return redirect(url_for('mis_planificaciones'))
+
 @app.route('/ver_planificaciones_diarias')
 def ver_planificaciones_diarias():
     if 'usuario' not in session and 'nombre_completo' not in session:
