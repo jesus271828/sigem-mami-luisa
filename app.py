@@ -2639,6 +2639,14 @@ def imprimir_planificaciones_semana_pdf():
     usuario_actual = session.get('nombre_completo')
     rol_actual = session.get('rol')
 
+    if not fecha_inicio or not fecha_fin:
+        flash('Por favor seleccione ambas fechas.', 'warning')
+        return redirect(url_for('ver_planificaciones_diarias'))
+
+    # Asegurar que inicio sea menor o igual que fin
+    if fecha_inicio > fecha_fin:
+        fecha_inicio, fecha_fin = fecha_fin, fecha_inicio
+
     try:
         conn = psycopg2.connect(DATABASE_URL)
         cursor = PostgresCursorWrapper(conn)
@@ -2654,7 +2662,7 @@ def imprimir_planificaciones_semana_pdf():
         cursor.close()
 
         if not planificaciones:
-            flash('No hay planificaciones en el rango de fechas seleccionado.', 'warning')
+            flash(f'No hay planificaciones registradas entre {fecha_inicio} y {fecha_fin}.', 'warning')
             return redirect(url_for('ver_planificaciones_diarias'))
 
         rendered_html = render_template('pdf_reporte_semanal.html', planificaciones=planificaciones, inicio=fecha_inicio, fin=fecha_fin)
@@ -2676,7 +2684,7 @@ def imprimir_planificaciones_semana_pdf():
         print("❌ Error al generar reporte semanal:", e)
         flash('Error al procesar el reporte.', 'danger')
         return redirect(url_for('ver_planificaciones_diarias'))
-
+    
 @app.route('/registrar_usuario', methods=['GET', 'POST'])
 def registrar_usuario():
     if session.get('rol') not in ['oficina', 'admin']:
