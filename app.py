@@ -2409,7 +2409,11 @@ def menu_planificacion():
     # Valida si el usuario ha iniciado sesión
     if 'nombre_completo' not in session:
         return redirect(url_for('login'))
-    return render_template('menu_planificacion.html')
+    return render_template('menu_planificacion.html')@app.route('/planificacion')
+def planificacion():
+    if 'usuario' not in session and 'nombre_completo' not in session:
+        return redirect(url_for('login'))
+    return render_template('planificacion.html')
 
 @app.route('/ver_planificaciones_diarias')
 def ver_planificaciones_diarias():
