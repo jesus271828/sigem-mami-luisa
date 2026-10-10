@@ -61,12 +61,12 @@
                                                 {{ intencion[:80] }}{% if intencion|length > 80 %}...{% endif %}
                                             </p>
                                         </div>
-                                        <div class="pt-3 border-top mt-3 d-flex justify-content-between align-items-center">
-                                            <button type="button" onclick="window.print()" class="btn btn-sm btn-outline-primary">
-                                                <i class="fas fa-print me-1"></i>Imprimir
-                                            </button>
-                                            <span class="text-muted small">ID: #{{ plan['identificacion'] or plan.identificacion }}</span>
-                                        </div>
+                                       <div class="pt-3 border-top mt-3 d-flex justify-content-between align-items-center">
+                                        <a href="{{ url_for('imprimir_planificacion_diaria_pdf', id=plan['identificacion'] or plan.identificacion) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                          <i class="fas fa-print me-1"></i>Imprimir PDF
+                                         </a>
+                                          <span class="text-muted small">ID: #{{ plan['identificacion'] or plan.identificacion }}</span>
+                                         </div>
                                     </div>
                                 </div>
                             </div>
