@@ -6,117 +6,135 @@
     <style>
         @page {
             size: letter landscape;
-            margin: 1cm;
+            margin: 0.8cm; /* Reducimos márgenes para ganar espacio */
         }
         body {
             font-family: Helvetica, Arial, sans-serif;
-            font-size: 10px;
+            font-size: 11px;
             color: #111;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            width: 100%;
         }
         .header-table {
             width: 100%;
-            margin-bottom: 12px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #003366;
+            padding-bottom: 8px;
         }
         .title {
-            font-size: 16px;
+            font-size: 18px;
             font-weight: bold;
             color: #003366;
             text-align: right;
         }
         .subtitle {
-            font-size: 12px;
+            font-size: 13px;
             font-weight: bold;
-            color: #003366;
+            color: #555;
             text-align: right;
         }
         .info-label {
             font-weight: bold;
+            color: #222;
         }
         .border-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 8px;
+            margin-top: 5px;
         }
         .border-table td, .border-table th {
-            border: 1px solid #000;
-            padding: 5px;
+            border: 1px solid #444;
+            padding: 8px;
             vertical-align: top;
         }
         .header-row {
-            background-color: #f2f2f2;
+            background-color: #e6ecf2;
             font-weight: bold;
+            text-align: center;
+            color: #003366;
+        }
+        .content-cell {
+            padding-top: 4px;
+            color: #333;
         }
     </style>
 </head>
 <body>
 
-    <table class="header-table">
-        <tr>
-            <td style="width: 60%;">
-                <p><span class="info-label">Docente:</span> {{ plan.get('docente', '') }}</p>
-                <p><span class="info-label">Área:</span> {{ plan.get('area', '') }}</p>
-                <p><span class="info-label">Grado y Sección:</span> {{ plan.get('grado_seccion', '') }} &nbsp;&nbsp;&nbsp;&nbsp; <span class="info-label">Fecha:</span> {{ plan.get('fecha', '') }}</p>
-            </td>
-            <td style="width: 40%;">
-                <div class="title">Esquema de Planificación Diaria</div>
-                <div class="subtitle">Nivel Primario</div>
-            </td>
-        </tr>
-    </table>
+    <div class="container">
+        <!-- Encabezado -->
+        <table class="header-table">
+            <tr>
+                <td style="width: 60%; vertical-align: middle;">
+                    <p style="margin: 3px 0;"><span class="info-label">Docente:</span> {{ plan.get('docente', '') }}</p>
+                    <p style="margin: 3px 0;"><span class="info-label">Área Curricular:</span> {{ plan.get('area', '') }}</p>
+                    <p style="margin: 3px 0;"><span class="info-label">Grado y Sección:</span> {{ plan.get('grado_seccion', '') }} &nbsp;&nbsp;&nbsp;&nbsp; <span class="info-label">Fecha:</span> {{ plan.get('fecha', '') }}</p>
+                </td>
+                <td style="width: 40%; vertical-align: middle;" align="right">
+                    <div class="title">Esquema de Planificación Diaria</div>
+                    <div class="subtitle">Nivel Primario</div>
+                </td>
+            </tr>
+        </table>
 
-    <table class="border-table">
-        <tr>
-            <td colspan="4">
-                <strong>Estrategias de enseñanza – aprendizaje:</strong><br>
-                {{ plan.get('estrategias', '') }}
-            </td>
-        </tr>
-        <tr>
-            <td colspan="4">
-                <strong>Intención pedagógica del día:</strong><br>
-                {{ plan.get('intencion_pedagogica', '') }}
-            </td>
-        </tr>
-        <tr>
-            <td colspan="4">
-                <strong>Indicador de logro:</strong><br>
-                {{ plan.get('indicador_logro', '') }}
-            </td>
-        </tr>
-        
-        <tr class="header-row">
-            <td style="width: 25%;">Competencia específica</td>
-            <td style="width: 15%;">Momentos</td>
-            <td style="width: 40%;">Actividades / Duración</td>
-            <td style="width: 20%;">Recursos:</td>
-        </tr>
+        <!-- Tabla de Contenido Principal -->
+        <table class="border-table">
+            <tr>
+                <td colspan="4">
+                    <span class="info-label">Estrategias de enseñanza – aprendizaje:</span>
+                    <div class="content-cell">{{ plan.get('estrategias', '') }}</div>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="4">
+                    <span class="info-label">Intención pedagógica del día:</span>
+                    <div class="content-cell">{{ plan.get('intencion_pedagogica', '') }}</div>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="4">
+                    <span class="info-label">Indicador de logro:</span>
+                    <div class="content-cell">{{ plan.get('indicador_logro', '') }}</div>
+                </td>
+            </tr>
+            
+            <tr class="header-row">
+                <td style="width: 25%;">Competencia específica</td>
+                <td style="width: 12%;">Momentos</td>
+                <td style="width: 43%;">Actividades / Duración</td>
+                <td style="width: 20%;">Recursos</td>
+            </tr>
 
-        <tr>
-            <td rowspan="3">
-                {{ plan.get('competencia_especifica', '') }}
-            </td>
-            <td><strong>Inicio</strong></td>
-            <td>{{ plan.get('actividad_inicio', '') }}</td>
-            <td rowspan="3">
-                {{ plan.get('recursos', '') }}
-            </td>
-        </tr>
-        <tr>
-            <td><strong>Desarrollo</strong></td>
-            <td>{{ plan.get('actividad_desarrollo', '') }}</td>
-        </tr>
-        <tr>
-            <td><strong>Cierre</strong></td>
-            <td>{{ plan.get('actividad_cierre', '') }}</td>
-        </tr>
+            <tr>
+                <td rowspan="3" style="vertical-align: middle;">
+                    <div class="content-cell">{{ plan.get('competencia_especifica', '') }}</div>
+                </td>
+                <td><strong>Inicio</strong></td>
+                <td><div class="content-cell">{{ plan.get('actividad_inicio', '') }}</div></td>
+                <td rowspan="3" style="vertical-align: middle;">
+                    <div class="content-cell">{{ plan.get('recursos', '') }}</div>
+                </td>
+            </tr>
+            <tr>
+                <td><strong>Desarrollo</strong></td>
+                <td><div class="content-cell">{{ plan.get('actividad_desarrollo', '') }}</div></td>
+            </tr>
+            <tr>
+                <td><strong>Cierre</strong></td>
+                <td><div class="content-cell">{{ plan.get('actividad_cierre', '') }}</div></td>
+            </tr>
 
-        <tr>
-            <td colspan="4">
-                <strong>Actividades de recuperación pedagógica:</strong><br>
-                {{ plan.get('recuperacion_pedagogica', '') }}
-            </td>
-        </tr>
-    </table>
+            <tr>
+                <td colspan="4">
+                    <span class="info-label">Actividades de recuperación pedagógica:</span>
+                    <div class="content-cell">{{ plan.get('recuperacion_pedagogica', '') }}</div>
+                </td>
+            </tr>
+        </table>
+    </div>
 
 </body>
 </html>
