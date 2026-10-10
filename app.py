@@ -2596,22 +2596,25 @@ def imprimir_planificacion_diaria_pdf(id):
         conn = psycopg2.connect(DATABASE_URL)
         cursor = PostgresCursorWrapper(conn)
 
-        # Cambiamos 'identificacion' por 'id' que es la columna real de la tabla
         query = 'SELECT * FROM planificaciones_diarias WHERE id = ?'
         cursor.execute(query, (id,))
         planificacion = cursor.fetchone()
         cursor.close()
 
+        print(f"🔍 Datos recuperados para PDF ID {id}: {planificacion}")
+
         if not planificacion:
             flash('Planificación no encontrada.', 'danger')
             return redirect(url_for('ver_planificaciones_diarias'))
 
+        # Renderizar la plantilla HTML pasando el diccionario
         rendered_html = render_template('pdf_planificacion_diaria.html', plan=planificacion)
 
         pdf_buffer = io.BytesIO()
         pisa_status = pisa.CreatePDF(rendered_html, dest=pdf_buffer)
 
         if pisa_status.err:
+            print("❌ Error de pisa al generar PDF:", pisa_status.err)
             flash('Error al generar el documento PDF.', 'danger')
             return redirect(url_for('ver_planificaciones_diarias'))
 
@@ -2622,7 +2625,7 @@ def imprimir_planificacion_diaria_pdf(id):
         return response
 
     except Exception as e:
-        print("❌ Error al generar PDF de planificación diaria:", e)
+        print("❌ Error crítico al generar PDF de planificación diaria:", e)
         flash('Error al procesar la solicitud del PDF.', 'danger')
         return redirect(url_for('ver_planificaciones_diarias'))
 
