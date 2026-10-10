@@ -2583,6 +2583,10 @@ def guardar_planificacion_diaria():
 
     return redirect(url_for('planificacion_diaria'))
 
+import io
+from flask import make_response
+from xhtml2pdf import pisa
+
 @app.route('/imprimir_planificacion_diaria_pdf/<int:id>')
 def imprimir_planificacion_diaria_pdf(id):
     if 'usuario' not in session and 'nombre_completo' not in session:
@@ -2601,10 +2605,8 @@ def imprimir_planificacion_diaria_pdf(id):
             flash('Planificación no encontrada.', 'danger')
             return redirect(url_for('ver_planificaciones_diarias'))
 
-        # Renderizar la plantilla HTML optimizada para PDF
         rendered_html = render_template('pdf_planificacion_diaria.html', plan=planificacion)
 
-        # Generar PDF en memoria
         pdf_buffer = io.BytesIO()
         pisa_status = pisa.CreatePDF(rendered_html, dest=pdf_buffer)
 
