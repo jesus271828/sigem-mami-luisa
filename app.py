@@ -2454,15 +2454,49 @@ def guardar_planificacion():
         return redirect(url_for('login'))
 
     docente = session.get('nombre_completo')
-    mes = request.form.get('mes')
-    area = request.form.get('area')
-    grado_seccion = request.form.get('grado') or request.form.get('grado_seccion')
-    competencias_fundamentales = request.form.get('competencias_fundamentales')
-    competencias_especificas = request.form.get('competencias_especificas')
-    contenidos_conceptuales = request.form.get('contenidos_conceptuales')
-    contenidos_procedimentales = request.form.get('contenidos_procedimentales')
-    contenidos_actitudinales = request.form.get('contenidos_actitudinales')
-    situacion_aprendizaje = request.form.get('situacion_aprendizaje')
+    
+    # Captura de campos individuales
+    grado = request.form.get('grado')
+    modalidad = request.form.get('modalidad')
+    areas_art = request.form.get('areas_art')
+    ejes = request.form.get('ejes')
+    duracion = request.form.get('duracion')
+    f_inicio = request.form.get('f_inicio') or None
+    f_cierre = request.form.get('f_cierre') or None
+    valor_mes = request.form.get('valor_mes')
+    efemerides = request.form.get('efemerides')
+    situacion = request.form.get('situacion')
+    
+    # Captura de competencias específicas
+    comp_comunicativa = request.form.get('comp_comunicativa')
+    comp_pensamiento = request.form.get('comp_pensamiento')
+    comp_etica = request.form.get('comp_etica')
+    
+    # Captura de contenidos
+    contenidos_conceptos = request.form.get('contenidos_conceptos')
+    contenidos_procedimientos = request.form.get('contenidos_procedimientos')
+    contenidos_actitudes = request.form.get('contenidos_actitudes')
+    
+    # Indicador y actividades
+    indicadores = request.form.get('indicadores')
+    actividades_ensenanza = request.form.get('actividades_ensenanza')
+    actividades_aprendizaje = request.form.get('actividades_aprendizaje')
+    actividades_evaluacion = request.form.get('actividades_evaluacion')
+    medios_recursos = request.form.get('medios_recursos')
+    
+    # Evaluación
+    evaluacion_criterios = request.form.get('evaluacion_criterios')
+    evaluacion_tecnicas = request.form.get('evaluacion_tecnicas')
+
+    # Para los checkboxes múltiples (áreas, estrategias, técnicas), los unimos en un texto separado por comas
+    areas_list = request.form.getlist('areas')
+    areas = ", ".join(areas_list) if areas_list else ""
+    
+    estrategias_list = request.form.getlist('estrategias')
+    estrategias = ", ".join(estrategias_list) if estrategias_list else ""
+    
+    tecnicas_list = request.form.getlist('tecnicas')
+    tecnicas = ", ".join(tecnicas_list) if tecnicas_list else ""
 
     try:
         conn = psycopg2.connect(DATABASE_URL)
@@ -2470,13 +2504,17 @@ def guardar_planificacion():
         
         query = '''
             INSERT INTO planificaciones 
-            (docente, mes, area, grado_seccion, competencias_fundamentales, competencias_especificas, contenidos_conceptuales, contenidos_procedimentales, contenidos_actitudinales, situacion_aprendizaje)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            (docente, grado, modalidad, areas_art, ejes, duracion, f_inicio, f_cierre, valor_mes, efemerides, situacion, 
+             comp_comunicativa, comp_pensamiento, comp_etica, contenidos_conceptos, contenidos_procedimientos, contenidos_actitudes, 
+             indicadores, actividades_ensenanza, actividades_aprendizaje, actividades_evaluacion, medios_recursos, 
+             evaluacion_criterios, evaluacion_tecnicas, areas, estrategias, tecnicas)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         '''
         cursor.execute(query, (
-            docente, mes, area, grado_seccion, competencias_fundamentales, 
-            competencias_especificas, contenidos_conceptuales, contenidos_procedimentales, 
-            contenidos_actitudinales, situacion_aprendizaje
+            docente, grado, modalidad, areas_art, ejes, duracion, f_inicio, f_cierre, valor_mes, efemerides, situacion,
+            comp_comunicativa, comp_pensamiento, comp_etica, contenidos_conceptos, contenidos_procedimientos, contenidos_actitudes,
+            indicadores, actividades_ensenanza, actividades_aprendizaje, actividades_evaluacion, medios_recursos,
+            evaluacion_criterios, evaluacion_tecnicas, areas, estrategias, tecnicas
         ))
         conn.commit()
         cursor.close()
