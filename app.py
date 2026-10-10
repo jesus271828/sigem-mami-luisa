@@ -2583,6 +2583,46 @@ def guardar_planificacion_diaria():
 
     return redirect(url_for('planificacion_diaria'))
 
+@app.route('/imprimir_planificacion_diaria_pdf/<int:id>')
+def imprimir_planificacion_diaria_pdf(id):
+    if 'usuario' not in session and 'nombre_completo' not in session:
+        return redirect(url_for('login'))
+
+    try:
+        conn = psycopg2.connect(DATABASE_URL)
+        cursor = PostgresCursorWrapper(conn)
+
+        query = 'SELECT * FROM planificaciones_diarias WHERE identificacion = ?'
+        cursor.execute(query, (id,))
+        planificacion = cursor.fetchone()
+        cursor.close()
+
+        if not planificacion:
+            flash('Planificación no encontrada.', 'danger')
+            return redirect(url_for('ver_planificaciones_diarias'))
+
+        # Renderizar la plantilla HTML optimizada para PDF
+        rendered_html = render_template('pdf_planificacion_diaria.html', plan=planificacion)
+
+        # Generar PDF en memoria
+        pdf_buffer = io.BytesIO()
+        pisa_status = pisa.CreatePDF(rendered_html, dest=pdf_buffer)
+
+        if pisa_status.err:
+            flash('Error al generar el documento PDF.', 'danger')
+            return redirect(url_for('ver_planificaciones_diarias'))
+
+        pdf_buffer.seek(0)
+        response = make_response(pdf_buffer.read())
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = f'inline; filename=Planificacion_Diaria_{id}.pdf'
+        return response
+
+    except Exception as e:
+        print("❌ Error al generar PDF de planificación diaria:", e)
+        flash('Error al procesar la solicitud del PDF.', 'danger')
+        return redirect(url_for('ver_planificaciones_diarias'))
+
 @app.route('/registrar_usuario', methods=['GET', 'POST'])
 def registrar_usuario():
     if session.get('rol') not in ['oficina', 'admin']:
