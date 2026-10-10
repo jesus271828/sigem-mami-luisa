@@ -43,6 +43,25 @@
                         <span class="badge bg-secondary fs-6">Total: {{ planificaciones|length }}</span>
                     </div>
 
+                    <!-- Filtro para Reporte PDF por Rango de Fechas / Semana -->
+                    <div class="card bg-light p-3 mb-4 border-0">
+                        <form action="{{ url_for('imprimir_planificaciones_semana_pdf') }}" method="GET" target="_blank" class="row g-3 align-items-end">
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold small text-secondary">Fecha Inicio:</label>
+                                <input type="date" name="fecha_inicio" class="form-control form-control-sm" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold small text-secondary">Fecha Fin:</label>
+                                <input type="date" name="fecha_fin" class="form-control form-control-sm" required>
+                            </div>
+                            <div class="col-md-4">
+                                <button type="submit" class="btn btn-primary btn-sm w-100">
+                                    <i class="fas fa-file-pdf me-1"></i>Generar PDF por Rango (Semana)
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
                     {% if planificaciones %}
                         <div class="row g-3">
                             {% for plan in planificaciones %}

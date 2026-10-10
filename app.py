@@ -2416,20 +2416,20 @@ def ver_planificaciones_diarias():
     if 'usuario' not in session and 'nombre_completo' not in session:
         return redirect(url_for('login'))
         
-    docente = session.get('nombre_completo')
+    usuario_actual = session.get('nombre_completo')
+    rol_actual = session.get('rol')
     
     try:
         conn = psycopg2.connect(DATABASE_URL)
         cursor = PostgresCursorWrapper(conn)
         
-        # Si es admin u oficina ve todas, de lo contrario filtra por docente
-        rol_actual = session.get('rol')
+        # Si es de oficina o admin ve todo, si es docente solo ve lo suyo
         if rol_actual in ['admin', 'oficina']:
             query = 'SELECT * FROM planificaciones_diarias ORDER BY fecha DESC'
             cursor.execute(query)
         else:
             query = 'SELECT * FROM planificaciones_diarias WHERE docente = ? ORDER BY fecha DESC'
-            cursor.execute(query, (docente,))
+            cursor.execute(query, (usuario_actual,))
             
         planificaciones = cursor.fetchall()
         cursor.close()
@@ -2627,6 +2627,54 @@ def imprimir_planificacion_diaria_pdf(id):
     except Exception as e:
         print("❌ Error crítico al generar PDF de planificación diaria:", e)
         flash('Error al procesar la solicitud del PDF.', 'danger')
+        return redirect(url_for('ver_planificaciones_diarias'))
+
+@app.route('/imprimir_planificaciones_semana_pdf', methods=['GET', 'POST'])
+def imprimir_planificaciones_semana_pdf():
+    if 'usuario' not in session and 'nombre_completo' not in session:
+        return redirect(url_for('login'))
+
+    fecha_inicio = request.args.get('fecha_inicio')
+    fecha_fin = request.args.get('fecha_fin')
+    usuario_actual = session.get('nombre_completo')
+    rol_actual = session.get('rol')
+
+    try:
+        conn = psycopg2.connect(DATABASE_URL)
+        cursor = PostgresCursorWrapper(conn)
+
+        if rol_actual in ['admin', 'oficina']:
+            query = 'SELECT * FROM planificaciones_diarias WHERE fecha BETWEEN ? AND ? ORDER BY fecha ASC'
+            cursor.execute(query, (fecha_inicio, fecha_fin))
+        else:
+            query = 'SELECT * FROM planificaciones_diarias WHERE docente = ? AND fecha BETWEEN ? AND ? ORDER BY fecha ASC'
+            cursor.execute(query, (usuario_actual, fecha_inicio, fecha_fin))
+
+        planificaciones = cursor.fetchall()
+        cursor.close()
+
+        if not planificaciones:
+            flash('No hay planificaciones en el rango de fechas seleccionado.', 'warning')
+            return redirect(url_for('ver_planificaciones_diarias'))
+
+        rendered_html = render_template('pdf_reporte_semanal.html', planificaciones=planificaciones, inicio=fecha_inicio, fin=fecha_fin)
+
+        pdf_buffer = io.BytesIO()
+        pisa_status = pisa.CreatePDF(rendered_html, dest=pdf_buffer)
+
+        if pisa_status.err:
+            flash('Error al generar el PDF semanal.', 'danger')
+            return redirect(url_for('ver_planificaciones_diarias'))
+
+        pdf_buffer.seek(0)
+        response = make_response(pdf_buffer.read())
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = f'inline; filename=Reporte_Semanal_{fecha_inicio}_al_{fecha_fin}.pdf'
+        return response
+
+    except Exception as e:
+        print("❌ Error al generar reporte semanal:", e)
+        flash('Error al procesar el reporte.', 'danger')
         return redirect(url_for('ver_planificaciones_diarias'))
 
 @app.route('/registrar_usuario', methods=['GET', 'POST'])
