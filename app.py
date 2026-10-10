@@ -2418,33 +2418,47 @@ def planificacion():
     
     return render_template('planificacion.html', usuario=usuario_info)
 
-@app.route('/mis_planificaciones')
-def mis_planificaciones():
+@app.route('/planificacion_mensual', methods=['GET', 'POST'])
+def planificacion_mensual():
     if 'usuario' not in session and 'nombre_completo' not in session:
         return redirect(url_for('login'))
 
-    usuario_actual = session.get('nombre_completo')
-    rol_actual = session.get('rol')
+    if request.method == 'POST':
+        docente = session.get('nombre_completo')
+        mes = request.form.get('mes')
+        area = request.form.get('area')
+        grado_seccion = request.form.get('grado_seccion')
+        competencias_fundamentales = request.form.get('competencias_fundamentales')
+        competencias_especificas = request.form.get('competencias_especificas')
+        contenidos_conceptuales = request.form.get('contenidos_conceptuales')
+        contenidos_procedimentales = request.form.get('contenidos_procedimentales')
+        contenidos_actitudinales = request.form.get('contenidos_actitudinales')
+        situacion_aprendizaje = request.form.get('situacion_aprendizaje')
 
-    try:
-        conn = psycopg2.connect(DATABASE_URL)
-        cursor = PostgresCursorWrapper(conn)
+        try:
+            conn = psycopg2.connect(DATABASE_URL)
+            cursor = PostgresCursorWrapper(conn)
+            
+            query = '''
+                INSERT INTO planificaciones 
+                (docente, mes, area, grado_seccion, competencias_fundamentales, competencias_especificas, contenidos_conceptuales, contenidos_procedimentales, contenidos_actitudinales, situacion_aprendizaje)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            '''
+            cursor.execute(query, (
+                docente, mes, area, grado_seccion, competencias_fundamentales, 
+                competencias_especificas, contenidos_conceptuales, contenidos_procedimentales, 
+                contenidos_actitudinales, situacion_aprendizaje
+            ))
+            conn.commit()
+            cursor.close()
+            flash('¡Planificación guardada con éxito!', 'success')
+            return redirect(url_for('mis_planificaciones'))
+        except Exception as e:
+            print("❌ Error al guardar planificación:", e)
+            flash('Error al guardar el registro.', 'danger')
 
-        # Si es admin u oficina ve todo, si es docente ve solo lo suyo
-        if rol_actual in ['admin', 'oficina']:
-            query = 'SELECT * FROM planificaciones_mensuales ORDER BY id DESC'
-            cursor.execute(query)
-        else:
-            query = 'SELECT * FROM planificaciones_mensuales WHERE docente = ? ORDER BY id DESC'
-            cursor.execute(query, (usuario_actual,))
-
-        planificaciones = cursor.fetchall()
-        cursor.close()
-    except Exception as e:
-        print("❌ Error obteniendo planificaciones mensuales:", e)
-        planificaciones = []
-
-    return render_template('mis_planificaciones.html', planificaciones=planificaciones)
+    # AQUÍ ESTÁ EL CAMBIO: Apunta directamente a tu archivo planificacion.html
+    return render_template('planificacion.html')
 
 @app.route('/ver_planificaciones_diarias')
 def ver_planificaciones_diarias():
