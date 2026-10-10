@@ -62,7 +62,7 @@
                                             </p>
                                         </div>
                                         <div class="pt-3 border-top mt-3 d-flex justify-content-between align-items-center">
-                                            {% set plan_id = plan.get('identificacion') or plan.get('id') or 1 %}
+                                            {% set plan_id = plan.get('id') or plan.id or 1 %}
                                             <a href="{{ url_for('imprimir_planificacion_diaria_pdf', id=plan_id) }}" target="_blank" class="btn btn-sm btn-outline-primary">
                                                 <i class="fas fa-print me-1"></i>Imprimir PDF
                                             </a>

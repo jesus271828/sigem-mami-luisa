@@ -2596,7 +2596,8 @@ def imprimir_planificacion_diaria_pdf(id):
         conn = psycopg2.connect(DATABASE_URL)
         cursor = PostgresCursorWrapper(conn)
 
-        query = 'SELECT * FROM planificaciones_diarias WHERE identificacion = ?'
+        # Cambiamos 'identificacion' por 'id' que es la columna real de la tabla
+        query = 'SELECT * FROM planificaciones_diarias WHERE id = ?'
         cursor.execute(query, (id,))
         planificacion = cursor.fetchone()
         cursor.close()
