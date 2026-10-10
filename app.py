@@ -2531,39 +2531,6 @@ def eliminar_planificacion(id):
 
     return redirect(url_for('mis_planificaciones'))
 
-@app.route('/mis_planificaciones')
-def mis_planificaciones():
-    if 'usuario' not in session:
-        return redirect(url_for('login'))
-        
-    usuario_actual = session.get('nombre_completo')
-    rol_actual = session.get('rol')
-    
-    conexion = get_db_connection()
-    is_postgres = DATABASE_URL is not None
-    planificaciones = []
-
-    try:
-        if is_postgres:
-            cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-            if rol_actual in ['admin', 'oficina']:
-                cur.execute("SELECT * FROM planificaciones ORDER BY id DESC")
-            else:
-                cur.execute("SELECT * FROM planificaciones WHERE docente = %s ORDER BY id DESC", (usuario_actual,))
-            planificaciones = cur.fetchall()
-            cur.close()
-        else:
-            conexion.row_factory = sqlite3.Row
-            if rol_actual in ['admin', 'oficina']:
-                planificaciones = conexion.execute("SELECT * FROM planificaciones ORDER BY id DESC").fetchall()
-            else:
-                planificaciones = conexion.execute("SELECT * FROM planificaciones WHERE docente = ? ORDER BY id DESC", (usuario_actual,)).fetchall()
-    except Exception as e:
-        print("--- ERROR AL CARGAR PLANIFICACIONES:", e)
-    finally:
-        conexion.close()
-
-    return render_template('mis_planificaciones.html', planificaciones=planificaciones)
 
 @app.route('/planificacion_diaria', methods=['GET', 'POST'])
 def planificacion_diaria():
