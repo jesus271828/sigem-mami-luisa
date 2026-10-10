@@ -2404,18 +2404,19 @@ def generar_pdf_notas(id_estudiante):
         print("--- ERROR AL GENERAR PDF DE NOTAS CON WEASYPRINT:", e)
         return 'Hubo un error al generar el PDF de notas', 500
 
-@app.route('/menu_planificacion')
-def menu_planificacion():
-    # Valida si el usuario ha iniciado sesión
-    if 'usuario' not in session and 'nombre_completo' not in session:
-        return redirect(url_for('login'))
-    return render_template('planificacion.html')
-
 @app.route('/planificacion')
+@app.route('/menu_planificacion')
 def planificacion():
     if 'usuario' not in session and 'nombre_completo' not in session:
         return redirect(url_for('login'))
-    return render_template('planificacion.html')
+    
+    # Creamos un diccionario 'usuario' seguro para que la plantilla no falle
+    usuario_info = {
+        'nombre_completo': session.get('nombre_completo', ''),
+        'curso_asignado': session.get('curso_asignado', session.get('grado_seccion', 'General'))
+    }
+    
+    return render_template('planificacion.html', usuario=usuario_info)
 
 @app.route('/ver_planificaciones_diarias')
 def ver_planificaciones_diarias():
