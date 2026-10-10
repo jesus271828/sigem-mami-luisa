@@ -2467,20 +2467,33 @@ def guardar_planificacion():
     efemerides = request.form.get('efemerides')
     situacion = request.form.get('situacion')
     
-    # 2. Competencias
+    # Captura segura para mes y área (si el form no los trae directos, los derivamos)
+    mes = request.form.get('mes') or valor_mes or "General"
+    
+    # Checkboxes de áreas
+    areas_list = request.form.getlist('areas')
+    areas = ", ".join(areas_list) if areas_list else ""
+    area = areas_list[0] if areas_list else (request.form.get('area') or "General")
+
+    estrategias_list = request.form.getlist('estrategias')
+    estrategias = ", ".join(estrategias_list) if estrategias_list else ""
+    
+    tecnicas_list = request.form.getlist('tecnicas')
+    tecnicas = ", ".join(tecnicas_list) if tecnicas_list else ""
+
+    # 2. Competencias específicas y fundamentales unificadas
     comp_comunicativa = request.form.get('comp_comunicativa') or ''
     comp_pensamiento = request.form.get('comp_pensamiento') or ''
     comp_etica = request.form.get('comp_etica') or ''
     
-    # Unificamos competencias para la columna general 'competencias' y 'competencias_especificas'
-    comp_unificadas = f"Comunicativa: {comp_comunicativa}\nPensamiento: {comp_pensamiento}\nÉtica: {comp_etica}".strip()
+    competencias_fundamentales_texto = f"Comunicativa: {comp_comunicativa}\nPensamiento: {comp_pensamiento}\nÉtica: {comp_etica}".strip()
+    comp_unificadas = competencias_fundamentales_texto
     
     # 3. Contenidos
     contenidos_conceptos = request.form.get('contenidos_conceptos') or ''
     contenidos_procedimientos = request.form.get('contenidos_procedimientos') or ''
     contenidos_actitudes = request.form.get('contenidos_actitudes') or ''
     
-    # Unificamos contenidos para la columna general 'contenidos'
     contenidos_unificados = f"Conceptos: {contenidos_conceptos}\nProcedimientos: {contenidos_procedimientos}\nActitudes: {contenidos_actitudes}".strip()
     
     # 4. Indicadores, Actividades y Recursos
@@ -2490,23 +2503,12 @@ def guardar_planificacion():
     actividades_evaluacion = request.form.get('actividades_evaluacion') or ''
     medios_recursos = request.form.get('medios_recursos')
     
-    # Unificamos actividades para la columna general 'actividades'
     actividades_unificadas = f"Enseñanza: {actividades_ensenanza}\nAprendizaje: {actividades_aprendizaje}\nEvaluación: {actividades_evaluacion}".strip()
     
     # 5. Evaluación
     evaluacion_criterios = request.form.get('evaluacion_criterios') or ''
     evaluacion_tecnicas = request.form.get('evaluacion_tecnicas') or ''
     evaluacion_unificada = f"Criterios: {evaluacion_criterios}\nTécnicas: {evaluacion_tecnicas}".strip()
-
-    # 6. Selección múltiple (Checkboxes)
-    areas_list = request.form.getlist('areas')
-    areas = ", ".join(areas_list) if areas_list else ""
-    
-    estrategias_list = request.form.getlist('estrategias')
-    estrategias = ", ".join(estrategias_list) if estrategias_list else ""
-    
-    tecnicas_list = request.form.getlist('tecnicas')
-    tecnicas = ", ".join(tecnicas_list) if tecnicas_list else ""
 
     try:
         conn = psycopg2.connect(DATABASE_URL)
@@ -2515,18 +2517,18 @@ def guardar_planificacion():
         query = '''
             INSERT INTO planificaciones 
             (
-                docente, grado, modalidad, areas_art, ejes, duracion, f_inicio, f_cierre, 
+                docente, mes, área, grado, modalidad, areas_art, ejes, duracion, f_inicio, f_cierre, 
                 valor_mes, efemerides, situacion, situacion_aprendizaje,
-                comp_comunicativa, comp_pensamiento, comp_etica, competencias, competencias_especificas,
+                competencias_fundamentales, comp_comunicativa, comp_pensamiento, comp_etica, competencias, competencias_especificas,
                 contenidos_conceptos, contenidos_procedimientos, contenidos_actitudes, contenidos, contenidos_conceptuales, contenidos_procedimentales, contenidos_actitudinales,
                 indicadores, actividades_ensenanza, actividades_aprendizaje, actividades_evaluacion, actividades,
                 medios_recursos, recursos, evaluacion_criterios, evaluacion_tecnicas, evaluacion,
                 areas, estrategias, tecnicas, grado_seccion
             )
             VALUES (
-                ?, ?, ?, ?, ?, ?, ?, ?, 
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
                 ?, ?, ?, ?,
-                ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?,
                 ?, ?, ?, ?, ?, ?, ?,
                 ?, ?, ?, ?, ?,
                 ?, ?, ?, ?, ?,
@@ -2534,9 +2536,9 @@ def guardar_planificacion():
             )
         '''
         cursor.execute(query, (
-            docente, grado, modalidad, areas_art, ejes, duracion, f_inicio, f_cierre,
+            docente, mes, area, grado, modalidad, areas_art, ejes, duracion, f_inicio, f_cierre,
             valor_mes, efemerides, situacion, situacion,
-            comp_comunicativa, comp_pensamiento, comp_etica, comp_unificadas, comp_unificadas,
+            competencias_fundamentales_texto, comp_comunicativa, comp_pensamiento, comp_etica, comp_unificadas, comp_unificadas,
             contenidos_conceptos, contenidos_procedimientos, contenidos_actitudes, contenidos_unificados, contenidos_conceptos, contenidos_procedimientos, contenidos_actitudes,
             indicadores, actividades_ensenanza, actividades_aprendizaje, actividades_evaluacion, actividades_unificadas,
             medios_recursos, medios_recursos, evaluacion_criterios, evaluacion_tecnicas, evaluacion_unificada,
