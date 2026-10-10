@@ -2467,10 +2467,8 @@ def guardar_planificacion():
     efemerides = request.form.get('efemerides')
     situacion = request.form.get('situacion')
     
-    # Captura segura para mes y área (si el form no los trae directos, los derivamos)
     mes = request.form.get('mes') or valor_mes or "General"
     
-    # Checkboxes de áreas
     areas_list = request.form.getlist('areas')
     areas = ", ".join(areas_list) if areas_list else ""
     area = areas_list[0] if areas_list else (request.form.get('area') or "General")
@@ -2481,7 +2479,7 @@ def guardar_planificacion():
     tecnicas_list = request.form.getlist('tecnicas')
     tecnicas = ", ".join(tecnicas_list) if tecnicas_list else ""
 
-    # 2. Competencias específicas y fundamentales unificadas
+    # 2. Competencias
     comp_comunicativa = request.form.get('comp_comunicativa') or ''
     comp_pensamiento = request.form.get('comp_pensamiento') or ''
     comp_etica = request.form.get('comp_etica') or ''
@@ -2514,10 +2512,11 @@ def guardar_planificacion():
         conn = psycopg2.connect(DATABASE_URL)
         cursor = PostgresCursorWrapper(conn)
         
+        # AQUÍ CAMBIAMOS 'área' por 'area' SIN TILDE para que coincida con Supabase
         query = '''
             INSERT INTO planificaciones 
             (
-                docente, mes, área, grado, modalidad, areas_art, ejes, duracion, f_inicio, f_cierre, 
+                docente, mes, area, grado, modalidad, areas_art, ejes, duracion, f_inicio, f_cierre, 
                 valor_mes, efemerides, situacion, situacion_aprendizaje,
                 competencias_fundamentales, comp_comunicativa, comp_pensamiento, comp_etica, competencias, competencias_especificas,
                 contenidos_conceptos, contenidos_procedimientos, contenidos_actitudes, contenidos, contenidos_conceptuales, contenidos_procedimentales, contenidos_actitudinales,
