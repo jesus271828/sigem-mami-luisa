@@ -2563,15 +2563,23 @@ def descargar_pdf_planificacion(id):
 
     try:
         conn = psycopg2.connect(DATABASE_URL)
-        cursor = PostgresCursorWrapper(conn)
-        cursor.execute("SELECT * FROM planificaciones WHERE id = ?", (id,))
+        # Usamos el cursor nativo de psycopg2 directamente para tener .description disponible
+        cursor = conn.cursor()
+        
+        # Como psycopg2 usa %s en lugar de ?, adaptamos la consulta para el cursor nativo
+        cursor.execute("SELECT * FROM planificaciones WHERE %s = %s", (psycopg2.sql.Identifier('id'), id))
+        # O de forma directa y segura:
+        cursor.execute("SELECT * FROM planificaciones WHERE id = %s", (id,))
+        
         row = cursor.fetchone()
         
         if not row:
+            cursor.close()
+            conn.close()
             flash("Planificación no encontrada.", "danger")
             return redirect(url_for('mis_planificaciones'))
             
-        # Convertir tupla de la base de datos a diccionario según las columnas de la tabla
+        # Convertir los resultados a diccionario usando las columnas nativas
         columns = [desc[0] for desc in cursor.description]
         plan = dict(zip(columns, row))
         
