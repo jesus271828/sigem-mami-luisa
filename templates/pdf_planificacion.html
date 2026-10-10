@@ -2,116 +2,339 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Planificación Mensual - Mami Luisa</title>
+    <title>Esquema de Planificación - SIGEM Mami Luisa</title>
     <style>
-        body { font-family: Helvetica, Arial, sans-serif; font-size: 11px; color: #2c3e50; line-height: 1.4; }
-        .header { text-align: center; border-bottom: 2px solid #1d3557; padding-bottom: 10px; margin-bottom: 15px; }
-        .title-school { font-size: 16px; font-weight: bold; color: #1d3557; font-family: 'Times New Roman', serif; }
-        .lema { font-size: 10px; font-style: italic; color: #d97706; }
-        .info-table, .content-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
-        .info-table td, .content-table th, .content-table td { border: 1px solid #94a3b8; padding: 6px; vertical-align: top; }
-        .th-title { background-color: #f1f5f9; font-weight: bold; text-align: center; color: #1d3557; }
-        .section-title { font-size: 12px; font-weight: bold; color: #1d3557; margin-top: 10px; margin-bottom: 5px; background: #e2e8f0; padding: 4px; }
+        body { 
+            font-family: Helvetica, Arial, sans-serif; 
+            font-size: 11px; 
+            color: #2c3e50; 
+            background-color: #ffffff;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* ENCABEZADO INSTITUCIONAL */
+        .header { 
+            display: table;
+            width: 100%;
+            border-bottom: 2px solid #1d3557; 
+            padding-bottom: 10px; 
+            margin-bottom: 15px; 
+        }
+        .header-cell {
+            display: table-cell;
+            vertical-align: middle;
+        }
+        .title-school { 
+            font-size: 16px; 
+            font-weight: bold; 
+            color: #1d3557; 
+            font-family: 'Times New Roman', serif; 
+            margin: 0;
+        }
+        .lema { 
+            font-size: 10px; 
+            font-style: italic; 
+            color: #d97706; 
+            font-family: 'Times New Roman', serif; 
+        }
+        .info-line { 
+            font-size: 10px; 
+            margin: 2px 0; 
+            color: #4b5563; 
+        }
+
+        /* BLOQUES DE SECCIÓN */
+        .section-box {
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 12px;
+            background: #f8fafc;
+        }
+        
+        .section-title {
+            font-size: 12px;
+            font-weight: bold;
+            color: #1d4ed8;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        /* TABLAS Y CAMPOS */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .table-bordered th, .table-bordered td {
+            border: 1px solid #94a3b8;
+            padding: 6px 8px;
+            vertical-align: top;
+            font-size: 10.5px;
+        }
+
+        .table-light {
+            background-color: #f1f5f9;
+            font-weight: bold;
+            text-align: center;
+            color: #1e293b;
+        }
+
+        .label-text {
+            font-weight: bold;
+            color: #1e293b;
+            font-size: 10px;
+            margin-bottom: 3px;
+            display: block;
+        }
+
+        .value-box {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            padding: 6px;
+            border-radius: 4px;
+            min-height: 15px;
+            color: #0f172a;
+        }
     </style>
 </head>
 <body>
 
-    <!-- ENCABEZADO INSTITUCIONAL -->
+    <!-- ENCABEZADO -->
     <div class="header">
-        <div class="title-school">Centro Educativo Mami Luisa S.R.L</div>
-        <div class="lema">"Educando con amor para un mundo mejor"</div>
-        <div style="font-size: 10px; color: #4b5563; margin-top: 4px;">
-            <b>Dirección:</b> C/Castillo Márquez #53. La Romana &nbsp;|&nbsp; <b>Tel:</b> 809-550-7385<br>
-            <b>Regional:</b> 05 San Pedro &nbsp;|&nbsp; <b>Distrito:</b> 05-03 La Romana &nbsp;|&nbsp; <b>Código:</b> 07121
+        <div class="header-cell" style="width: 85%;">
+            <div class="title-school">Centro Educativo Mami Luisa S.R.L</div>
+            <div class="lema">"Educando con amor para un mundo mejor"</div>
+            <div class="info-line"><b>Dirección:</b> C/Castillo Márquez #53. La Romana. &nbsp;|&nbsp; <b>Tel:</b> 809-550-7385</div>
+            <div class="info-line"><b>Regional:</b> 05 San Pedro &nbsp;|&nbsp; <b>Distrito:</b> 05-03 La Romana &nbsp;|&nbsp; <b>Código:</b> 07121</div>
+            <div class="info-line" style="font-weight: bold; color: #1d4ed8; margin-top: 3px;">
+                UNIDAD DE APRENDIZAJE - NIVEL PRIMARIO | Tanda Matutina
+            </div>
         </div>
-        <div style="font-size: 11px; font-weight: bold; color: #1d4ed8; margin-top: 5px;">
-            UNIDAD DE APRENDIZAJE - NIVEL PRIMARIO
+        <div class="header-cell" style="text-align: right; vertical-align: top;">
+            <span style="font-size: 9px; color: #d97706; font-style: italic;">"Educando con amor para un mundo mejor"</span>
         </div>
     </div>
 
     <!-- 1. IDENTIFICACIÓN -->
-    <table class="info-table">
-        <tr>
-            <td><b>Centro:</b> Mami Luisa</td>
-            <td><b>Tanda:</b> Matutina</td>
-            <td><b>Grado:</b> {{ plan.grado or plan.grado_seccion }}</td>
-        </tr>
-        <tr>
-            <td colspan="3"><b>Docente:</b> {{ plan.docente }}</td>
-        </tr>
-    </table>
+    <div class="section-box">
+        <table>
+            <tr>
+                <td style="width: 33%;">
+                    <span class="label-text">Centro:</span>
+                    <div class="value-box">Mami Luisa</div>
+                </td>
+                <td style="width: 33%;">
+                    <span class="label-text">Tanda:</span>
+                    <div class="value-box">Matutina</div>
+                </td>
+                <td style="width: 33%;">
+                    <span class="label-text">Grado:</span>
+                    <div class="value-box" style="font-weight: bold; color: #2563eb;">{{ plan.grado or plan.grado_seccion or '' }}</div>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="3" style="padding-top: 8px;">
+                    <span class="label-text">Docente:</span>
+                    <div class="value-box" style="font-weight: bold;">{{ plan.docente or '' }}</div>
+                </td>
+            </tr>
+        </table>
+    </div>
 
-    <!-- 2. DATOS GENERALES -->
-    <table class="info-table">
+    <!-- 2. ÁREAS Y ARTICULACIÓN -->
+    <table style="width: 100%; margin-bottom: 12px;">
         <tr>
-            <td><b>Áreas Curriculares:</b> {{ plan.areas }}</td>
-            <td><b>Modalidad:</b> {{ plan.modalidad }}</td>
-        </tr>
-        <tr>
-            <td><b>Duración:</b> {{ plan.duracion }} días</td>
-            <td><b>Fechas:</b> Del {{ plan.f_inicio }} al {{ plan.f_cierre }}</td>
-        </tr>
-        <tr>
-            <td colspan="2"><b>Áreas Articuladas / Ejes:</b> {{ plan.areas_art }} - {{ plan.ejes }}</td>
-        </tr>
-    </table>
-
-    <!-- 3. SITUACIÓN DE APRENDIZAJE -->
-    <div class="section-title">SITUACIÓN DE APRENDIZAJE</div>
-    <table class="info-table">
-        <tr>
-            <td>{{ plan.situacion }}</td>
-        </tr>
-    </table>
-
-    <!-- 4. COMPETENCIAS -->
-    <div class="section-title">COMPETENCIAS</div>
-    <table class="content-table">
-        <tr>
-            <th class="th-title" style="width: 35%;">Competencias Fundamentales</th>
-            <th class="th-title" style="width: 65%;">Competencia Específica del Grado</th>
-        </tr>
-        <tr>
-            <td><b>Comunicativa, Pensamiento y Ética</b></td>
-            <td>
-                - Comunicativa: {{ plan.comp_comunicativa }}<br>
-                - Pensamiento: {{ plan.comp_pensamiento }}<br>
-                - Ética: {{ plan.comp_etica }}
+            <td style="width: 60%; vertical-align: top; padding-right: 6px;">
+                <div class="section-box" style="height: 100%;">
+                    <span class="label-text">Áreas Curriculares:</span>
+                    <div class="value-box">{{ plan.areas or 'Ninguna seleccionada' }}</div>
+                </div>
+            </td>
+            <td style="width: 40%; vertical-align: top; padding-left: 6px;">
+                <div class="section-box" style="height: 100%;">
+                    <span class="label-text">Modalidad de Articulación:</span>
+                    <div class="value-box">{{ plan.modalidad or 'No especificada' }}</div>
+                </div>
             </td>
         </tr>
     </table>
 
-    <!-- 5. CONTENIDOS -->
-    <div class="section-title">CONTENIDOS</div>
-    <table class="content-table">
+    <!-- 3. EJES Y ÁREAS ARTICULADAS -->
+    <div class="section-box">
+        <table style="margin-bottom: 8px;">
+            <tr>
+                <td>
+                    <span class="label-text">Áreas articuladas:</span>
+                    <div class="value-box">{{ plan.areas_art or 'Ninguna' }}</div>
+                </td>
+            </tr>
+        </table>
+        <table>
+            <tr>
+                <td>
+                    <span class="label-text">Ejes transversales:</span>
+                    <div class="value-box">{{ plan.ejes or 'Ninguno' }}</div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- 4. ESTRATEGIAS, TÉCNICAS Y TIEMPO -->
+    <table style="width: 100%; margin-bottom: 12px;">
         <tr>
-            <th class="th-title" style="width: 33%;">Conceptos</th>
-            <th class="th-title" style="width: 33%;">Procedimientos</th>
-            <th class="th-title" style="width: 33%;">Actitudes y Valores</th>
-        </tr>
-        <tr>
-            <td>{{ plan.contenidos_conceptos }}</td>
-            <td>{{ plan.contenidos_procedimientos }}</td>
-            <td>{{ plan.contenidos_actitudes }}</td>
+            <td style="width: 50%; vertical-align: top; padding-right: 6px;">
+                <div class="section-box">
+                    <span class="label-text">Estrategias de enseñanza y de aprendizaje:</span>
+                    <div class="value-box">{{ plan.estrategias or 'Ninguna' }}</div>
+                </div>
+            </td>
+            <td style="width: 50%; vertical-align: top; padding-left: 6px;">
+                <div class="section-box">
+                    <span class="label-text">Técnicas:</span>
+                    <div class="value-box">{{ plan.tecnicas or 'Ninguna' }}</div>
+                </div>
+            </td>
         </tr>
     </table>
 
-    <!-- 6. ACTIVIDADES Y RECURSOS -->
-    <div class="section-title">ACTIVIDADES Y RECURSOS</div>
-    <table class="content-table">
-        <tr>
-            <th class="th-title" style="width: 25%;">Enseñanza</th>
-            <th class="th-title" style="width: 25%;">Aprendizaje</th>
-            <th class="th-title" style="width: 25%;">Evaluación</th>
-            <th class="th-title" style="width: 25%;">Medios y Recursos</th>
-        </tr>
-        <tr>
-            <td>{{ plan.actividades_ensenanza }}</td>
-            <td>{{ plan.actividades_aprendizaje }}</td>
-            <td>{{ plan.actividades_evaluacion }}</td>
-            <td>{{ plan.medios_recursos }}</td>
-        </tr>
-    </table>
+    <div class="section-box">
+        <table>
+            <tr>
+                <td style="width: 33%;">
+                    <span class="label-text">Duración (días):</span>
+                    <div class="value-box">{{ plan.duracion or '' }}</div>
+                </td>
+                <td style="width: 33%;">
+                    <span class="label-text">Fecha de Inicio:</span>
+                    <div class="value-box">{{ plan.f_inicio or '' }}</div>
+                </td>
+                <td style="width: 33%;">
+                    <span class="label-text">Fecha de Cierre:</span>
+                    <div class="value-box">{{ plan.f_cierre or '' }}</div>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- 5. VALOR DEL MES, EFEMÉRIDES Y SITUACIÓN DE APRENDIZAJE -->
+    <div class="section-box">
+        <span class="label-text">Valor del mes:</span>
+        <div class="value-box" style="margin-bottom: 8px;">{{ plan.valor_mes or '' }}</div>
+
+        <span class="label-text">Conmemoraciones / Efemérides:</span>
+        <div class="value-box" style="margin-bottom: 8px;">{{ plan.efemerides or '' }}</div>
+
+        <span class="label-text">Situación de aprendizaje:</span>
+        <div class="value-box">{{ plan.situacion or plan.situacion_aprendizaje or '' }}</div>
+    </div>
+
+    <!-- 6. DESGLOSE CURRICULAR INTEGRAL -->
+    <div class="section-box">
+        <div class="section-title">Desglose Curricular (Competencias, Contenidos, Actividades y Evaluación)</div>
+
+        <!-- TABLA 1: COMPETENCIAS -->
+        <table class="table-bordered" style="margin-bottom: 15px;">
+            <thead>
+                <tr class="table-light">
+                    <th style="width: 35%;">Competencias Fundamentales</th>
+                    <th style="width: 65%;">Competencia específica del grado</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="table-light" style="text-align: left;">Comunicativa</td>
+                    <td><div class="value-box">{{ plan.comp_comunicativa or '' }}</div></td>
+                </tr>
+                <tr>
+                    <td class="table-light" style="text-align: left;">
+                        Pensamiento lógico, creativo y crítico;<br>
+                        Resolución de problemas;<br>
+                        Científica y tecnológica.
+                    </td>
+                    <td><div class="value-box">{{ plan.comp_pensamiento or '' }}</div></td>
+                </tr>
+                <tr>
+                    <td class="table-light" style="text-align: left;">
+                        Ética y ciudadanía;<br>
+                        Desarrollo personal y espiritual;<br>
+                        Ambiental y de la salud.
+                    </td>
+                    <td><div class="value-box">{{ plan.comp_etica or '' }}</div></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- TABLA 2: CONTENIDOS -->
+        <table class="table-bordered" style="margin-bottom: 15px;">
+            <thead>
+                <tr class="table-light">
+                    <th colspan="3" style="text-transform: uppercase;">Contenidos</th>
+                </tr>
+                <tr class="table-light">
+                    <th style="width: 33%;">Conceptos</th>
+                    <th style="width: 33%;">Procedimientos</th>
+                    <th style="width: 33%;">Actitudes y valores</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><div class="value-box">{{ plan.contenidos_conceptos or '' }}</div></td>
+                    <td><div class="value-box">{{ plan.contenidos_procedimientos or '' }}</div></td>
+                    <td><div class="value-box">{{ plan.contenidos_actitudes or '' }}</div></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- INDICADORES DE LOGRO -->
+        <div style="margin-bottom: 15px;">
+            <span class="label-text">Indicadores de logro:</span>
+            <div class="value-box">{{ plan.indicadores or '' }}</div>
+        </div>
+
+        <!-- TABLA 3: ACTIVIDADES, MEDIOS Y RECURSOS -->
+        <table class="table-bordered" style="margin-bottom: 15px;">
+            <thead>
+                <tr class="table-light">
+                    <th colspan="3" style="text-transform: uppercase;">Actividades</th>
+                    <th rowspan="2" class="table-light" style="vertical-align: middle; width: 25%;">Medios y recursos</th>
+                </tr>
+                <tr class="table-light">
+                    <th style="width: 25%;">De enseñanza</th>
+                    <th style="width: 25%;">De aprendizaje</th>
+                    <th style="width: 25%;">De evaluación</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><div class="value-box">{{ plan.actividades_ensenanza or '' }}</div></td>
+                    <td><div class="value-box">{{ plan.actividades_aprendizaje or '' }}</div></td>
+                    <td><div class="value-box">{{ plan.actividades_evaluacion or '' }}</div></td>
+                    <td><div class="value-box">{{ plan.medios_recursos or '' }}</div></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- TABLA 4: EVALUACIÓN -->
+        <table class="table-bordered">
+            <thead>
+                <tr class="table-light">
+                    <th colspan="2" style="text-transform: uppercase;">Evaluación</th>
+                </tr>
+                <tr class="table-light">
+                    <th style="width: 50%;">Criterios</th>
+                    <th style="width: 50%;">Tipo, técnicas e instrumentos.</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><div class="value-box">{{ plan.evaluacion_criterios or '' }}</div></td>
+                    <td><div class="value-box">{{ plan.evaluacion_tecnicas or '' }}</div></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 
 </body>
 </html>
