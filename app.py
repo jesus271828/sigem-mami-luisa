@@ -2455,7 +2455,8 @@ def guardar_planificacion():
 
     docente = session.get('nombre_completo')
     
-    # Captura de campos individuales
+    # 1. Datos generales e identificación
+    mes = request.form.get('mes')
     grado = request.form.get('grado')
     modalidad = request.form.get('modalidad')
     areas_art = request.form.get('areas_art')
@@ -2467,28 +2468,28 @@ def guardar_planificacion():
     efemerides = request.form.get('efemerides')
     situacion = request.form.get('situacion')
     
-    # Captura de competencias específicas
+    # 2. Competencias específicas
     comp_comunicativa = request.form.get('comp_comunicativa')
     comp_pensamiento = request.form.get('comp_pensamiento')
     comp_etica = request.form.get('comp_etica')
     
-    # Captura de contenidos
+    # 3. Contenidos
     contenidos_conceptos = request.form.get('contenidos_conceptos')
     contenidos_procedimientos = request.form.get('contenidos_procedimientos')
     contenidos_actitudes = request.form.get('contenidos_actitudes')
     
-    # Indicador y actividades
+    # 4. Indicador y Actividades / Recursos
     indicadores = request.form.get('indicadores')
     actividades_ensenanza = request.form.get('actividades_ensenanza')
     actividades_aprendizaje = request.form.get('actividades_aprendizaje')
     actividades_evaluacion = request.form.get('actividades_evaluacion')
     medios_recursos = request.form.get('medios_recursos')
     
-    # Evaluación
+    # 5. Evaluación
     evaluacion_criterios = request.form.get('evaluacion_criterios')
     evaluacion_tecnicas = request.form.get('evaluacion_tecnicas')
 
-    # Para los checkboxes múltiples (áreas, estrategias, técnicas), los unimos en un texto separado por comas
+    # 6. Checkbox múltiples (convertidos a texto separado por comas)
     areas_list = request.form.getlist('areas')
     areas = ", ".join(areas_list) if areas_list else ""
     
@@ -2504,14 +2505,14 @@ def guardar_planificacion():
         
         query = '''
             INSERT INTO planificaciones 
-            (docente, grado, modalidad, areas_art, ejes, duracion, f_inicio, f_cierre, valor_mes, efemerides, situacion, 
+            (docente, mes, grado, modalidad, areas_art, ejes, duracion, f_inicio, f_cierre, valor_mes, efemerides, situacion, 
              comp_comunicativa, comp_pensamiento, comp_etica, contenidos_conceptos, contenidos_procedimientos, contenidos_actitudes, 
              indicadores, actividades_ensenanza, actividades_aprendizaje, actividades_evaluacion, medios_recursos, 
              evaluacion_criterios, evaluacion_tecnicas, areas, estrategias, tecnicas)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         '''
         cursor.execute(query, (
-            docente, grado, modalidad, areas_art, ejes, duracion, f_inicio, f_cierre, valor_mes, efemerides, situacion,
+            docente, mes, grado, modalidad, areas_art, ejes, duracion, f_inicio, f_cierre, valor_mes, efemerides, situacion,
             comp_comunicativa, comp_pensamiento, comp_etica, contenidos_conceptos, contenidos_procedimientos, contenidos_actitudes,
             indicadores, actividades_ensenanza, actividades_aprendizaje, actividades_evaluacion, medios_recursos,
             evaluacion_criterios, evaluacion_tecnicas, areas, estrategias, tecnicas
@@ -2520,7 +2521,7 @@ def guardar_planificacion():
         cursor.close()
         flash('¡Planificación guardada con éxito!', 'success')
     except Exception as e:
-        print("❌ Error al guardar planificación:", e)
+        print("❌ Error al guardar planificación completa:", e)
         flash('Error al guardar el registro en la base de datos.', 'danger')
 
     return redirect(url_for('mis_planificaciones'))
