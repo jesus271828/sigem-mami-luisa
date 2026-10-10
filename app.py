@@ -2418,6 +2418,40 @@ def planificacion():
     
     return render_template('planificacion.html', usuario=usuario_info)
 
+@app.route('/mis_planificaciones')
+def mis_planificaciones():
+    if 'usuario' not in session and 'nombre_completo' not in session:
+        return redirect(url_for('login'))
+
+    usuario_actual = session.get('nombre_completo')
+    rol_actual = session.get('rol')
+
+    # Diccionario de usuario para evitar errores Jinja2 UndefinedError
+    usuario_info = {
+        'nombre_completo': usuario_actual or '',
+        'curso_asignado': session.get('curso_asignado', session.get('grado_seccion', 'General')),
+        'rol': rol_actual
+    }
+
+    try:
+        conn = psycopg2.connect(DATABASE_URL)
+        cursor = PostgresCursorWrapper(conn)
+
+        if rol_actual in ['admin', 'oficina']:
+            query = 'SELECT * FROM planificaciones_diarias ORDER BY fecha DESC'
+            cursor.execute(query)
+        else:
+            query = 'SELECT * FROM planificaciones_diarias WHERE docente = ? ORDER BY fecha DESC'
+            cursor.execute(query, (usuario_actual,))
+
+        planificaciones = cursor.fetchall()
+        cursor.close()
+    except Exception as e:
+        print("❌ Error en mis_planificaciones:", e)
+        planificaciones = []
+
+    return render_template('ver_planificaciones_diarias.html', planificaciones=planificaciones, usuario=usuario_info)
+
 @app.route('/ver_planificaciones_diarias')
 def ver_planificaciones_diarias():
     if 'usuario' not in session and 'nombre_completo' not in session:
