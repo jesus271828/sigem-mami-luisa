@@ -2158,33 +2158,36 @@ def notas1():
                            rol_usuario=rol_usuario)
 
 @app.route('/notas/guardadas')
-@login_required
 def ver_notas_guardadas():
+    if 'usuario' not in session and 'user_id' not in session:
+        flash("Debes iniciar sesión para acceder.", "warning")
+        return redirect(url_for('login'))
+
     try:
-        # 1. Obtener registros de la tabla 'notas1'
+        # Indicamos a Python que utilizaremos la instancia global de Supabase definida en el archivo
+        global supabase
+
         res_notas = supabase.table('notas1').select('*').execute()
-        registros_notas = res_notas.data if res_notas.data else []
+        registros_notas = res_notas.data if res_notas and res_notas.data else []
 
-        # 2. Obtener lista de estudiantes para relacionar los nombres
-        res_estudiantes = supabase.table('estudiantes').select('*').execute()
-        estudiantes_map = {str(est['id_estudiante']): est for est in (res_estudiantes.data or [])}
+        res_est = supabase.table('estudiantes').select('*').execute()
+        estudiantes_lista = res_est.data if res_est and res_est.data else []
+        estudiantes_map = {str(est['id_estudiante']): est for est in estudiantes_lista}
 
-        # 3. Mapear la información para la tabla
         informes_guardados = []
         for reg in registros_notas:
             id_est = str(reg.get('id_estudiante', ''))
             est_info = estudiantes_map.get(id_est, {})
             
-            # Nombre completo del estudiante
-            nombre_estudiante = f"{est_info.get('nombres', 'Estudiante')} {est_info.get('apellidos', '')}".strip()
+            nombre_comp = f"{est_info.get('nombres', '')} {est_info.get('apellidos', '')}".strip()
             
             informes_guardados.append({
                 'id': reg.get('id'),
                 'id_estudiante': id_est,
-                'nombre_estudiante': nombre_estudiante if nombre_estudiante else f"ID: {id_est}",
+                'nombre_estudiante': nombre_comp if nombre_comp else f"Estudiante ID: {id_est}",
                 'grado': est_info.get('grado', '1ro a 3ro Primaria'),
                 'seccion': est_info.get('seccion', 'A'),
-                'fecha_actualizacion': reg.get('created_at', 'Registrado')[:10] if reg.get('created_at') else 'Guardado'
+                'fecha_actualizacion': str(reg.get('created_at', ''))[:10] if reg.get('created_at') else 'Guardado'
             })
 
         return render_template(
@@ -2194,7 +2197,7 @@ def ver_notas_guardadas():
         )
 
     except Exception as e:
-        flash(f"Error al cargar las calificaciones guardadas: {str(e)}", "danger")
+        flash(f"Error al cargar los informes guardados: {str(e)}", "danger")
         return redirect(url_for('menu'))
 
 @app.route('/notas2', methods=['GET', 'POST'])

@@ -18,14 +18,24 @@
             padding: 10px;
         }
 
+        /* PANTALLA COMPLETA - OCUPA EL 98% DEL ANCHO DE PANTALLA */
         .border-main {
             width: 100%;
-            max-width: 1300px;
+            max-width: 98vw;
             margin: 0 auto;
             box-sizing: border-box;
             border: 2px solid #000000;
-            padding: 8px;
+            padding: 12px;
             background-color: #ffffff;
+        }
+
+        /* CLASES CSS PARA MENSAJES FLASH (CORRIGE ERRORES DE LINTER EN VS CODE) */
+        .flash-msg-success {
+            background-color: #16a34a;
+        }
+        
+        .flash-msg-danger {
+            background-color: #dc2626;
         }
 
         /* SALTO DE PÁGINA PARA IMPRESIÓN */
@@ -333,24 +343,23 @@
 </head>
 <body>
 
-    <!-- FORMULARIO PRINCIPAL QUE ENVÍA LOS DATOS POR POST -->
+    <!-- FORMULARIO PRINCIPAL -->
     <form action="{{ url_for('notas1') }}" method="POST">
-        <!-- Input oculto para enviar siempre el ID del estudiante actual -->
         <input type="hidden" name="id_estudiante" value="{{ estudiante.id_estudiante if estudiante else '' }}">
 
-        <!-- MENSAJES FLASH DE CONFIRMACIÓN -->
+        <!-- MENSAJES FLASH -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <div class="no-print" style="max-width: 1300px; margin: 0 auto 10px auto; padding: 10px; border-radius: 4px; font-weight: bold; text-align: center; color: white; background-color: {% if category == 'success' %}#16a34a{% else %}#dc2626{% endif %};">
+                    <div class="no-print flash-msg-{% if category == 'success' %}success{% else %}danger{% endif %}" style="max-width: 98vw; margin: 0 auto 10px auto; padding: 10px; border-radius: 4px; font-weight: bold; text-align: center; color: white;">
                         {{ message }}
                     </div>
                 {% endfor %}
             {% endif %}
         {% endwith %}
 
-        <!-- BARRA DE ACCIÓN SUPERIOR (BOTONES) -->
-        <div class="no-print" style="margin-bottom: 12px; text-align: right; max-width: 1300px; margin-left: auto; margin-right: auto;">
+        <!-- BARRA DE ACCIÓN SUPERIOR -->
+        <div class="no-print" style="margin-bottom: 12px; text-align: right; max-width: 98vw; margin-left: auto; margin-right: auto;">
             <a href="/menu" style="padding: 8px 14px; background-color: #6c757d; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 12px; margin-right: 5px;">⬅ Menú</a>
             <a href="/notas/guardadas" style="padding: 8px 14px; background-color: #0284c7; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 12px; margin-right: 5px;">📂 Ver Guardadas</a>
             <button type="submit" style="padding: 8px 16px; background-color: #16a34a; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px;">💾 Guardar Informe</button>
@@ -451,31 +460,31 @@
                         {% set pfx = 'nota_' ~ i ~ '_' %}
                         
                         <!-- C1: P1, P2, P3, P4 -->
-                        <td><input type="number" name="{{ pfx }}c1_p1" class="grade-input c1-p" data-comp="c1" value="{{ notas.get(pfx + 'c1_p1', '') }}"></td>
-                        <td><input type="number" name="{{ pfx }}c1_p2" class="grade-input c1-p" data-comp="c1" value="{{ notas.get(pfx + 'c1_p2', '') }}"></td>
-                        <td><input type="number" name="{{ pfx }}c1_p3" class="grade-input c1-p" data-comp="c1" value="{{ notas.get(pfx + 'c1_p3', '') }}"></td>
-                        <td><input type="number" name="{{ pfx }}c1_p4" class="grade-input c1-p" data-comp="c1" value="{{ notas.get(pfx + 'c1_p4', '') }}"></td>
+                        <td><input type="number" name="{{ pfx }}c1_p1" class="grade-input c1-p" data-comp="c1" value="{{ notas.get(pfx ~ 'c1_p1', '') }}"></td>
+                        <td><input type="number" name="{{ pfx }}c1_p2" class="grade-input c1-p" data-comp="c1" value="{{ notas.get(pfx ~ 'c1_p2', '') }}"></td>
+                        <td><input type="number" name="{{ pfx }}c1_p3" class="grade-input c1-p" data-comp="c1" value="{{ notas.get(pfx ~ 'c1_p3', '') }}"></td>
+                        <td><input type="number" name="{{ pfx }}c1_p4" class="grade-input c1-p" data-comp="c1" value="{{ notas.get(pfx ~ 'c1_p4', '') }}"></td>
                         
                         <!-- C2: P1, P2, P3, P4 -->
-                        <td><input type="number" name="{{ pfx }}c2_p1" class="grade-input c2-p" data-comp="c2" value="{{ notas.get(pfx + 'c2_p1', '') }}"></td>
-                        <td><input type="number" name="{{ pfx }}c2_p2" class="grade-input c2-p" data-comp="c2" value="{{ notas.get(pfx + 'c2_p2', '') }}"></td>
-                        <td><input type="number" name="{{ pfx }}c2_p3" class="grade-input c2-p" data-comp="c2" value="{{ notas.get(pfx + 'c2_p3', '') }}"></td>
-                        <td><input type="number" name="{{ pfx }}c2_p4" class="grade-input c2-p" data-comp="c2" value="{{ notas.get(pfx + 'c2_p4', '') }}"></td>
+                        <td><input type="number" name="{{ pfx }}c2_p1" class="grade-input c2-p" data-comp="c2" value="{{ notas.get(pfx ~ 'c2_p1', '') }}"></td>
+                        <td><input type="number" name="{{ pfx }}c2_p2" class="grade-input c2-p" data-comp="c2" value="{{ notas.get(pfx ~ 'c2_p2', '') }}"></td>
+                        <td><input type="number" name="{{ pfx }}c2_p3" class="grade-input c2-p" data-comp="c2" value="{{ notas.get(pfx ~ 'c2_p3', '') }}"></td>
+                        <td><input type="number" name="{{ pfx }}c2_p4" class="grade-input c2-p" data-comp="c2" value="{{ notas.get(pfx ~ 'c2_p4', '') }}"></td>
                         
                         <!-- C3: P1, P2, P3, P4 -->
-                        <td><input type="number" name="{{ pfx }}c3_p1" class="grade-input c3-p" data-comp="c3" value="{{ notas.get(pfx + 'c3_p1', '') }}"></td>
-                        <td><input type="number" name="{{ pfx }}c3_p2" class="grade-input c3-p" data-comp="c3" value="{{ notas.get(pfx + 'c3_p2', '') }}"></td>
-                        <td><input type="number" name="{{ pfx }}c3_p3" class="grade-input c3-p" data-comp="c3" value="{{ notas.get(pfx + 'c3_p3', '') }}"></td>
-                        <td><input type="number" name="{{ pfx }}c3_p4" class="grade-input c3-p" data-comp="c3" value="{{ notas.get(pfx + 'c3_p4', '') }}"></td>
+                        <td><input type="number" name="{{ pfx }}c3_p1" class="grade-input c3-p" data-comp="c3" value="{{ notas.get(pfx ~ 'c3_p1', '') }}"></td>
+                        <td><input type="number" name="{{ pfx }}c3_p2" class="grade-input c3-p" data-comp="c3" value="{{ notas.get(pfx ~ 'c3_p2', '') }}"></td>
+                        <td><input type="number" name="{{ pfx }}c3_p3" class="grade-input c3-p" data-comp="c3" value="{{ notas.get(pfx ~ 'c3_p3', '') }}"></td>
+                        <td><input type="number" name="{{ pfx }}c3_p4" class="grade-input c3-p" data-comp="c3" value="{{ notas.get(pfx ~ 'c3_p4', '') }}"></td>
                         
                         <!-- Finales calculados C1, C2, C3 -->
-                        <td><input type="text" name="{{ pfx }}c1_final" class="grade-input auto-calc c1-final" value="{{ notas.get(pfx + 'c1_final', '') }}" readonly></td>
-                        <td><input type="text" name="{{ pfx }}c2_final" class="grade-input auto-calc c2-final" value="{{ notas.get(pfx + 'c2_final', '') }}" readonly></td>
-                        <td><input type="text" name="{{ pfx }}c3_final" class="grade-input auto-calc c3-final" value="{{ notas.get(pfx + 'c3_final', '') }}" readonly></td>
+                        <td><input type="text" name="{{ pfx }}c1_final" class="grade-input auto-calc c1-final" value="{{ notas.get(pfx ~ 'c1_final', '') }}" readonly></td>
+                        <td><input type="text" name="{{ pfx }}c2_final" class="grade-input auto-calc c2-final" value="{{ notas.get(pfx ~ 'c2_final', '') }}" readonly></td>
+                        <td><input type="text" name="{{ pfx }}c3_final" class="grade-input auto-calc c3-final" value="{{ notas.get(pfx ~ 'c3_final', '') }}" readonly></td>
                         
                         <!-- Del Área y Recuperación -->
-                        <td><input type="text" name="{{ pfx }}del_area" class="grade-input auto-calc" value="{{ notas.get(pfx + 'del_area', '') }}"></td>
-                        <td><input type="text" name="{{ pfx }}recuperacion" class="grade-input" value="{{ notas.get(pfx + 'recuperacion', '') }}"></td>
+                        <td><input type="text" name="{{ pfx }}del_area" class="grade-input auto-calc" value="{{ notas.get(pfx ~ 'del_area', '') }}"></td>
+                        <td><input type="text" name="{{ pfx }}recuperacion" class="grade-input" value="{{ notas.get(pfx ~ 'recuperacion', '') }}"></td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -668,7 +677,6 @@
             }
         }
 
-        // Redondeo inteligente (si decimal >= 0.5 suma uno, sin decimales)
         function calcularRedondeado(valorDecimal) {
             let entero = Math.floor(valorDecimal);
             let decimal = valorDecimal - entero;
@@ -685,7 +693,7 @@
             return calcularRedondeado(suma / 4);
         }
 
-        // Lógica de Notas por Materia (aparecen al colocar el P4 de C3)
+        // Lógica de Notas por Materia
         document.querySelectorAll('.materia-row').forEach(row => {
             let inputsP = row.querySelectorAll('.grade-input');
             
@@ -720,7 +728,7 @@
             });
         });
 
-        // Lógica de Asistencia Independiente por Período
+        // Lógica de Asistencia
         document.querySelectorAll('.asis-row').forEach(fila => {
             let inputAsis = fila.querySelector('.asis-val');
             let inputAus = fila.querySelector('.aus-val');
@@ -753,7 +761,7 @@
             inputAus.addEventListener('input', recalcularFila);
         });
 
-        // Disparar cálculos automáticos al cargar la página si ya existen notas guardadas
+        // Evento al cargar
         document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('.materia-row').forEach(row => {
                 let inputPrueba = row.querySelector('.c3-p');
