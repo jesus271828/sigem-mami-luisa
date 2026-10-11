@@ -2077,18 +2077,10 @@ def notas1():
 
     nombre_docente_actual = session.get('nombre_completo') or session.get('usuario', 'Docente Titular')
 
-    # Recibir el tipo de orden ('nombre', 'orden' o 'grado')
-    tipo_orden = request.args.get('orden', 'nombre')
+    # Criterio de ordenamiento estricto alfabético por nombre
+    criterio_sql = [Estudiante.nombres.asc()]
 
-    # Criterio de ordenamiento SQL dinámico
-    if tipo_orden == 'grado' and hasattr(Estudiante, 'grado'):
-        criterio_sql = [Estudiante.grado.asc(), Estudiante.nombres.asc()]
-    elif tipo_orden == 'orden' and hasattr(Estudiante, 'numero_orden'):
-        criterio_sql = [Estudiante.numero_orden.asc()]
-    else:
-        criterio_sql = [Estudiante.nombres.asc()]
-
-    # Filtrar estudiantes según el rol (Oficina ve 1ro al 3ro, el maestro ve su curso)
+    # Filtrar estudiantes según el rol (Oficina ve 1ro al 3ro, el maestro ve su curso ordenados alfabéticamente)
     if rol_usuario == 'admin' or rol_usuario == 'oficina':
         lista_estudiantes = Estudiante.query.filter(
             db.or_(
@@ -2138,11 +2130,11 @@ def notas1():
         db.session.commit()
         flash('¡Informe guardado con éxito!', 'success')
         
-        return redirect(url_for('notas1', id_estudiante=id_estudiante, orden=tipo_orden))
+        return redirect(url_for('notas1', id_estudiante=id_estudiante))
 
     # 2. CARGAR DATOS DEL ESTUDIANTE SELECCIONADO (GET)
     if not id_estudiante and lista_estudiantes:
-        estudiante = lista_estudiantes[0] # Selecciona el primer estudiante por defecto
+        estudiante = lista_estudiantes[0] # Selecciona el primero alfabéticamente por defecto
         id_estudiante = estudiante.id_estudiante
     elif id_estudiante:
         estudiante = Estudiante.query.filter_by(id_estudiante=str(id_estudiante)).first()
@@ -2161,7 +2153,6 @@ def notas1():
                            lista_estudiantes=lista_estudiantes, 
                            estudiante=estudiante, 
                            notas=notas,
-                           tipo_orden=tipo_orden,
                            grado_activo=grado_activo,
                            docente_nombre=docente_guardado,
                            rol_usuario=rol_usuario)

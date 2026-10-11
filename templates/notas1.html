@@ -365,17 +365,16 @@
             </tr>
         </table>
 
-         <!-- DATOS DEL ESTUDIANTE -->
+<!-- DATOS DEL ESTUDIANTE -->
         <table class="student-table">
             <tr>
                 <td style="width: 35%;">
                     NOMBRE(S): 
-                    <!-- Selector dinámico tanto para oficina como para docente -->
                     <select id="select_estudiante" class="student-input" style="width: 65%;" onchange="cambiarEstudiante(this.value)">
                         <option value="">-- Seleccione un estudiante --</option>
                         {% for est in lista_estudiantes %}
                             <option value="{{ est.id_estudiante }}" {% if estudiante and estudiante.id_estudiante == est.id_estudiante %}selected{% endif %}>
-                                {{ est.nombres }} {{ est.apellidos }} (Ord: {{ est.numero_orden }})
+                                {{ est.nombres }} {{ est.apellidos }}
                             </option>
                         {% endfor %}
                     </select>
@@ -386,7 +385,9 @@
                 </td>
                 <td style="width: 15%;">
                     NO. DE ORDEN: 
-                    <input type="text" id="est_orden" class="student-input" style="width: 40%; border:none;" value="{{ estudiante.numero_orden if estudiante else '' }}" readonly>
+                    <!-- Aquí calculamos el número de orden según la posición alfabética en la lista -->
+                    <input type="text" id="est_orden" class="student-input" style="width: 40%; border:none;" 
+                           value="{% for est in lista_estudiantes %}{% if estudiante and estudiante.id_estudiante == est.id_estudiante %}{{ loop.index }}{% endif %}{% endfor %}" readonly>
                 </td>
                 <td style="width: 20%;">
                     ID ESTUDIANTE: 
@@ -616,15 +617,23 @@
             </tr>
         </table>
 
+<!-- FIRMAS AL PIE DE PÁGINA -->
         <table class="footer-signatures">
             <tr>
                 <td>
                     <div class="signature-line"></div>
-                    <div class="signature-title">Licda.<br>(Docente titular del grado)</div>
+                    <div class="signature-title">
+                        <!-- Aquí inyectamos el nombre del docente logueado -->
+                        <b>{{ docente_nombre if docente_nombre else 'Docente Titular' }}</b><br>
+                        (Docente titular del grado)
+                    </div>
                 </td>
                 <td>
                     <div class="signature-line"></div>
-                    <div class="signature-title">Licda. María Teresa Herrero Romero<br>(Directora)</div>
+                    <div class="signature-title">
+                        <b>Licda. María Teresa Herrero Romero</b><br>
+                        (Directora)
+                    </div>
                 </td>
             </tr>
         </table>
