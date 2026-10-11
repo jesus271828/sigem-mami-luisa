@@ -338,6 +338,17 @@
         <!-- Input oculto para enviar siempre el ID del estudiante actual -->
         <input type="hidden" name="id_estudiante" value="{{ estudiante.id_estudiante if estudiante else '' }}">
 
+        <!-- MENSAJES FLASH DE CONFIRMACIÓN -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="no-print" style="max-width: 1300px; margin: 0 auto 10px auto; padding: 10px; border-radius: 4px; font-weight: bold; text-align: center; color: white; background-color: {% if category == 'success' %}#16a34a{% else %}#dc2626{% endif %};">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
         <!-- BARRA DE ACCIÓN SUPERIOR (BOTONES) -->
         <div class="no-print" style="margin-bottom: 12px; text-align: right; max-width: 1300px; margin-left: auto; margin-right: auto;">
             <a href="/menu" style="padding: 8px 14px; background-color: #6c757d; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 12px; margin-right: 5px;">⬅ Menú</a>
@@ -433,31 +444,38 @@
                         'Educación Artística',
                         'Inglés'
                     ] %}
-                    {% for materia in materias %}
+                    {% for i in range(1, 9) %}
                     <tr class="materia-row">
-                        <td class="area-name">{{ materia }}</td>
+                        <td class="area-name">{{ materias[i-1] }}</td>
+                        
+                        {% set pfx = 'nota_' ~ i ~ '_' %}
+                        
                         <!-- C1: P1, P2, P3, P4 -->
-                        <td><input type="number" name="nota_{{loop.index}}_c1_p1" class="grade-input c1-p" data-comp="c1" value=""></td>
-                        <td><input type="number" name="nota_{{loop.index}}_c1_p2" class="grade-input c1-p" data-comp="c1" value=""></td>
-                        <td><input type="number" name="nota_{{loop.index}}_c1_p3" class="grade-input c1-p" data-comp="c1" value=""></td>
-                        <td><input type="number" name="nota_{{loop.index}}_c1_p4" class="grade-input c1-p" data-comp="c1" value=""></td>
+                        <td><input type="number" name="{{ pfx }}c1_p1" class="grade-input c1-p" data-comp="c1" value="{{ notas.get(pfx + 'c1_p1', '') }}"></td>
+                        <td><input type="number" name="{{ pfx }}c1_p2" class="grade-input c1-p" data-comp="c1" value="{{ notas.get(pfx + 'c1_p2', '') }}"></td>
+                        <td><input type="number" name="{{ pfx }}c1_p3" class="grade-input c1-p" data-comp="c1" value="{{ notas.get(pfx + 'c1_p3', '') }}"></td>
+                        <td><input type="number" name="{{ pfx }}c1_p4" class="grade-input c1-p" data-comp="c1" value="{{ notas.get(pfx + 'c1_p4', '') }}"></td>
+                        
                         <!-- C2: P1, P2, P3, P4 -->
-                        <td><input type="number" name="nota_{{loop.index}}_c2_p1" class="grade-input c2-p" data-comp="c2" value=""></td>
-                        <td><input type="number" name="nota_{{loop.index}}_c2_p2" class="grade-input c2-p" data-comp="c2" value=""></td>
-                        <td><input type="number" name="nota_{{loop.index}}_c2_p3" class="grade-input c2-p" data-comp="c2" value=""></td>
-                        <td><input type="number" name="nota_{{loop.index}}_c2_p4" class="grade-input c2-p" data-comp="c2" value=""></td>
+                        <td><input type="number" name="{{ pfx }}c2_p1" class="grade-input c2-p" data-comp="c2" value="{{ notas.get(pfx + 'c2_p1', '') }}"></td>
+                        <td><input type="number" name="{{ pfx }}c2_p2" class="grade-input c2-p" data-comp="c2" value="{{ notas.get(pfx + 'c2_p2', '') }}"></td>
+                        <td><input type="number" name="{{ pfx }}c2_p3" class="grade-input c2-p" data-comp="c2" value="{{ notas.get(pfx + 'c2_p3', '') }}"></td>
+                        <td><input type="number" name="{{ pfx }}c2_p4" class="grade-input c2-p" data-comp="c2" value="{{ notas.get(pfx + 'c2_p4', '') }}"></td>
+                        
                         <!-- C3: P1, P2, P3, P4 -->
-                        <td><input type="number" name="nota_{{loop.index}}_c3_p1" class="grade-input c3-p" data-comp="c3" value=""></td>
-                        <td><input type="number" name="nota_{{loop.index}}_c3_p2" class="grade-input c3-p" data-comp="c3" value=""></td>
-                        <td><input type="number" name="nota_{{loop.index}}_c3_p3" class="grade-input c3-p" data-comp="c3" value=""></td>
-                        <td><input type="number" name="nota_{{loop.index}}_c3_p4" class="grade-input c3-p" data-comp="c3" value=""></td>
+                        <td><input type="number" name="{{ pfx }}c3_p1" class="grade-input c3-p" data-comp="c3" value="{{ notas.get(pfx + 'c3_p1', '') }}"></td>
+                        <td><input type="number" name="{{ pfx }}c3_p2" class="grade-input c3-p" data-comp="c3" value="{{ notas.get(pfx + 'c3_p2', '') }}"></td>
+                        <td><input type="number" name="{{ pfx }}c3_p3" class="grade-input c3-p" data-comp="c3" value="{{ notas.get(pfx + 'c3_p3', '') }}"></td>
+                        <td><input type="number" name="{{ pfx }}c3_p4" class="grade-input c3-p" data-comp="c3" value="{{ notas.get(pfx + 'c3_p4', '') }}"></td>
+                        
                         <!-- Finales calculados C1, C2, C3 -->
-                        <td><input type="text" name="nota_{{loop.index}}_c1_final" class="grade-input auto-calc c1-final" readonly></td>
-                        <td><input type="text" name="nota_{{loop.index}}_c2_final" class="grade-input auto-calc c2-final" readonly></td>
-                        <td><input type="text" name="nota_{{loop.index}}_c3_final" class="grade-input auto-calc c3-final" readonly></td>
+                        <td><input type="text" name="{{ pfx }}c1_final" class="grade-input auto-calc c1-final" value="{{ notas.get(pfx + 'c1_final', '') }}" readonly></td>
+                        <td><input type="text" name="{{ pfx }}c2_final" class="grade-input auto-calc c2-final" value="{{ notas.get(pfx + 'c2_final', '') }}" readonly></td>
+                        <td><input type="text" name="{{ pfx }}c3_final" class="grade-input auto-calc c3-final" value="{{ notas.get(pfx + 'c3_final', '') }}" readonly></td>
+                        
                         <!-- Del Área y Recuperación -->
-                        <td><input type="text" name="nota_{{loop.index}}_del_area" class="grade-input auto-calc"></td>
-                        <td><input type="text" name="nota_{{loop.index}}_recuperacion" class="grade-input"></td>
+                        <td><input type="text" name="{{ pfx }}del_area" class="grade-input auto-calc" value="{{ notas.get(pfx + 'del_area', '') }}"></td>
+                        <td><input type="text" name="{{ pfx }}recuperacion" class="grade-input" value="{{ notas.get(pfx + 'recuperacion', '') }}"></td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -507,31 +525,31 @@
                             </tr>
                             <tr class="asis-row" data-periodo="1">
                                 <td style="font-weight: bold; text-align: center;">P1</td>
-                                <td><input type="number" name="asis_p1_asistencia" class="grade-input asis-val" value=""></td>
-                                <td><input type="number" name="asis_p1_ausencia" class="grade-input aus-val" value=""></td>
-                                <td><input type="text" name="asis_p1_pct_asistencia" class="grade-input auto-calc pct-asis" readonly></td>
-                                <td><input type="text" name="asis_p1_pct_ausencia" class="grade-input auto-calc pct-aus" readonly></td>
+                                <td><input type="number" name="asis_p1_asistencia" class="grade-input asis-val" value="{{ notas.get('asis_p1_asistencia', '') }}"></td>
+                                <td><input type="number" name="asis_p1_ausencia" class="grade-input aus-val" value="{{ notas.get('asis_p1_ausencia', '') }}"></td>
+                                <td><input type="text" name="asis_p1_pct_asistencia" class="grade-input auto-calc pct-asis" value="{{ notas.get('asis_p1_pct_asistencia', '') }}" readonly></td>
+                                <td><input type="text" name="asis_p1_pct_ausencia" class="grade-input auto-calc pct-aus" value="{{ notas.get('asis_p1_pct_ausencia', '') }}" readonly></td>
                             </tr>
                             <tr class="asis-row" data-periodo="2">
                                 <td style="font-weight: bold; text-align: center;">P2</td>
-                                <td><input type="number" name="asis_p2_asistencia" class="grade-input asis-val" value=""></td>
-                                <td><input type="number" name="asis_p2_ausencia" class="grade-input aus-val" value=""></td>
-                                <td><input type="text" name="asis_p2_pct_asistencia" class="grade-input auto-calc pct-asis" readonly></td>
-                                <td><input type="text" name="asis_p2_pct_ausencia" class="grade-input auto-calc pct-aus" readonly></td>
+                                <td><input type="number" name="asis_p2_asistencia" class="grade-input asis-val" value="{{ notas.get('asis_p2_asistencia', '') }}"></td>
+                                <td><input type="number" name="asis_p2_ausencia" class="grade-input aus-val" value="{{ notas.get('asis_p2_ausencia', '') }}"></td>
+                                <td><input type="text" name="asis_p2_pct_asistencia" class="grade-input auto-calc pct-asis" value="{{ notas.get('asis_p2_pct_asistencia', '') }}" readonly></td>
+                                <td><input type="text" name="asis_p2_pct_ausencia" class="grade-input auto-calc pct-aus" value="{{ notas.get('asis_p2_pct_ausencia', '') }}" readonly></td>
                             </tr>
                             <tr class="asis-row" data-periodo="3">
                                 <td style="font-weight: bold; text-align: center;">P3</td>
-                                <td><input type="number" name="asis_p3_asistencia" class="grade-input asis-val" value=""></td>
-                                <td><input type="number" name="asis_p3_ausencia" class="grade-input aus-val" value=""></td>
-                                <td><input type="text" name="asis_p3_pct_asistencia" class="grade-input auto-calc pct-asis" readonly></td>
-                                <td><input type="text" name="asis_p3_pct_ausencia" class="grade-input auto-calc pct-aus" readonly></td>
+                                <td><input type="number" name="asis_p3_asistencia" class="grade-input asis-val" value="{{ notas.get('asis_p3_asistencia', '') }}"></td>
+                                <td><input type="number" name="asis_p3_ausencia" class="grade-input aus-val" value="{{ notas.get('asis_p3_ausencia', '') }}"></td>
+                                <td><input type="text" name="asis_p3_pct_asistencia" class="grade-input auto-calc pct-asis" value="{{ notas.get('asis_p3_pct_asistencia', '') }}" readonly></td>
+                                <td><input type="text" name="asis_p3_pct_ausencia" class="grade-input auto-calc pct-aus" value="{{ notas.get('asis_p3_pct_ausencia', '') }}" readonly></td>
                             </tr>
                             <tr class="asis-row" data-periodo="4">
                                 <td style="font-weight: bold; text-align: center;">P4</td>
-                                <td><input type="number" name="asis_p4_asistencia" class="grade-input asis-val" value=""></td>
-                                <td><input type="number" name="asis_p4_ausencia" class="grade-input aus-val" value=""></td>
-                                <td><input type="text" name="asis_p4_pct_asistencia" class="grade-input auto-calc pct-asis" readonly></td>
-                                <td><input type="text" name="asis_p4_pct_ausencia" class="grade-input auto-calc pct-aus" readonly></td>
+                                <td><input type="number" name="asis_p4_asistencia" class="grade-input asis-val" value="{{ notas.get('asis_p4_asistencia', '') }}"></td>
+                                <td><input type="number" name="asis_p4_ausencia" class="grade-input aus-val" value="{{ notas.get('asis_p4_ausencia', '') }}"></td>
+                                <td><input type="text" name="asis_p4_pct_asistencia" class="grade-input auto-calc pct-asis" value="{{ notas.get('asis_p4_pct_asistencia', '') }}" readonly></td>
+                                <td><input type="text" name="asis_p4_pct_ausencia" class="grade-input auto-calc pct-aus" value="{{ notas.get('asis_p4_pct_ausencia', '') }}" readonly></td>
                             </tr>
                         </table>
                     </td>
@@ -550,19 +568,19 @@
             <table class="obs-table">
                 <tr>
                     <td class="obs-label">P1</td>
-                    <td><textarea name="obs_p1" class="obs-input" placeholder="Observaciones del Período 1..."></textarea></td>
+                    <td><textarea name="obs_p1" class="obs-input" placeholder="Observaciones del Período 1...">{{ notas.get('obs_p1', '') }}</textarea></td>
                 </tr>
                 <tr>
                     <td class="obs-label">P2</td>
-                    <td><textarea name="obs_p2" class="obs-input" placeholder="Observaciones del Período 2..."></textarea></td>
+                    <td><textarea name="obs_p2" class="obs-input" placeholder="Observaciones del Período 2...">{{ notas.get('obs_p2', '') }}</textarea></td>
                 </tr>
                 <tr>
                     <td class="obs-label">P3</td>
-                    <td><textarea name="obs_p3" class="obs-input" placeholder="Observaciones del Período 3..."></textarea></td>
+                    <td><textarea name="obs_p3" class="obs-input" placeholder="Observaciones del Período 3...">{{ notas.get('obs_p3', '') }}</textarea></td>
                 </tr>
                 <tr>
                     <td class="obs-label">P4</td>
-                    <td><textarea name="obs_p4" class="obs-input" placeholder="Observaciones del Período 4..."></textarea></td>
+                    <td><textarea name="obs_p4" class="obs-input" placeholder="Observaciones del Período 4...">{{ notas.get('obs_p4', '') }}</textarea></td>
                 </tr>
             </table>
 
@@ -570,7 +588,7 @@
                 Información sobre el nivel de avances de los aprendizajes y los apoyos que necesita para la mejora de sus aprendizajes.
             </div>
             <div style="border: 1.5px solid #000; margin-bottom: 15px; height: 100px;">
-                <textarea name="obs_general" class="obs-input" style="height: 100%;" placeholder="Escriba aquí la información general..."></textarea>
+                <textarea name="obs_general" class="obs-input" style="height: 100%;" placeholder="Escriba aquí la información general...">{{ notas.get('obs_general', '') }}</textarea>
             </div>
 
             <table class="page2-bottom-grid">
@@ -600,9 +618,9 @@
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td><input type="text" name="sit_promovido" class="grade-input"></td>
-                                    <td><input type="text" name="sit_aplazado" class="grade-input"></td>
-                                    <td><input type="text" name="sit_repitente" class="grade-input"></td>
+                                    <td><input type="text" name="sit_promovido" class="grade-input" value="{{ notas.get('sit_promovido', '') }}"></td>
+                                    <td><input type="text" name="sit_aplazado" class="grade-input" value="{{ notas.get('sit_aplazado', '') }}"></td>
+                                    <td><input type="text" name="sit_repitente" class="grade-input" value="{{ notas.get('sit_repitente', '') }}"></td>
                                 </tr>
                                 <tr>
                                     <td colspan="3" style="font-weight: bold; text-align: left; background-color: #ffffff; border-top: 1.5px solid #000;">
@@ -611,7 +629,7 @@
                                 </tr>
                                 <tr>
                                     <td colspan="3" style="height: 45px;">
-                                        <textarea name="sit_condicion_final" class="obs-input" style="height: 100%;" placeholder="Detalle..."></textarea>
+                                        <textarea name="sit_condicion_final" class="obs-input" style="height: 100%;" placeholder="Detalle...">{{ notas.get('sit_condicion_final', '') }}</textarea>
                                     </td>
                                 </tr>
                             </tbody>
@@ -733,6 +751,22 @@
 
             inputAsis.addEventListener('input', recalcularFila);
             inputAus.addEventListener('input', recalcularFila);
+        });
+
+        // Disparar cálculos automáticos al cargar la página si ya existen notas guardadas
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.materia-row').forEach(row => {
+                let inputPrueba = row.querySelector('.c3-p');
+                if (inputPrueba && inputPrueba.value !== "") {
+                    inputPrueba.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+            });
+            document.querySelectorAll('.asis-row').forEach(fila => {
+                let inputPrueba = fila.querySelector('.asis-val');
+                if (inputPrueba && inputPrueba.value !== "") {
+                    inputPrueba.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+            });
         });
     </script>
 </body>
