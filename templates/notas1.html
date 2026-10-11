@@ -603,7 +603,6 @@
     <script>
         // Función de redondeo inteligente con regla de .5 y sin decimales
         function calcularPromedioRedondeado(p1, p2, p3, p4) {
-            // El cálculo solo se ejecuta cuando se ingresa el último período (P4)
             if (p1 === "" || p2 === "" || p3 === "" || p4 === "" || 
                 isNaN(p1) || isNaN(p2) || isNaN(p3) || isNaN(p4)) {
                 return ""; 
@@ -613,7 +612,6 @@
             let suma = valores.reduce((a, b) => a + b, 0);
             let promedio = suma / 4;
             
-            // Redondeo personalizado: si la parte decimal es >= 0.5 sube al siguiente entero
             let entero = Math.floor(promedio);
             let decimal = promedio - entero;
             if (decimal >= 0.5) {
@@ -629,23 +627,35 @@
             
             inputsP.forEach(input => {
                 input.addEventListener('input', () => {
-                    // C1: P1, P2, P3, P4
+                    // C1
                     let c1_inputs = row.querySelectorAll('.c1-p');
-                    row.querySelector('.c1-final').value = calcularPromedioRedondeado(
-                        c1_inputs[0].value, c1_inputs[1].value, c1_inputs[2].value, c1_inputs[3].value
-                    );
+                    let valC1 = calcularPromedioRedondeado(c1_inputs[0].value, c1_inputs[1].value, c1_inputs[2].value, c1_inputs[3].value);
+                    row.querySelector('.c1-final').value = valC1;
 
-                    // C2: P1, P2, P3, P4
+                    // C2
                     let c2_inputs = row.querySelectorAll('.c2-p');
-                    row.querySelector('.c2-final').value = calcularPromedioRedondeado(
-                        c2_inputs[0].value, c2_inputs[1].value, c2_inputs[2].value, c2_inputs[3].value
-                    );
+                    let valC2 = calcularPromedioRedondeado(c2_inputs[0].value, c2_inputs[1].value, c2_inputs[2].value, c2_inputs[3].value);
+                    row.querySelector('.c2-final').value = valC2;
 
-                    // C3: P1, P2, P3, P4 (El cálculo aparece al digitar la última nota en P4)
+                    // C3 (El último C)
                     let c3_inputs = row.querySelectorAll('.c3-p');
-                    row.querySelector('.c3-final').value = calcularPromedioRedondeado(
-                        c3_inputs[0].value, c3_inputs[1].value, c3_inputs[2].value, c3_inputs[3].value
-                    );
+                    let valC3 = calcularPromedioRedondeado(c3_inputs[0].value, c3_inputs[1].value, c3_inputs[2].value, c3_inputs[3].value);
+                    row.querySelector('.c3-final').value = valC3;
+
+                    // NOTA FINAL / DEL ÁREA: Se calcula y se muestra SOLAMENTE cuando ya se han colocado C1, C2 y C3
+                    let inputDelArea = row.querySelectorAll('.grade-input'); 
+                    // (Asumiendo que el campo "Del Área" es el antepenúltimo o penúltimo input de la fila)
+                    let inputsFila = row.querySelectorAll('input.grade-input');
+                    let campoDelArea = inputsFila[inputsFila.length - 2]; // Del Área
+                    
+                    if (valC1 !== "" && valC2 !== "" && valC3 !== "") {
+                        let promedioArea = (parseFloat(valC1) + parseFloat(valC2) + parseFloat(valC3)) / 3;
+                        let enteroArea = Math.floor(promedioArea);
+                        let decArea = promedioArea - enteroArea;
+                        campoDelArea.value = (decArea >= 0.5) ? enteroArea + 1 : enteroArea;
+                    } else {
+                        campoDelArea.value = "";
+                    }
                 });
             });
         });
