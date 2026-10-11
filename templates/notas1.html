@@ -333,319 +333,323 @@
 </head>
 <body>
 
-<!-- BARRA DE ACCIÓN SUPERIOR (BOTONES) -->
-    <div class="no-print" style="margin-bottom: 12px; text-align: right; max-width: 1300px; margin-left: auto; margin-right: auto;">
-        <a href="/menu" style="padding: 8px 14px; background-color: #6c757d; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 12px; margin-right: 5px;">⬅ Menú</a>
-        <a href="/notas/guardadas" style="padding: 8px 14px; background-color: #0284c7; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 12px; margin-right: 5px;">📂 Ver Guardadas</a>
-        <button type="submit" style="padding: 8px 16px; background-color: #16a34a; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px;">💾 Guardar Informe</button>
-    </div>
+    <!-- FORMULARIO PRINCIPAL QUE ENVÍA LOS DATOS POR POST -->
+    <form action="{{ url_for('notas1') }}" method="POST">
+        <!-- Input oculto para enviar siempre el ID del estudiante actual -->
+        <input type="hidden" name="id_estudiante" value="{{ estudiante.id_estudiante if estudiante else '' }}">
 
-    <!-- ==================== PÁGINA 1 ==================== -->
-    <div class="border-main">
-
-        <!-- ENCABEZADO INSTITUCIONAL -->
-        <table class="header-table">
-            <tr>
-                <td style="width: 70px; text-align: center;">
-                    <img src="{{ url_for('static', filename='img/logo2.png') }}" style="width: 60px; height: auto;" alt="Logo">
-                </td>
-                <td style="padding-left: 8px;">
-                    <div>
-                        <span class="school-title">Centro Educativo Mami Luisa S.R.L</span>
-                        <span class="school-lema">"Educando con amor para un mundo mejor"</span>
-                    </div>
-                    <div class="header-details">
-                        <b>Dirección:</b> C/Castillo Márquez #53. La Romana, Centro Ciudad. <b>Teléfono:</b> 809-550-7385 / 809-710-3395<br>
-                        <b>Regional de Educación:</b> 05 San Pedro de Macorís. <b>Distrito Educativo:</b> 05-03 La Romana. <b>Código:</b> 07121<br>
-                        <b style="font-size: 10px; text-decoration: underline;">INFORME DE APRENDIZAJE. Primer Grado del Nivel Primario, Sección A.</b><br>
-                        Año Escolar 2026-2027 / Jornada Escolar Regular. Tanda Matutina.
-                    </div>
-                </td>
-            </tr>
-        </table>
-
-<!-- DATOS DEL ESTUDIANTE -->
-        <table class="student-table">
-            <tr>
-                <td style="width: 35%;">
-                    NOMBRE(S): 
-                    <select id="select_estudiante" class="student-input" style="width: 65%;" onchange="cambiarEstudiante(this.value)">
-                        <option value="">-- Seleccione un estudiante --</option>
-                        {% for est in lista_estudiantes %}
-                            <!-- Mostramos SOLAMENTE el nombre en el menú desplegable -->
-                            <option value="{{ est.id_estudiante }}" {% if estudiante and estudiante.id_estudiante == est.id_estudiante %}selected{% endif %}>
-                                {{ est.nombres }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </td>
-                <td style="width: 30%;">
-                    APELLIDO (S): 
-                    <!-- Aquí se muestra únicamente el apellido del estudiante seleccionado -->
-                    <input type="text" id="est_apellido" class="student-input" value="{{ estudiante.apellidos if estudiante else '' }}" readonly style="border:none;">
-                </td>
-                <td style="width: 15%;">
-                    NO. DE ORDEN: 
-                    <input type="text" id="est_orden" class="student-input" style="width: 40%; border:none;" 
-                           value="{% for est in lista_estudiantes %}{% if estudiante and estudiante.id_estudiante == est.id_estudiante %}{{ loop.index }}{% endif %}{% endfor %}" readonly>
-                </td>
-                <td style="width: 20%;">
-                    ID ESTUDIANTE: 
-                    <input type="text" id="est_id" class="student-input" style="width: 45%; border:none;" value="{{ estudiante.id_estudiante if estudiante else '' }}" readonly>
-                </td>
-            </tr>
-        </table>
-
-        <!-- MATRIZ PRINCIPAL DE NOTAS -->
-        <table class="grades-table" id="matrixTable">
-            <thead>
-                <tr>
-                    <th rowspan="3" class="area-header">ÁREAS CURRICULARES</th>
-                    <th colspan="12">COMPETENCIAS FUNDAMENTALES</th>
-                    <th colspan="5">CALIFICACIÓN FINAL</th>
-                </tr>
-                <tr>
-                    <th colspan="4" class="comp-header"><b>C1</b><br>Comunicativa</th>
-                    <th colspan="4" class="comp-header"><b>C2</b><br>Pensamiento Lógico Creativo y Crítico; Resolución de Problemas; Científica y Tecnológica</th>
-                    <th colspan="4" class="comp-header"><b>C3</b><br>Ética y Ciudadana; Desarrollo Personal y Espiritual; Ambiental y de la Salud</th>
-                    <th colspan="3" class="sub-header">POR COMPETENCIA</th>
-                    <th rowspan="2" class="vertical-header">DEL ÁREA</th>
-                    <th rowspan="2" class="vertical-header">RECUPERACIÓN</th>
-                </tr>
-                <tr>
-                    <th>P1</th><th>P2</th><th>P3</th><th>P4</th>
-                    <th>P1</th><th>P2</th><th>P3</th><th>P4</th>
-                    <th>P1</th><th>P2</th><th>P3</th><th>P4</th>
-                    <th>C1</th><th>C2</th><th>C3</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% set materias = [
-                    'Lengua Española',
-                    'Matemática',
-                    'Ciencias Sociales',
-                    'Ciencias de la Naturaleza',
-                    'Educación Física',
-                    'Formación Integral, Humana y Religiosa',
-                    'Educación Artística',
-                    'Inglés'
-                ] %}
-                {% for materia in materias %}
-                <tr class="materia-row">
-                    <td class="area-name">{{ materia }}</td>
-                    <!-- C1: P1, P2, P3, P4 -->
-                    <td><input type="number" class="grade-input c1-p" data-comp="c1" value=""></td>
-                    <td><input type="number" class="grade-input c1-p" data-comp="c1" value=""></td>
-                    <td><input type="number" class="grade-input c1-p" data-comp="c1" value=""></td>
-                    <td><input type="number" class="grade-input c1-p" data-comp="c1" value=""></td>
-                    <!-- C2: P1, P2, P3, P4 -->
-                    <td><input type="number" class="grade-input c2-p" data-comp="c2" value=""></td>
-                    <td><input type="number" class="grade-input c2-p" data-comp="c2" value=""></td>
-                    <td><input type="number" class="grade-input c2-p" data-comp="c2" value=""></td>
-                    <td><input type="number" class="grade-input c2-p" data-comp="c2" value=""></td>
-                    <!-- C3: P1, P2, P3, P4 -->
-                    <td><input type="number" class="grade-input c3-p" data-comp="c3" value=""></td>
-                    <td><input type="number" class="grade-input c3-p" data-comp="c3" value=""></td>
-                    <td><input type="number" class="grade-input c3-p" data-comp="c3" value=""></td>
-                    <td><input type="number" class="grade-input c3-p" data-comp="c3" value=""></td>
-                    <!-- Finales calculados C1, C2, C3 -->
-                    <td><input type="text" class="grade-input auto-calc c1-final" readonly></td>
-                    <td><input type="text" class="grade-input auto-calc c2-final" readonly></td>
-                    <td><input type="text" class="grade-input auto-calc c3-final" readonly></td>
-                    <!-- Del Área y Recuperación -->
-                    <td><input type="text" class="grade-input auto-calc"></td>
-                    <td><input type="text" class="grade-input"></td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-
-        <!-- PIE DE PÁGINA PÁGINA 1 -->
-        <table class="bottom-container">
-            <tr>
-                <td style="width: 50%;">
-                    <table class="escala-table">
-                        <tr>
-                            <td style="font-weight: bold; text-align: center; width: 22%;">Escala numérica</td>
-                            <td style="font-weight: bold; text-align: center;">DESCRIPCIÓN</td>
-                        </tr>
-                        <tr>
-                            <td style="font-weight: bold; text-align: center;">89-100</td>
-                            <td>Evidencia que el estudiante ha alcanzado un desempeño destacado con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
-                        </tr>
-                        <tr>
-                            <td style="font-weight: bold; text-align: center;">77-88</td>
-                            <td>Evidencia que el estudiante ha logrado, en general, los aprendizajes esperados con relación a los aspectos evaluados de las competencias de cada área, durante los periodos y al finalizar el año escolar.</td>
-                        </tr>
-                        <tr>
-                            <td style="font-weight: bold; text-align: center;">65 - 76</td>
-                            <td>Evidencia que el estudiante aún se encuentra en proceso con relación a los aspectos evaluados de las competencias de cada área, durante los periodos y al finalizar el año escolar, mostrando un logro muy básico.</td>
-                        </tr>
-                        <tr>
-                            <td style="font-weight: bold; text-align: center;">Menos de 65</td>
-                            <td>Evidencia que el estudiante ha alcanzado un desempeño insuficiente con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
-                        </tr>
-                    </table>
-                </td>
-
-                <!-- RESUMEN DE ASISTENCIA -->
-                <td style="width: 35%;">
-                    <table class="asistencia-table" id="tablaAsistencia">
-                        <tr>
-                            <th rowspan="2" style="width: 20%; text-align: center; vertical-align: middle;">PERÍODO</th>
-                            <th colspan="2" style="text-align: center;">RESUMEN DE ASISTENCIA DEL ESTUDIANTE</th>
-                            <th colspan="2" style="text-align: center;">% POR PERÍODO</th>
-                        </tr>
-                        <tr>
-                            <th style="width: 20%; text-align: center;">ASISTENCIA</th>
-                            <th style="width: 20%; text-align: center;">AUSENCIA</th>
-                            <th style="width: 20%; text-align: center;">ASISTENCIA</th>
-                            <th style="width: 20%; text-align: center;">AUSENCIA</th>
-                        </tr>
-                        <tr class="asis-row" data-periodo="1">
-                            <td style="font-weight: bold; text-align: center;">P1</td>
-                            <td><input type="number" class="grade-input asis-val" value=""></td>
-                            <td><input type="number" class="grade-input aus-val" value=""></td>
-                            <td><input type="text" class="grade-input auto-calc pct-asis" readonly></td>
-                            <td><input type="text" class="grade-input auto-calc pct-aus" readonly></td>
-                        </tr>
-                        <tr class="asis-row" data-periodo="2">
-                            <td style="font-weight: bold; text-align: center;">P2</td>
-                            <td><input type="number" class="grade-input asis-val" value=""></td>
-                            <td><input type="number" class="grade-input aus-val" value=""></td>
-                            <td><input type="text" class="grade-input auto-calc pct-asis" readonly></td>
-                            <td><input type="text" class="grade-input auto-calc pct-aus" readonly></td>
-                        </tr>
-                        <tr class="asis-row" data-periodo="3">
-                            <td style="font-weight: bold; text-align: center;">P3</td>
-                            <td><input type="number" class="grade-input asis-val" value=""></td>
-                            <td><input type="number" class="grade-input aus-val" value=""></td>
-                            <td><input type="text" class="grade-input auto-calc pct-asis" readonly></td>
-                            <td><input type="text" class="grade-input auto-calc pct-aus" readonly></td>
-                        </tr>
-                        <tr class="asis-row" data-periodo="4">
-                            <td style="font-weight: bold; text-align: center;">P4</td>
-                            <td><input type="number" class="grade-input asis-val" value=""></td>
-                            <td><input type="number" class="grade-input aus-val" value=""></td>
-                            <td><input type="text" class="grade-input auto-calc pct-asis" readonly></td>
-                            <td><input type="text" class="grade-input auto-calc pct-aus" readonly></td>
-                        </tr>
-                    </table>
-                </td>
-
-                <td style="width: 15%; padding: 5px; font-size: 8.5px; line-height: 1.35; vertical-align: top;">
-                    <div style="font-weight: bold; text-align: center; border-bottom: 1px solid #000; margin-bottom: 3px; padding-bottom: 2px;">LEYENDA</div>
-                    <b>(P1)</b> Período 1<br><b>(P2)</b> Período 2<br><b>(P3)</b> Período 3<br><b>(P4)</b> Período 4<br><br>
-                    <b>(C1)</b> Competencia 1<br><b>(C2)</b> Competencia 2<br><b>(C3)</b> Competencia 3
-                </td>
-            </tr>
-        </table>
-    </div>
-
-    <!-- ==================== PÁGINA 2 ==================== -->
-    <div class="border-main page-break">
-        <table class="obs-table">
-            <tr>
-                <td class="obs-label">P1</td>
-                <td><textarea class="obs-input" placeholder="Observaciones del Período 1..."></textarea></td>
-            </tr>
-            <tr>
-                <td class="obs-label">P2</td>
-                <td><textarea class="obs-input" placeholder="Observaciones del Período 2..."></textarea></td>
-            </tr>
-            <tr>
-                <td class="obs-label">P3</td>
-                <td><textarea class="obs-input" placeholder="Observaciones del Período 3..."></textarea></td>
-            </tr>
-            <tr>
-                <td class="obs-label">P4</td>
-                <td><textarea class="obs-input" placeholder="Observaciones del Período 4..."></textarea></td>
-            </tr>
-        </table>
-
-        <div class="obs-title-bar">
-            Información sobre el nivel de avances de los aprendizajes y los apoyos que necesita para la mejora de sus aprendizajes.
-        </div>
-        <div style="border: 1.5px solid #000; margin-bottom: 15px; height: 100px;">
-            <textarea class="obs-input" style="height: 100%;" placeholder="Escriba aquí la información general..."></textarea>
+        <!-- BARRA DE ACCIÓN SUPERIOR (BOTONES) -->
+        <div class="no-print" style="margin-bottom: 12px; text-align: right; max-width: 1300px; margin-left: auto; margin-right: auto;">
+            <a href="/menu" style="padding: 8px 14px; background-color: #6c757d; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 12px; margin-right: 5px;">⬅ Menú</a>
+            <a href="/notas/guardadas" style="padding: 8px 14px; background-color: #0284c7; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 12px; margin-right: 5px;">📂 Ver Guardadas</a>
+            <button type="submit" style="padding: 8px 16px; background-color: #16a34a; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px;">💾 Guardar Informe</button>
         </div>
 
-        <table class="page2-bottom-grid">
-            <tr>
-                <td style="width: 55%; padding-right: 15px;">
-                    <table class="firmas-table">
-                        <thead>
-                            <tr>
-                                <th style="width: 45%;">Períodos de reportes de calificaciones</th>
-                                <th>FIRMA DEL PADRE, MADRE O TUTOR</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr><td><b>Septiembre – Octubre</b></td><td></td></tr>
-                            <tr><td><b>Noviembre – Diciembre – Enero</b></td><td></td></tr>
-                            <tr><td><b>Febrero – Marzo</b></td><td></td></tr>
-                            <tr><td><b>Abril – Mayo – Junio</b></td><td></td></tr>
-                        </tbody>
-                    </table>
-                </td>
+        <!-- ==================== PÁGINA 1 ==================== -->
+        <div class="border-main">
 
-                <td style="width: 45%;">
-                    <table class="situacion-table">
-                        <thead>
-                            <tr><th colspan="3">SITUACION DEL/DE LA ESTUDIANTE</th></tr>
-                            <tr><th style="width: 33%;">Promovido/a</th><th style="width: 33%;">Aplazado/a</th><th style="width: 34%;">Repitente</th></tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><input type="text" class="grade-input"></td>
-                                <td><input type="text" class="grade-input"></td>
-                                <td><input type="text" class="grade-input"></td>
-                            </tr>
-                            <tr>
-                                <td colspan="3" style="font-weight: bold; text-align: left; background-color: #ffffff; border-top: 1.5px solid #000;">
-                                    Condición final del/de la estudiante
-                                </td>
-                            </tr>
-                            <tr>
-                                <td colspan="3" style="height: 45px;">
-                                    <textarea class="obs-input" style="height: 100%;" placeholder="Detalle..."></textarea>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </td>
-            </tr>
-        </table>
+            <!-- ENCABEZADO INSTITUCIONAL -->
+            <table class="header-table">
+                <tr>
+                    <td style="width: 70px; text-align: center;">
+                        <img src="{{ url_for('static', filename='img/logo2.png') }}" style="width: 60px; height: auto;" alt="Logo">
+                    </td>
+                    <td style="padding-left: 8px;">
+                        <div>
+                            <span class="school-title">Centro Educativo Mami Luisa S.R.L</span>
+                            <span class="school-lema">"Educando con amor para un mundo mejor"</span>
+                        </div>
+                        <div class="header-details">
+                            <b>Dirección:</b> C/Castillo Márquez #53. La Romana, Centro Ciudad. <b>Teléfono:</b> 809-550-7385 / 809-710-3395<br>
+                            <b>Regional de Educación:</b> 05 San Pedro de Macorís. <b>Distrito Educativo:</b> 05-03 La Romana. <b>Código:</b> 07121<br>
+                            <b style="font-size: 10px; text-decoration: underline;">INFORME DE APRENDIZAJE. Primer Grado del Nivel Primario, Sección A.</b><br>
+                            Año Escolar 2026-2027 / Jornada Escolar Regular. Tanda Matutina.
+                        </div>
+                    </td>
+                </tr>
+            </table>
 
-<!-- FIRMAS AL PIE DE PÁGINA -->
-        <table class="footer-signatures">
-            <tr>
-                <td>
-                    <div class="signature-line"></div>
-                    <div class="signature-title">
-                        <!-- Aquí inyectamos el nombre del docente logueado -->
-                        <b>{{ docente_nombre if docente_nombre else 'Docente Titular' }}</b><br>
-                        (Docente titular del grado)
-                    </div>
-                </td>
-                <td>
-                    <div class="signature-line"></div>
-                    <div class="signature-title">
-                        <b>Licda. María Teresa Herrero Romero</b><br>
-                        (Directora)
-                    </div>
-                </td>
-            </tr>
-        </table>
-    </div>
+            <!-- DATOS DEL ESTUDIANTE -->
+            <table class="student-table">
+                <tr>
+                    <td style="width: 35%;">
+                        NOMBRE(S): 
+                        <select id="select_estudiante" class="student-input" style="width: 65%;" onchange="cambiarEstudiante(this.value)">
+                            <option value="">-- Seleccione un estudiante --</option>
+                            {% for est in lista_estudiantes %}
+                                <option value="{{ est.id_estudiante }}" {% if estudiante and estudiante.id_estudiante == est.id_estudiante %}selected{% endif %}>
+                                    {{ est.nombres }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td style="width: 30%;">
+                        APELLIDO (S): 
+                        <input type="text" id="est_apellido" class="student-input" value="{{ estudiante.apellidos if estudiante else '' }}" readonly style="border:none;">
+                    </td>
+                    <td style="width: 15%;">
+                        NO. DE ORDEN: 
+                        <input type="text" id="est_orden" class="student-input" style="width: 40%; border:none;" 
+                               value="{% for est in lista_estudiantes %}{% if estudiante and estudiante.id_estudiante == est.id_estudiante %}{{ loop.index }}{% endif %}{% endfor %}" readonly>
+                    </td>
+                    <td style="width: 20%;">
+                        ID ESTUDIANTE: 
+                        <input type="text" id="est_id" class="student-input" style="width: 45%; border:none;" value="{{ estudiante.id_estudiante if estudiante else '' }}" readonly>
+                    </td>
+                </tr>
+            </table>
 
-    <!-- SCRIPT DE CÁLCULO INTELIGENTE -->
+            <!-- MATRIZ PRINCIPAL DE NOTAS -->
+            <table class="grades-table" id="matrixTable">
+                <thead>
+                    <tr>
+                        <th rowspan="3" class="area-header">ÁREAS CURRICULARES</th>
+                        <th colspan="12">COMPETENCIAS FUNDAMENTALES</th>
+                        <th colspan="5">CALIFICACIÓN FINAL</th>
+                    </tr>
+                    <tr>
+                        <th colspan="4" class="comp-header"><b>C1</b><br>Comunicativa</th>
+                        <th colspan="4" class="comp-header"><b>C2</b><br>Pensamiento Lógico Creativo y Crítico; Resolución de Problemas; Científica y Tecnológica</th>
+                        <th colspan="4" class="comp-header"><b>C3</b><br>Ética y Ciudadana; Desarrollo Personal y Espiritual; Ambiental y de la Salud</th>
+                        <th colspan="3" class="sub-header">POR COMPETENCIA</th>
+                        <th rowspan="2" class="vertical-header">DEL ÁREA</th>
+                        <th rowspan="2" class="vertical-header">RECUPERACIÓN</th>
+                    </tr>
+                    <tr>
+                        <th>P1</th><th>P2</th><th>P3</th><th>P4</th>
+                        <th>P1</th><th>P2</th><th>P3</th><th>P4</th>
+                        <th>P1</th><th>P2</th><th>P3</th><th>P4</th>
+                        <th>C1</th><th>C2</th><th>C3</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% set materias = [
+                        'Lengua Española',
+                        'Matemática',
+                        'Ciencias Sociales',
+                        'Ciencias de la Naturaleza',
+                        'Educación Física',
+                        'Formación Integral, Humana y Religiosa',
+                        'Educación Artística',
+                        'Inglés'
+                    ] %}
+                    {% for materia in materias %}
+                    <tr class="materia-row">
+                        <td class="area-name">{{ materia }}</td>
+                        <!-- C1: P1, P2, P3, P4 -->
+                        <td><input type="number" name="nota_{{loop.index}}_c1_p1" class="grade-input c1-p" data-comp="c1" value=""></td>
+                        <td><input type="number" name="nota_{{loop.index}}_c1_p2" class="grade-input c1-p" data-comp="c1" value=""></td>
+                        <td><input type="number" name="nota_{{loop.index}}_c1_p3" class="grade-input c1-p" data-comp="c1" value=""></td>
+                        <td><input type="number" name="nota_{{loop.index}}_c1_p4" class="grade-input c1-p" data-comp="c1" value=""></td>
+                        <!-- C2: P1, P2, P3, P4 -->
+                        <td><input type="number" name="nota_{{loop.index}}_c2_p1" class="grade-input c2-p" data-comp="c2" value=""></td>
+                        <td><input type="number" name="nota_{{loop.index}}_c2_p2" class="grade-input c2-p" data-comp="c2" value=""></td>
+                        <td><input type="number" name="nota_{{loop.index}}_c2_p3" class="grade-input c2-p" data-comp="c2" value=""></td>
+                        <td><input type="number" name="nota_{{loop.index}}_c2_p4" class="grade-input c2-p" data-comp="c2" value=""></td>
+                        <!-- C3: P1, P2, P3, P4 -->
+                        <td><input type="number" name="nota_{{loop.index}}_c3_p1" class="grade-input c3-p" data-comp="c3" value=""></td>
+                        <td><input type="number" name="nota_{{loop.index}}_c3_p2" class="grade-input c3-p" data-comp="c3" value=""></td>
+                        <td><input type="number" name="nota_{{loop.index}}_c3_p3" class="grade-input c3-p" data-comp="c3" value=""></td>
+                        <td><input type="number" name="nota_{{loop.index}}_c3_p4" class="grade-input c3-p" data-comp="c3" value=""></td>
+                        <!-- Finales calculados C1, C2, C3 -->
+                        <td><input type="text" name="nota_{{loop.index}}_c1_final" class="grade-input auto-calc c1-final" readonly></td>
+                        <td><input type="text" name="nota_{{loop.index}}_c2_final" class="grade-input auto-calc c2-final" readonly></td>
+                        <td><input type="text" name="nota_{{loop.index}}_c3_final" class="grade-input auto-calc c3-final" readonly></td>
+                        <!-- Del Área y Recuperación -->
+                        <td><input type="text" name="nota_{{loop.index}}_del_area" class="grade-input auto-calc"></td>
+                        <td><input type="text" name="nota_{{loop.index}}_recuperacion" class="grade-input"></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- PIE DE PÁGINA PÁGINA 1 -->
+            <table class="bottom-container">
+                <tr>
+                    <td style="width: 50%;">
+                        <table class="escala-table">
+                            <tr>
+                                <td style="font-weight: bold; text-align: center; width: 22%;">Escala numérica</td>
+                                <td style="font-weight: bold; text-align: center;">DESCRIPCIÓN</td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: bold; text-align: center;">89-100</td>
+                                <td>Evidencia que el estudiante ha alcanzado un desempeño destacado con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: bold; text-align: center;">77-88</td>
+                                <td>Evidencia que el estudiante ha logrado, en general, los aprendizajes esperados con relación a los aspectos evaluados de las competencias de cada área, durante los periodos y al finalizar el año escolar.</td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: bold; text-align: center;">65 - 76</td>
+                                <td>Evidencia que el estudiante aún se encuentra en proceso con relación a los aspectos evaluados de las competencias de cada área, durante los periodos y al finalizar el año escolar, mostrando un logro muy básico.</td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight: bold; text-align: center;">Menos de 65</td>
+                                <td>Evidencia que el estudiante ha alcanzado un desempeño insuficiente con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
+                            </tr>
+                        </table>
+                    </td>
+
+                    <!-- RESUMEN DE ASISTENCIA -->
+                    <td style="width: 35%;">
+                        <table class="asistencia-table" id="tablaAsistencia">
+                            <tr>
+                                <th rowspan="2" style="width: 20%; text-align: center; vertical-align: middle;">PERÍODO</th>
+                                <th colspan="2" style="text-align: center;">RESUMEN DE ASISTENCIA DEL ESTUDIANTE</th>
+                                <th colspan="2" style="text-align: center;">% POR PERÍODO</th>
+                            </tr>
+                            <tr>
+                                <th style="width: 20%; text-align: center;">ASISTENCIA</th>
+                                <th style="width: 20%; text-align: center;">AUSENCIA</th>
+                                <th style="width: 20%; text-align: center;">ASISTENCIA</th>
+                                <th style="width: 20%; text-align: center;">AUSENCIA</th>
+                            </tr>
+                            <tr class="asis-row" data-periodo="1">
+                                <td style="font-weight: bold; text-align: center;">P1</td>
+                                <td><input type="number" name="asis_p1_asistencia" class="grade-input asis-val" value=""></td>
+                                <td><input type="number" name="asis_p1_ausencia" class="grade-input aus-val" value=""></td>
+                                <td><input type="text" name="asis_p1_pct_asistencia" class="grade-input auto-calc pct-asis" readonly></td>
+                                <td><input type="text" name="asis_p1_pct_ausencia" class="grade-input auto-calc pct-aus" readonly></td>
+                            </tr>
+                            <tr class="asis-row" data-periodo="2">
+                                <td style="font-weight: bold; text-align: center;">P2</td>
+                                <td><input type="number" name="asis_p2_asistencia" class="grade-input asis-val" value=""></td>
+                                <td><input type="number" name="asis_p2_ausencia" class="grade-input aus-val" value=""></td>
+                                <td><input type="text" name="asis_p2_pct_asistencia" class="grade-input auto-calc pct-asis" readonly></td>
+                                <td><input type="text" name="asis_p2_pct_ausencia" class="grade-input auto-calc pct-aus" readonly></td>
+                            </tr>
+                            <tr class="asis-row" data-periodo="3">
+                                <td style="font-weight: bold; text-align: center;">P3</td>
+                                <td><input type="number" name="asis_p3_asistencia" class="grade-input asis-val" value=""></td>
+                                <td><input type="number" name="asis_p3_ausencia" class="grade-input aus-val" value=""></td>
+                                <td><input type="text" name="asis_p3_pct_asistencia" class="grade-input auto-calc pct-asis" readonly></td>
+                                <td><input type="text" name="asis_p3_pct_ausencia" class="grade-input auto-calc pct-aus" readonly></td>
+                            </tr>
+                            <tr class="asis-row" data-periodo="4">
+                                <td style="font-weight: bold; text-align: center;">P4</td>
+                                <td><input type="number" name="asis_p4_asistencia" class="grade-input asis-val" value=""></td>
+                                <td><input type="number" name="asis_p4_ausencia" class="grade-input aus-val" value=""></td>
+                                <td><input type="text" name="asis_p4_pct_asistencia" class="grade-input auto-calc pct-asis" readonly></td>
+                                <td><input type="text" name="asis_p4_pct_ausencia" class="grade-input auto-calc pct-aus" readonly></td>
+                            </tr>
+                        </table>
+                    </td>
+
+                    <td style="width: 15%; padding: 5px; font-size: 8.5px; line-height: 1.35; vertical-align: top;">
+                        <div style="font-weight: bold; text-align: center; border-bottom: 1px solid #000; margin-bottom: 3px; padding-bottom: 2px;">LEYENDA</div>
+                        <b>(P1)</b> Período 1<br><b>(P2)</b> Período 2<br><b>(P3)</b> Período 3<br><b>(P4)</b> Período 4<br><br>
+                        <b>(C1)</b> Competencia 1<br><b>(C2)</b> Competencia 2<br><b>(C3)</b> Competencia 3
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- ==================== PÁGINA 2 ==================== -->
+        <div class="border-main page-break">
+            <table class="obs-table">
+                <tr>
+                    <td class="obs-label">P1</td>
+                    <td><textarea name="obs_p1" class="obs-input" placeholder="Observaciones del Período 1..."></textarea></td>
+                </tr>
+                <tr>
+                    <td class="obs-label">P2</td>
+                    <td><textarea name="obs_p2" class="obs-input" placeholder="Observaciones del Período 2..."></textarea></td>
+                </tr>
+                <tr>
+                    <td class="obs-label">P3</td>
+                    <td><textarea name="obs_p3" class="obs-input" placeholder="Observaciones del Período 3..."></textarea></td>
+                </tr>
+                <tr>
+                    <td class="obs-label">P4</td>
+                    <td><textarea name="obs_p4" class="obs-input" placeholder="Observaciones del Período 4..."></textarea></td>
+                </tr>
+            </table>
+
+            <div class="obs-title-bar">
+                Información sobre el nivel de avances de los aprendizajes y los apoyos que necesita para la mejora de sus aprendizajes.
+            </div>
+            <div style="border: 1.5px solid #000; margin-bottom: 15px; height: 100px;">
+                <textarea name="obs_general" class="obs-input" style="height: 100%;" placeholder="Escriba aquí la información general..."></textarea>
+            </div>
+
+            <table class="page2-bottom-grid">
+                <tr>
+                    <td style="width: 55%; padding-right: 15px;">
+                        <table class="firmas-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 45%;">Períodos de reportes de calificaciones</th>
+                                    <th>FIRMA DEL PADRE, MADRE O TUTOR</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td><b>Septiembre – Octubre</b></td><td></td></tr>
+                                <tr><td><b>Noviembre – Diciembre – Enero</b></td><td></td></tr>
+                                <tr><td><b>Febrero – Marzo</b></td><td></td></tr>
+                                <tr><td><b>Abril – Mayo – Junio</b></td><td></td></tr>
+                            </tbody>
+                        </table>
+                    </td>
+
+                    <td style="width: 45%;">
+                        <table class="situacion-table">
+                            <thead>
+                                <tr><th colspan="3">SITUACION DEL/DE LA ESTUDIANTE</th></tr>
+                                <tr><th style="width: 33%;">Promovido/a</th><th style="width: 33%;">Aplazado/a</th><th style="width: 34%;">Repitente</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><input type="text" name="sit_promovido" class="grade-input"></td>
+                                    <td><input type="text" name="sit_aplazado" class="grade-input"></td>
+                                    <td><input type="text" name="sit_repitente" class="grade-input"></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3" style="font-weight: bold; text-align: left; background-color: #ffffff; border-top: 1.5px solid #000;">
+                                        Condición final del/de la estudiante
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3" style="height: 45px;">
+                                        <textarea name="sit_condicion_final" class="obs-input" style="height: 100%;" placeholder="Detalle..."></textarea>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+
+            <!-- FIRMAS AL PIE DE PÁGINA -->
+            <table class="footer-signatures">
+                <tr>
+                    <td>
+                        <div class="signature-line"></div>
+                        <div class="signature-title">
+                            <b>{{ docente_nombre if docente_nombre else 'Docente Titular' }}</b><br>
+                            (Docente titular del grado)
+                        </div>
+                    </td>
+                    <td>
+                        <div class="signature-line"></div>
+                        <div class="signature-title">
+                            <b>Licda. María Teresa Herrero Romero</b><br>
+                            (Directora)
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </form>
+
+    <!-- SCRIPT DE CÁLCULO INTELIGENTE Y NAVEGACIÓN -->
     <script>
         function cambiarEstudiante(idEstudiante) {
             if (idEstudiante) {
-                window.location.href = "{{ url_for('notas1') }}?id_estudiante=" + idEstudiante + "&orden={{ tipo_orden }}";
+                window.location.href = "{{ url_for('notas1') }}?id_estudiante=" + idEstudiante;
             }
         }
+
         // Redondeo inteligente (si decimal >= 0.5 suma uno, sin decimales)
         function calcularRedondeado(valorDecimal) {
             let entero = Math.floor(valorDecimal);
@@ -730,19 +734,6 @@
             inputAsis.addEventListener('input', recalcularFila);
             inputAus.addEventListener('input', recalcularFila);
         });
-
-        function guardarInforme() {
-            alert("¡Informe guardado con éxito!");
-        }
-    </script>
-    <script>
-        function cambiarEstudiante(idEstudiante) {
-            if (idEstudiante) {
-                window.location.href = "{{ url_for('notas1') }}?id_estudiante=" + idEstudiante;
-            }
-        }
-        
-        // El resto de funciones de cálculo de notas y asistencia que ya tienes...
     </script>
 </body>
 </html>
