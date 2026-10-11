@@ -248,6 +248,7 @@
             width: 100%;
             border-collapse: collapse;
             margin-top: 15px;
+            margin-bottom: 25px;
         }
 
         .page2-bottom-grid td {
@@ -290,6 +291,31 @@
         .situacion-table th {
             font-weight: bold;
             background-color: #ffffff;
+        }
+
+        /* SECCIÓN DE FIRMAS INFERIORES */
+        .footer-signatures {
+            width: 100%;
+            margin-top: 35px;
+            border-collapse: collapse;
+        }
+
+        .footer-signatures td {
+            width: 50%;
+            vertical-align: top;
+            padding: 0 40px;
+        }
+
+        .signature-line {
+            border-top: 1.5px solid #000;
+            margin-bottom: 4px;
+        }
+
+        .signature-title {
+            font-size: 9.5px;
+            font-weight: normal;
+            color: #000;
+            line-height: 1.2;
         }
 
         /* IMPRESIÓN Y PDF */
@@ -530,7 +556,7 @@
         <div class="obs-title-bar">
             Información sobre el nivel de avances de los aprendizajes y los apoyos que necesita para la mejora de sus aprendizajes.
         </div>
-        <div style="border: 1.5px solid #000; margin-bottom: 20px; height: 110px;">
+        <div style="border: 1.5px solid #000; margin-bottom: 15px; height: 100px;">
             <textarea class="obs-input" style="height: 100%;" placeholder="Escriba aquí la información general sobre el nivel de avance..."></textarea>
         </div>
 
@@ -592,12 +618,32 @@
                                 </td>
                             </tr>
                             <tr>
-                                <td colspan="3" style="height: 50px;">
+                                <td colspan="3" style="height: 45px;">
                                     <textarea class="obs-input" style="height: 100%;" placeholder="Detalle de condición final..."></textarea>
                                 </td>
                             </tr>
                         </tbody>
                     </table>
+                </td>
+            </tr>
+        </table>
+
+        <!-- FIRMAS OFICIALES DE DOCENTE Y DIRECTORA -->
+        <table class="footer-signatures">
+            <tr>
+                <td>
+                    <div class="signature-line"></div>
+                    <div class="signature-title">
+                        Licda.<br>
+                        (Docente titular del grado)
+                    </div>
+                </td>
+                <td>
+                    <div class="signature-line"></div>
+                    <div class="signature-title">
+                        Licda. María Teresa Herrero Romero<br>
+                        (Directora)
+                    </div>
                 </td>
             </tr>
         </table>
