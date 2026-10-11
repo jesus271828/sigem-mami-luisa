@@ -2157,70 +2157,45 @@ def notas1():
                            docente_nombre=docente_guardado,
                            rol_usuario=rol_usuario)
 
-
-import json
-from io import BytesIO
-from flask import render_template, session, redirect, url_for, make_response
-from xhtml2pdf import pisa
-
-# --- RUTA PARA EL BOTÓN DE PDF (USANDO STRING PARA EL ID DE SUPABASE) ---
-@app.route('/notas1/pdf/<string:id_estudiante>')
-def general_pdf_notas1(id_estudiante):
-    if 'usuario' not in session:
-        return redirect(url_for('login'))
-        
-    estudiante = Estudiante.query.filter_by(id_estudiante=str(id_estudiante)).first_or_404()
-    
-    registro_notas = Notas1.query.filter_by(id_estudiante=str(id_estudiante)).first()
-    notas = {}
-    docente_guardado = session.get('nombre_completo', 'Docente Titular')
-    
-    if registro_notas and registro_notas.datos_formulario:
-        try:
-            notas = json.loads(registro_notas.datos_formulario)
-            docente_guardado = notas.get('_docente_registro', docente_guardado)
-        except Exception:
-            notas = {}
-
-    # Renderizamos directamente el template con las variables necesarias para el PDF
+@app.route('/notas/guardadas')
+@login_required
+def ver_notas_guardadas():
     try:
-        html_crudo = render_template(
-            'general_pdf_notas1.html',
-            estudiante=estudiante,
-            lista_estudiantes=[estudiante],
-            notas=notas,
-            docente_nombre=docente_guardado,
-            modo_pdf=True
+        # 1. Obtener registros de la tabla 'notas1'
+        res_notas = supabase.table('notas1').select('*').execute()
+        registros_notas = res_notas.data if res_notas.data else []
+
+        # 2. Obtener lista de estudiantes para relacionar los nombres
+        res_estudiantes = supabase.table('estudiantes').select('*').execute()
+        estudiantes_map = {str(est['id_estudiante']): est for est in (res_estudiantes.data or [])}
+
+        # 3. Mapear la información para la tabla
+        informes_guardados = []
+        for reg in registros_notas:
+            id_est = str(reg.get('id_estudiante', ''))
+            est_info = estudiantes_map.get(id_est, {})
+            
+            # Nombre completo del estudiante
+            nombre_estudiante = f"{est_info.get('nombres', 'Estudiante')} {est_info.get('apellidos', '')}".strip()
+            
+            informes_guardados.append({
+                'id': reg.get('id'),
+                'id_estudiante': id_est,
+                'nombre_estudiante': nombre_estudiante if nombre_estudiante else f"ID: {id_est}",
+                'grado': est_info.get('grado', '1ro a 3ro Primaria'),
+                'seccion': est_info.get('seccion', 'A'),
+                'fecha_actualizacion': reg.get('created_at', 'Registrado')[:10] if reg.get('created_at') else 'Guardado'
+            })
+
+        return render_template(
+            'ver_notas_guardadas.html',
+            informes=informes_guardados,
+            total_informes=len(informes_guardados)
         )
+
     except Exception as e:
-        return f"Error al renderizar la plantilla HTML: {str(e)}", 500
-
-    # Generación segura del PDF utilizando BytesIO y xhtml2pdf
-    pdf_buffer = BytesIO()
-    
-    try:
-        pisa_status = pisa.CreatePDF(
-            html_crudo.encode('utf-8'), 
-            dest=pdf_buffer,
-            encoding='utf-8'
-        )
-    except Exception as e:
-        return f"Error crítico procesando xhtml2pdf: {str(e)}", 500
-
-    if pisa_status.err:
-        return f"Error interno de xhtml2pdf (Código de error: {pisa_status.err}). Es posible que existan estilos CSS no compatibles o tablas con desbordamiento en la plantilla.", 500
-
-    # Limpiar nombre de archivo de caracteres especiales si es necesario
-    nombre_archivo = f"informe_notas_{getattr(estudiante, 'nombres', 'estudiante')}.pdf".replace(" ", "_")
-
-    response = make_response(pdf_buffer.getvalue())
-    response.headers['Content-Type'] = 'application/pdf'
-    response.headers['Content-Disposition'] = f'inline; filename={nombre_archivo}'
-    
-    return response
-
-
-import json
+        flash(f"Error al cargar las calificaciones guardadas: {str(e)}", "danger")
+        return redirect(url_for('menu'))
 
 @app.route('/notas2', methods=['GET', 'POST'])
 def notas2():

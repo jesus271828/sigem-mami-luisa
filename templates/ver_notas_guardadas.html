@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Informes de Aprendizaje Guardados - SIGEM Mami Luisa</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #f4f6f9;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .header-card {
+            background: linear-gradient(135deg, #1e3a8a 0%, #0284c7 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .main-card {
+            background: white;
+            border-radius: 12px;
+            border: none;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            padding: 24px;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+        }
+
+        .search-box input {
+            padding-left: 42px;
+            border-radius: 8px;
+        }
+
+        .table-custom {
+            margin-top: 15px;
+            border-collapse: separate;
+            border-spacing: 0 8px;
+        }
+
+        .table-custom tbody tr {
+            background-color: #ffffff;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .table-custom tbody tr:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            background-color: #f8fafc;
+        }
+
+        .table-custom td, .table-custom th {
+            padding: 14px 16px;
+            vertical-align: middle;
+        }
+
+        .badge-grado {
+            background-color: #e0f2fe;
+            color: #0369a1;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 20px;
+        }
+
+        .btn-action {
+            padding: 6px 12px;
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 6px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container py-4">
+        <!-- CABECERA PRINCIPAL -->
+        <div class="header-card d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <h3 class="fw-bold mb-1"><i class="fa-solid fa-folder-open me-2"></i>Informes de Aprendizaje Guardados</h3>
+                <p class="mb-0 text-white-50">Consulta, edita o imprime los informes registrados en el sistema</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="/notas1" class="btn btn-success fw-bold"><i class="fa-solid fa-plus me-1"></i>Nuevo Informe</a>
+                <a href="/menu" class="btn btn-light fw-bold"><i class="fa-solid fa-arrow-left me-1"></i>Menú Principal</a>
+            </div>
+        </div>
+
+        <!-- TARJETA PRINCIPAL CON BUSCADOR Y TABLA -->
+        <div class="main-card">
+            <!-- MENSAJES FLASH -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show mb-4" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <div class="row g-3 mb-4 align-items-center">
+                <div class="col-md-6">
+                    <div class="search-box">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="inputBuscar" class="form-control form-control-lg" placeholder="Buscar por estudiante, matrícula o grado..." onkeyup="filtrarTabla()">
+                    </div>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <span class="text-muted fw-semibold">Total de informes guardados: <span class="badge bg-primary rounded-pill fs-6" id="totalBadge">{{ total_informes }}</span></span>
+                </div>
+            </div>
+
+            <!-- TABLA DE INFORMES GUARDADOS -->
+            <div class="table-responsive">
+                <table class="table table-custom align-middle" id="tablaInformes">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">Estudiante</th>
+                            <th scope="col">Grado / Sección</th>
+                            <th scope="col">Última Actualización</th>
+                            <th scope="col" class="text-center">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if informes %}
+                            {% for inf in informes %}
+                            <tr class="fila-informe">
+                                <td class="fw-bold text-secondary">{{ loop.index }}</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-circle bg-primary-subtle text-primary fw-bold me-3 d-flex align-items-center justify-content-center rounded-circle" style="width: 38px; height: 38px;">
+                                            <i class="fa-solid fa-user-graduate"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold text-dark nombre-estudiante">{{ inf.nombre_estudiante }}</div>
+                                            <small class="text-muted">ID: {{ inf.id_estudiante }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge-grado"><i class="fa-solid fa-school me-1"></i>{{ inf.grado }} - {{ inf.seccion }}</span>
+                                </td>
+                                <td class="text-secondary fw-medium">
+                                    <i class="fa-regular fa-calendar-check me-1"></i>{{ inf.fecha_actualizacion }}
+                                </td>
+                                <td class="text-center">
+                                    <a href="/notas1?id_estudiante={{ inf.id_estudiante }}" class="btn btn-outline-primary btn-action me-1" title="Editar o Modificar">
+                                        <i class="fa-solid fa-pen-to-square"></i> Abrir / Editar
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr id="sinRegistros">
+                                <td colspan="5" class="text-center py-5">
+                                    <i class="fa-solid fa-folder-open fa-3x text-muted mb-3 d-block"></i>
+                                    <h5 class="text-muted fw-bold">No hay informes de aprendizaje guardados aún</h5>
+                                    <p class="text-muted small">Selecciona un estudiante e ingresa sus notas para guardar el primer informe.</p>
+                                    <a href="/notas1" class="btn btn-primary fw-bold mt-2"><i class="fa-solid fa-plus me-1"></i>Crear Nuevo Informe</a>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPT DE FILTRADO EN TIEMPO REAL -->
+    <script>
+        function filtrarTabla() {
+            let input = document.getElementById("inputBuscar").value.toLowerCase();
+            let filas = document.querySelectorAll(".fila-informe");
+            let contador = 0;
+
+            filas.forEach(fila => {
+                let textoFila = fila.innerText.toLowerCase();
+                if (textoFila.includes(input)) {
+                    fila.style.display = "";
+                    contador++;
+                } else {
+                    fila.style.display = "none";
+                }
+            });
+
+            document.getElementById("totalBadge").innerText = contador;
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
