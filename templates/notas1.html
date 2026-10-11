@@ -365,29 +365,33 @@
             </tr>
         </table>
 
-<!-- DATOS DEL ESTUDIANTE -->
+         <!-- DATOS DEL ESTUDIANTE -->
         <table class="student-table">
             <tr>
                 <td style="width: 35%;">
                     NOMBRE(S): 
-                    {% if rol_usuario == 'admin' or rol_usuario == 'oficina' %}
-                        <!-- Menú desplegable para Oficina / Admin -->
-                        <select id="select_estudiante" class="student-input" style="width: 65%;" onchange="cambiarEstudiante(this.value)">
-                            <option value="">-- Seleccione un estudiante --</option>
-                            {% for est in lista_estudiantes %}
-                                <option value="{{ est.id_estudiante }}" {% if estudiante and estudiante.id_estudiante == est.id_estudiante %}selected{% endif %}>
-                                    {{ est.nombres }} {{ est.apellidos }} ({{ est.grado }})
-                                </option>
-                            {% endfor %}
-                        </select>
-                    {% else %}
-                        <!-- Campo fijo si es Docente -->
-                        <input type="text" id="est_nombre" class="student-input" value="{{ estudiante.nombres if estudiante else '' }}" readonly>
-                    {% endif %}
+                    <!-- Selector dinámico tanto para oficina como para docente -->
+                    <select id="select_estudiante" class="student-input" style="width: 65%;" onchange="cambiarEstudiante(this.value)">
+                        <option value="">-- Seleccione un estudiante --</option>
+                        {% for est in lista_estudiantes %}
+                            <option value="{{ est.id_estudiante }}" {% if estudiante and estudiante.id_estudiante == est.id_estudiante %}selected{% endif %}>
+                                {{ est.nombres }} {{ est.apellidos }} (Ord: {{ est.numero_orden }})
+                            </option>
+                        {% endfor %}
+                    </select>
                 </td>
-                <td style="width: 30%;">APELLIDO (S): <input type="text" id="est_apellido" class="student-input" value="{{ estudiante.apellidos if estudiante else '' }}" readonly></td>
-                <td style="width: 15%;">NO. DE ORDEN: <input type="text" id="est_orden" class="student-input" style="width: 40%;" value="{{ estudiante.numero_orden if estudiante else '' }}" readonly></td>
-                <td style="width: 20%;">ID ESTUDIANTE: <input type="text" id="est_id" class="student-input" style="width: 45%;" value="{{ estudiante.id_estudiante if estudiante else '' }}" readonly></td>
+                <td style="width: 30%;">
+                    APELLIDO (S): 
+                    <input type="text" id="est_apellido" class="student-input" value="{{ estudiante.apellidos if estudiante else '' }}" readonly style="border:none;">
+                </td>
+                <td style="width: 15%;">
+                    NO. DE ORDEN: 
+                    <input type="text" id="est_orden" class="student-input" style="width: 40%; border:none;" value="{{ estudiante.numero_orden if estudiante else '' }}" readonly>
+                </td>
+                <td style="width: 20%;">
+                    ID ESTUDIANTE: 
+                    <input type="text" id="est_id" class="student-input" style="width: 45%; border:none;" value="{{ estudiante.id_estudiante if estudiante else '' }}" readonly>
+                </td>
             </tr>
         </table>
 

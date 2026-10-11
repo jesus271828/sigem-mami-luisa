@@ -2088,7 +2088,7 @@ def notas1():
     else:
         criterio_sql = [Estudiante.nombres.asc()]
 
-    # Filtrar estudiantes según el rol (Oficina ve 1ro al 3ro de forma flexible, el maestro ve su curso)
+    # Filtrar estudiantes según el rol (Oficina ve 1ro al 3ro, el maestro ve su curso)
     if rol_usuario == 'admin' or rol_usuario == 'oficina':
         lista_estudiantes = Estudiante.query.filter(
             db.or_(
@@ -2141,8 +2141,14 @@ def notas1():
         return redirect(url_for('notas1', id_estudiante=id_estudiante, orden=tipo_orden))
 
     # 2. CARGAR DATOS DEL ESTUDIANTE SELECCIONADO (GET)
-    if id_estudiante:
+    if not id_estudiante and lista_estudiantes:
+        estudiante = lista_estudiantes[0] # Selecciona el primer estudiante por defecto
+        id_estudiante = estudiante.id_estudiante
+    elif id_estudiante:
         estudiante = Estudiante.query.filter_by(id_estudiante=str(id_estudiante)).first()
+
+    # Cargar notas guardadas si existen
+    if id_estudiante:
         registro_notas = Notas1.query.filter_by(id_estudiante=str(id_estudiante)).first()
         if registro_notas and registro_notas.datos_formulario:
             try:
@@ -2157,7 +2163,8 @@ def notas1():
                            notas=notas,
                            tipo_orden=tipo_orden,
                            grado_activo=grado_activo,
-                           docente_nombre=docente_guardado)
+                           docente_nombre=docente_guardado,
+                           rol_usuario=rol_usuario)
 
 
 import json
