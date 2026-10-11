@@ -365,13 +365,29 @@
             </tr>
         </table>
 
-        <!-- DATOS DEL ESTUDIANTE -->
+<!-- DATOS DEL ESTUDIANTE -->
         <table class="student-table">
             <tr>
-                <td style="width: 35%;">NOMBRE(S): <input type="text" id="est_nombre" class="student-input" value="{{ estudiante.nombre if estudiante else '' }}"></td>
-                <td style="width: 30%;">APELLIDO (S): <input type="text" id="est_apellido" class="student-input" value="{{ estudiante.apellido if estudiante else '' }}"></td>
-                <td style="width: 15%;">NO. DE ORDEN: <input type="text" id="est_orden" class="student-input" style="width: 50%;" value="{{ estudiante.numero_orden if estudiante else '' }}"></td>
-                <td style="width: 20%;">ID ESTUDIANTE: <input type="text" id="est_id" class="student-input" style="width: 50%;" value="{{ estudiante.id_estudiante if estudiante else '' }}"></td>
+                <td style="width: 35%;">
+                    NOMBRE(S): 
+                    {% if rol_usuario == 'admin' or rol_usuario == 'oficina' %}
+                        <!-- Menú desplegable para Oficina / Admin -->
+                        <select id="select_estudiante" class="student-input" style="width: 65%;" onchange="cambiarEstudiante(this.value)">
+                            <option value="">-- Seleccione un estudiante --</option>
+                            {% for est in lista_estudiantes %}
+                                <option value="{{ est.id_estudiante }}" {% if estudiante and estudiante.id_estudiante == est.id_estudiante %}selected{% endif %}>
+                                    {{ est.nombres }} {{ est.apellidos }} ({{ est.grado }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    {% else %}
+                        <!-- Campo fijo si es Docente -->
+                        <input type="text" id="est_nombre" class="student-input" value="{{ estudiante.nombres if estudiante else '' }}" readonly>
+                    {% endif %}
+                </td>
+                <td style="width: 30%;">APELLIDO (S): <input type="text" id="est_apellido" class="student-input" value="{{ estudiante.apellidos if estudiante else '' }}" readonly></td>
+                <td style="width: 15%;">NO. DE ORDEN: <input type="text" id="est_orden" class="student-input" style="width: 40%;" value="{{ estudiante.numero_orden if estudiante else '' }}" readonly></td>
+                <td style="width: 20%;">ID ESTUDIANTE: <input type="text" id="est_id" class="student-input" style="width: 45%;" value="{{ estudiante.id_estudiante if estudiante else '' }}" readonly></td>
             </tr>
         </table>
 
@@ -612,6 +628,11 @@
 
     <!-- SCRIPT DE CÁLCULO INTELIGENTE -->
     <script>
+        function cambiarEstudiante(idEstudiante) {
+            if (idEstudiante) {
+                window.location.href = "{{ url_for('notas1') }}?id_estudiante=" + idEstudiante + "&orden={{ tipo_orden }}";
+            }
+        }
         // Redondeo inteligente (si decimal >= 0.5 suma uno, sin decimales)
         function calcularRedondeado(valorDecimal) {
             let entero = Math.floor(valorDecimal);
