@@ -621,32 +621,30 @@
             }
         }
 
-        // Escuchar cambios en los inputs de notas para recalcular automáticamente
+        // Escuchar cambios en los inputs de notas para calcular cada competencia al completar sus 4 períodos
         document.querySelectorAll('.materia-row').forEach(row => {
             let inputsP = row.querySelectorAll('.grade-input');
             
             inputsP.forEach(input => {
                 input.addEventListener('input', () => {
-                    // C1
+                    // C1: se calcula al llenar sus 4 períodos
                     let c1_inputs = row.querySelectorAll('.c1-p');
                     let valC1 = calcularPromedioRedondeado(c1_inputs[0].value, c1_inputs[1].value, c1_inputs[2].value, c1_inputs[3].value);
                     row.querySelector('.c1-final').value = valC1;
 
-                    // C2
+                    // C2: se calcula al llenar sus 4 períodos
                     let c2_inputs = row.querySelectorAll('.c2-p');
                     let valC2 = calcularPromedioRedondeado(c2_inputs[0].value, c2_inputs[1].value, c2_inputs[2].value, c2_inputs[3].value);
                     row.querySelector('.c2-final').value = valC2;
 
-                    // C3 (El último C)
+                    // C3: se calcula al llenar sus 4 períodos
                     let c3_inputs = row.querySelectorAll('.c3-p');
                     let valC3 = calcularPromedioRedondeado(c3_inputs[0].value, c3_inputs[1].value, c3_inputs[2].value, c3_inputs[3].value);
                     row.querySelector('.c3-final').value = valC3;
 
-                    // NOTA FINAL / DEL ÁREA: Se calcula y se muestra SOLAMENTE cuando ya se han colocado C1, C2 y C3
-                    let inputDelArea = row.querySelectorAll('.grade-input'); 
-                    // (Asumiendo que el campo "Del Área" es el antepenúltimo o penúltimo input de la fila)
+                    // DEL ÁREA: Se calcula y aparece SOLAMENTE cuando C1, C2 y C3 ya tienen sus notas finales calculadas (es decir, al digitar el P4 de C3)
                     let inputsFila = row.querySelectorAll('input.grade-input');
-                    let campoDelArea = inputsFila[inputsFila.length - 2]; // Del Área
+                    let campoDelArea = inputsFila[inputsFila.length - 2]; // Casilla "DEL ÁREA"
                     
                     if (valC1 !== "" && valC2 !== "" && valC3 !== "") {
                         let promedioArea = (parseFloat(valC1) + parseFloat(valC2) + parseFloat(valC3)) / 3;
