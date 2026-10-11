@@ -333,12 +333,11 @@
 </head>
 <body>
 
-    <!-- BARRA DE ACCIÓN SUPERIOR (BOTONES) -->
+<!-- BARRA DE ACCIÓN SUPERIOR (BOTONES) -->
     <div class="no-print" style="margin-bottom: 12px; text-align: right; max-width: 1300px; margin-left: auto; margin-right: auto;">
         <a href="/menu" style="padding: 8px 14px; background-color: #6c757d; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 12px; margin-right: 5px;">⬅ Menú</a>
         <a href="/notas/guardadas" style="padding: 8px 14px; background-color: #0284c7; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 12px; margin-right: 5px;">📂 Ver Guardadas</a>
-        <button onclick="guardarInforme()" style="padding: 8px 16px; background-color: #16a34a; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; margin-right: 5px;">💾 Guardar Informe</button>
-        <button onclick="window.print()" style="padding: 8px 16px; background-color: #d9534f; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px;">🖨️ Imprimir / PDF</button>
+        <button type="submit" style="padding: 8px 16px; background-color: #16a34a; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px;">💾 Guardar Informe</button>
     </div>
 
     <!-- ==================== PÁGINA 1 ==================== -->
@@ -735,6 +734,15 @@
         function guardarInforme() {
             alert("¡Informe guardado con éxito!");
         }
+    </script>
+    <script>
+        function cambiarEstudiante(idEstudiante) {
+            if (idEstudiante) {
+                window.location.href = "{{ url_for('notas1') }}?id_estudiante=" + idEstudiante;
+            }
+        }
+        
+        // El resto de funciones de cálculo de notas y asistencia que ya tienes...
     </script>
 </body>
 </html>
