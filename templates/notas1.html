@@ -473,7 +473,7 @@
                         <tr>
                             <th rowspan="2" style="width: 20%; text-align: center; vertical-align: middle;">PERÍODO</th>
                             <th colspan="2" style="text-align: center;">RESUMEN DE ASISTENCIA DEL ESTUDIANTE</th>
-                            <th colspan="2" style="text-align: center;">% ANUAL</th>
+                            <th colspan="2" style="text-align: center;">% POR PERÍODO</th>
                         </tr>
                         <tr>
                             <th style="width: 20%; text-align: center;">ASISTENCIA</th>
@@ -485,23 +485,29 @@
                             <td style="font-weight: bold; text-align: center;">P1</td>
                             <td><input type="number" class="grade-input asis-val" value=""></td>
                             <td><input type="number" class="grade-input aus-val" value=""></td>
-                            <td rowspan="4" style="vertical-align: middle;"><input type="text" class="grade-input auto-calc" id="pctAsisAnual" readonly></td>
-                            <td rowspan="4" style="vertical-align: middle;"><input type="text" class="grade-input auto-calc" id="pctAusAnual" readonly></td>
+                            <td><input type="text" class="grade-input auto-calc pct-asis" readonly></td>
+                            <td><input type="text" class="grade-input auto-calc pct-aus" readonly></td>
                         </tr>
                         <tr class="asis-row" data-periodo="2">
                             <td style="font-weight: bold; text-align: center;">P2</td>
                             <td><input type="number" class="grade-input asis-val" value=""></td>
                             <td><input type="number" class="grade-input aus-val" value=""></td>
+                            <td><input type="text" class="grade-input auto-calc pct-asis" readonly></td>
+                            <td><input type="text" class="grade-input auto-calc pct-aus" readonly></td>
                         </tr>
                         <tr class="asis-row" data-periodo="3">
                             <td style="font-weight: bold; text-align: center;">P3</td>
                             <td><input type="number" class="grade-input asis-val" value=""></td>
                             <td><input type="number" class="grade-input aus-val" value=""></td>
+                            <td><input type="text" class="grade-input auto-calc pct-asis" readonly></td>
+                            <td><input type="text" class="grade-input auto-calc pct-aus" readonly></td>
                         </tr>
                         <tr class="asis-row" data-periodo="4">
                             <td style="font-weight: bold; text-align: center;">P4</td>
                             <td><input type="number" class="grade-input asis-val" value=""></td>
                             <td><input type="number" class="grade-input aus-val" value=""></td>
+                            <td><input type="text" class="grade-input auto-calc pct-asis" readonly></td>
+                            <td><input type="text" class="grade-input auto-calc pct-aus" readonly></td>
                         </tr>
                     </table>
                 </td>
@@ -604,9 +610,15 @@
         </table>
     </div>
 
-    <!-- SCRIPT DE CÁLCULO INTELIGENTE (CALIFICACIONES Y ASISTENCIA) -->
+    <!-- SCRIPT DE CÁLCULO INTELIGENTE -->
     <script>
-        // Redondeo inteligente para notas
+        // Redondeo inteligente (si decimal >= 0.5 suma uno, sin decimales)
+        function calcularRedondeado(valorDecimal) {
+            let entero = Math.floor(valorDecimal);
+            let decimal = valorDecimal - entero;
+            return (decimal >= 0.5) ? entero + 1 : entero;
+        }
+
         function calcularPromedioRedondeado(p1, p2, p3, p4) {
             if (p1 === "" || p2 === "" || p3 === "" || p4 === "" || 
                 isNaN(p1) || isNaN(p2) || isNaN(p3) || isNaN(p4)) {
@@ -614,13 +626,10 @@
             }
             let valores = [parseFloat(p1), parseFloat(p2), parseFloat(p3), parseFloat(p4)];
             let suma = valores.reduce((a, b) => a + b, 0);
-            let promedio = suma / 4;
-            let entero = Math.floor(promedio);
-            let decimal = promedio - entero;
-            return (decimal >= 0.5) ? entero + 1 : entero;
+            return calcularRedondeado(suma / 4);
         }
 
-        // Lógica de Notas por Materia
+        // Lógica de Notas por Materia (aparecen al colocar el P4 de C3)
         document.querySelectorAll('.materia-row').forEach(row => {
             let inputsP = row.querySelectorAll('.grade-input');
             
@@ -644,9 +653,7 @@
                         row.querySelector('.c3-final').value = valC3;
 
                         let promedioArea = (parseFloat(valC1) + parseFloat(valC2) + parseFloat(valC3)) / 3;
-                        let enteroArea = Math.floor(promedioArea);
-                        let decArea = promedioArea - enteroArea;
-                        campoDelArea.value = (decArea >= 0.5) ? enteroArea + 1 : enteroArea;
+                        campoDelArea.value = calcularRedondeado(promedioArea);
                     } else {
                         row.querySelector('.c1-final').value = "";
                         row.querySelector('.c2-final').value = "";
@@ -657,46 +664,38 @@
             });
         });
 
-        // Lógica de Resumen de Asistencia y % Anual
-        const filasAsistencia = document.querySelectorAll('.asis-row');
-        filasAsistencia.forEach(fila => {
-            let inputsAsis = fila.querySelectorAll('input');
-            inputsAsis.forEach(inp => {
-                inp.addEventListener('input', calcularAsistenciaAnual);
-            });
-        });
+        // Lógica de Asistencia Independiente por Período
+        document.querySelectorAll('.asis-row').forEach(fila => {
+            let inputAsis = fila.querySelector('.asis-val');
+            let inputAus = fila.querySelector('.aus-val');
+            let campoPctAsis = fila.querySelector('.pct-asis');
+            let campoPctAus = fila.querySelector('.pct-aus');
 
-        function calcularAsistenciaAnual() {
-            let totalAsistencia = 0;
-            let totalAusencia = 0;
-            let hayDatos = false;
+            function recalcularFila() {
+                let asis = parseFloat(inputAsis.value);
+                let aus = parseFloat(inputAus.value);
 
-            filasAsistencia.forEach(fila => {
-                let asis = parseFloat(fila.querySelector('.asis-val').value) || 0;
-                let aus = parseFloat(fila.querySelector('.aus-val').value) || 0;
-                
-                if (fila.querySelector('.asis-val').value !== "" || fila.querySelector('.aus-val').value !== "") {
-                    hayDatos = true;
+                if (!isNaN(asis) && !isNaN(aus)) {
+                    let totalClases = asis + aus;
+                    if (totalClases > 0) {
+                        let pctAsisVal = (asis / totalClases) * 100;
+                        let pctAusVal = (aus / totalClases) * 100;
+
+                        campoPctAsis.value = calcularRedondeado(pctAsisVal);
+                        campoPctAus.value = calcularRedondeado(pctAusVal);
+                    } else {
+                        campoPctAsis.value = "";
+                        campoPctAus.value = "";
+                    }
+                } else {
+                    campoPctAsis.value = "";
+                    campoPctAus.value = "";
                 }
-                totalAsistencia += asis;
-                totalAusencia += aus;
-            });
-
-            let totalClases = totalAsistencia + totalAusencia;
-            let pctAsisElem = document.getElementById('pctAsisAnual');
-            let pctAusElem = document.getElementById('pctAusAnual');
-
-            if (hayDatos && totalClases > 0) {
-                let pctAsis = (totalAsistencia / totalClases) * 100;
-                let pctAus = (totalAusencia / totalClases) * 100;
-                
-                pctAsisElem.value = pctAsis.toFixed(1) + "%";
-                pctAusElem.value = pctAus.toFixed(1) + "%";
-            } else {
-                pctAsisElem.value = "";
-                pctAusElem.value = "";
             }
-        }
+
+            inputAsis.addEventListener('input', recalcularFila);
+            inputAus.addEventListener('input', recalcularFila);
+        });
 
         function guardarInforme() {
             alert("¡Informe guardado con éxito!");
