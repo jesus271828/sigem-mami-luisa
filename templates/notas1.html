@@ -432,7 +432,7 @@
                     <td><input type="text" class="grade-input auto-calc c2-final" readonly></td>
                     <td><input type="text" class="grade-input auto-calc c3-final" readonly></td>
                     <!-- Del Área y Recuperación -->
-                    <td><input type="text" class="grade-input"></td>
+                    <td><input type="text" class="grade-input auto-calc"></td>
                     <td><input type="text" class="grade-input"></td>
                 </tr>
                 {% endfor %}
@@ -467,8 +467,9 @@
                     </table>
                 </td>
 
+                <!-- RESUMEN DE ASISTENCIA -->
                 <td style="width: 35%;">
-                    <table class="asistencia-table">
+                    <table class="asistencia-table" id="tablaAsistencia">
                         <tr>
                             <th rowspan="2" style="width: 20%; text-align: center; vertical-align: middle;">PERÍODO</th>
                             <th colspan="2" style="text-align: center;">RESUMEN DE ASISTENCIA DEL ESTUDIANTE</th>
@@ -480,23 +481,27 @@
                             <th style="width: 20%; text-align: center;">ASISTENCIA</th>
                             <th style="width: 20%; text-align: center;">AUSENCIA</th>
                         </tr>
-                        <tr>
+                        <tr class="asis-row" data-periodo="1">
                             <td style="font-weight: bold; text-align: center;">P1</td>
-                            <td><input type="text" class="grade-input"></td><td><input type="text" class="grade-input"></td>
-                            <td rowspan="4" style="vertical-align: middle;"><input type="text" class="grade-input"></td>
-                            <td rowspan="4" style="vertical-align: middle;"><input type="text" class="grade-input"></td>
+                            <td><input type="number" class="grade-input asis-val" value=""></td>
+                            <td><input type="number" class="grade-input aus-val" value=""></td>
+                            <td rowspan="4" style="vertical-align: middle;"><input type="text" class="grade-input auto-calc" id="pctAsisAnual" readonly></td>
+                            <td rowspan="4" style="vertical-align: middle;"><input type="text" class="grade-input auto-calc" id="pctAusAnual" readonly></td>
                         </tr>
-                        <tr>
+                        <tr class="asis-row" data-periodo="2">
                             <td style="font-weight: bold; text-align: center;">P2</td>
-                            <td><input type="text" class="grade-input"></td><td><input type="text" class="grade-input"></td>
+                            <td><input type="number" class="grade-input asis-val" value=""></td>
+                            <td><input type="number" class="grade-input aus-val" value=""></td>
                         </tr>
-                        <tr>
+                        <tr class="asis-row" data-periodo="3">
                             <td style="font-weight: bold; text-align: center;">P3</td>
-                            <td><input type="text" class="grade-input"></td><td><input type="text" class="grade-input"></td>
+                            <td><input type="number" class="grade-input asis-val" value=""></td>
+                            <td><input type="number" class="grade-input aus-val" value=""></td>
                         </tr>
-                        <tr>
+                        <tr class="asis-row" data-periodo="4">
                             <td style="font-weight: bold; text-align: center;">P4</td>
-                            <td><input type="text" class="grade-input"></td><td><input type="text" class="grade-input"></td>
+                            <td><input type="number" class="grade-input asis-val" value=""></td>
+                            <td><input type="number" class="grade-input aus-val" value=""></td>
                         </tr>
                     </table>
                 </td>
@@ -599,29 +604,23 @@
         </table>
     </div>
 
-<!-- SCRIPT DE CÁLCULO TOTAL AL LLEGAR AL P4 DE C3 -->
+    <!-- SCRIPT DE CÁLCULO INTELIGENTE (CALIFICACIONES Y ASISTENCIA) -->
     <script>
-        // Función de redondeo inteligente con regla de .5 y sin decimales
+        // Redondeo inteligente para notas
         function calcularPromedioRedondeado(p1, p2, p3, p4) {
             if (p1 === "" || p2 === "" || p3 === "" || p4 === "" || 
                 isNaN(p1) || isNaN(p2) || isNaN(p3) || isNaN(p4)) {
                 return ""; 
             }
-
             let valores = [parseFloat(p1), parseFloat(p2), parseFloat(p3), parseFloat(p4)];
             let suma = valores.reduce((a, b) => a + b, 0);
             let promedio = suma / 4;
-            
             let entero = Math.floor(promedio);
             let decimal = promedio - entero;
-            if (decimal >= 0.5) {
-                return entero + 1;
-            } else {
-                return entero;
-            }
+            return (decimal >= 0.5) ? entero + 1 : entero;
         }
 
-        // Escuchar cambios en los inputs de notas
+        // Lógica de Notas por Materia
         document.querySelectorAll('.materia-row').forEach(row => {
             let inputsP = row.querySelectorAll('.grade-input');
             
@@ -631,30 +630,24 @@
                     let c2_inputs = row.querySelectorAll('.c2-p');
                     let c3_inputs = row.querySelectorAll('.c3-p');
 
-                    // Verificamos si ya se colocó el P4 de C3 (el último valor a digitar)
                     let p4_c3 = c3_inputs[3].value;
-
                     let inputsFila = row.querySelectorAll('input.grade-input');
-                    let campoDelArea = inputsFila[inputsFila.length - 2]; // Casilla "DEL ÁREA"
+                    let campoDelArea = inputsFila[inputsFila.length - 2];
 
-                    // Solo calculamos y mostramos TODO cuando P4 de C3 esté lleno (y lógicamente los demás también)
                     let valC1 = calcularPromedioRedondeado(c1_inputs[0].value, c1_inputs[1].value, c1_inputs[2].value, c1_inputs[3].value);
                     let valC2 = calcularPromedioRedondeado(c2_inputs[0].value, c2_inputs[1].value, c2_inputs[2].value, c2_inputs[3].value);
                     let valC3 = calcularPromedioRedondeado(c3_inputs[0].value, c3_inputs[1].value, c3_inputs[2].value, c3_inputs[3].value);
 
                     if (p4_c3 !== "" && valC1 !== "" && valC2 !== "" && valC3 !== "") {
-                        // Mostrar C1, C2 y C3 finales
                         row.querySelector('.c1-final').value = valC1;
                         row.querySelector('.c2-final').value = valC2;
                         row.querySelector('.c3-final').value = valC3;
 
-                        // Calcular y mostrar "Del Área"
                         let promedioArea = (parseFloat(valC1) + parseFloat(valC2) + parseFloat(valC3)) / 3;
                         let enteroArea = Math.floor(promedioArea);
                         let decArea = promedioArea - enteroArea;
                         campoDelArea.value = (decArea >= 0.5) ? enteroArea + 1 : enteroArea;
                     } else {
-                        // Si falta llegar al P4 de C3, todo se mantiene limpio
                         row.querySelector('.c1-final').value = "";
                         row.querySelector('.c2-final').value = "";
                         row.querySelector('.c3-final').value = "";
@@ -663,6 +656,47 @@
                 });
             });
         });
+
+        // Lógica de Resumen de Asistencia y % Anual
+        const filasAsistencia = document.querySelectorAll('.asis-row');
+        filasAsistencia.forEach(fila => {
+            let inputsAsis = fila.querySelectorAll('input');
+            inputsAsis.forEach(inp => {
+                inp.addEventListener('input', calcularAsistenciaAnual);
+            });
+        });
+
+        function calcularAsistenciaAnual() {
+            let totalAsistencia = 0;
+            let totalAusencia = 0;
+            let hayDatos = false;
+
+            filasAsistencia.forEach(fila => {
+                let asis = parseFloat(fila.querySelector('.asis-val').value) || 0;
+                let aus = parseFloat(fila.querySelector('.aus-val').value) || 0;
+                
+                if (fila.querySelector('.asis-val').value !== "" || fila.querySelector('.aus-val').value !== "") {
+                    hayDatos = true;
+                }
+                totalAsistencia += asis;
+                totalAusencia += aus;
+            });
+
+            let totalClases = totalAsistencia + totalAusencia;
+            let pctAsisElem = document.getElementById('pctAsisAnual');
+            let pctAusElem = document.getElementById('pctAusAnual');
+
+            if (hayDatos && totalClases > 0) {
+                let pctAsis = (totalAsistencia / totalClases) * 100;
+                let pctAus = (totalAusencia / totalClases) * 100;
+                
+                pctAsisElem.value = pctAsis.toFixed(1) + "%";
+                pctAusElem.value = pctAus.toFixed(1) + "%";
+            } else {
+                pctAsisElem.value = "";
+                pctAusElem.value = "";
+            }
+        }
 
         function guardarInforme() {
             alert("¡Informe guardado con éxito!");
