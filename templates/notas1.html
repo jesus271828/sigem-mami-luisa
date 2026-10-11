@@ -599,7 +599,7 @@
         </table>
     </div>
 
-<!-- SCRIPT DE CÁLCULO INDEPENDIENTE Y DEL ÁREA -->
+<!-- SCRIPT DE CÁLCULO TOTAL AL LLEGAR AL P4 DE C3 -->
     <script>
         // Función de redondeo inteligente con regla de .5 y sin decimales
         function calcularPromedioRedondeado(p1, p2, p3, p4) {
@@ -631,28 +631,33 @@
                     let c2_inputs = row.querySelectorAll('.c2-p');
                     let c3_inputs = row.querySelectorAll('.c3-p');
 
-                    // 1. C1 se calcula apenas llenas sus 4 periodos
-                    let valC1 = calcularPromedioRedondeado(c1_inputs[0].value, c1_inputs[1].value, c1_inputs[2].value, c1_inputs[3].value);
-                    row.querySelector('.c1-final').value = valC1;
+                    // Verificamos si ya se colocó el P4 de C3 (el último valor a digitar)
+                    let p4_c3 = c3_inputs[3].value;
 
-                    // 2. C2 se calcula apenas llenas sus 4 periodos
-                    let valC2 = calcularPromedioRedondeado(c2_inputs[0].value, c2_inputs[1].value, c2_inputs[2].value, c2_inputs[3].value);
-                    row.querySelector('.c2-final').value = valC2;
-
-                    // 3. C3 se calcula apenas llenas sus 4 periodos
-                    let valC3 = calcularPromedioRedondeado(c3_inputs[0].value, c3_inputs[1].value, c3_inputs[2].value, c3_inputs[3].value);
-                    row.querySelector('.c3-final').value = valC3;
-
-                    // 4. DEL ÁREA: Aparece solo cuando C1, C2 y C3 ya tienen sus notas calculadas
                     let inputsFila = row.querySelectorAll('input.grade-input');
                     let campoDelArea = inputsFila[inputsFila.length - 2]; // Casilla "DEL ÁREA"
 
-                    if (valC1 !== "" && valC2 !== "" && valC3 !== "") {
+                    // Solo calculamos y mostramos TODO cuando P4 de C3 esté lleno (y lógicamente los demás también)
+                    let valC1 = calcularPromedioRedondeado(c1_inputs[0].value, c1_inputs[1].value, c1_inputs[2].value, c1_inputs[3].value);
+                    let valC2 = calcularPromedioRedondeado(c2_inputs[0].value, c2_inputs[1].value, c2_inputs[2].value, c2_inputs[3].value);
+                    let valC3 = calcularPromedioRedondeado(c3_inputs[0].value, c3_inputs[1].value, c3_inputs[2].value, c3_inputs[3].value);
+
+                    if (p4_c3 !== "" && valC1 !== "" && valC2 !== "" && valC3 !== "") {
+                        // Mostrar C1, C2 y C3 finales
+                        row.querySelector('.c1-final').value = valC1;
+                        row.querySelector('.c2-final').value = valC2;
+                        row.querySelector('.c3-final').value = valC3;
+
+                        // Calcular y mostrar "Del Área"
                         let promedioArea = (parseFloat(valC1) + parseFloat(valC2) + parseFloat(valC3)) / 3;
                         let enteroArea = Math.floor(promedioArea);
                         let decArea = promedioArea - enteroArea;
                         campoDelArea.value = (decArea >= 0.5) ? enteroArea + 1 : enteroArea;
                     } else {
+                        // Si falta llegar al P4 de C3, todo se mantiene limpio
+                        row.querySelector('.c1-final').value = "";
+                        row.querySelector('.c2-final').value = "";
+                        row.querySelector('.c3-final').value = "";
                         campoDelArea.value = "";
                     }
                 });
