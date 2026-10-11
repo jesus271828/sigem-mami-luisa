@@ -2386,13 +2386,21 @@ def planificacion():
     if 'usuario' not in session and 'nombre_completo' not in session:
         return redirect(url_for('login'))
     
-    # Creamos un diccionario 'usuario' seguro para que la plantilla no falle
+    # Obtenemos el grado de la sesión de manera segura
+    grado_actual = session.get('curso_asignado', session.get('grado_seccion', 'Primer Grado'))
+    if not grado_actual or grado_actual == 'None':
+        grado_actual = 'Primer Grado' # O el valor predeterminado que prefieras
+    
     usuario_info = {
         'nombre_completo': session.get('nombre_completo', ''),
-        'curso_asignado': session.get('curso_asignado', session.get('grado_seccion', 'General'))
+        'curso_asignado': grado_actual
     }
     
-    return render_template('planificacion.html', usuario=usuario_info)
+    return render_template(
+        'planificacion.html', 
+        usuario=usuario_info, 
+        grado=grado_actual  # <-- Pasamos la variable grado explícitamente aquí
+    )
 
 @app.route('/mis_planificaciones')
 def mis_planificaciones():
