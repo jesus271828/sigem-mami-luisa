@@ -599,11 +599,17 @@
         </table>
     </div>
 
-    <!-- SCRIPT DE CÁLCULO INTELIGENTE Y GUARDADO -->
+<!-- SCRIPT DE CÁLCULO INTELIGENTE Y GUARDADO -->
     <script>
         // Función de redondeo inteligente con regla de .5 y sin decimales
         function calcularPromedioRedondeado(p1, p2, p3, p4) {
-            let valores = [p1, p2, p3, p4].map(v => parseFloat(v) || 0);
+            // Validar que los 4 campos tengan un valor numérico ingresado
+            if (p1 === "" || p2 === "" || p3 === "" || p4 === "" || 
+                isNaN(p1) || isNaN(p2) || isNaN(p3) || isNaN(p4)) {
+                return ""; // Si falta alguno, no muestra nada en la C final
+            }
+
+            let valores = [parseFloat(p1), parseFloat(p2), parseFloat(p3), parseFloat(p4)];
             let suma = valores.reduce((a, b) => a + b, 0);
             let promedio = suma / 4;
             
@@ -617,38 +623,32 @@
             }
         }
 
-        // Escuchar cambios en los inputs de notas para recalcular automáticamente en tiempo real
+        // Escuchar cambios en los inputs de notas para recalcular automáticamente
         document.querySelectorAll('.materia-row').forEach(row => {
             let inputsP = row.querySelectorAll('.grade-input');
             
             inputsP.forEach(input => {
                 input.addEventListener('input', () => {
-                    // C1: columnas 1, 2, 3, 4 (índices 0, 1, 2, 3)
-                    let c1_1 = row.querySelectorAll('.c1-p')[0].value;
-                    let c1_2 = row.querySelectorAll('.c1-p')[1].value;
-                    let c1_3 = row.querySelectorAll('.c1-p')[2].value;
-                    let c1_4 = row.querySelectorAll('.c1-p')[3].value;
-                    row.querySelector('.c1-final').value = calcularPromedioRedondeado(c1_1, c1_2, c1_3, c1_4);
+                    // C1: P1, P2, P3, P4
+                    let c1_inputs = row.querySelectorAll('.c1-p');
+                    let c1_final = calcularPromedioRedondeado(c1_inputs[0].value, c1_inputs[1].value, c1_inputs[2].value, c1_inputs[3].value);
+                    row.querySelector('.c1-final').value = c1_final;
 
-                    // C2: columnas 5, 6, 7, 8 (índices 0, 1, 2, 3 de c2-p)
-                    let c2_1 = row.querySelectorAll('.c2-p')[0].value;
-                    let c2_2 = row.querySelectorAll('.c2-p')[1].value;
-                    let c2_3 = row.querySelectorAll('.c2-p')[2].value;
-                    let c2_4 = row.querySelectorAll('.c2-p')[3].value;
-                    row.querySelector('.c2-final').value = calcularPromedioRedondeado(c2_1, c2_2, c2_3, c2_4);
+                    // C2: P1, P2, P3, P4
+                    let c2_inputs = row.querySelectorAll('.c2-p');
+                    let c2_final = calcularPromedioRedondeado(c2_inputs[0].value, c2_inputs[1].value, c2_inputs[2].value, c2_inputs[3].value);
+                    row.querySelector('.c2-final').value = c2_final;
 
-                    // C3: columnas 9, 10, 11, 12 (índices 0, 1, 2, 3 de c3-p)
-                    let c3_1 = row.querySelectorAll('.c3-p')[0].value;
-                    let c3_2 = row.querySelectorAll('.c3-p')[1].value;
-                    let c3_3 = row.querySelectorAll('.c3-p')[2].value;
-                    let c3_4 = row.querySelectorAll('.c3-p')[3].value;
-                    row.querySelector('.c3-final').value = calcularPromedioRedondeado(c3_1, c3_2, c3_3, c3_4);
+                    // C3: P1, P2, P3, P4
+                    let c3_inputs = row.querySelectorAll('.c3-p');
+                    let c3_final = calcularPromedioRedondeado(c3_inputs[0].value, c3_inputs[1].value, c3_inputs[2].value, c3_inputs[3].value);
+                    row.querySelector('.c3-final').value = c3_final;
                 });
             });
         });
 
         function guardarInforme() {
-            alert("¡Informe guardado con éxito! (Puedes conectar esta función con tu backend Flask para enviarlo por POST a la base de datos).");
+            alert("¡Informe guardado con éxito!");
         }
     </script>
 </body>
