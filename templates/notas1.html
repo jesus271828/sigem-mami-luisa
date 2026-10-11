@@ -373,19 +373,20 @@
                     <select id="select_estudiante" class="student-input" style="width: 65%;" onchange="cambiarEstudiante(this.value)">
                         <option value="">-- Seleccione un estudiante --</option>
                         {% for est in lista_estudiantes %}
+                            <!-- Mostramos SOLAMENTE el nombre en el menú desplegable -->
                             <option value="{{ est.id_estudiante }}" {% if estudiante and estudiante.id_estudiante == est.id_estudiante %}selected{% endif %}>
-                                {{ est.nombres }} {{ est.apellidos }}
+                                {{ est.nombres }}
                             </option>
                         {% endfor %}
                     </select>
                 </td>
                 <td style="width: 30%;">
                     APELLIDO (S): 
+                    <!-- Aquí se muestra únicamente el apellido del estudiante seleccionado -->
                     <input type="text" id="est_apellido" class="student-input" value="{{ estudiante.apellidos if estudiante else '' }}" readonly style="border:none;">
                 </td>
                 <td style="width: 15%;">
                     NO. DE ORDEN: 
-                    <!-- Aquí calculamos el número de orden según la posición alfabética en la lista -->
                     <input type="text" id="est_orden" class="student-input" style="width: 40%; border:none;" 
                            value="{% for est in lista_estudiantes %}{% if estudiante and estudiante.id_estudiante == est.id_estudiante %}{{ loop.index }}{% endif %}{% endfor %}" readonly>
                 </td>
