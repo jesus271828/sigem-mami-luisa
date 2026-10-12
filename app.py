@@ -2228,6 +2228,85 @@ def ver_notas_guardadas():
         flash(f"Error al cargar los informes guardados: {str(e)}", "danger")
         return redirect(url_for('menu'))
 
+from xhtml2pdf import pisa
+from io import BytesIO
+from flask import make_response
+
+@app.route('/pdf/notas1')
+def generar_pdf_notas1():
+    if 'usuario' not in session and 'user_id' not in session:
+        flash("Debes iniciar sesión para acceder.", "warning")
+        return redirect(url_for('login'))
+
+    id_estudiante = request.args.get('id_estudiante')
+    if not id_estudiante:
+        flash("No se ha especificado un estudiante para el PDF.", "danger")
+        return redirect(url_for('ver_notas_guardadas'))
+
+    try:
+        conn = get_db_connection()
+        is_postgres = DATABASE_URL is not None
+        
+        estudiante = None
+        notas_guardadas = {}
+
+        if is_postgres:
+            cur = conn.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            # Buscar datos del estudiante
+            cur.execute('SELECT * FROM estudiantes WHERE id_estudiante = %s OR id::text = %s', (id_estudiante, id_estudiante))
+            estudiante = cur.fetchone()
+            
+            # Buscar notas guardadas de este estudiante
+            cur.execute('SELECT * FROM notas1 WHERE id_estudiante = %s', (id_estudiante,))
+            row_notas = cur.fetchone()
+            if row_notas:
+                notas_guardadas = dict(row_notas)
+            cur.close()
+        else:
+            conn.row_factory = sqlite3.Row
+            cur = conn.cursor()
+            cur.execute('SELECT * FROM estudiantes WHERE id_estudiante = ? OR id = ?', (id_estudiante, id_estudiante))
+            estudiante = cur.fetchone()
+            
+            cur.execute('SELECT * FROM notas1 WHERE id_estudiante = ?', (id_estudiante,))
+            row_notas = cur.fetchone()
+            if row_notas:
+                notas_guardadas = dict(row_notas)
+            cur.close()
+            
+        conn.close()
+
+        if not estudiante:
+            flash("Estudiante no encontrado.", "danger")
+            return redirect(url_for('ver_notas_guardadas'))
+
+        # Renderizamos la misma plantilla de notas1 pero con los datos fijos del estudiante
+        html_content = render_template(
+            'notas1.html',
+            estudiante=dict(estudiante),
+            notas=notas_guardadas,
+            lista_estudiantes=[dict(estudiante)],
+            docente_nombre=session.get('nombre_completo', 'Docente Titular')
+        )
+
+        # Generación del PDF con xhtml2pdf
+        pdf_buffer = BytesIO()
+        pisa_status = pisa.CreatePDF(BytesIO(html_content.encode("utf-8")), dest=pdf_buffer)
+
+        if pisa_status.err:
+            flash("Ocurrió un error al generar el documento PDF.", "danger")
+            return redirect(url_for('ver_notas_guardadas'))
+
+        response = make_response(pdf_buffer.getvalue())
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = f'inline; filename=Informe_Aprendizaje_{id_estudiante}.pdf'
+        return response
+
+    except Exception as e:
+        print("Error detallado al generar PDF de notas:", e)
+        flash(f"Error al generar el PDF: {str(e)}", "danger")
+        return redirect(url_for('ver_notas_guardadas'))
+
 @app.route('/notas2', methods=['GET', 'POST'])
 def notas2():
     if 'usuario' not in session:
