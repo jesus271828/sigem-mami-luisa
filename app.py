@@ -2870,24 +2870,24 @@ def planificacion_diaria():
         flash("Debes iniciar sesión para acceder.", "warning")
         return redirect(url_for('login'))
     
-    # Obtenemos los datos del usuario logueado de la sesión
-    nombre_docente = session.get('nombre_completo', '')
+    # Obtenemos el nombre del docente (verificando nombre_completo o usuario como respaldo)
+    nombre_docente = session.get('nombre_completo') or session.get('usuario') or session.get('nombre', '')
     rol = session.get('rol', '')
     area_asignada = session.get('area_especializada', session.get('curso_asignado', ''))
     
-    # Lista de grados estándar del centro educativo para que el maestro elija
+    # Lista de grados estándar del centro educativo
     grados_disponibles = [
-        "1ro Primaria (A/B)", "2do Primaria (A/B)", "3ro Primaria (A/B)",
-        "4to Primaria (A/B)", "5to Primaria (A/B)", "6to Primaria (A/B)"
+        "1ro A", "1ro B", "2do A", "2do B", "3ro A", "3ro B",
+        "4to A", "4to B", "5to A", "5to B", "6to A", "6to B"
     ]
 
     if request.method == 'POST':
-        # Lógica para guardar la planificación diaria en tu base de datos
+        # Lógica de guardado
         pass
 
     return render_template(
         'planificacion_diaria.html',
-        nombre_docente=nombre_docente,
+        docente=nombre_docente,  # <-- CORREGIDO: coincide con {{ docente }} en la plantilla
         rol=rol,
         area_asignada=area_asignada,
         grados_disponibles=grados_disponibles
