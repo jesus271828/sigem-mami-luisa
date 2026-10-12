@@ -15,16 +15,23 @@
         .form-control, .form-select, .form-control:focus, .form-select:focus { background-color: transparent; border: none; box-shadow: none; font-size: 0.85rem; }
         .input-line { border-bottom: 1px solid #333; border-radius: 0; padding: 2px 5px; }
 
-        /* Estilo estricto para forzar impresión en una sola página horizontal */
+        /* REGLAS DE IMPRESIÓN OPTIMIZADAS PARA HOJA HORIZONTAL COMPLETA */
         @media print {
-            body {
+            @page {
+                size: letter landscape;
+                margin: 0.3cm !important;
+            }
+            html, body {
                 background: white !important;
                 margin: 0 !important;
                 padding: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                font-size: 11px !important;
                 print-color-adjust: exact;
                 -webkit-print-color-adjust: exact;
             }
-            .sidebar, .d-print-none {
+            .sidebar, .d-print-none, .alert {
                 display: none !important;
             }
             .col-md-9 {
@@ -39,22 +46,34 @@
                 padding: 0px !important;
                 border: none !important;
                 width: 100% !important;
+                margin: 0 !important;
             }
-            @page {
-                size: letter landscape;
-                margin: 0.5cm;
+            table {
+                font-size: 0.72rem !important;
+                width: 100% !important;
+                page-break-inside: avoid !important;
+                margin-bottom: 0 !important;
+            }
+            .table-bordered th, .table-bordered td {
+                padding: 2px 4px !important;
+                border-color: #000 !important;
             }
             textarea, input, select {
-                resize: none;
+                resize: none !important;
                 border: none !important;
                 background: transparent !important;
                 box-shadow: none !important;
-                padding: 2px !important;
+                padding: 0px !important;
+                margin: 0px !important;
+                font-size: 0.72rem !important;
+                line-height: 1.15 !important;
                 appearance: none;
                 -webkit-appearance: none;
+                height: auto !important;
             }
-            table {
-                font-size: 0.8rem !important;
+            .row {
+                margin-left: 0 !important;
+                margin-right: 0 !important;
             }
         }
     </style>
@@ -95,7 +114,7 @@
                     
                     <form action="{{ url_for('guardar_planificacion_diaria') }}" method="POST">
                         <!-- Cabecera del Esquema -->
-                        <div class="row mb-3 align-items-center">
+                        <div class="row mb-2 align-items-center">
                             <div class="col-md-7">
                                 <div class="mb-1">
                                     <label class="fw-bold">Docente:</label>
@@ -103,7 +122,6 @@
                                 </div>
                                 <div class="mb-1">
                                     <label class="fw-bold">Área:</label>
-                                    <!-- Se autocompleta con el área asignada para maestross de área -->
                                     <input type="text" name="area" class="form-control input-line d-inline-block w-80 fw-bold" 
                                            value="{{ area_asignada if area_asignada else '' }}" 
                                            placeholder="Ej. Lengua Española / Matemáticas" 
@@ -113,7 +131,6 @@
                                     <div class="col-md-7 mb-1">
                                         <label class="fw-bold">Grado y Sección:</label>
                                         {% if session.get('rol') == 'maestro_area' %}
-                                            <!-- Desplegable para seleccionar grado -->
                                             <select name="grado_seccion" class="form-select input-line d-inline-block w-50 fw-bold" required>
                                                 <option value="" disabled selected>Seleccione...</option>
                                                 <option value="1ro A">1ro A</option>
@@ -130,7 +147,6 @@
                                                 <option value="6to B">6to B</option>
                                             </select>
                                         {% else %}
-                                            <!-- Campo estático para maestro titular -->
                                             <input type="text" name="grado_seccion" class="form-control input-line d-inline-block w-50 fw-bold" value="{{ grado_seccion }}" required>
                                         {% endif %}
                                     </div>
@@ -141,8 +157,8 @@
                                 </div>
                             </div>
                             <div class="col-md-5 text-end">
-                                <h4 class="text-primary fw-bold mb-0" style="font-size: 1.4rem; color: #003366 !important;">Esquema de Planificación Diaria</h4>
-                                <h5 class="text-secondary fw-bold" style="font-size: 1.1rem; color: #003366 !important;">Nivel Primario</h5>
+                                <h4 class="text-primary fw-bold mb-0" style="font-size: 1.3rem; color: #003366 !important;">Esquema de Planificación Diaria</h4>
+                                <h5 class="text-secondary fw-bold" style="font-size: 1.0rem; color: #003366 !important;">Nivel Primario</h5>
                             </div>
                         </div>
 
@@ -151,35 +167,35 @@
                             <tbody>
                                 <tr>
                                     <td colspan="4">
-                                        <strong class="d-block mb-1" style="font-size: 0.85rem;">Estrategias de enseñanza – aprendizaje:</strong>
+                                        <strong class="d-block mb-1" style="font-size: 0.8rem;">Estrategias de enseñanza – aprendizaje:</strong>
                                         <textarea name="estrategias" class="form-control py-0" rows="2" placeholder="Escribe las estrategias..."></textarea>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td colspan="4">
-                                        <strong class="d-block mb-1" style="font-size: 0.85rem;">Intención pedagógica del día:</strong>
+                                        <strong class="d-block mb-1" style="font-size: 0.8rem;">Intención pedagógica del día:</strong>
                                         <textarea name="intencion_pedagogica" class="form-control py-0" rows="2" placeholder="¿Cuál es el propósito de hoy?"></textarea>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td colspan="4">
-                                        <strong class="d-block mb-1" style="font-size: 0.85rem;">Indicador de logro:</strong>
+                                        <strong class="d-block mb-1" style="font-size: 0.8rem;">Indicador de logro:</strong>
                                         <textarea name="indicador_logro" class="form-control py-0" rows="2" placeholder="Indica el logro esperado..."></textarea>
                                     </td>
                                 </tr>
                                 
                                 <!-- Encabezados de la grilla principal -->
-                                <tr class="text-start fw-bold" style="font-size: 0.85rem; background-color: #f8f9fa;">
-                                    <td style="width: 20%;">Competencia específica</td>
-                                    <td style="width: 12%;">Momentos</td>
-                                    <td style="width: 43%;">Actividades / Duración</td>
-                                    <td style="width: 25%;">Recursos:</td>
+                                <tr class="text-start fw-bold" style="font-size: 0.8rem; background-color: #f8f9fa;">
+                                    <td style="width: 22%;">Competencia específica</td>
+                                    <td style="width: 10%;">Momentos</td>
+                                    <td style="width: 44%;">Actividades / Duración</td>
+                                    <td style="width: 24%;">Recursos:</td>
                                 </tr>
 
                                 <!-- Filas de Momentos con Recursos divididos alineadamente -->
                                 <tr>
                                     <td rowspan="3" class="align-top">
-                                        <textarea name="competencia_especifica" class="form-control" rows="10" placeholder="Competencias específicas..."></textarea>
+                                        <textarea name="competencia_especifica" class="form-control" rows="8" placeholder="Competencias específicas..."></textarea>
                                     </td>
                                     <td class="align-top"><strong>Inicio</strong></td>
                                     <td class="align-top">
@@ -211,7 +227,7 @@
                                 <!-- Fila final de Recuperación Pedagógica -->
                                 <tr>
                                     <td colspan="4">
-                                        <strong class="d-block mb-1" style="font-size: 0.85rem;">Actividades de recuperación pedagógica:</strong>
+                                        <strong class="d-block mb-1" style="font-size: 0.8rem;">Actividades de recuperación pedagógica:</strong>
                                         <textarea name="recuperacion_pedagogica" class="form-control py-0" rows="2" placeholder="Actividades de reforzamiento..."></textarea>
                                     </td>
                                 </tr>

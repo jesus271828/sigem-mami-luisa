@@ -2816,48 +2816,60 @@ def planificacion_diaria():
 
 @app.route('/guardar_planificacion_diaria', methods=['POST'])
 def guardar_planificacion_diaria():
-    if request.method == 'POST':
-        try:
-            conn = psycopg2.connect(DATABASE_URL)
-            cursor = PostgresCursorWrapper(conn)
+    if 'usuario' not in session and 'user_id' not in session:
+        return redirect(url_for('login'))
 
-            query = """
-                INSERT INTO planificaciones_diarias (
-                    docente, area, grado_seccion, fecha, estrategias,
-                    intencion_pedagogica, indicador_logro, competencia_especifica,
-                    actividad_inicio, actividad_desarrollo, actividad_cierre,
-                    recursos, recuperacion_pedagogica
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """
+    docente = request.form.get('docente')
+    area = request.form.get('area')
+    grado_seccion = request.form.get('grado_seccion')
+    fecha = request.form.get('fecha')
+    
+    estrategias = request.form.get('estrategias')
+    intencion_pedagogica = request.form.get('intencion_pedagogica')
+    indicador_logro = request.form.get('indicador_logro')
+    competencia_especifica = request.form.get('competencia_especifica')
+    
+    actividad_inicio = request.form.get('actividad_inicio')
+    actividad_desarrollo = request.form.get('actividad_desarrollo')
+    actividad_cierre = request.form.get('actividad_cierre')
+    
+    # NUEVOS CAMPOS DE RECURSOS POR MOMENTO
+    recursos_inicio = request.form.get('recursos_inicio')
+    recursos_desarrollo = request.form.get('recursos_desarrollo')
+    recursos_cierre = request.form.get('recursos_cierre')
+    
+    recuperacion_pedagogica = request.form.get('recuperacion_pedagogica')
 
-            params = (
-                request.form.get("docente"),
-                request.form.get("area"),
-                request.form.get("grado_seccion"),
-                request.form.get("fecha"),
-                request.form.get("estrategias"),
-                request.form.get("intencion_pedagogica"),
-                request.form.get("indicador_logro"),
-                request.form.get("competencia_especifica"),
-                request.form.get("actividad_inicio"),
-                request.form.get("actividad_desarrollo"),
-                request.form.get("actividad_cierre"),
-                request.form.get("recursos"),
-                request.form.get("recuperacion_pedagogica")
-            )
+    try:
+        conn = get_db_connection()
+        is_postgres = DATABASE_URL is not None
+        
+        if is_postgres:
+            cur = conn.conn.cursor()
+            cur.execute('''
+                INSERT INTO planificaciones 
+                (docente, area, grado_seccion, fecha, estrategias, intencion_pedagogica, indicador_logro, competencia_especifica, actividad_inicio, actividad_desarrollo, actividad_cierre, recursos_inicio, recursos_desarrollo, recursos_cierre, recuperacion_pedagogica)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ''', (docente, area, grado_seccion, fecha, estrategias, intencion_pedagogica, indicador_logro, competencia_especifica, actividad_inicio, actividad_desarrollo, actividad_cierre, recursos_inicio, recursos_desarrollo, recursos_cierre, recuperacion_pedagogica))
+            conn.conn.commit()
+            cur.close()
+        else:
+            cur = conn.cursor()
+            cur.execute('''
+                INSERT INTO planificaciones 
+                (docente, area, grado_seccion, fecha, estrategias, intencion_pedagogica, indicador_logro, competencia_especifica, actividad_inicio, actividad_desarrollo, actividad_cierre, recursos_inicio, recursos_desarrollo, recursos_cierre, recuperacion_pedagogica)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (docente, area, grado_seccion, fecha, estrategias, intencion_pedagogica, indicador_logro, competencia_especifica, actividad_inicio, actividad_desarrollo, actividad_cierre, recursos_inicio, recursos_desarrollo, recursos_cierre, recuperacion_pedagogica))
+            conn.commit()
+            cur.close()
+            
+        conn.close()
+        flash("Planificación guardada correctamente.", "success")
+    except Exception as e:
+        print("Error al guardar planificación:", e)
+        flash("Ocurrió un error al guardar la planificación.", "danger")
 
-            cursor.execute(query, params)
-            cursor.close(commit_changes=True)
-
-            flash('¡Planificación diaria guardada con éxito!', 'success')
-            return redirect(url_for('ver_planificaciones_diarias'))
-
-        except Exception as e:
-            print("❌ ERROR AL GUARDAR EN BASE DE DATOS:", e)
-            flash(f'Error al guardar en la base de datos: {e}', 'danger')
-            return redirect(url_for('planificacion_diaria'))
-
-    return redirect(url_for('planificacion_diaria'))
+    return redirect(url_for('ver_planificaciones_diarias'))
 
 import io
 from flask import make_response
