@@ -2380,8 +2380,17 @@ def generar_pdf_notas(id_estudiante):
         print("--- ERROR AL GENERAR PDF DE NOTAS CON WEASYPRINT:", e)
         return 'Hubo un error al generar el PDF de notas', 500
 
-@app.route('/planificacion')
+# 1. RUTA PARA EL MENÚ DE OPCIONES DE PLANIFICACIÓN
 @app.route('/menu_planificacion')
+def menu_planificacion():
+    if 'usuario' not in session and 'nombre_completo' not in session:
+        return redirect(url_for('login'))
+    
+    return render_template('menu_planificacion.html')
+
+
+# 2. RUTA PARA CREAR O EDITAR LA UNIDAD DE APRENDIZAJE
+@app.route('/planificacion')
 def planificacion():
     if 'usuario' not in session and 'nombre_completo' not in session:
         return redirect(url_for('login'))
@@ -2389,7 +2398,7 @@ def planificacion():
     # Obtenemos el grado de la sesión de manera segura
     grado_actual = session.get('curso_asignado', session.get('grado_seccion', 'Primer Grado'))
     if not grado_actual or grado_actual == 'None':
-        grado_actual = 'Primer Grado' # O el valor predeterminado que prefieras
+        grado_actual = 'Primer Grado'
     
     usuario_info = {
         'nombre_completo': session.get('nombre_completo', ''),
@@ -2399,7 +2408,7 @@ def planificacion():
     return render_template(
         'planificacion.html', 
         usuario=usuario_info, 
-        grado=grado_actual  # <-- Pasamos la variable grado explícitamente aquí
+        grado=grado_actual
     )
 
 @app.route('/mis_planificaciones')
