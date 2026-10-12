@@ -2711,12 +2711,11 @@ def ver_planificaciones_diarias():
         flash("Debes iniciar sesión para acceder.", "warning")
         return redirect(url_for('login'))
 
+    planificaciones_formateadas = []
     try:
         conn = get_db_connection()
         is_postgres = DATABASE_URL is not None
         
-        planificaciones_lista = []
-
         if is_postgres:
             cur = conn.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             cur.execute('SELECT * FROM planificaciones ORDER BY id DESC')
@@ -2731,28 +2730,18 @@ def ver_planificaciones_diarias():
             
         conn.close()
 
-        # Convertimos los resultados a diccionarios seguros
-        planificaciones_formateadas = []
         for row in planificaciones_lista:
-            p_dict = dict(row)
-            # Aseguramos campos por defecto si faltan en filas antiguas
-            if 'recursos_inicio' not in p_dict:
-                p_dict['recursos_inicio'] = p_dict.get('recursos', '')
-            if 'recursos_desarrollo' not in p_dict:
-                p_dict['recursos_desarrollo'] = ''
-            if 'recursos_cierre' not in p_dict:
-                p_dict['recursos_cierre'] = ''
-            planificaciones_formateadas.append(p_dict)
-
-        return render_template(
-            'ver_planificaciones_diarias.html',
-            planificaciones=planificaciones_formateadas
-        )
+            planificaciones_formateadas.append(dict(row))
 
     except Exception as e:
-        print("Error al cargar historial de planificaciones:", e)
-        flash(f"Error al cargar las planificaciones: {str(e)}", "danger")
-        return redirect(url_for('menu_planificacion'))
+        print("Error detallado al cargar planificaciones:", e)
+        # Si la tabla no existe o falta una columna, inicializamos vacía para que no colapse la vista
+        planificaciones_formateadas = []
+
+    return render_template(
+        'ver_planificaciones_diarias.html',
+        planificaciones=planificaciones_formateadas
+    )
 
 @app.route('/ver_detalle_planificacion_diaria/<int:id>')
 def ver_detalle_planificacion_diaria(id):
