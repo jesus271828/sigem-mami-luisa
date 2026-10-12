@@ -2719,7 +2719,6 @@ def ver_planificaciones_diarias():
 
         if is_postgres:
             cur = conn.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-            # Consultamos todas las planificaciones ordenadas por fecha o id descendente
             cur.execute('SELECT * FROM planificaciones ORDER BY id DESC')
             planificaciones_lista = cur.fetchall()
             cur.close()
@@ -2732,13 +2731,17 @@ def ver_planificaciones_diarias():
             
         conn.close()
 
-        # Convertimos los resultados a diccionarios limpios
+        # Convertimos los resultados a diccionarios seguros
         planificaciones_formateadas = []
-        for p in planificaciones_lista:
-            p_dict = dict(p)
-            # Aseguramos compatibilidad si algún campo antiguo no existe
+        for row in planificaciones_lista:
+            p_dict = dict(row)
+            # Aseguramos campos por defecto si faltan en filas antiguas
             if 'recursos_inicio' not in p_dict:
                 p_dict['recursos_inicio'] = p_dict.get('recursos', '')
+            if 'recursos_desarrollo' not in p_dict:
+                p_dict['recursos_desarrollo'] = ''
+            if 'recursos_cierre' not in p_dict:
+                p_dict['recursos_cierre'] = ''
             planificaciones_formateadas.append(p_dict)
 
         return render_template(
