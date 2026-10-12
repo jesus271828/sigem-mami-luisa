@@ -2705,6 +2705,7 @@ def descargar_pdf_planificacion(id):
         flash("Error al generar el documento PDF.", "danger")
         return redirect(url_for('mis_planificaciones'))
 
+# --- RUTA PARA VER EL HISTORIAL DE PLANIFICACIONES ---
 @app.route('/ver_planificaciones_diarias')
 def ver_planificaciones_diarias():
     if 'usuario' not in session and 'user_id' not in session:
@@ -2722,19 +2723,19 @@ def ver_planificaciones_diarias():
         if is_postgres:
             cur = conn.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             # Si es oficina o admin, trae todas. Si es maestro normal, trae solo las suyas.
-            if rol in ['admin', 'oficina'] or 'Oficina' in nombre_usuario:
-                cur.execute('SELECT * FROM planificaciones ORDER BY id DESC')
+            if rol in ['admin', 'oficina'] or 'Oficina' in nombre_usuario or 'Luis Felipe' in nombre_usuario:
+                cur.execute('SELECT * FROM planificaciones_diarias ORDER BY id DESC')
             else:
-                cur.execute('SELECT * FROM planificaciones WHERE docente = %s ORDER BY id DESC', (nombre_usuario,))
+                cur.execute('SELECT * FROM planificaciones_diarias WHERE docente = %s ORDER BY id DESC', (nombre_usuario,))
             planificaciones_lista = cur.fetchall()
             cur.close()
         else:
             conn.row_factory = sqlite3.Row
             cur = conn.cursor()
-            if rol in ['admin', 'oficina'] or 'Oficina' in nombre_usuario:
-                cur.execute('SELECT * FROM planificaciones ORDER BY id DESC')
+            if rol in ['admin', 'oficina'] or 'Oficina' in nombre_usuario or 'Luis Felipe' in nombre_usuario:
+                cur.execute('SELECT * FROM planificaciones_diarias ORDER BY id DESC')
             else:
-                cur.execute('SELECT * FROM planificaciones WHERE docente = ? ORDER BY id DESC', (nombre_usuario,))
+                cur.execute('SELECT * FROM planificaciones_diarias WHERE docente = ? ORDER BY id DESC', (nombre_usuario,))
             planificaciones_lista = cur.fetchall()
             cur.close()
             
@@ -2751,6 +2752,65 @@ def ver_planificaciones_diarias():
         'ver_planificaciones_diarias.html',
         planificaciones=planificaciones_formateadas
     )
+
+
+# --- RUTA PARA GUARDAR LA PLANIFICACIÓN DIARIA ---
+@app.route('/guardar_planificacion_diaria', methods=['POST'])
+def guardar_planificacion_diaria():
+    if 'usuario' not in session and 'user_id' not in session:
+        return redirect(url_for('login'))
+
+    docente = request.form.get('docente')
+    area = request.form.get('area')
+    grado_seccion = request.form.get('grado_seccion')
+    fecha = request.form.get('fecha')
+    
+    estrategias = request.form.get('estrategias')
+    intencion_pedagogica = request.form.get('intencion_pedagogica')
+    indicador_logro = request.form.get('indicador_logro')
+    competencia_especifica = request.form.get('competencia_especifica')
+    
+    actividad_inicio = request.form.get('actividad_inicio')
+    actividad_desarrollo = request.form.get('actividad_desarrollo')
+    actividad_cierre = request.form.get('actividad_cierre')
+    
+    # Recursos divididos por momento
+    recursos_inicio = request.form.get('recursos_inicio')
+    recursos_desarrollo = request.form.get('recursos_desarrollo')
+    recursos_cierre = request.form.get('recursos_cierre')
+    
+    recuperacion_pedagogica = request.form.get('recuperacion_pedagogica')
+
+    try:
+        conn = get_db_connection()
+        is_postgres = DATABASE_URL is not None
+        
+        if is_postgres:
+            cur = conn.conn.cursor()
+            cur.execute('''
+                INSERT INTO planificaciones_diarias 
+                (docente, area, grado_seccion, fecha, estrategias, intencion_pedagogica, indicador_logro, competencia_especifica, actividad_inicio, actividad_desarrollo, actividad_cierre, recursos_inicio, recursos_desarrollo, recursos_cierre, recuperacion_pedagogica)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ''', (docente, area, grado_seccion, fecha, estrategias, intencion_pedagogica, indicador_logro, competencia_especifica, actividad_inicio, actividad_desarrollo, actividad_cierre, recursos_inicio, recursos_desarrollo, recursos_cierre, recuperacion_pedagogica))
+            conn.conn.commit()
+            cur.close()
+        else:
+            cur = conn.cursor()
+            cur.execute('''
+                INSERT INTO planificaciones_diarias 
+                (docente, area, grado_seccion, fecha, estrategias, intencion_pedagogica, indicador_logro, competencia_especifica, actividad_inicio, actividad_desarrollo, actividad_cierre, recursos_inicio, recursos_desarrollo, recursos_cierre, recuperacion_pedagogica)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (docente, area, grado_seccion, fecha, estrategias, intencion_pedagogica, indicador_logro, competencia_especifica, actividad_inicio, actividad_desarrollo, actividad_cierre, recursos_inicio, recursos_desarrollo, recursos_cierre, recuperacion_pedagogica))
+            conn.commit()
+            cur.close()
+            
+        conn.close()
+        flash("Planificación guardada correctamente.", "success")
+    except Exception as e:
+        print("Error al guardar planificación:", e)
+        flash("Ocurrió un error al guardar la planificación.", "danger")
+
+    return redirect(url_for('ver_planificaciones_diarias'))
 
 @app.route('/ver_detalle_planificacion_diaria/<int:id>')
 def ver_detalle_planificacion_diaria(id):
