@@ -2230,25 +2230,29 @@ def ver_notas_guardadas():
 
 import io
 import json
+import os
 from flask import render_template, make_response, request
+from supabase import create_client
 from xhtml2pdf import pisa
 
 @app.route('/pdf/notas1')
 def generar_pdf_notas1():
     try:
-        global supabase
-        # Captura el ID desde los parámetros de la URL (ej: ?id_estudiante=35562360)
         estudiante_id = request.args.get('id_estudiante')
-        
         if not estudiante_id:
             return "No se ha proporcionado el ID del estudiante", 400
 
+        # Inicialización directa del cliente para evitar errores de variable no definida
+        url = os.environ.get("SUPABASE_URL")
+        key = os.environ.get("SUPABASE_KEY")
+        db = create_client(url, key)
+
         # 1. Consultar los datos del estudiante
-        response_estudiante = supabase.table('estudiantes').select('*').eq('id', estudiante_id).execute()
+        response_estudiante = db.table('estudiantes').select('*').eq('id', estudiante_id).execute()
         estudiante = response_estudiante.data[0] if response_estudiante.data else {}
 
         # 2. Consultar el registro de notas en la tabla 'notas1' filtrando por 'id_estudiante'
-        response_notas = supabase.table('notas1').select('*').eq('id_estudiante', estudiante_id).execute()
+        response_notas = db.table('notas1').select('*').eq('id_estudiante', estudiante_id).execute()
         
         notas_data = {}
         if response_notas.data:
