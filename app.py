@@ -335,7 +335,8 @@ def login():
             
             if is_postgres:
                 cur = conn.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-                cur.execute('SELECT username, rol, nombre_completo, curso_asignado FROM usuarios WHERE username = %s AND password = %s', (usuario_ingresado, password))
+                # Seleccionamos también area_especializada para cubrir a los maestros de área
+                cur.execute('SELECT username, rol, nombre_completo, curso_asignado, area_especializada FROM usuarios WHERE username = %s AND password = %s', (usuario_ingresado, password))
                 row = cur.fetchone()
                 cur.close()
                 if row:
@@ -343,7 +344,7 @@ def login():
             else:
                 conn.row_factory = sqlite3.Row
                 cur = conn.cursor()
-                cur.execute('SELECT username, rol, nombre_completo, curso_asignado FROM usuarios WHERE username = ? AND password = ?', (usuario_ingresado, password))
+                cur.execute('SELECT username, rol, nombre_completo, curso_asignado, area_especializada FROM usuarios WHERE username = ? AND password = ?', (usuario_ingresado, password))
                 row = cur.fetchone()
                 cur.close()
                 if row:
@@ -362,7 +363,11 @@ def login():
             session['usuario'] = user.get('username', '')
             session['rol'] = user.get('rol', '')
             session['nombre_completo'] = user.get('nombre_completo', '')
-            session['curso_asignado'] = user.get('curso_asignado', '')
+            
+            # Asignamos de forma inteligente: si es maestro de área usa area_especializada, si no, curso_asignado
+            asignacion_real = user.get('curso_asignado') or user.get('area_especializada') or ''
+            session['curso_asignado'] = asignacion_real
+            
             return redirect('/menu')
         else:
             flash("Usuario o contraseña incorrectos", "danger")
