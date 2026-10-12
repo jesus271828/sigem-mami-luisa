@@ -2,188 +2,115 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Esquema de Planificación Diaria</title>
+    <title>Planificación Diaria PDF</title>
     <style>
         @page {
             size: letter landscape;
-            margin: 0.5cm; /* Márgenes mínimos para aprovechar toda la hoja */
+            margin: 0.8cm;
         }
         body {
             font-family: Helvetica, Arial, sans-serif;
             font-size: 10px;
-            color: #000;
-            background-color: #fff;
-            margin: 0;
-            padding: 0;
+            color: #111;
         }
-        .container {
-            width: 100%;
-            height: 100%;
-        }
-        .header-table {
-            width: 100%;
-            margin-bottom: 10px;
-            border-collapse: collapse;
-        }
-        .title-block {
+        .header-title {
             text-align: right;
-            vertical-align: top;
-        }
-        .title {
-            font-size: 19px;
-            font-weight: bold;
             color: #003366;
-            margin: 0;
-        }
-        .subtitle {
-            font-size: 12px;
+            font-size: 14px;
             font-weight: bold;
-            color: #003366;
-            margin-top: 3px;
         }
-        .info-label {
-            font-weight: bold;
-            font-size: 10.5px;
-            color: #000;
-        }
-        .info-line {
-            border-bottom: 1px solid #000;
-            padding-bottom: 2px;
-            margin-top: 3px;
-            min-height: 15px;
-            font-size: 10.5px;
-            color: #333;
-        }
-        .main-table {
+        .table-custom {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 5px;
+            margin-top: 10px;
         }
-        .main-table td {
+        .table-custom th, .table-custom td {
             border: 1px solid #000;
-            padding: 8px; /* Mayor espacio interno para expandir las celdas */
+            padding: 5px 6px;
             vertical-align: top;
         }
-        .header-row {
+        .bg-gray {
             background-color: #f2f2f2;
             font-weight: bold;
-            text-align: left;
-        }
-        .field-title {
-            font-weight: bold;
-            font-size: 10.5px;
-            color: #000;
-            margin-bottom: 4px;
-        }
-        .field-content {
-            font-size: 10.5px;
-            color: #333;
-            min-height: 30px; /* Altura mínima para que las cajas ocupen más espacio vertical */
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <!-- Encabezado extendido -->
-        <table class="header-table">
-            <tr>
-                <td style="width: 58%; border: none; vertical-align: top;">
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <tr>
-                            <td style="border: none; padding-bottom: 8px;">
-                                <span class="info-label">Docente:</span>
-                                <div class="info-line">{{ plan.get('docente', '') }}</div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td style="border: none; padding-bottom: 8px;">
-                                <span class="info-label">Área:</span>
-                                <div class="info-line">{{ plan.get('area', '') }}</div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td style="border: none;">
-                                <table style="width: 100%; border-collapse: collapse;">
-                                    <tr>
-                                        <td style="border: none; width: 55%;">
-                                            <span class="info-label">Grado y Sección:</span>
-                                            <div class="info-line">{{ plan.get('grado_seccion', '') }}</div>
-                                        </td>
-                                        <td style="border: none; width: 5%;"></td>
-                                        <td style="border: none; width: 40%;">
-                                            <span class="info-label">Fecha:</span>
-                                            <div class="info-line">{{ plan.get('fecha', '') }}</div>
-                                        </td>
-                                    </tr>
-                                </table>
-                            </td>
-                        </tr>
-                    </table>
-                </td>
-                <td style="width: 2%; border: none;"></td>
-                <td style="width: 40%; border: none;" class="title-block">
-                    <div class="title">Esquema de Planificación Diaria</div>
-                    <div class="subtitle">Nivel Primario</div>
-                </td>
-            </tr>
-        </table>
+    <!-- CABECERA DEL INFORME -->
+    <table style="width: 100%; margin-bottom: 8px;">
+        <tr>
+            <td style="width: 60%;">
+                <p><strong>Docente:</strong> {{ plan.get('docente', '') }}</p>
+                <p><strong>Área:</strong> {{ plan.get('area', '') }}</p>
+                <p><strong>Grado y Sección:</strong> {{ plan.get('grado_seccion', '') }} &nbsp;&nbsp;|&nbsp;&nbsp; <strong>Fecha:</strong> {{ plan.get('fecha', '') }}</p>
+            </td>
+            <td style="width: 40%; text-align: right;">
+                <div class="header-title">Esquema de Planificación Diaria</div>
+                <div style="font-size: 11px; color: #555;">Nivel Primario</div>
+            </td>
+        </tr>
+    </table>
 
-        <!-- Tabla principal expandida para cubrir toda la página -->
-        <table class="main-table">
+    <!-- ESTRUCTURA PRINCIPAL -->
+    <table class="table-custom">
+        <tbody>
             <tr>
                 <td colspan="4">
-                    <div class="field-title">Estrategias de enseñanza – aprendizaje:</div>
-                    <div class="field-content">{{ plan.get('estrategias', '') }}</div>
+                    <strong>Estrategias de enseñanza – aprendizaje:</strong><br>
+                    {{ plan.get('estrategias', '') }}
                 </td>
             </tr>
             <tr>
                 <td colspan="4">
-                    <div class="field-title">Intención pedagógica del día:</div>
-                    <div class="field-content">{{ plan.get('intencion_pedagogica', '') }}</div>
+                    <strong>Intención pedagógica del día:</strong><br>
+                    {{ plan.get('intencion_pedagogica', '') }}
                 </td>
             </tr>
             <tr>
                 <td colspan="4">
-                    <div class="field-title">Indicador de logro:</div>
-                    <div class="field-content">{{ plan.get('indicador_logro', '') }}</div>
+                    <strong>Indicador de logro:</strong><br>
+                    {{ plan.get('indicador_logro', '') }}
                 </td>
-            </tr>
-            
-            <tr class="header-row">
-                <td style="width: 25%;">Competencia específica</td>
-                <td style="width: 15%;">Momentos</td>
-                <td style="width: 40%;">Actividades / Duración</td>
-                <td style="width: 20%;">Recursos:</td>
             </tr>
 
+            <!-- ENCABEZADOS DE TABLA -->
+            <tr class="bg-gray">
+                <th style="width: 22%;">Competencia específica</th>
+                <th style="width: 10%;">Momentos</th>
+                <th style="width: 44%;">Actividades / Duración</th>
+                <th style="width: 24%;">Recursos:</th>
+            </tr>
+
+            <!-- MOMENTOS Y RECURSOS ALINEADOS -->
             <tr>
-                <td rowspan="3" style="vertical-align: top;">
-                    <div class="field-content" style="min-height: 120px;">{{ plan.get('competencia_especifica', '') }}</div>
+                <td rowspan="3">
+                    {{ plan.get('competencia_especifica', '') }}
                 </td>
                 <td><strong>Inicio</strong></td>
-                <td><div class="field-content" style="min-height: 35px;">{{ plan.get('actividad_inicio', '') }}</div></td>
-                <td rowspan="3" style="vertical-align: top;">
-                    <div class="field-content" style="min-height: 120px;">{{ plan.get('recursos', '') }}</div>
-                </td>
+                <td>{{ plan.get('actividad_inicio', '') }}</td>
+                <td>{{ plan.get('recursos_inicio', '') }}</td>
             </tr>
             <tr>
                 <td><strong>Desarrollo</strong></td>
-                <td><div class="field-content" style="min-height: 50px;">{{ plan.get('actividad_desarrollo', '') }}</div></td>
+                <td>{{ plan.get('actividad_desarrollo', '') }}</td>
+                <td>{{ plan.get('recursos_desarrollo', '') }}</td>
             </tr>
             <tr>
                 <td><strong>Cierre</strong></td>
-                <td><div class="field-content" style="min-height: 35px;">{{ plan.get('actividad_cierre', '') }}</div></td>
+                <td>{{ plan.get('actividad_cierre', '') }}</td>
+                <td>{{ plan.get('recursos_cierre', '') }}</td>
             </tr>
 
+            <!-- RECUPERACIÓN PEDAGÓGICA -->
             <tr>
                 <td colspan="4">
-                    <div class="field-title">Actividades de recuperación pedagógica:</div>
-                    <div class="field-content">{{ plan.get('recuperacion_pedagogica', '') }}</div>
+                    <strong>Actividades de recuperación pedagógica:</strong><br>
+                    {{ plan.get('recuperacion_pedagogica', '') }}
                 </td>
             </tr>
-        </table>
-    </div>
+        </tbody>
+    </table>
 
 </body>
 </html>

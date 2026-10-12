@@ -2901,44 +2901,50 @@ from xhtml2pdf import pisa
 
 @app.route('/imprimir_planificacion_diaria_pdf/<int:id>')
 def imprimir_planificacion_diaria_pdf(id):
-    if 'usuario' not in session and 'nombre_completo' not in session:
+    if 'usuario' not in session and 'user_id' not in session:
         return redirect(url_for('login'))
 
     try:
-        conn = psycopg2.connect(DATABASE_URL)
-        cursor = PostgresCursorWrapper(conn)
+        conn = get_db_connection()
+        is_postgres = DATABASE_URL is not None
+        
+        plan = None
+        if is_postgres:
+            cur = conn.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute('SELECT * FROM planificaciones_diarias WHERE id = %s', (id,))
+            plan = cur.fetchone()
+            cur.close()
+        else:
+            conn.row_factory = sqlite3.Row
+            cur = conn.cursor()
+            cur.execute('SELECT * FROM planificaciones_diarias WHERE id = ?', (id,))
+            plan = cur.fetchone()
+            cur.close()
+            
+        conn.close()
 
-        query = 'SELECT * FROM planificaciones_diarias WHERE id = ?'
-        cursor.execute(query, (id,))
-        planificacion = cursor.fetchone()
-        cursor.close()
-
-        print(f"🔍 Datos recuperados para PDF ID {id}: {planificacion}")
-
-        if not planificacion:
-            flash('Planificación no encontrada.', 'danger')
+        if not plan:
+            flash("Planificación no encontrada.", "danger")
             return redirect(url_for('ver_planificaciones_diarias'))
 
-        # Renderizar la plantilla HTML pasando el diccionario
-        rendered_html = render_template('pdf_planificacion_diaria.html', plan=planificacion)
-
-        pdf_buffer = io.BytesIO()
-        pisa_status = pisa.CreatePDF(rendered_html, dest=pdf_buffer)
-
+        # Renderizamos la plantilla HTML para el PDF convirtiendo el objeto a dict
+        plan_dict = dict(plan)
+        
+        html_content = render_template('pdf_planificacion_diaria.html', plan=plan_dict)
+        
+        # Generación del PDF con xhtml2pdf
+        pdf_file = io.BytesIO()
+        pisa_status = pisa.CreatePDF(io.BytesIO(html_content.encode('utf-8')), dest=pdf_file)
+        
         if pisa_status.err:
-            print("❌ Error de pisa al generar PDF:", pisa_status.err)
-            flash('Error al generar el documento PDF.', 'danger')
-            return redirect(url_for('ver_planificaciones_diarias'))
+            return "Error al generar el PDF", 500
 
-        pdf_buffer.seek(0)
-        response = make_response(pdf_buffer.read())
-        response.headers['Content-Type'] = 'application/pdf'
-        response.headers['Content-Disposition'] = f'inline; filename=Planificacion_Diaria_{id}.pdf'
-        return response
+        pdf_file.seek(0)
+        return send_file(pdf_file, mimetype='application/pdf', as_attachment=False, download_name=f"planificacion_{id}.pdf")
 
     except Exception as e:
-        print("❌ Error crítico al generar PDF de planificación diaria:", e)
-        flash('Error al procesar la solicitud del PDF.', 'danger')
+        print("Error al exportar PDF:", e)
+        flash(f"Error al generar el PDF: {str(e)}", "danger")
         return redirect(url_for('ver_planificaciones_diarias'))
 
 @app.route('/imprimir_planificaciones_semana_pdf', methods=['GET', 'POST'])
