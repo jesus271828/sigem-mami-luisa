@@ -2230,11 +2230,8 @@ def ver_notas_guardadas():
 
 import io
 import json
-import os
 from flask import render_template, make_response, request
 from xhtml2pdf import pisa
-import urllib.request
-import json as pyjson
 
 @app.route('/pdf/notas1')
 def generar_pdf_notas1():
@@ -2243,40 +2240,32 @@ def generar_pdf_notas1():
         if not estudiante_id:
             return "No se ha proporcionado el ID del estudiante", 400
 
-        # Conexión mediante las variables de entorno de Supabase
-        url = os.environ.get("SUPABASE_URL")
-        key = os.environ.get("SUPABASE_KEY")
+        # IMPORTANTE: Reutiliza aquí la misma variable de conexión que usas 
+        # en tus rutas de planificaciones (ej. 'supabase' o 'db').
+        # Si tu app usa una variable global, asegúrate de llamarla aquí:
+        global supabase # Si tu cliente global se llama de otra forma, cámbialo por ese nombre (ej: db)
+
+        # 1. Consultar los datos del estudiante
+        response_estudiante = supabase.table('estudiantes').select('*').eq('id', estudiante_id).execute()
+        estudiante = response_estudiante.data[0] if response_estudiante.data else {}
+
+        # 2. Consultar el registro de notas en la tabla 'notas1' filtrando por 'id_estudiante'
+        response_notas = supabase.table('notas1').select('*').eq('id_estudiante', estudiante_id).execute()
         
-        # Petición directa a la REST API de Supabase para evitar cualquier error de importación local
-        headers = {
-            "apikey": key,
-            "Authorization": f"Bearer {key}",
-            "Content-Type": "application/json"
-        }
-
-        # 1. Consultar estudiante
-        req_est = urllib.request.Request(f"{url}/rest/v1/estudiantes?id=eq.{estudiante_id}", headers=headers)
-        with urllib.request.urlopen(req_est) as response:
-            estudiantes_data = pyjson.loads(response.read().decode())
-            estudiante = estudiantes_data[0] if estudiantes_data else {}
-
-        # 2. Consultar notas1 filtrando por id_estudiante
-        req_notas = urllib.request.Request(f"{url}/rest/v1/notas1?id_estudiante=eq.{estudiante_id}", headers=headers)
         notas_data = {}
-        with urllib.request.urlopen(req_notas) as response:
-            notas_list = pyjson.loads(response.read().decode())
-            if notas_list:
-                registro = notas_list[0]
-                datos_brutos = registro.get('datos_formulario', '{}')
-                if isinstance(datos_brutos, str):
-                    notas_data = json.loads(datos_brutos)
-                elif isinstance(datos_brutos, dict):
-                    notas_data = datos_brutos
+        if response_notas.data:
+            registro = response_notas.data[0]
+            datos_brutos = registro.get('datos_formulario', '{}')
+            
+            if isinstance(datos_brutos, str):
+                notas_data = json.loads(datos_brutos)
+            elif isinstance(datos_brutos, dict):
+                notas_data = datos_brutos
 
-        # 3. Renderizar la plantilla HTML
+        # 3. Renderizar la plantilla HTML con los datos
         html = render_template('pdf_notas1.html', estudiante=estudiante, notas=notas_data)
 
-        # 4. Generar el PDF con xhtml2pdf
+        # 4. Generar el PDF utilizando xhtml2pdf en memoria
         pdf_buffer = io.BytesIO()
         pisa_status = pisa.CreatePDF(io.BytesIO(html.encode('utf-8')), dest=pdf_buffer)
 
@@ -2285,7 +2274,7 @@ def generar_pdf_notas1():
 
         pdf_buffer.seek(0)
 
-        # 5. Enviar el PDF resultante
+        # 5. Enviar el archivo PDF resultante al navegador
         nombre_estudiante = estudiante.get('nombre', 'Estudiante')
         response = make_response(pdf_buffer.read())
         response.headers['Content-Type'] = 'application/pdf'
