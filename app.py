@@ -2787,16 +2787,31 @@ def eliminar_planificacion(id):
 
 @app.route('/planificacion_diaria', methods=['GET', 'POST'])
 def planificacion_diaria():
-    if 'nombre_completo' not in session:
+    if 'usuario' not in session and 'user_id' not in session:
+        flash("Debes iniciar sesión para acceder.", "warning")
         return redirect(url_for('login'))
     
-    docente_nombre = session.get('nombre_completo', '')
-    grado_curso = session.get('curso_asignado', '')
+    # Obtenemos los datos del usuario logueado de la sesión
+    nombre_docente = session.get('nombre_completo', '')
+    rol = session.get('rol', '')
+    area_asignada = session.get('area_especializada', session.get('curso_asignado', ''))
+    
+    # Lista de grados estándar del centro educativo para que el maestro elija
+    grados_disponibles = [
+        "1ro Primaria (A/B)", "2do Primaria (A/B)", "3ro Primaria (A/B)",
+        "4to Primaria (A/B)", "5to Primaria (A/B)", "6to Primaria (A/B)"
+    ]
+
+    if request.method == 'POST':
+        # Lógica para guardar la planificación diaria en tu base de datos
+        pass
 
     return render_template(
-        'planificacion_diaria.html', 
-        docente=docente_nombre, 
-        grado_seccion=grado_curso
+        'planificacion_diaria.html',
+        nombre_docente=nombre_docente,
+        rol=rol,
+        area_asignada=area_asignada,
+        grados_disponibles=grados_disponibles
     )
 
 @app.route('/guardar_planificacion_diaria', methods=['POST'])

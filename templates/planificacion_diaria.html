@@ -12,7 +12,7 @@
         .plan-container { background: white; border-radius: 15px; padding: 25px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
         .table-bordered { border-color: #000 !important; }
         .table-bordered th, .table-bordered td { border-color: #000 !important; padding: 6px 8px !important; }
-        .form-control, .form-control:focus { background-color: transparent; border: none; box-shadow: none; font-size: 0.85rem; }
+        .form-control, .form-select, .form-control:focus, .form-select:focus { background-color: transparent; border: none; box-shadow: none; font-size: 0.85rem; }
         .input-line { border-bottom: 1px solid #333; border-radius: 0; padding: 2px 5px; }
 
         /* Estilo estricto para forzar impresión en una sola página horizontal */
@@ -44,12 +44,14 @@
                 size: letter landscape;
                 margin: 0.5cm;
             }
-            textarea, input {
+            textarea, input, select {
                 resize: none;
                 border: none !important;
                 background: transparent !important;
                 box-shadow: none !important;
                 padding: 2px !important;
+                appearance: none;
+                -webkit-appearance: none;
             }
             table {
                 font-size: 0.8rem !important;
@@ -101,12 +103,36 @@
                                 </div>
                                 <div class="mb-1">
                                     <label class="fw-bold">Área:</label>
-                                    <input type="text" name="area" class="form-control input-line d-inline-block w-80" placeholder="Ej. Lengua Española / Matemáticas" required>
+                                    <!-- Si es maestro de área se autocompleta con su área especializada -->
+                                    <input type="text" name="area" class="form-control input-line d-inline-block w-80 fw-bold" 
+                                           value="{{ area_asignada if area_asignada else '' }}" 
+                                           placeholder="Ej. Lengua Española / Matemáticas" 
+                                           {% if session.get('rol') == 'maestro_area' %}readonly{% endif %} required>
                                 </div>
                                 <div class="row">
                                     <div class="col-md-7 mb-1">
                                         <label class="fw-bold">Grado y Sección:</label>
-                                        <input type="text" name="grado_seccion" class="form-control input-line d-inline-block w-50 fw-bold" value="{{ grado_seccion }}" required>
+                                        {% if session.get('rol') == 'maestro_area' %}
+                                            <!-- Selector desplegable para maestros de área -->
+                                            <select name="grado_seccion" class="form-select input-line d-inline-block w-50 fw-bold" required>
+                                                <option value="" disabled selected>Seleccione...</option>
+                                                <option value="1ro A">1ro A</option>
+                                                <option value="1ro B">1ro B</option>
+                                                <option value="2do A">2do A</option>
+                                                <option value="2do B">2do B</option>
+                                                <option value="3ro A">3ro A</option>
+                                                <option value="3ro B">3ro B</option>
+                                                <option value="4to A">4to A</option>
+                                                <option value="4to B">4to B</option>
+                                                <option value="5to A">5to A</option>
+                                                <option value="5to B">5to B</option>
+                                                <option value="6to A">6to A</option>
+                                                <option value="6to B">6to B</option>
+                                            </select>
+                                        {% else %}
+                                            <!-- Campo estático para maestro de grado -->
+                                            <input type="text" name="grado_seccion" class="form-control input-line d-inline-block w-50 fw-bold" value="{{ grado_seccion }}" required>
+                                        {% endif %}
                                     </div>
                                     <div class="col-md-5 mb-1">
                                         <label class="fw-bold">Fecha:</label>
@@ -146,27 +172,39 @@
                                 <tr class="text-start fw-bold" style="font-size: 0.85rem; background-color: #f8f9fa;">
                                     <td style="width: 20%;">Competencia específica</td>
                                     <td style="width: 12%;">Momentos</td>
-                                    <td style="width: 48%;">Actividades / Duración</td>
-                                    <td style="width: 20%;">Recursos:</td>
+                                    <td style="width: 43%;">Actividades / Duración</td>
+                                    <td style="width: 25%;">Recursos:</td>
                                 </tr>
 
-                                <!-- Filas de Momentos con Columna de Recursos -->
+                                <!-- Filas de Momentos con Columna de Recursos dividida en 3 -->
                                 <tr>
                                     <td rowspan="3" class="align-top">
-                                        <textarea name="competencia_especifica" class="form-control" rows="8" placeholder="Competencias específicas..."></textarea>
+                                        <textarea name="competencia_especifica" class="form-control" rows="10" placeholder="Competencias específicas..."></textarea>
                                     </td>
                                     <td class="align-top"><strong>Inicio</strong></td>
                                     <td class="align-top">
                                         <textarea name="actividad_inicio" class="form-control py-0" rows="2" placeholder="Actividades de inicio..."></textarea>
                                     </td>
-                                    <td rowspan="3" class="align-top">
-                                        <textarea name="recursos" class="form-control py-0" rows="8" placeholder="Pizarra, cuaderno, proyector..."></textarea>
+                                    <!-- COLUMNA DE RECURSOS DIVIDIDA EN 3 PARTES -->
+                                    <td rowspan="3" class="align-top p-2" style="background-color: #fafafa;">
+                                        <div class="mb-2">
+                                            <strong class="d-block text-primary mb-1" style="font-size: 0.78rem;">1. Humanos:</strong>
+                                            <textarea name="recursos_humanos" class="form-control py-0 input-line" rows="2" placeholder="Docente, estudiantes..."></textarea>
+                                        </div>
+                                        <div class="mb-2">
+                                            <strong class="d-block text-primary mb-1" style="font-size: 0.78rem;">2. Tecnológicos / Digitales:</strong>
+                                            <textarea name="recursos_tecnologicos" class="form-control py-0 input-line" rows="2" placeholder="Proyector, laptop..."></textarea>
+                                        </div>
+                                        <div>
+                                            <strong class="d-block text-primary mb-1" style="font-size: 0.78rem;">3. Didácticos / Materiales:</strong>
+                                            <textarea name="recursos_didacticos" class="form-control py-0 input-line" rows="2" placeholder="Pizarra, cuadernos, libros..."></textarea>
+                                        </div>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td class="align-top"><strong>Desarrollo</strong></td>
                                     <td class="align-top">
-                                        <textarea name="actividad_desarrollo" class="form-control py-0" rows="3" placeholder="Actividades centrales..."></textarea>
+                                        <textarea name="actividad_desarrollo" class="form-control py-0" rows="4" placeholder="Actividades centrales..."></textarea>
                                     </td>
                                 </tr>
                                 <tr>
@@ -189,9 +227,11 @@
                         <!-- Botones de Acción -->
                         <div class="text-center mt-3 d-print-none">
                             <button type="submit" class="btn btn-primary px-4 py-2 fw-bold">
-                             <i class="fas fa-save me-2"></i>Guardar Planificación
-                             </button>
-                            <button type="button" onclick="window.print()" class="btn btn-secondary px-4 py-2 fw-bold ms-2"><i class="fas fa-print me-2"></i>Imprimir / Guardar PDF (Horizontal)</button>
+                                <i class="fas fa-save me-2"></i>Guardar Planificación
+                            </button>
+                            <button type="button" onclick="window.print()" class="btn btn-secondary px-4 py-2 fw-bold ms-2">
+                                <i class="fas fa-print me-2"></i>Imprimir / Guardar PDF (Horizontal)
+                            </button>
                         </div>
                     </form>
 
