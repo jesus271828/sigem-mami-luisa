@@ -2169,30 +2169,53 @@ def ver_notas_guardadas():
         return redirect(url_for('login'))
 
     try:
-        # Indicamos a Python que utilizaremos la instancia global de Supabase definida en el archivo
-        global supabase
+        conn = get_db_connection()
+        is_postgres = DATABASE_URL is not None
+        
+        registros_notas = []
+        estudiantes_lista = []
 
-        res_notas = supabase.table('notas1').select('*').execute()
-        registros_notas = res_notas.data if res_notas and res_notas.data else []
+        if is_postgres:
+            cur = conn.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            # Consultamos las notas guardadas
+            cur.execute('SELECT * FROM notas1')
+            registros_notas = cur.fetchall()
+            
+            # Consultamos los estudiantes
+            cur.execute('SELECT * FROM estudiantes')
+            estudiantes_lista = cur.fetchall()
+            cur.close()
+        else:
+            conn.row_factory = sqlite3.Row
+            cur = conn.cursor()
+            cur.execute('SELECT * FROM notas1')
+            registros_notas = cur.fetchall()
+            
+            cur.execute('SELECT * FROM estudiantes')
+            estudiantes_lista = cur.fetchall()
+            cur.close()
+            
+        conn.close()
 
-        res_est = supabase.table('estudiantes').select('*').execute()
-        estudiantes_lista = res_est.data if res_est and res_est.data else []
-        estudiantes_map = {str(est['id_estudiante']): est for est in estudiantes_lista}
+        # Mapeamos los estudiantes por ID
+        estudiantes_map = {str(est['id_estudiante'] if 'id_estudiante' in est else est.get('id')): est for est in estudiantes_lista}
 
         informes_guardados = []
         for reg in registros_notas:
-            id_est = str(reg.get('id_estudiante', ''))
+            # Convertimos el registro a diccionario si viene como row de base de datos
+            reg_dict = dict(reg)
+            id_est = str(reg_dict.get('id_estudiante', ''))
             est_info = estudiantes_map.get(id_est, {})
             
             nombre_comp = f"{est_info.get('nombres', '')} {est_info.get('apellidos', '')}".strip()
             
             informes_guardados.append({
-                'id': reg.get('id'),
+                'id': reg_dict.get('id'),
                 'id_estudiante': id_est,
                 'nombre_estudiante': nombre_comp if nombre_comp else f"Estudiante ID: {id_est}",
                 'grado': est_info.get('grado', '1ro a 3ro Primaria'),
                 'seccion': est_info.get('seccion', 'A'),
-                'fecha_actualizacion': str(reg.get('created_at', ''))[:10] if reg.get('created_at') else 'Guardado'
+                'fecha_actualizacion': str(reg_dict.get('created_at', ''))[:10] if reg_dict.get('created_at') else 'Guardado'
             })
 
         return render_template(
