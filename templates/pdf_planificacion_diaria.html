@@ -203,4 +203,210 @@
     </table>
 
 </body>
+</html><!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Esquema de Planificación Diaria</title>
+    <style>
+        @page {
+            size: letter landscape;
+            margin: 0.5cm;
+        }
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 9px;
+            color: #111111;
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* CABECERA SUPERIOR */
+        .meta-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 6px;
+        }
+        .meta-table td {
+            vertical-align: bottom;
+            padding: 1px 0;
+        }
+        .line-field {
+            border-bottom: 1px solid #000000;
+            font-size: 10px;
+            padding-bottom: 1px;
+        }
+        .header-title {
+            text-align: right;
+            color: #003366;
+            font-size: 14px;
+            font-weight: bold;
+            margin: 0;
+        }
+        .header-subtitle {
+            text-align: right;
+            color: #003366;
+            font-size: 10px;
+            font-weight: bold;
+            margin-top: 1px;
+        }
+
+        /* CUADRÍCULA Y TABLA PRINCIPAL */
+        .plan-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .plan-table td, .plan-table th {
+            border: 1px solid #000000;
+            padding: 5px 6px;
+            vertical-align: top;
+            font-size: 8.5px;
+            line-height: 1.25;
+        }
+        .section-label {
+            font-weight: bold;
+            font-size: 9px;
+            margin-bottom: 3px;
+            display: block;
+        }
+        .cell-content {
+            font-size: 8.5px;
+            line-height: 1.25;
+            color: #222222;
+        }
+        .moment-title {
+            font-weight: bold;
+            font-size: 9.5px;
+        }
+        
+        .header-cell {
+            font-weight: bold;
+            font-size: 9px;
+            background-color: #f2f2f2;
+            padding: 4px 6px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- DATOS DEL ENCABEZADO -->
+    <table class="meta-table">
+        <tr>
+            <td style="width: 58%;">
+                <div style="margin-bottom: 4px;">
+                    <strong>Docente:</strong>
+                    <div class="line-field">{{ plan.get('docente', '') }}</div>
+                </div>
+                <div style="margin-bottom: 4px;">
+                    <strong>Área:</strong>
+                    <div class="line-field">{{ plan.get('area', '') }}</div>
+                </div>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                        <td style="width: 48%; padding-right: 10px;">
+                            <strong>Grado y Sección:</strong>
+                            <div class="line-field">{{ plan.get('grado_seccion', '') }}</div>
+                        </td>
+                        <td style="width: 52%;">
+                            <strong>Fecha:</strong>
+                            <div class="line-field">{{ plan.get('fecha', '') }}</div>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+            <td style="width: 42%; text-align: right; vertical-align: top;">
+                <div class="header-title">Esquema de Planificación Diaria</div>
+                <div class="header-subtitle">Nivel Primario</div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- ESTRUCTURA PRINCIPAL DE LA PLANIFICACIÓN -->
+    <table class="plan-table">
+        <tbody>
+            <!-- ESTRATEGIAS -->
+            <tr>
+                <td colspan="4">
+                    <span class="section-label">Estrategias de enseñanza – aprendizaje:</span>
+                    <div class="cell-content">{{ plan.get('estrategias', '') }}</div>
+                </td>
+            </tr>
+
+            <!-- INTENCIÓN PEDAGÓGICA -->
+            <tr>
+                <td colspan="4">
+                    <span class="section-label">Intención pedagógica del día:</span>
+                    <div class="cell-content">{{ plan.get('intencion_pedagogica', '') }}</div>
+                </td>
+            </tr>
+
+            <!-- INDICADOR DE LOGRO -->
+            <tr>
+                <td colspan="4">
+                    <span class="section-label">Indicador de logro:</span>
+                    <div class="cell-content">{{ plan.get('indicador_logro', '') }}</div>
+                </td>
+            </tr>
+
+            <!-- ENCABEZADOS DE LA TABLA DE MOMENTOS -->
+            <tr>
+                <td class="header-cell" style="width: 22%;">Competencia específica</td>
+                <td class="header-cell" style="width: 10%;">Momentos</td>
+                <td class="header-cell" style="width: 44%;">Actividades / Duración</td>
+                <td class="header-cell" style="width: 24%;">Recursos:</td>
+            </tr>
+
+            <!-- MOMENTO INICIO -->
+            <tr>
+                <td rowspan="3">
+                    <div class="cell-content">{{ plan.get('competencia_especifica', '') }}</div>
+                </td>
+                <td>
+                    <span class="moment-title">Inicio</span>
+                </td>
+                <td>
+                    <div class="cell-content">{{ plan.get('actividad_inicio', '') }}</div>
+                </td>
+                <td>
+                    <div class="cell-content">{{ plan.get('recursos_inicio', '') if plan.get('recursos_inicio') else '' }}</div>
+                </td>
+            </tr>
+
+            <!-- MOMENTO DESARROLLO -->
+            <tr>
+                <td>
+                    <span class="moment-title">Desarrollo</span>
+                </td>
+                <td>
+                    <div class="cell-content">{{ plan.get('actividad_desarrollo', '') }}</div>
+                </td>
+                <td>
+                    <div class="cell-content">{{ plan.get('recursos_desarrollo', '') if plan.get('recursos_desarrollo') else '' }}</div>
+                </td>
+            </tr>
+
+            <!-- MOMENTO CIERRE -->
+            <tr>
+                <td>
+                    <span class="moment-title">Cierre</span>
+                </td>
+                <td>
+                    <div class="cell-content">{{ plan.get('actividad_cierre', '') }}</div>
+                </td>
+                <td>
+                    <div class="cell-content">{{ plan.get('recursos_cierre', '') if plan.get('recursos_cierre') else '' }}</div>
+                </td>
+            </tr>
+
+            <!-- RECUPERACIÓN PEDAGÓGICA -->
+            <tr>
+                <td colspan="4">
+                    <span class="section-label">Actividades de recuperación pedagógica:</span>
+                    <div class="cell-content">{{ plan.get('recuperacion_pedagogica', '') }}</div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+</body>
 </html>
