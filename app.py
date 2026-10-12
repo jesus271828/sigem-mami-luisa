@@ -2707,31 +2707,49 @@ def descargar_pdf_planificacion(id):
 
 @app.route('/ver_planificaciones_diarias')
 def ver_planificaciones_diarias():
-    if 'usuario' not in session and 'nombre_completo' not in session:
+    if 'usuario' not in session and 'user_id' not in session:
+        flash("Debes iniciar sesión para acceder.", "warning")
         return redirect(url_for('login'))
-        
-    usuario_actual = session.get('nombre_completo')
-    rol_actual = session.get('rol')
-    
-    try:
-        conn = psycopg2.connect(DATABASE_URL)
-        cursor = PostgresCursorWrapper(conn)
-        
-        # Si es de oficina o admin ve todo, si es docente solo ve lo suyo
-        if rol_actual in ['admin', 'oficina']:
-            query = 'SELECT * FROM planificaciones_diarias ORDER BY fecha DESC'
-            cursor.execute(query)
-        else:
-            query = 'SELECT * FROM planificaciones_diarias WHERE docente = ? ORDER BY fecha DESC'
-            cursor.execute(query, (usuario_actual,))
-            
-        planificaciones = cursor.fetchall()
-        cursor.close()
-    except Exception as e:
-        print("❌ Error obteniendo planificaciones diarias:", e)
-        planificaciones = []
 
-    return render_template('ver_planificaciones_diarias.html', planificaciones=planificaciones)
+    try:
+        conn = get_db_connection()
+        is_postgres = DATABASE_URL is not None
+        
+        planificaciones_lista = []
+
+        if is_postgres:
+            cur = conn.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            # Consultamos todas las planificaciones ordenadas por fecha o id descendente
+            cur.execute('SELECT * FROM planificaciones ORDER BY id DESC')
+            planificaciones_lista = cur.fetchall()
+            cur.close()
+        else:
+            conn.row_factory = sqlite3.Row
+            cur = conn.cursor()
+            cur.execute('SELECT * FROM planificaciones ORDER BY id DESC')
+            planificaciones_lista = cur.fetchall()
+            cur.close()
+            
+        conn.close()
+
+        # Convertimos los resultados a diccionarios limpios
+        planificaciones_formateadas = []
+        for p in planificaciones_lista:
+            p_dict = dict(p)
+            # Aseguramos compatibilidad si algún campo antiguo no existe
+            if 'recursos_inicio' not in p_dict:
+                p_dict['recursos_inicio'] = p_dict.get('recursos', '')
+            planificaciones_formateadas.append(p_dict)
+
+        return render_template(
+            'ver_planificaciones_diarias.html',
+            planificaciones=planificaciones_formateadas
+        )
+
+    except Exception as e:
+        print("Error al cargar historial de planificaciones:", e)
+        flash(f"Error al cargar las planificaciones: {str(e)}", "danger")
+        return redirect(url_for('menu_planificacion'))
 
 @app.route('/ver_detalle_planificacion_diaria/<int:id>')
 def ver_detalle_planificacion_diaria(id):
