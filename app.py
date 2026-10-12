@@ -2227,12 +2227,10 @@ def ver_notas_guardadas():
     except Exception as e:
         flash(f"Error al cargar los informes guardados: {str(e)}", "danger")
         return redirect(url_for('menu'))
-
 import io
 import json
 import os
 from flask import render_template, make_response, request
-from supabase import create_client
 from xhtml2pdf import pisa
 
 @app.route('/pdf/notas1')
@@ -2242,17 +2240,17 @@ def generar_pdf_notas1():
         if not estudiante_id:
             return "No se ha proporcionado el ID del estudiante", 400
 
-        # Inicialización directa del cliente para evitar errores de variable no definida
-        url = os.environ.get("SUPABASE_URL")
-        key = os.environ.get("SUPABASE_KEY")
-        db = create_client(url, key)
+        # Si en tus otras rutas usas una variable global diferente para la base de datos 
+        # (por ejemplo, 'supabase' o 'db'), asegúrate de usarla aquí. 
+        # Si la inicializas directo usando tu método actual del proyecto:
+        global supabase # O utiliza la variable global que ya conecta tu app
 
         # 1. Consultar los datos del estudiante
-        response_estudiante = db.table('estudiantes').select('*').eq('id', estudiante_id).execute()
+        response_estudiante = supabase.table('estudiantes').select('*').eq('id', estudiante_id).execute()
         estudiante = response_estudiante.data[0] if response_estudiante.data else {}
 
         # 2. Consultar el registro de notas en la tabla 'notas1' filtrando por 'id_estudiante'
-        response_notas = db.table('notas1').select('*').eq('id_estudiante', estudiante_id).execute()
+        response_notas = supabase.table('notas1').select('*').eq('id_estudiante', estudiante_id).execute()
         
         notas_data = {}
         if response_notas.data:
