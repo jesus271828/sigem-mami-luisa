@@ -2228,85 +2228,42 @@ def ver_notas_guardadas():
         flash(f"Error al cargar los informes guardados: {str(e)}", "danger")
         return redirect(url_for('menu'))
 
-from xhtml2pdf import pisa
-from io import BytesIO
-from flask import make_response
+from flask import render_template, make_response
+# Asegúrate de importar tu función generadora de PDF o xhtml2pdf según lo tengas configurado en tu proyecto
 
-@app.route('/pdf/notas1')
-def generar_pdf_notas1():
-    if 'usuario' not in session and 'user_id' not in session:
-        flash("Debes iniciar sesión para acceder.", "warning")
-        return redirect(url_for('login'))
-
-    id_estudiante = request.args.get('id_estudiante')
-    if not id_estudiante:
-        flash("No se ha especificado un estudiante para el PDF.", "danger")
-        return redirect(url_for('ver_notas_guardadas'))
-
+@app.route('/generar_pdf_notas1/<int:estudiante_id>')
+def generar_pdf_notas1(estudiante_id):
     try:
-        conn = get_db_connection()
-        is_postgres = DATABASE_URL is not None
-        
-        estudiante = None
-        notas_guardadas = {}
+        # 1. Consultar los datos del estudiante y sus notas desde Supabase
+        # (Ajusta esta consulta según las tablas que tengas en tu base de datos para notas1)
+        response_estudiante = supabase.table('estudiantes').select('*').eq('id', estudiante_id).execute()
+        estudiante = response_estudiante.data[0] if response_estudiante.data else {}
 
-        if is_postgres:
-            cur = conn.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-            cur.execute('SELECT * FROM estudiantes WHERE id_estudiante = %s OR id::text = %s', (id_estudiante, id_estudiante))
-            estudiante = cur.fetchone()
-            
-            cur.execute('SELECT * FROM notas1 WHERE id_estudiante = %s', (id_estudiante,))
-            row_notas = cur.fetchone()
-            if row_notas:
-                notas_guardadas = dict(row_notas)
-            cur.close()
-        else:
-            conn.row_factory = sqlite3.Row
-            cur = conn.cursor()
-            cur.execute('SELECT * FROM estudiantes WHERE id_estudiante = ? OR id = ?', (id_estudiante, id_estudiante))
-            estudiante = cur.fetchone()
-            
-            cur.execute('SELECT * FROM notas1 WHERE id_estudiante = ?', (id_estudiante,))
-            row_notas = cur.fetchone()
-            if row_notas:
-                notas_guardadas = dict(row_notas)
-            cur.close()
-            
-        conn.close()
+        response_notas = supabase.table('notas1').select('*').eq('estudiante_id', estudiante_id).execute()
+        notas = response_notas.data if response_notas.data else []
 
-        if not estudiante:
-            flash("Estudiante no encontrado.", "danger")
-            return redirect(url_for('ver_notas_guardadas'))
+        # 2. Datos para la plantilla
+        context = {
+            'estudiante': estudiante,
+            'notas': notas
+        }
 
-        # Renderizamos la plantilla asegurando que aplique el formato limpio de impresión
-        html_content = render_template(
-            'notas1.html',
-            estudiante=dict(estudiante),
-            notas=notas_guardadas,
-            lista_estudiantes=[dict(estudiante)],
-            docente_nombre=session.get('nombre_completo', 'Docente Titular')
-        )
+        # 3. Renderizar la plantilla HTML del PDF
+        html = render_template('pdf_notas1.html', **context)
 
-        # Configuración del búfer para xhtml2pdf con estricto soporte de diseño A4 horizontal
-        pdf_buffer = BytesIO()
-        pisa_status = pisa.CreatePDF(
-            BytesIO(html_content.encode("utf-8")), 
-            dest=pdf_buffer
-        )
+        # 4. Generar el PDF usando tu función de conversión (ej. xhtml2pdf o pisa)
+        # (Dependiendo de cómo tengas estructurado tu helper de PDF, por lo general se usa algo similar a esto:)
+        pdf_file = create_pdf_from_html(html) # O tu método actual para transformar HTML a PDF
 
-        if pisa_status.err:
-            flash("Ocurrió un error al generar el documento PDF.", "danger")
-            return redirect(url_for('ver_notas_guardadas'))
-
-        response = make_response(pdf_buffer.getvalue())
+        response = make_response(pdf_file)
         response.headers['Content-Type'] = 'application/pdf'
-        response.headers['Content-Disposition'] = f'inline; filename=Informe_Aprendizaje_{id_estudiante}.pdf'
+        response.headers['Content-Disposition'] = f"inline; filename=Informe_Aprendizaje_{estudiante.get('nombre', 'Estudiante')}.pdf"
+        
         return response
 
     except Exception as e:
-        print("Error detallado al generar PDF de notas:", e)
-        flash(f"Error al generar el PDF: {str(e)}", "danger")
-        return redirect(url_for('ver_notas_guardadas'))
+        print(f"Error al generar el PDF de notas: {e}")
+        return f"Ocurrió un error al generar el PDF: {e}", 500
 
 @app.route('/notas2', methods=['GET', 'POST'])
 def notas2():

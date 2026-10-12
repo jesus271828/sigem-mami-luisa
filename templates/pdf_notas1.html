@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Informe de Aprendizaje - Notas 1</title>
+    <style>
+        @page {
+            size: letter portrait; /* O landscape según prefieras para las notas */
+            margin: 0.8cm;
+        }
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 10px;
+            color: #111111;
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* ENCABEZADO INSTITUCIONAL */
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-left: 25px;
+            margin-bottom: 15px;
+        }
+        .school-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #1A237E;
+            line-height: 1.2;
+        }
+        .school-lema {
+            font-style: italic;
+            font-size: 11px;
+            color: #555555;
+            line-height: 1.2;
+            margin-top: 2px;
+            margin-bottom: 6px;
+        }
+        .header-details {
+            font-size: 10.5px;
+            line-height: 1.4;
+            color: #333333;
+            margin-left: 18px;
+        }
+
+        /* TABLA DE CALIFICACIONES / CONTENIDO */
+        .content-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .content-table th, .content-table td {
+            border: 1px solid #000000;
+            padding: 6px 8px;
+            vertical-align: middle;
+            font-size: 9.5px;
+        }
+        .content-table th {
+            background-color: #f2f2f2;
+            text-align: center;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ENCABEZADO INSTITUCIONAL UNIFICADO -->
+    <table class="header-table">
+        <tr>
+            <td style="width: 70px; text-align: center; vertical-align: top;">
+                <img src="{{ url_for('static', filename='img/logo2.png') }}" style="width: 60px; height: auto;" alt="Logo">
+            </td>
+            <td style="padding-left: 15px; vertical-align: top;">
+                <!-- TÍTULO Y LEMA JUNTOS -->
+                <div class="school-title">Centro Educativo Mami Luisa S.R.L</div>
+                <div class="school-lema">"Educando con amor para un mundo mejor"</div>
+
+                <!-- DETALLES DESPLAZADOS MÁS A LA DERECHA -->
+                <div class="header-details">
+                    <b>Dirección:</b> C/Castillo Márquez #53. La Romana, Centro Ciudad. <b>Teléfono:</b> 809-550-7385 / 809-710-3395<br>
+                    <b>Regional de Educación:</b> 05 San Pedro de Macorís. <b>Distrito Educativo:</b> 05-03 La Romana. <b>Código:</b> 07121<br>
+                    <b style="font-size: 10px; text-decoration: underline;">INFORME DE APRENDIZAJE. Primer Grado del Nivel Primario, Sección A.</b><br>
+                    Año Escolar 2026-2027 / Jornada Escolar Regular. Tanda Matutina.
+                </div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- SECCIÓN DE DATOS DEL ESTUDIANTE Y CALIFICACIONES (NOTAS 1) -->
+    <table style="width: 100%; margin-bottom: 10px; font-size: 10px;">
+        <tr>
+            <td><strong>Estudiante:</strong> ____________________________________________________</td>
+            <td><strong>Nº / Orden:</strong> _______</td>
+        </tr>
+    </table>
+
+    <!-- TABLA DE EVALUACIÓN -->
+    <table class="content-table">
+        <thead>
+            <tr>
+                <th style="width: 45%;">Competencias / Criterios de Evaluación</th>
+                <th style="width: 15%;">P1</th>
+                <th style="width: 15%;">P2</th>
+                <th style="width: 25%;">Valoración / Observaciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Competencia Fundamental 1: Ética y Ciudadana</td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>Competencia Fundamental 2: Comunicativa</td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>Competencia Fundamental 3: Pensamiento Lógico, Creativo y Crítico</td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>Competencia Fundamental 4: Solución de Problemas</td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>Competencia Fundamental 5 Científica y Tecnológica</td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+        </tbody>
+    </table>
+
+</body>
+</html>
