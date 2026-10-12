@@ -2711,6 +2711,9 @@ def ver_planificaciones_diarias():
         flash("Debes iniciar sesión para acceder.", "warning")
         return redirect(url_for('login'))
 
+    nombre_usuario = session.get('nombre_completo', '')
+    rol = session.get('rol', '')
+
     planificaciones_formateadas = []
     try:
         conn = get_db_connection()
@@ -2718,13 +2721,20 @@ def ver_planificaciones_diarias():
         
         if is_postgres:
             cur = conn.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-            cur.execute('SELECT * FROM planificaciones ORDER BY id DESC')
+            # Si es oficina o admin, trae todas. Si es maestro normal, trae solo las suyas.
+            if rol in ['admin', 'oficina'] or 'Oficina' in nombre_usuario:
+                cur.execute('SELECT * FROM planificaciones ORDER BY id DESC')
+            else:
+                cur.execute('SELECT * FROM planificaciones WHERE docente = %s ORDER BY id DESC', (nombre_usuario,))
             planificaciones_lista = cur.fetchall()
             cur.close()
         else:
             conn.row_factory = sqlite3.Row
             cur = conn.cursor()
-            cur.execute('SELECT * FROM planificaciones ORDER BY id DESC')
+            if rol in ['admin', 'oficina'] or 'Oficina' in nombre_usuario:
+                cur.execute('SELECT * FROM planificaciones ORDER BY id DESC')
+            else:
+                cur.execute('SELECT * FROM planificaciones WHERE docente = ? ORDER BY id DESC', (nombre_usuario,))
             planificaciones_lista = cur.fetchall()
             cur.close()
             
@@ -2734,8 +2744,7 @@ def ver_planificaciones_diarias():
             planificaciones_formateadas.append(dict(row))
 
     except Exception as e:
-        print("Error detallado al cargar planificaciones:", e)
-        # Si la tabla no existe o falta una columna, inicializamos vacía para que no colapse la vista
+        print("Error al cargar planificaciones:", e)
         planificaciones_formateadas = []
 
     return render_template(
