@@ -2228,42 +2228,61 @@ def ver_notas_guardadas():
         flash(f"Error al cargar los informes guardados: {str(e)}", "danger")
         return redirect(url_for('menu'))
 
-from flask import render_template, make_response
-# Asegúrate de importar tu función generadora de PDF o xhtml2pdf según lo tengas configurado en tu proyecto
+import io
+import json
+from flask import render_template, make_response, request
+from xhtml2pdf import pisa
 
-@app.route('/generar_pdf_notas1/<int:estudiante_id>')
-def generar_pdf_notas1(estudiante_id):
+@app.route('/pdf/notas1')
+def generar_pdf_notas1():
     try:
-        # 1. Consultar los datos del estudiante y sus notas desde Supabase
-        # (Ajusta esta consulta según las tablas que tengas en tu base de datos para notas1)
+        global supabase
+        # Captura el ID desde los parámetros de la URL (ej: ?id_estudiante=35562360)
+        estudiante_id = request.args.get('id_estudiante')
+        
+        if not estudiante_id:
+            return "No se ha proporcionado el ID del estudiante", 400
+
+        # 1. Consultar los datos del estudiante
         response_estudiante = supabase.table('estudiantes').select('*').eq('id', estudiante_id).execute()
         estudiante = response_estudiante.data[0] if response_estudiante.data else {}
 
-        response_notas = supabase.table('notas1').select('*').eq('estudiante_id', estudiante_id).execute()
-        notas = response_notas.data if response_notas.data else []
-
-        # 2. Datos para la plantilla
-        context = {
-            'estudiante': estudiante,
-            'notas': notas
-        }
-
-        # 3. Renderizar la plantilla HTML del PDF
-        html = render_template('pdf_notas1.html', **context)
-
-        # 4. Generar el PDF usando tu función de conversión (ej. xhtml2pdf o pisa)
-        # (Dependiendo de cómo tengas estructurado tu helper de PDF, por lo general se usa algo similar a esto:)
-        pdf_file = create_pdf_from_html(html) # O tu método actual para transformar HTML a PDF
-
-        response = make_response(pdf_file)
-        response.headers['Content-Type'] = 'application/pdf'
-        response.headers['Content-Disposition'] = f"inline; filename=Informe_Aprendizaje_{estudiante.get('nombre', 'Estudiante')}.pdf"
+        # 2. Consultar el registro de notas en la tabla 'notas1' filtrando por 'id_estudiante'
+        response_notas = supabase.table('notas1').select('*').eq('id_estudiante', estudiante_id).execute()
         
+        notas_data = {}
+        if response_notas.data:
+            registro = response_notas.data[0]
+            datos_brutos = registro.get('datos_formulario', '{}')
+            
+            if isinstance(datos_brutos, str):
+                notas_data = json.loads(datos_brutos)
+            elif isinstance(datos_brutos, dict):
+                notas_data = datos_brutos
+
+        # 3. Renderizar la plantilla HTML con los datos
+        html = render_template('pdf_notas1.html', estudiante=estudiante, notas=notas_data)
+
+        # 4. Generar el PDF utilizando xhtml2pdf en memoria
+        pdf_buffer = io.BytesIO()
+        pisa_status = pisa.CreatePDF(io.BytesIO(html.encode('utf-8')), dest=pdf_buffer)
+
+        if pisa_status.err:
+            return f"Error al generar el PDF: {pisa_status.err}", 500
+
+        pdf_buffer.seek(0)
+
+        # 5. Enviar el archivo PDF resultante al navegador
+        nombre_estudiante = estudiante.get('nombre', 'Estudiante')
+        response = make_response(pdf_buffer.read())
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = f"inline; filename=Informe_Aprendizaje_{nombre_estudiante}.pdf"
+
         return response
 
     except Exception as e:
-        print(f"Error al generar el PDF de notas: {e}")
-        return f"Ocurrió un error al generar el PDF: {e}", 500
+        print(f"Error en la ruta de notas1: {e}")
+        return f"Ocurrió un error: {e}", 500
 
 @app.route('/notas2', methods=['GET', 'POST'])
 def notas2():
