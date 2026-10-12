@@ -103,7 +103,7 @@
                                 </div>
                                 <div class="mb-1">
                                     <label class="fw-bold">Área:</label>
-                                    <!-- Si es maestro de área se autocompleta con su área especializada -->
+                                    <!-- Se autocompleta con el área asignada para maestross de área -->
                                     <input type="text" name="area" class="form-control input-line d-inline-block w-80 fw-bold" 
                                            value="{{ area_asignada if area_asignada else '' }}" 
                                            placeholder="Ej. Lengua Española / Matemáticas" 
@@ -113,7 +113,7 @@
                                     <div class="col-md-7 mb-1">
                                         <label class="fw-bold">Grado y Sección:</label>
                                         {% if session.get('rol') == 'maestro_area' %}
-                                            <!-- Selector desplegable para maestros de área -->
+                                            <!-- Desplegable para seleccionar grado -->
                                             <select name="grado_seccion" class="form-select input-line d-inline-block w-50 fw-bold" required>
                                                 <option value="" disabled selected>Seleccione...</option>
                                                 <option value="1ro A">1ro A</option>
@@ -130,7 +130,7 @@
                                                 <option value="6to B">6to B</option>
                                             </select>
                                         {% else %}
-                                            <!-- Campo estático para maestro de grado -->
+                                            <!-- Campo estático para maestro titular -->
                                             <input type="text" name="grado_seccion" class="form-control input-line d-inline-block w-50 fw-bold" value="{{ grado_seccion }}" required>
                                         {% endif %}
                                     </div>
@@ -176,7 +176,7 @@
                                     <td style="width: 25%;">Recursos:</td>
                                 </tr>
 
-                                <!-- Filas de Momentos con Columna de Recursos dividida en 3 -->
+                                <!-- Filas de Momentos con Recursos divididos alineadamente -->
                                 <tr>
                                     <td rowspan="3" class="align-top">
                                         <textarea name="competencia_especifica" class="form-control" rows="10" placeholder="Competencias específicas..."></textarea>
@@ -185,20 +185,8 @@
                                     <td class="align-top">
                                         <textarea name="actividad_inicio" class="form-control py-0" rows="2" placeholder="Actividades de inicio..."></textarea>
                                     </td>
-                                    <!-- COLUMNA DE RECURSOS DIVIDIDA EN 3 PARTES -->
-                                    <td rowspan="3" class="align-top p-2" style="background-color: #fafafa;">
-                                        <div class="mb-2">
-                                            <strong class="d-block text-primary mb-1" style="font-size: 0.78rem;">1. Humanos:</strong>
-                                            <textarea name="recursos_humanos" class="form-control py-0 input-line" rows="2" placeholder="Docente, estudiantes..."></textarea>
-                                        </div>
-                                        <div class="mb-2">
-                                            <strong class="d-block text-primary mb-1" style="font-size: 0.78rem;">2. Tecnológicos / Digitales:</strong>
-                                            <textarea name="recursos_tecnologicos" class="form-control py-0 input-line" rows="2" placeholder="Proyector, laptop..."></textarea>
-                                        </div>
-                                        <div>
-                                            <strong class="d-block text-primary mb-1" style="font-size: 0.78rem;">3. Didácticos / Materiales:</strong>
-                                            <textarea name="recursos_didacticos" class="form-control py-0 input-line" rows="2" placeholder="Pizarra, cuadernos, libros..."></textarea>
-                                        </div>
+                                    <td class="align-top">
+                                        <textarea name="recursos_inicio" class="form-control py-0" rows="2" placeholder="Recursos para inicio..."></textarea>
                                     </td>
                                 </tr>
                                 <tr>
@@ -206,11 +194,17 @@
                                     <td class="align-top">
                                         <textarea name="actividad_desarrollo" class="form-control py-0" rows="4" placeholder="Actividades centrales..."></textarea>
                                     </td>
+                                    <td class="align-top">
+                                        <textarea name="recursos_desarrollo" class="form-control py-0" rows="4" placeholder="Recursos para desarrollo..."></textarea>
+                                    </td>
                                 </tr>
                                 <tr>
                                     <td class="align-top"><strong>Cierre</strong></td>
                                     <td class="align-top">
                                         <textarea name="actividad_cierre" class="form-control py-0" rows="2" placeholder="Metacognición y cierre..."></textarea>
+                                    </td>
+                                    <td class="align-top">
+                                        <textarea name="recursos_cierre" class="form-control py-0" rows="2" placeholder="Recursos para cierre..."></textarea>
                                     </td>
                                 </tr>
 
