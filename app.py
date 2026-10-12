@@ -2252,11 +2252,9 @@ def generar_pdf_notas1():
 
         if is_postgres:
             cur = conn.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-            # Buscar datos del estudiante
             cur.execute('SELECT * FROM estudiantes WHERE id_estudiante = %s OR id::text = %s', (id_estudiante, id_estudiante))
             estudiante = cur.fetchone()
             
-            # Buscar notas guardadas de este estudiante
             cur.execute('SELECT * FROM notas1 WHERE id_estudiante = %s', (id_estudiante,))
             row_notas = cur.fetchone()
             if row_notas:
@@ -2280,7 +2278,7 @@ def generar_pdf_notas1():
             flash("Estudiante no encontrado.", "danger")
             return redirect(url_for('ver_notas_guardadas'))
 
-        # Renderizamos la misma plantilla de notas1 pero con los datos fijos del estudiante
+        # Renderizamos la plantilla asegurando que aplique el formato limpio de impresión
         html_content = render_template(
             'notas1.html',
             estudiante=dict(estudiante),
@@ -2289,9 +2287,12 @@ def generar_pdf_notas1():
             docente_nombre=session.get('nombre_completo', 'Docente Titular')
         )
 
-        # Generación del PDF con xhtml2pdf
+        # Configuración del búfer para xhtml2pdf con estricto soporte de diseño A4 horizontal
         pdf_buffer = BytesIO()
-        pisa_status = pisa.CreatePDF(BytesIO(html_content.encode("utf-8")), dest=pdf_buffer)
+        pisa_status = pisa.CreatePDF(
+            BytesIO(html_content.encode("utf-8")), 
+            dest=pdf_buffer
+        )
 
         if pisa_status.err:
             flash("Ocurrió un error al generar el documento PDF.", "danger")
