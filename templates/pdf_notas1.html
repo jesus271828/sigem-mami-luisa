@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Informe de Aprendizaje - Encabezado</title>
+    <title>Informe de Aprendizaje - Datos del Estudiante</title>
     <style>
         @page {
             size: letter landscape;
@@ -17,12 +17,13 @@
             color: #000;
         }
 
-        /* Tabla principal del encabezado */
+        /* ESTILOS DE LA PARTE 1 (ENCABEZADO) */
         .header-table {
             width: 100%;
             border-collapse: collapse;
             border-bottom: 2px solid #000;
             padding-bottom: 6px;
+            margin-bottom: 8px;
         }
 
         .header-table td {
@@ -30,7 +31,6 @@
             padding: 0;
         }
 
-        /* Contenedor e imagen del Logo */
         .logo-cell {
             width: 110px;
             padding-right: 15px;
@@ -42,7 +42,6 @@
             display: block;
         }
 
-        /* Línea del título con S.R.L alineado abajo a la derecha del texto */
         .title-container {
             display: flex;
             align-items: baseline;
@@ -52,7 +51,7 @@
         .school-title {
             font-size: 26px;
             font-weight: bold;
-            color: #5b739c; /* Azul exacto de la imagen */
+            color: #5b739c;
             margin: 0;
             line-height: 1;
         }
@@ -60,21 +59,19 @@
         .school-srl {
             font-size: 16px;
             font-weight: bold;
-            color: #a3a3a3; /* Gris exacto */
+            color: #a3a3a3;
         }
 
-        /* Lema ubicado DEBAJO del título */
         .motto-text {
             font-family: "Times New Roman", Times, serif;
             font-style: italic;
             font-size: 17px;
-            color: #e59b6e; /* Naranja/salmón exacto */
+            color: #e59b6e;
             margin-top: 2px;
             margin-bottom: 6px;
             display: block;
         }
 
-        /* Datos de dirección y teléfono */
         .details-text {
             font-size: 11.5px;
             line-height: 1.3;
@@ -86,7 +83,6 @@
             color: #000;
         }
 
-        /* Subtítulos */
         .report-subtitle {
             font-size: 12.5px;
             font-weight: bold;
@@ -100,6 +96,36 @@
             margin-top: 2px;
         }
 
+        /* ---------------------------------------------------- */
+        /* ESTILOS DE LA PARTE 2 (BARRA DATOS DEL ESTUDIANTE) */
+        /* ---------------------------------------------------- */
+        .student-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 2px solid #000; /* Borde exterior negro más grueso */
+            margin-bottom: 8px;
+        }
+
+        .student-table td {
+            border-right: 1px solid #000; /* Líneas divisorias verticales */
+            padding: 4px 6px;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+            vertical-align: middle;
+            height: 22px; /* Altura adecuada para llenar datos a mano o dinámicos */
+        }
+
+        .student-table td:last-child {
+            border-right: none; /* La última casilla no lleva borde a la derecha */
+        }
+
+        /* Anchos proporcionales idénticos a la imagen original */
+        .col-nombre { width: 30%; }
+        .col-apellido { width: 30%; }
+        .col-orden { width: 20%; }
+        .col-id { width: 20%; }
+
         @media print {
             body {
                 -webkit-print-color-adjust: exact;
@@ -110,40 +136,39 @@
 </head>
 <body>
 
-    <!-- ENCABEZADO -->
+    <!-- PARTE 1: ENCABEZADO -->
     <table class="header-table">
         <tr>
-            <!-- COLUMNA LOGO -->
             <td class="logo-cell">
                 <img src="logo.png" alt="Logo" class="logo-img" onerror="this.style.display='none'; this.parentNode.innerHTML='<div style=\'width:90px;height:90px;border:1px dashed #ccc;text-align:center;line-height:90px;font-size:11px;\'>[LOGO]</div>';">
             </td>
-
-            <!-- COLUMNA TEXTO -->
             <td>
-                <!-- 1. Título principal -->
                 <div class="title-container">
                     <span class="school-title">Centro Educativo Mami Luisa</span>
                     <span class="school-srl">S.R.L</span>
                 </div>
-
-                <!-- 2. Lema (debajo del título) -->
                 <div class="motto-text">“ Educando con amor para un mundo mejor ”</div>
-
-                <!-- 3. Dirección y teléfonos -->
                 <div class="details-text">
                     <span class="bold">Dirección:</span> C/Castillo Márquez #53. La Romana, Centro Ciudad. <span class="bold">Teléfono:</span> 809-550-7385 / 809-710-3395<br>
                     <span class="bold">Regional de Educación:</span> 05 San Pedro de Macorís. <span class="bold">Distrito Educativo:</span> 05-03 La Romana. <span class="bold">Código:</span> 07121
                 </div>
-
-                <!-- 4. Informe y año escolar -->
                 <div class="report-subtitle">
                     INFORME DE APRENDIZAJE. Primer Grado del Nivel Primario, Sección A.
                 </div>
-
                 <div class="year-text">
                     Año Escolar 2025-2026 /Jornada Escolar Regular. Tanda Matutina.
                 </div>
             </td>
+        </tr>
+    </table>
+
+    <!-- PARTE 2: BARRA DATOS DEL ESTUDIANTE -->
+    <table class="student-table">
+        <tr>
+            <td class="col-nombre">NOMBRE(S):</td>
+            <td class="col-apellido">APELLIDO (S):</td>
+            <td class="col-orden">NO. DE ORDEN:</td>
+            <td class="col-id">ID ESTUDIANATE:</td>
         </tr>
     </table>
 
