@@ -2232,26 +2232,28 @@ import io
 import json
 from flask import render_template, make_response, request
 from xhtml2pdf import pisa
-# Importa tus modelos y la base de datos desde tu archivo models.py (o desde donde los tengas definidos)
 from models import db, Estudiante, Notas1
 
 @app.route('/pdf/notas1')
 def generar_pdf_notas1():
     try:
-        estudiante_id = request.args.get('id_estudiante')
-        if not estudiante_id:
+        estudiante_id_str = request.args.get('id_estudiante')
+        if not estudiante_id_str:
             return "No se ha proporcionado el ID del estudiante", 400
 
-        # 1. Consultar los datos del estudiante usando SQLAlchemy
+        # Convertir el ID a entero para que coincida con el tipo de la base de datos (integer)
+        try:
+            estudiante_id = int(estudiante_id_str)
+        except ValueError:
+            return "El ID del estudiante debe ser un número válido", 400
+
+        # 1. Consultar los datos del estudiante usando el ID entero
         estudiante_obj = Estudiante.query.filter_by(id=estudiante_id).first()
-        if not estudiante_obj:
-            # Intentar buscar por el campo id_estudiante si el ID principal es numérico distinto
-            estudiante_obj = Estudiante.query.filter_by(id_estudiante=estudiante_id).first()
-            
+        
         if not estudiante_obj:
             return "Estudiante no encontrado", 404
 
-        # Convertir el objeto estudiante a un diccionario para usarlo fácil en el HTML
+        # Convertir el objeto estudiante a un diccionario
         estudiante = {
             'id': estudiante_obj.id_estudiante or estudiante_obj.id,
             'nombre': estudiante_obj.nombres,
@@ -2259,7 +2261,7 @@ def generar_pdf_notas1():
             'grado': estudiante_obj.grado
         }
 
-        # 2. Consultar el registro de notas en la tabla 'notas1' usando el modelo
+        # 2. Consultar el registro de notas en la tabla 'notas1'
         notas_registro = Notas1.query.filter_by(id_estudiante=str(estudiante_id)).first()
         
         notas_data = {}
