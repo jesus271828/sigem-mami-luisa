@@ -4,210 +4,233 @@
     <meta charset="UTF-8">
     <title>Esquema de Planificación Diaria</title>
     <style>
-        @page {
-            size: letter landscape;
-            margin: 0.4cm;
-        }
-        body {
-            font-family: Helvetica, Arial, sans-serif;
-            font-size: 9.5px;
-            color: #111111;
+        /* Importación de tipografía y regla base */
+        * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
+            font-family: "Tw Cen MT", "Century Gothic", "Tw Cen MT Bold", sans-serif;
         }
-        
-        /* CABECERA SUPERIOR */
-        .meta-table {
+
+        body {
+            background-color: #fff;
+            padding: 8mm;
+            font-size: 11.5px;
+            color: #000;
+            line-height: 1.2;
+        }
+
+        /* Ajustes de Impresión */
+        @page {
+            size: letter portrait;
+            margin: 8mm;
+        }
+
+        @media print {
+            body {
+                padding: 0;
+                background: none;
+            }
+            .no-print {
+                display: none;
+            }
+            table {
+                page-break-inside: avoid;
+            }
+        }
+
+        .contenedor-planificacion {
+            width: 100%;
+            max-width: 100%;
+        }
+
+        /* Encabezado */
+        .header-table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 8px;
         }
-        .meta-table td {
+
+        .header-table td {
+            padding: 2px 4px;
             vertical-align: bottom;
-            padding: 2px 0;
-        }
-        .line-field {
-            border-bottom: 1px solid #000000;
-            font-size: 10.5px;
-            padding-bottom: 2px;
-            font-weight: bold;
-        }
-        .header-title {
-            text-align: right;
-            color: #003366;
-            font-size: 15px;
-            font-weight: bold;
-            margin: 0;
-        }
-        .header-subtitle {
-            text-align: right;
-            color: #003366;
-            font-size: 10.5px;
-            font-weight: bold;
-            margin-top: 2px;
         }
 
-        /* TABLA PRINCIPAL - ESPACIADO OPTIMIZADO PARA OCUPAR TODA LA PÁGINA */
-        .plan-table {
+        .header-title {
+            text-align: right;
+            font-size: 15px;
+            font-weight: bold;
+            letter-spacing: 0.2px;
+        }
+
+        .header-subtitle {
+            text-align: right;
+            font-size: 11px;
+            font-weight: normal;
+        }
+
+        .field-label {
+            font-weight: bold;
+            font-size: 11px;
+        }
+
+        .field-value {
+            border-bottom: 1.5px solid #000;
+            padding-bottom: 1px;
+            font-size: 12px;
+        }
+
+        /* Tabla Principal */
+        .main-table {
             width: 100%;
             border-collapse: collapse;
+            border: 2px solid #000;
         }
-        .plan-table td, .plan-table th {
-            border: 1px solid #000000;
-            padding: 8px 8px; /* Padding incrementado para expandir la altura vertical */
+
+        .main-table th, 
+        .main-table td {
+            border: 1px solid #000;
+            padding: 4px 6px;
             vertical-align: top;
-            font-size: 9px;
-            line-height: 1.3;
+            text-align: left;
+            font-size: 11px;
         }
-        .section-label {
-            font-weight: bold;
-            font-size: 9.5px;
-            margin-bottom: 4px;
-            display: block;
-        }
-        .cell-content {
-            font-size: 9px;
-            line-height: 1.3;
-            color: #111111;
-        }
-        .moment-title {
-            font-weight: bold;
-            font-size: 9.5px;
-        }
-        .header-cell {
-            font-weight: bold;
-            font-size: 9.5px;
+
+        .main-table th {
             background-color: #f2f2f2;
-            padding: 6px 8px;
+            font-weight: bold;
+            font-size: 11.5px;
+            text-transform: none;
+        }
+
+        /* Anchos de columnas en proporción */
+        .col-comp { width: 23%; }
+        .col-mom  { width: 10%; }
+        .col-act  { width: 47%; }
+        .col-rec  { width: 20%; }
+
+        /* Celda unificada para Competencia Específica */
+        td.competencia-unica {
+            vertical-align: top;
+            background-color: #fff;
+        }
+
+        .bloque-seccion {
+            background-color: #fff;
+        }
+
+        .bloque-titulo {
+            font-weight: bold;
+            font-size: 11.5px;
+            margin-bottom: 2px;
         }
     </style>
 </head>
 <body>
 
-    <!-- DATOS DEL ENCABEZADO -->
-    <table class="meta-table">
+<div class="contenedor-planificacion">
+
+    <!-- ENCABEZADO -->
+    <table class="header-table">
         <tr>
-            <td style="width: 58%;">
-                <div style="margin-bottom: 5px;">
-                    <strong>Docente:</strong>
-                    <div class="line-field">{{ plan.get('docente', '') }}</div>
-                </div>
-                <div style="margin-bottom: 5px;">
-                    <strong>Área:</strong>
-                    <div class="line-field">{{ plan.get('area', '') }}</div>
-                </div>
-                <table style="width: 100%; border-collapse: collapse;">
-                    <tr>
-                        <td style="width: 48%; padding-right: 8px;">
-                            <strong>Grado y Sección:</strong>
-                            <div class="line-field">{{ plan.get('grado_seccion', '') }}</div>
-                        </td>
-                        <td style="width: 52%;">
-                            <strong>Fecha:</strong>
-                            <div class="line-field">{{ plan.get('fecha', '') }}</div>
-                        </td>
-                    </tr>
-                </table>
+            <td colspan="2">
+                <span class="field-label">Docente:</span><br>
+                <div class="field-value">Luis Felipe Celeste Quezada</div>
             </td>
-            <td style="width: 42%; text-align: right; vertical-align: top;">
-                <div class="header-title">Esquema de Planificación Diaria</div>
+            <td colspan="2" class="header-title">
+                Esquema de Planificación Diaria<br>
                 <div class="header-subtitle">Nivel Primario</div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="4">
+                <span class="field-label">Área:</span><br>
+                <div class="field-value">Informática</div>
+            </td>
+        </tr>
+        <tr>
+            <td style="width: 25%;">
+                <span class="field-label">Grado y Sección:</span><br>
+                <div class="field-value">1ro A</div>
+            </td>
+            <td style="width: 25%;">
+                <span class="field-label">Fecha:</span><br>
+                <div class="field-value">2026-10-01</div>
+            </td>
+            <td colspan="2"></td>
+        </tr>
+    </table>
+
+    <!-- TABLA PRINCIPAL DEL ESQUEMA -->
+    <table class="main-table">
+        <!-- Estrategias de enseñanza - aprendizaje -->
+        <tr>
+            <td colspan="4" class="bloque-seccion">
+                <div class="bloque-titulo">Estrategias de enseñanza - aprendizaje:</div>
+                Aprendizaje basado en el juego (gamificación) y estimulación sensorial. • Demostración guiada y práctica de motricidad digital. • Repaso continuo mediante rutina inicial.
+            </td>
+        </tr>
+
+        <!-- Intención pedagógica del día -->
+        <tr>
+            <td colspan="4" class="bloque-seccion">
+                <div class="bloque-titulo">Intención pedagógica del día:</div>
+                Reconocer los elementos principales del escritorio de la computadora (íconos, fondo, puntero) y ejercitar el control básico del mouse/touchpad (clic y arrastre).
+            </td>
+        </tr>
+
+        <!-- Indicador de logro -->
+        <tr>
+            <td colspan="4" class="bloque-seccion">
+                <div class="bloque-titulo">Indicador de logro:</div>
+                Identifica el puntero y los íconos en la pantalla y realiza acciones sencillas como hacer clic y arrastrar elementos en un entorno digital guiado.
+            </td>
+        </tr>
+
+        <!-- Encabezados de la matriz -->
+        <tr>
+            <th class="col-comp">Competencia específica</th>
+            <th class="col-mom">Momentos</th>
+            <th class="col-act">Actividades / Duración</th>
+            <th class="col-rec">Recursos:</th>
+        </tr>
+
+        <!-- Filas de Momentos con Competencia Específica Combinada -->
+        <tr>
+            <td rowspan="3" class="competencia-unica">
+                Coordina movimientos de motricidad fina para interactuar con interfaces gráficas sencillas en dispositivos digitales.
+            </td>
+            <td><strong>Inicio</strong></td>
+            <td>
+                <strong>Rutina de Inicio (Mural Digital):</strong> Proyección del Mural Digital de Reglas creado previamente para hacer una lectura guiada rápida de 2 minutos sobre cómo usar los equipos. • <strong>Juego del Puntero:</strong> El docente mueve el puntero/flecha en la pantalla grande y los niños lo siguen con el dedo en el aire gritando "¡Allí va la flechita!". • Presentación del tema: "La casita de la computadora: El Escritorio y la flechita mágica". Duración: 10 minutos
+            </td>
+            <td>Proyector / Pantalla. • Mural Digital de Reglas guardado.</td>
+        </tr>
+        <tr>
+            <td><strong>Desarrollo</strong></td>
+            <td>
+                <strong>Explicación sencilla (5 min):</strong> Comparar el escritorio de Ubuntu/Windows con la mesa de trabajo de su casa: los íconos son como sus juguetes o cuadernos colocados sobre la mesa. • <strong>Práctica Guiada "El Clic de Ratón" (20 min):</strong> Los estudiantes pasan en turnos a la computadora del docente o interactúan con una actividad interactiva de encajar/unir figuras sencillas (ej. GCompris, Tux Paint o juegos de arrastrar formas). • Enseñanza del agarre correcto del mouse (mano en forma de conchita) y la diferencia entre el botón izquierdo y el derecho. Duración: 25 minutos. <strong>Juego de Retroalimentación: "Simón Dice informático":</strong> (ej. Simón dice: me mueven la flechita que se mueve en la pantalla? ¿Qué botón usamos para tocar las cosas en la computadora?). Duración: 10 minutos.
+            </td>
+            <td>Pizarra y marcadores.</td>
+        </tr>
+        <tr>
+            <td><strong>Cierre</strong></td>
+            <td>
+                <strong>Juego de Retroalimentación: "Simón Dice informático":</strong> (ej. Simón dice: me mueven la flechita que se mueve en la pantalla?). Preguntas de metacognición: ¿Cómo se llama la flechita que se mueve en la pantalla? ¿Qué botón usamos para tocar las cosas en la computadora? Duración: 10 minutos
+            </td>
+            <td>Pizarra y marcadores.</td>
+        </tr>
+
+        <!-- Actividades de recuperación pedagógica -->
+        <tr>
+            <td colspan="4" class="bloque-seccion">
+                <div class="bloque-titulo">Actividades de recuperación pedagógica:</div>
+                Mural Digital de Compromiso y Guía Táctil: Lectura del mural digital al inicio de cada sesión y apoyo físico "mano sobre mano" del docente para aquellos niños que presenten dificultad al sostener el mouse o coordinar el movimiento de la flecha en la pantalla.
             </td>
         </tr>
     </table>
 
-    <!-- ESTRUCTURA PRINCIPAL DE LA PLANIFICACIÓN -->
-    <table class="plan-table">
-        <tbody>
-            <!-- ESTRATEGIAS -->
-            <tr>
-                <td colspan="4">
-                    <span class="section-label">Estrategias de enseñanza – aprendizaje:</span>
-                    <div class="cell-content">{{ plan.get('estrategias', '') }}</div>
-                </td>
-            </tr>
-
-            <!-- INTENCIÓN PEDAGÓGICA -->
-            <tr>
-                <td colspan="4">
-                    <span class="section-label">Intención pedagógica del día:</span>
-                    <div class="cell-content">{{ plan.get('intencion_pedagogica', '') }}</div>
-                </td>
-            </tr>
-
-            <!-- INDICADOR DE LOGRO -->
-            <tr>
-                <td colspan="4">
-                    <span class="section-label">Indicador de logro:</span>
-                    <div class="cell-content">{{ plan.get('indicador_logro', '') }}</div>
-                </td>
-            </tr>
-
-            <!-- ENCABEZADOS DE LA TABLA DE MOMENTOS -->
-            <tr>
-                <td class="header-cell" style="width: 22%;">Competencia específica</td>
-                <td class="header-cell" style="width: 9%;">Momentos</td>
-                <td class="header-cell" style="width: 46%;">Actividades / Duración</td>
-                <td class="header-cell" style="width: 23%;">Recursos:</td>
-            </tr>
-
-            <!-- MOMENTO INICIO -->
-            <tr>
-                <td>
-                    <div class="cell-content">{{ plan.get('competencia_especifica', '') }}</div>
-                </td>
-                <td>
-                    <span class="moment-title">Inicio</span>
-                </td>
-                <td>
-                    <div class="cell-content">{{ plan.get('actividad_inicio', '') }}</div>
-                </td>
-                <td>
-                    <div class="cell-content">{{ plan.get('recursos_inicio', '') if plan.get('recursos_inicio') else '' }}</div>
-                </td>
-            </tr>
-
-            <!-- MOMENTO DESARROLLO -->
-            <tr>
-                <td>
-                    <div class="cell-content" style="color: #666; font-style: italic;">(Continuación)</div>
-                </td>
-                <td>
-                    <span class="moment-title">Desarrollo</span>
-                </td>
-                <td>
-                    <div class="cell-content">{{ plan.get('actividad_desarrollo', '') }}</div>
-                </td>
-                <td>
-                    <div class="cell-content">{{ plan.get('recursos_desarrollo', '') if plan.get('recursos_desarrollo') else '' }}</div>
-                </td>
-            </tr>
-
-            <!-- MOMENTO CIERRE -->
-            <tr>
-                <td>
-                    <div class="cell-content" style="color: #666; font-style: italic;">(Continuación)</div>
-                </td>
-                <td>
-                    <span class="moment-title">Cierre</span>
-                </td>
-                <td>
-                    <div class="cell-content">{{ plan.get('actividad_cierre', '') }}</div>
-                </td>
-                <td>
-                    <div class="cell-content">{{ plan.get('recursos_cierre', '') if plan.get('recursos_cierre') else '' }}</div>
-                </td>
-            </tr>
-
-            <!-- RECUPERACIÓN PEDAGÓGICA -->
-            <tr>
-                <td colspan="4">
-                    <span class="section-label">Actividades de recuperación pedagógica:</span>
-                    <div class="cell-content">{{ plan.get('recuperacion_pedagogica', '') }}</div>
-                </td>
-            </tr>
-        </tbody>
-    </table>
+</div>
 
 </body>
 </html>
