@@ -10,109 +10,92 @@
         }
 
         body {
-            font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+            font-family: "Times New Roman", Times, serif; /* Fuente con serifas idéntica al original */
             margin: 0;
-            padding: 20px;
+            padding: 10px;
             background-color: #fff;
-            color: #333;
+            color: #000;
         }
 
-        /* Estructura principal del encabezado */
-        .header-container {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
+        /* Tabla contenedora principal del encabezado */
+        .header-table {
             width: 100%;
-            border-bottom: 2px solid #555;
-            padding-bottom: 8px;
-            box-sizing: border-box;
+            border-collapse: collapse;
+            border-bottom: 2px solid #000;
+            padding-bottom: 4px;
         }
 
-        /* Sección del Logo y Contenido Izquierdo */
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            flex: 1;
+        .header-table td {
+            vertical-align: top;
+            padding: 0;
         }
 
-        .logo-box {
-            width: 90px;
-            height: 90px;
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        /* Celda del Logo */
+        .logo-cell {
+            width: 95px;
+            text-align: left;
         }
 
-        .logo-box img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
+        .logo-img {
+            width: 85px;
+            height: auto;
+            display: block;
         }
 
-        .header-info {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .title-container {
-            display: flex;
-            align-items: baseline;
-            gap: 8px;
-        }
-
+        /* Título del colegio */
         .school-title {
-            font-size: 20px;
+            font-size: 21px;
             font-weight: bold;
-            color: #5c7299; /* Azul grisáceo del título */
+            color: #5b739c; /* Color azul grisáceo exacto */
             margin: 0;
-            letter-spacing: -0.2px;
+            display: inline-block;
         }
 
         .school-srl {
             font-size: 16px;
             font-weight: bold;
-            color: #a0a0a0; /* Gris del S.R.L */
+            color: #a3a3a3; /* Color gris del S.R.L */
+            margin-left: 5px;
         }
 
+        /* Lema superior derecho */
+        .motto-cell {
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .motto-text {
+            font-family: "Times New Roman", Times, serif;
+            font-style: italic;
+            font-size: 15px;
+            color: #e59b6e; /* Color naranja/salmón exacto */
+        }
+
+        /* Detalles e información */
         .details-text {
-            font-size: 11px;
-            color: #444;
-            margin-top: 6px;
-            line-height: 1.35;
+            font-size: 10.5px;
+            line-height: 1.25;
+            color: #333;
+            margin-top: 3px;
         }
 
-        .bold-label {
+        .bold {
             font-weight: bold;
-            color: #222;
+            color: #000;
         }
 
+        /* Subtítulos */
         .report-subtitle {
             font-size: 12px;
             font-weight: bold;
             color: #333;
-            margin-top: 5px;
+            margin-top: 4px;
         }
 
         .year-text {
             font-size: 11px;
-            color: #777;
+            color: #666;
             margin-top: 2px;
-        }
-
-        /* Lema del colegio a la derecha */
-        .header-right {
-            text-align: right;
-            padding-top: 5px;
-            min-width: 250px;
-        }
-
-        .motto {
-            font-family: "Brush Script MT", "Comic Sans MS", cursive;
-            font-size: 18px;
-            color: #e29569; /* Tono anaranjado / salmón del lema */
-            white-space: nowrap;
         }
 
         @media print {
@@ -126,25 +109,34 @@
 </head>
 <body>
 
-    <!-- PARTE 1: ENCABEZADO -->
-    <div class="header-container">
-        
-        <!-- Izquierda: Logo y Datos Oficiales -->
-        <div class="header-left">
-            <div class="logo-box">
-                <!-- Puedes cambiar 'logo.png' por la ruta de tu imagen real del logo -->
-                <img src="logo.png" alt="Logo Mami Luisa" onerror="this.style.display='none'; this.parentNode.innerText='[LOGO]';">
-            </div>
+    <!-- TABLA ENCABEZADO EXAMEN / INFORME -->
+    <table class="header-table">
+        <tr>
+            <!-- COLUMNA 1: LOGO -->
+            <td class="logo-cell">
+                <!-- Reemplaza 'logo.png' por el archivo o URL de tu logo -->
+                <img src="logo.png" alt="Logo" class="logo-img" onerror="this.style.display='none'; this.parentNode.innerHTML='<div style=\'width:80px;height:80px;border:1px dashed #ccc;text-align:center;line-height:80px;font-size:10px;\'>LOGO</div>';">
+            </td>
 
-            <div class="header-info">
-                <div class="title-container">
-                    <h1 class="school-title">Centro Educativo Mami Luisa</h1>
-                    <span class="school-srl">S.R.L</span>
-                </div>
+            <!-- COLUMNA 2: TEXTO CENTRAL Y LEMA -->
+            <td>
+                <!-- Fila superior: Título a la izquierda, Lema a la derecha -->
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                        <td style="vertical-align: bottom;">
+                            <span class="school-title">Centro Educativo Mami Luisa</span>
+                            <span class="school-srl">S.R.L</span>
+                        </td>
+                        <td class="motto-cell" style="vertical-align: bottom;">
+                            <span class="motto-text">“Educando con amor para un mundo mejor ”</span>
+                        </td>
+                    </tr>
+                </table>
 
+                <!-- Fila inferior: Datos de dirección, teléfono y títulos del informe -->
                 <div class="details-text">
-                    <span class="bold-label">Dirección:</span> C/Castillo Márquez #53. La Romana, Centro Ciudad. <span class="bold-label">Teléfono:</span> 809-550-7385 / 809-710-3395<br>
-                    <span class="bold-label">Regional de Educación:</span> 05 San Pedro de Macorís. <span class="bold-label">Distrito Educativo:</span> 05-03 La Romana. <span class="bold-label">Código:</span> 07121
+                    <span class="bold">Dirección:</span> C/Castillo Márquez #53. La Romana, Centro Ciudad. <span class="bold">Teléfono:</span> 809-550-7385 / 809-710-3395<br>
+                    <span class="bold">Regional de Educación:</span> 05 San Pedro de Macorís. <span class="bold">Distrito Educativo:</span> 05-03 La Romana. <span class="bold">Código:</span> 07121
                 </div>
 
                 <div class="report-subtitle">
@@ -154,15 +146,9 @@
                 <div class="year-text">
                     Año Escolar 2025-2026 /Jornada Escolar Regular. Tanda Matutina.
                 </div>
-            </div>
-        </div>
-
-        <!-- Derecha: Lema -->
-        <div class="header-right">
-            <div class="motto">“Educando con amor para un mundo mejor ”</div>
-        </div>
-
-    </div>
+            </td>
+        </tr>
+    </table>
 
 </body>
 </html>
