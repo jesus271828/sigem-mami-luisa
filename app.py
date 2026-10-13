@@ -2237,21 +2237,23 @@ from models import db, Estudiante, Notas1
 @app.route('/pdf/notas1')
 def generar_pdf_notas1():
     try:
-        estudiante_id_str = request.args.get('id_estudiante')
-        if not estudiante_id_str:
+        estudiante_id = request.args.get('id_estudiante')
+        if not estudiante_id:
             return "No se ha proporcionado el ID del estudiante", 400
 
-        # Convertir el ID a entero para que coincida con el tipo de la base de datos (integer)
-        try:
-            estudiante_id = int(estudiante_id_str)
-        except ValueError:
-            return "El ID del estudiante debe ser un número válido", 400
-
-        # 1. Consultar los datos del estudiante usando el ID entero
-        estudiante_obj = Estudiante.query.filter_by(id=estudiante_id).first()
+        # 1. Buscar al estudiante por el campo 'id_estudiante' (que es el código varchar que viene en la URL)
+        # Si en tu base de datos el ID es numérico puro, puedes probar también buscando por el id principal.
+        estudiante_obj = Estudiante.query.filter_by(id_estudiante=str(estudiante_id)).first()
         
+        # Si no lo encuentra por id_estudiante, intentamos buscarlo por el id numérico por si acaso
         if not estudiante_obj:
-            return "Estudiante no encontrado", 404
+            try:
+                estudiante_obj = Estudiante.query.filter_by(id=int(estudiante_id)).first()
+            except ValueError:
+                pass
+
+        if not estudiante_obj:
+            return "Estudiante no encontrado en la base de datos", 404
 
         # Convertir el objeto estudiante a un diccionario
         estudiante = {
@@ -2261,7 +2263,7 @@ def generar_pdf_notas1():
             'grado': estudiante_obj.grado
         }
 
-        # 2. Consultar el registro de notas en la tabla 'notas1'
+        # 2. Consultar el registro de notas en la tabla 'notas1' usando el mismo id_estudiante
         notas_registro = Notas1.query.filter_by(id_estudiante=str(estudiante_id)).first()
         
         notas_data = {}
@@ -2272,7 +2274,7 @@ def generar_pdf_notas1():
             elif isinstance(datos_brutos, dict):
                 notas_data = datos_brutos
 
-        # 3. Renderizar la plantilla HTML con los datos
+        # 3. Renderizar la plantilla HTML con los datos y la tipografía Tw Cen MT
         html = render_template('pdf_notas1.html', estudiante=estudiante, notas=notas_data)
 
         # 4. Generar el PDF utilizando xhtml2pdf en memoria
