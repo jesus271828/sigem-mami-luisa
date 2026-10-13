@@ -2,11 +2,11 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Informe de Aprendizaje - Horizontal</title>
+    <title>Informe de Aprendizaje - Nivel Primario</title>
     <style>
         @page {
             size: letter landscape;
-            margin: 8mm;
+            margin: 5mm 7mm 5mm 7mm;
         }
 
         * {
@@ -18,9 +18,9 @@
 
         body {
             background-color: #ffffff;
-            font-size: 10px;
+            font-size: 9.5px;
             color: #000000;
-            line-height: 1.15;
+            line-height: 1.1;
         }
 
         .page {
@@ -33,217 +33,244 @@
             page-break-after: avoid;
         }
 
-        /* Encabezado Institucional Horizontal */
-        .header-table {
+        /* Encabezado */
+        .tabla-encabezado {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 5px;
-            border-bottom: 2px solid #000;
-            padding-bottom: 4px;
+            margin-bottom: 3px;
         }
 
-        .header-logo {
+        .logo-box {
             width: 8%;
             text-align: center;
+            font-weight: bold;
+            font-size: 11px;
             vertical-align: middle;
         }
 
-        .header-text {
+        .header-center {
             width: 92%;
             text-align: center;
         }
 
-        .school-name {
-            font-size: 16px;
+        .titulo-escuela {
+            font-size: 15px;
             font-weight: bold;
-            color: #1a365d;
+            color: #1b365d;
             text-transform: uppercase;
         }
 
-        .school-slogan {
-            font-size: 10px;
-            font-style: italic;
-            color: #4a5568;
-        }
-
-        .school-info {
+        .slogan {
             font-size: 9px;
-            color: #2d3748;
+            font-style: italic;
+            color: #bd7344;
+            margin-top: 1px;
         }
 
-        .doc-title {
-            font-size: 12px;
-            font-weight: bold;
+        .info-contacto {
+            font-size: 8px;
+            color: #333333;
+        }
+
+        .banner-titulo {
+            width: 100%;
+            border-top: 1.5px solid #000;
+            border-bottom: 1.5px solid #000;
             text-align: center;
+            font-weight: bold;
+            font-size: 11px;
+            padding: 2px 0;
+            margin-bottom: 4px;
             text-transform: uppercase;
-            margin: 6px 0 4px 0;
+            background-color: #f8f9fa;
         }
 
         /* Datos del Estudiante */
-        .info-estudiante {
+        .tabla-estudiante {
             width: 100%;
             border-collapse: collapse;
-            border: 1px solid #000;
-            margin-bottom: 6px;
-            font-size: 10px;
+            border: 1.5px solid #000;
+            margin-bottom: 4px;
         }
 
-        .info-estudiante td {
+        .tabla-estudiante td {
             border: 1px solid #000;
-            padding: 4px 8px;
+            padding: 3px 5px;
+            font-size: 9.5px;
         }
 
-        .info-label {
+        .lbl-bold {
             font-weight: bold;
-            background-color: #f7fafc;
+            text-transform: uppercase;
         }
 
-        /* Tabla Principal de Calificaciones en Horizontal */
-        .tabla-calificaciones {
+        /* Tabla de Notas / Áreas */
+        .tabla-matriz {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1.5px solid #000;
+            margin-bottom: 4px;
+        }
+
+        .tabla-matriz th, .tabla-matriz td {
+            border: 1px solid #000;
+            text-align: center;
+            padding: 2px 1px;
+            font-size: 8.5px;
+        }
+
+        .tabla-matriz th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+
+        .col-area-nombre {
+            text-align: left !important;
+            padding-left: 5px !important;
+            font-weight: bold;
+            width: 22%;
+        }
+
+        /* Bloque Inferior: Escala y Asistencia */
+        .tabla-inferior {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .box-escala {
+            width: 58%;
+            vertical-align: top;
+            padding-right: 4px;
+        }
+
+        .box-asistencia {
+            width: 42%;
+            vertical-align: top;
+            padding-left: 4px;
+        }
+
+        .sub-tabla {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1.5px solid #000;
+        }
+
+        .sub-tabla th, .sub-tabla td {
+            border: 1px solid #000;
+            padding: 2px 4px;
+            font-size: 8px;
+        }
+
+        .sub-tabla th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        /* Reverso */
+        .tabla-reverso-bloque {
             width: 100%;
             border-collapse: collapse;
             border: 1.5px solid #000;
             margin-bottom: 6px;
         }
 
-        .tabla-calificaciones th, .tabla-calificaciones td {
+        .tabla-reverso-bloque td {
             border: 1px solid #000;
-            text-align: center;
-            padding: 4px 2px;
-            font-size: 9.5px;
-        }
-
-        .tabla-calificaciones th {
-            background-color: #edf2f7;
-            font-weight: bold;
-        }
-
-        .col-area {
-            text-align: left !important;
-            padding-left: 6px !important;
-            font-weight: bold;
-            width: 22%;
-        }
-
-        /* Sección inferior horizontal */
-        .seccion-inferior {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .seccion-inferior td {
-            vertical-align: top;
-            border: 1px solid #000;
-            padding: 5px;
+            padding: 4px;
             font-size: 9px;
         }
 
-        /* Estilos para la Segunda Página (Reverso Horizontal) */
-        .tabla-reverso {
+        .cuadro-apoyos {
+            width: 100%;
+            border: 1.5px solid #000;
+            min-height: 50px;
+            padding: 5px;
+            margin-bottom: 6px;
+            font-size: 9px;
+        }
+
+        .tabla-firmas-final {
             width: 100%;
             border-collapse: collapse;
-            border: 1px solid #000;
-            margin-bottom: 8px;
+            margin-top: 15px;
         }
 
-        .tabla-reverso th, .tabla-reverso td {
-            border: 1px solid #000;
-            padding: 6px;
-            font-size: 10px;
-        }
-
-        .seccion-apoyos {
-            border: 1px solid #000;
-            padding: 6px;
-            min-height: 55px;
-            margin-bottom: 8px;
-            font-size: 10px;
-        }
-
-        .firmas-tabla {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-
-        .firmas-tabla td {
+        .tabla-firmas-final td {
             text-align: center;
             vertical-align: bottom;
-            font-size: 10px;
-            padding: 5px;
+            font-size: 9px;
         }
 
-        .linea-firma {
+        .linea-docente {
             border-top: 1px solid #000;
-            width: 60%;
+            width: 65%;
             margin: 0 auto;
-            padding-top: 3px;
+            padding-top: 2px;
             font-weight: bold;
         }
     </style>
 </head>
 <body>
 
-    <!-- ================================= PÁGINA 1: ANVERSO (HORIZONTAL) ================================= -->
+    <!-- ================================= PÁGINA 1: ANVERSO ================================= -->
     <div class="page">
-        <!-- Encabezado -->
-        <table class="header-table">
+        <!-- Header -->
+        <table class="tabla-encabezado">
             <tr>
-                <td class="header-logo">
-                    <strong>[ M L ]</strong>
-                </td>
-                <td class="header-text">
-                    <div class="school-name">Centro Educativo Mami Luisa S.R.L</div>
-                    <div class="school-slogan">"Educando con amor para un mundo mejor"</div>
-                    <div class="school-info">Dirección: C/ Castillo Márquez #53, La Romana | Tel.: 809-550-7585 / 809-710-3395</div>
-                    <div class="school-info">Regional 05 San Pedro de Macorís | Distrito 05-02 La Romana</div>
+                <td class="logo-box">[ ML ]</td>
+                <td class="header-center">
+                    <div class="titulo-escuela">Centro Educativo Mami Luisa S.R.L</div>
+                    <div class="slogan">"Educando con amor para un mundo mejor"</div>
+                    <div class="info-contacto">Dirección: C/ Castillo Márquez #53, La Romana | Tel.: 809-550-7585 / 809-710-3395</div>
+                    <div class="info-contacto">Regional 05 San Pedro de Macorís | Distrito 05-02 La Romana</div>
                 </td>
             </tr>
         </table>
 
-        <div class="doc-title">INFORME DE APRENDIZAJE - NIVEL PRIMARIO (FORMATO OFICIAL)</div>
+        <div class="banner-titulo">INFORME DE APRENDIZAJE - NIVEL PRIMARIO (FORMATO OFICIAL)</div>
 
-        <!-- Datos Generales -->
-        <table class="info-estudiante">
+        <!-- Datos del estudiante -->
+        <table class="tabla-estudiante">
             <tr>
-                <td class="info-label" style="width: 10%;">NOMBRE(S):</td>
-                <td style="width: 32%;">{{ estudiante.nombre }}</td>
-                <td class="info-label" style="width: 10%;">APELLIDO(S):</td>
-                <td style="width: 32%;">{{ estudiante.apellido }}</td>
-                <td class="info-label" style="width: 8%;">GRADO:</td>
-                <td style="width: 8%;">{{ estudiante.grado }}</td>
+                <td class="lbl-bold" style="width: 10%;">NOMBRE(S):</td>
+                <td style="width: 30%;">{{ estudiante.nombre }}</td>
+                <td class="lbl-bold" style="width: 10%;">APELLIDO(S):</td>
+                <td style="width: 30%;">{{ estudiante.apellido }}</td>
+                <td class="lbl-bold" style="width: 8%;">GRADO:</td>
+                <td style="width: 12%;">{{ estudiante.grado }}</td>
             </tr>
         </table>
 
-        <!-- Tabla Completa de Calificaciones -->
-        <table class="tabla-calificaciones">
+        <!-- Tabla Matriz Principal -->
+        <table class="tabla-matriz">
             <thead>
                 <tr>
-                    <th rowspan="2" class="col-area" style="vertical-align: middle;">ÁREAS CURRICULARES</th>
+                    <th rowspan="2" class="col-area-nombre" style="vertical-align: middle;">ÁREAS CURRICULARES</th>
                     <th colspan="12">COMPETENCIAS FUNDAMENTALES</th>
                     <th colspan="3">CALIFICACIÓN FINAL</th>
                 </tr>
                 <tr>
-                    <th colspan="4" style="font-size: 8px;">C1 - Comunicativa</th>
-                    <th colspan="4" style="font-size: 8px;">C2 - Pensamiento Lógico, Crítico y Creativo</th>
-                    <th colspan="4" style="font-size: 8px;">C3 - Ética, Ciudadana y Ambiental</th>
-                    <th style="font-size: 8px;">C1</th>
-                    <th style="font-size: 8px;">C2</th>
-                    <th style="font-size: 8px;">C3</th>
+                    <th colspan="4" style="font-size: 7.5px;">C1 - Comunicativa</th>
+                    <th colspan="4" style="font-size: 7.5px;">C2 - Pensamiento Lógico, Crítico y Creativo</th>
+                    <th colspan="4" style="font-size: 7.5px;">C3 - Ética, Ciudadana y Ambiental</th>
+                    <th style="font-size: 7.5px;">C1</th>
+                    <th style="font-size: 7.5px;">C2</th>
+                    <th style="font-size: 7.5px;">C3</th>
                 </tr>
                 <tr>
-                    <th class="col-area">Períodos</th>
-                    <th>P1</th><th>P2</th><th>P3</th><th>P4</th>
-                    <th>P1</th><th>P2</th><th>P3</th><th>P4</th>
-                    <th>P1</th><th>P2</th><th>P3</th><th>P4</th>
-                    <th>ÁREA</th><th>REC.</th>
+                    <th class="col-area-nombre">Períodos</th>
+                    <th style="width: 4%;">P1</th><th style="width: 4%;">P2</th><th style="width: 4%;">P3</th><th style="width: 4%;">P4</th>
+                    <th style="width: 4%;">P1</th><th style="width: 4%;">P2</th><th style="width: 4%;">P3</th><th style="width: 4%;">P4</th>
+                    <th style="width: 4%;">P1</th><th style="width: 4%;">P2</th><th style="width: 4%;">P3</th><th style="width: 4%;">P4</th>
+                    <th style="width: 5%;">ÁREA</th><th style="width: 5%;">REC.</th><th style="width: 5%;"></th>
                 </tr>
             </thead>
             <tbody>
                 {% set areas = ['Lengua Española', 'Matemática', 'Ciencias Sociales', 'Ciencias de la Naturaleza', 'Educación Física', 'Formación Integral, Humana y Religiosa', 'Educación Artística', 'Inglés'] %}
                 {% for area in areas %}
                 <tr>
-                    <td class="col-area">{{ area }}</td>
+                    <td class="col-area-nombre">{{ area }}</td>
                     <td>-</td><td>-</td><td>-</td><td>-</td>
                     <td>-</td><td>-</td><td>-</td><td>-</td>
                     <td>-</td><td>-</td><td>-</td><td>-</td>
@@ -253,141 +280,139 @@
             </tbody>
         </table>
 
-        <!-- Bloque inferior: Escala numérica y Asistencia en Horizontal -->
-        <table class="seccion-inferior">
+        <!-- Escala Numérica y Asistencia -->
+        <table class="tabla-inferior">
             <tr>
-                <td style="width: 60%;">
-                    <table style="width: 100%; border-collapse: collapse;">
+                <td class="box-escala">
+                    <table class="sub-tabla">
                         <tr>
-                            <th style="border: 1px solid #000; background: #edf2f7; font-size: 9px; padding: 3px;">Escala numérica</th>
-                            <th style="border: 1px solid #000; background: #edf2f7; font-size: 9px; padding: 3px;">DESCRIPCIÓN</th>
+                            <th style="width: 25%;">Escala numérica</th>
+                            <th>DESCRIPCIÓN</th>
                         </tr>
                         <tr>
-                            <td style="border: 1px solid #000; text-align: center; font-weight: bold;">89-100</td>
-                            <td style="border: 1px solid #000; font-size: 8px;">Evidencia que el estudiante ha alcanzado un desempeño destacado con relación a los aspectos evaluados.</td>
+                            <td style="text-align: center; font-weight: bold;">89-100</td>
+                            <td>Evidencia que el estudiante ha alcanzado un desempeño destacado con relación a los aspectos evaluados.</td>
                         </tr>
                         <tr>
-                            <td style="border: 1px solid #000; text-align: center; font-weight: bold;">78-88</td>
-                            <td style="border: 1px solid #000; font-size: 8px;">Evidencia que el estudiante ha logrado, en general, los aprendizajes esperados.</td>
+                            <td style="text-align: center; font-weight: bold;">78-88</td>
+                            <td>Evidencia que el estudiante ha logrado, en general, los aprendizajes esperados.</td>
                         </tr>
                         <tr>
-                            <td style="border: 1px solid #000; text-align: center; font-weight: bold;">65-77</td>
-                            <td style="border: 1px solid #000; font-size: 8px;">Evidencia que el estudiante aún se encuentra en proceso con relación a los aspectos evaluados.</td>
+                            <td style="text-align: center; font-weight: bold;">65-77</td>
+                            <td>Evidencia que el estudiante aún se encuentra en proceso con relación a los aspectos evaluados.</td>
                         </tr>
                         <tr>
-                            <td style="border: 1px solid #000; text-align: center; font-weight: bold;">Menos de 65</td>
-                            <td style="border: 1px solid #000; font-size: 8px;">Evidencia que el estudiante ha alcanzado un desempeño insuficiente.</td>
+                            <td style="text-align: center; font-weight: bold;">Menos de 65</td>
+                            <td>Evidencia que el estudiante ha alcanzado un desempeño insuficiente.</td>
                         </tr>
                     </table>
                 </td>
-                <td style="width: 40%;">
-                    <div style="font-weight: bold; margin-bottom: 4px; font-size: 9.5px; text-align: center;">RESUMEN DE ASISTENCIA DEL ESTUDIANTE</div>
-                    <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 8.5px;">
-                        <tr style="background: #edf2f7;">
-                            <th style="border: 1px solid #000; padding: 3px;">PERÍODO</th>
-                            <th style="border: 1px solid #000; padding: 3px;">ASISTENCIA</th>
-                            <th style="border: 1px solid #000; padding: 3px;">AUSENCIA</th>
+                <td class="box-asistencia">
+                    <table class="sub-tabla">
+                        <tr>
+                            <th colspan="3">RESUMEN DE ASISTENCIA DEL ESTUDIANTE</th>
                         </tr>
-                        <tr><td style="border: 1px solid #000;">P1</td><td style="border: 1px solid #000;">-</td><td style="border: 1px solid #000;">-</td></tr>
-                        <tr><td style="border: 1px solid #000;">P2</td><td style="border: 1px solid #000;">-</td><td style="border: 1px solid #000;">-</td></tr>
-                        <tr><td style="border: 1px solid #000;">P3</td><td style="border: 1px solid #000;">-</td><td style="border: 1px solid #000;">-</td></tr>
-                        <tr><td style="border: 1px solid #000;">P4</td><td style="border: 1px solid #000;">-</td><td style="border: 1px solid #000;">-</td></tr>
+                        <tr style="background-color: #f2f2f2; text-align: center; font-weight: bold;">
+                            <td>PERÍODO</td>
+                            <td>ASISTENCIA</td>
+                            <td>AUSENCIA</td>
+                        </tr>
+                        <tr><td style="text-align: center;">P1</td><td style="text-align: center;">-</td><td style="text-align: center;">-</td></tr>
+                        <tr><td style="text-align: center;">P2</td><td style="text-align: center;">-</td><td style="text-align: center;">-</td></tr>
+                        <tr><td style="text-align: center;">P3</td><td style="text-align: center;">-</td><td style="text-align: center;">-</td></tr>
+                        <tr><td style="text-align: center;">P4</td><td style="text-align: center;">-</td><td style="text-align: center;">-</td></tr>
                     </table>
                 </td>
             </tr>
         </table>
     </div>
 
-
-    <!-- ================================= PÁGINA 2: REVERSO (HORIZONTAL) ================================= -->
+    <!-- ================================= PÁGINA 2: REVERSO ================================= -->
     <div class="page">
-        <div class="doc-title" style="margin-bottom: 8px;">SEGUIMIENTO DE APRENDIZAJES Y CONDICIÓN FINAL</div>
+        <div class="banner-titulo" style="margin-top: 5px;">SEGUIMIENTO DE APRENDIZAJES Y CONDICIÓN FINAL</div>
 
-        <!-- Tabla Períodos P1-P4 -->
-        <table class="tabla-reverso">
+        <table class="tabla-reverso-bloque">
             <tr>
-                <td style="width: 6%; font-weight: bold; text-align: center; background: #edf2f7;">P1</td>
-                <td style="height: 25px;"></td>
+                <td style="width: 6%; font-weight: bold; text-align: center; background-color: #f2f2f2;">P1</td>
+                <td style="height: 22px;"></td>
             </tr>
             <tr>
-                <td style="font-weight: bold; text-align: center; background: #edf2f7;">P2</td>
-                <td style="height: 25px;"></td>
+                <td style="font-weight: bold; text-align: center; background-color: #f2f2f2;">P2</td>
+                <td style="height: 22px;"></td>
             </tr>
             <tr>
-                <td style="font-weight: bold; text-align: center; background: #edf2f7;">P3</td>
-                <td style="height: 25px;"></td>
+                <td style="font-weight: bold; text-align: center; background-color: #f2f2f2;">P3</td>
+                <td style="height: 22px;"></td>
             </tr>
             <tr>
-                <td style="font-weight: bold; text-align: center; background: #edf2f7;">P4</td>
-                <td style="height: 25px;"></td>
+                <td style="font-weight: bold; text-align: center; background-color: #f2f2f2;">P4</td>
+                <td style="height: 22px;"></td>
             </tr>
         </table>
 
-        <!-- Información de avances y apoyos -->
-        <div style="font-weight: bold; font-size: 9.5px; margin-bottom: 3px;">Información sobre el nivel de avances de los aprendizajes y los apoyos que necesita para la mejora de sus aprendizajes:</div>
-        <div class="seccion-apoyos"></div>
+        <div style="font-weight: bold; font-size: 9px; margin-bottom: 2px;">Información sobre el nivel de avances de los aprendizajes y los apoyos que necesita para la mejora de sus aprendizajes:</div>
+        <div class="cuadro-apoyos"></div>
 
-        <!-- Secciones inferiores distribuidas en horizontal -->
         <table style="width: 100%; border-collapse: collapse;">
             <tr>
-                <td style="width: 58%; vertical-align: top; padding-right: 8px;">
-                    <table class="tabla-reverso">
-                        <tr style="background: #edf2f7;">
-                            <th style="padding: 4px; font-size: 9px;">Períodos de reportes de calificaciones</th>
-                            <th style="padding: 4px; font-size: 9px;">FIRMA DEL PADRE, MADRE O TUTOR</th>
+                <td style="width: 58%; vertical-align: top; padding-right: 4px;">
+                    <table class="sub-tabla">
+                        <tr>
+                            <th>Períodos de reportes de calificaciones</th>
+                            <th>FIRMA DEL PADRE, MADRE O TUTOR</th>
                         </tr>
                         <tr>
-                            <td style="font-size: 9px; padding: 6px;">Septiembre – Octubre</td>
-                            <td style="height: 20px;"></td>
+                            <td style="padding: 5px;">Septiembre – Octubre</td>
+                            <td style="height: 18px;"></td>
                         </tr>
                         <tr>
-                            <td style="font-size: 9px; padding: 6px;">Noviembre – Diciembre – Enero</td>
-                            <td style="height: 20px;"></td>
+                            <td style="padding: 5px;">Noviembre – Diciembre – Enero</td>
+                            <td style="height: 18px;"></td>
                         </tr>
                         <tr>
-                            <td style="font-size: 9px; padding: 6px;">Febrero – Marzo</td>
-                            <td style="height: 20px;"></td>
+                            <td style="padding: 5px;">Febrero – Marzo</td>
+                            <td style="height: 18px;"></td>
                         </tr>
                         <tr>
-                            <td style="font-size: 9px; padding: 6px;">Abril – Mayo – Junio</td>
-                            <td style="height: 20px;"></td>
+                            <td style="padding: 5px;">Abril – Mayo – Junio</td>
+                            <td style="height: 18px;"></td>
                         </tr>
                     </table>
                 </td>
-                <td style="width: 42%; vertical-align: top;">
-                    <table class="tabla-reverso" style="margin-bottom: 6px;">
-                        <tr style="background: #edf2f7;">
-                            <th colspan="3" style="padding: 4px; font-size: 9px;">SITUACIÓN DEL / DE LA ESTUDIANTE</th>
+                <td style="width: 42%; vertical-align: top; padding-left: 4px;">
+                    <table class="sub-tabla" style="margin-bottom: 4px;">
+                        <tr>
+                            <th colspan="3">SITUACIÓN DEL / DE LA ESTUDIANTE</th>
                         </tr>
-                        <tr style="font-size: 8.5px; text-align: center;">
-                            <td style="padding: 4px;">Promovido/a: [ ]</td>
-                            <td style="padding: 4px;">Aplazado/a: [ ]</td>
-                            <td style="padding: 4px;">Repitente: [ ]</td>
+                        <tr style="text-align: center;">
+                            <td>Promovido/a: [ ]</td>
+                            <td>Aplazado/a: [ ]</td>
+                            <td>Repitente: [ ]</td>
                         </tr>
                     </table>
-                    <table class="tabla-reverso">
-                        <tr style="background: #edf2f7;">
-                            <th style="padding: 4px; font-size: 9px;">Condición final del / de la estudiante</th>
+                    <table class="sub-tabla">
+                        <tr>
+                            <th>Condición final del / de la estudiante</th>
                         </tr>
                         <tr>
-                            <td style="height: 28px;"></td>
+                            <td style="height: 25px;"></td>
                         </tr>
                     </table>
                 </td>
             </tr>
         </table>
 
-        <!-- Firmas Oficiales -->
-        <table class="firmas-tabla">
+        <!-- Firmas del Reverso -->
+        <table class="tabla-firmas-final">
             <tr>
                 <td style="width: 45%;">
-                    <div class="linea-firma">Licda. Johanna Estofany Pilar Castro</div>
-                    <div style="font-size: 9px; margin-top: 2px;">(Docente titular del grado)</div>
+                    <div class="linea-docente">Licda. Johanna Estofany Pilar Castro</div>
+                    <div style="font-size: 8.5px; margin-top: 1px;">(Docente titular del grado)</div>
                 </td>
                 <td style="width: 10%;"></td>
                 <td style="width: 45%;">
-                    <div class="linea-firma">Licda. María Teresa Herrero Romero</div>
-                    <div style="font-size: 9px; margin-top: 2px;">(Directora)</div>
+                    <div class="linea-docente">Licda. María Teresa Herrero Romero</div>
+                    <div style="font-size: 8.5px; margin-top: 1px;">(Directora)</div>
                 </td>
             </tr>
         </table>
