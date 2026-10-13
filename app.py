@@ -2232,6 +2232,8 @@ import io
 import json
 from flask import render_template, make_response, request
 from xhtml2pdf import pisa
+# Importa tus modelos y la base de datos desde tu archivo models.py (o desde donde los tengas definidos)
+from models import db, Estudiante, Notas1
 
 @app.route('/pdf/notas1')
 def generar_pdf_notas1():
@@ -2240,23 +2242,29 @@ def generar_pdf_notas1():
         if not estudiante_id:
             return "No se ha proporcionado el ID del estudiante", 400
 
-        # IMPORTANTE: Reutiliza aquí la misma variable de conexión que usas 
-        # en tus rutas de planificaciones (ej. 'supabase' o 'db').
-        # Si tu app usa una variable global, asegúrate de llamarla aquí:
-        global supabase # Si tu cliente global se llama de otra forma, cámbialo por ese nombre (ej: db)
+        # 1. Consultar los datos del estudiante usando SQLAlchemy
+        estudiante_obj = Estudiante.query.filter_by(id=estudiante_id).first()
+        if not estudiante_obj:
+            # Intentar buscar por el campo id_estudiante si el ID principal es numérico distinto
+            estudiante_obj = Estudiante.query.filter_by(id_estudiante=estudiante_id).first()
+            
+        if not estudiante_obj:
+            return "Estudiante no encontrado", 404
 
-        # 1. Consultar los datos del estudiante
-        response_estudiante = supabase.table('estudiantes').select('*').eq('id', estudiante_id).execute()
-        estudiante = response_estudiante.data[0] if response_estudiante.data else {}
+        # Convertir el objeto estudiante a un diccionario para usarlo fácil en el HTML
+        estudiante = {
+            'id': estudiante_obj.id_estudiante or estudiante_obj.id,
+            'nombre': estudiante_obj.nombres,
+            'apellido': estudiante_obj.apellidos,
+            'grado': estudiante_obj.grado
+        }
 
-        # 2. Consultar el registro de notas en la tabla 'notas1' filtrando por 'id_estudiante'
-        response_notas = supabase.table('notas1').select('*').eq('id_estudiante', estudiante_id).execute()
+        # 2. Consultar el registro de notas en la tabla 'notas1' usando el modelo
+        notas_registro = Notas1.query.filter_by(id_estudiante=str(estudiante_id)).first()
         
         notas_data = {}
-        if response_notas.data:
-            registro = response_notas.data[0]
-            datos_brutos = registro.get('datos_formulario', '{}')
-            
+        if notas_registro and notas_registro.datos_formulario:
+            datos_brutos = notas_registro.datos_formulario
             if isinstance(datos_brutos, str):
                 notas_data = json.loads(datos_brutos)
             elif isinstance(datos_brutos, dict):
@@ -2275,10 +2283,10 @@ def generar_pdf_notas1():
         pdf_buffer.seek(0)
 
         # 5. Enviar el archivo PDF resultante al navegador
-        nombre_estudiante = estudiante.get('nombre', 'Estudiante')
+        nombre_archivo = f"Informe_Aprendizaje_{estudiante['nombre']}.pdf"
         response = make_response(pdf_buffer.read())
         response.headers['Content-Type'] = 'application/pdf'
-        response.headers['Content-Disposition'] = f"inline; filename=Informe_Aprendizaje_{nombre_estudiante}.pdf"
+        response.headers['Content-Disposition'] = f"inline; filename={nombre_archivo}"
 
         return response
 
