@@ -2,12 +2,11 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Informe de Aprendizaje - Encabezado Horizontal</title>
+    <title>Informe de Aprendizaje - Encabezado</title>
     <style>
-        /* Configuración de la página en Horizontal */
         @page {
-            size: letter landscape; /* Hoja Carta Horizontal */
-            margin: 1cm;
+            size: letter landscape;
+            margin: 0.8cm;
         }
 
         body {
@@ -18,7 +17,7 @@
             color: #000;
         }
 
-        /* Contenedor del Encabezado */
+        /* Tabla principal del encabezado */
         .header-table {
             width: 100%;
             border-collapse: collapse;
@@ -31,7 +30,7 @@
             padding: 0;
         }
 
-        /* Columna del Logo */
+        /* Contenedor e imagen del Logo */
         .logo-cell {
             width: 110px;
             padding-right: 15px;
@@ -43,42 +42,43 @@
             display: block;
         }
 
-        /* Título del Colegio */
+        /* Línea del título con S.R.L alineado abajo a la derecha del texto */
+        .title-container {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+
         .school-title {
-            font-size: 24px;
+            font-size: 26px;
             font-weight: bold;
-            color: #5b739c; /* Azul grisáceo */
+            color: #5b739c; /* Azul exacto de la imagen */
             margin: 0;
-            display: inline-block;
+            line-height: 1;
         }
 
         .school-srl {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
-            color: #a3a3a3; /* Gris */
-            margin-left: 6px;
+            color: #a3a3a3; /* Gris exacto */
         }
 
-        /* Lema superior derecho */
-        .motto-cell {
-            text-align: right;
-            vertical-align: top;
-            white-space: nowrap;
-        }
-
+        /* Lema ubicado DEBAJO del título */
         .motto-text {
             font-family: "Times New Roman", Times, serif;
             font-style: italic;
-            font-size: 18px;
-            color: #e59b6e; /* Naranja / salmón */
+            font-size: 17px;
+            color: #e59b6e; /* Naranja/salmón exacto */
+            margin-top: 2px;
+            margin-bottom: 6px;
+            display: block;
         }
 
-        /* Detalles de dirección y teléfonos */
+        /* Datos de dirección y teléfono */
         .details-text {
-            font-size: 12px;
+            font-size: 11.5px;
             line-height: 1.3;
             color: #333;
-            margin-top: 4px;
         }
 
         .bold {
@@ -86,16 +86,16 @@
             color: #000;
         }
 
-        /* Títulos del informe */
+        /* Subtítulos */
         .report-subtitle {
-            font-size: 13px;
+            font-size: 12.5px;
             font-weight: bold;
             color: #333;
-            margin-top: 5px;
+            margin-top: 4px;
         }
 
         .year-text {
-            font-size: 12px;
+            font-size: 11.5px;
             color: #666;
             margin-top: 2px;
         }
@@ -110,33 +110,32 @@
 </head>
 <body>
 
-    <!-- TABLA ENCABEZADO HORIZONTAL -->
+    <!-- ENCABEZADO -->
     <table class="header-table">
         <tr>
-            <!-- COLUMNA 1: LOGO -->
+            <!-- COLUMNA LOGO -->
             <td class="logo-cell">
                 <img src="logo.png" alt="Logo" class="logo-img" onerror="this.style.display='none'; this.parentNode.innerHTML='<div style=\'width:90px;height:90px;border:1px dashed #ccc;text-align:center;line-height:90px;font-size:11px;\'>[LOGO]</div>';">
             </td>
 
-            <!-- COLUMNA 2: INFORMACIÓN CENTRAL Y LEMA -->
+            <!-- COLUMNA TEXTO -->
             <td>
-                <table style="width: 100%; border-collapse: collapse;">
-                    <tr>
-                        <td style="vertical-align: bottom;">
-                            <span class="school-title">Centro Educativo Mami Luisa</span>
-                            <span class="school-srl">S.R.L</span>
-                        </td>
-                        <td class="motto-cell">
-                            <span class="motto-text">“ Educando con amor para un mundo mejor ”</span>
-                        </td>
-                    </tr>
-                </table>
+                <!-- 1. Título principal -->
+                <div class="title-container">
+                    <span class="school-title">Centro Educativo Mami Luisa</span>
+                    <span class="school-srl">S.R.L</span>
+                </div>
 
+                <!-- 2. Lema (debajo del título) -->
+                <div class="motto-text">“ Educando con amor para un mundo mejor ”</div>
+
+                <!-- 3. Dirección y teléfonos -->
                 <div class="details-text">
                     <span class="bold">Dirección:</span> C/Castillo Márquez #53. La Romana, Centro Ciudad. <span class="bold">Teléfono:</span> 809-550-7385 / 809-710-3395<br>
                     <span class="bold">Regional de Educación:</span> 05 San Pedro de Macorís. <span class="bold">Distrito Educativo:</span> 05-03 La Romana. <span class="bold">Código:</span> 07121
                 </div>
 
+                <!-- 4. Informe y año escolar -->
                 <div class="report-subtitle">
                     INFORME DE APRENDIZAJE. Primer Grado del Nivel Primario, Sección A.
                 </div>
