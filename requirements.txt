@@ -11,3 +11,4 @@ pytesseract
 pillow
 google-api-core
 weasyprint
+supabase
