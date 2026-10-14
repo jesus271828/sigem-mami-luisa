@@ -19,7 +19,7 @@
         }
 
         /* ---------------------------------------------------- */
-        /* PARTE 1: ENCABEZADO CON RUTA A STATIC/IMG/LOGO2.PNG  */
+        /* PARTE 1: ENCABEZADO CON LOGO A LA IZQUIERDA          */
         /* ---------------------------------------------------- */
         .header-table {
             width: 100%;
@@ -34,28 +34,28 @@
             padding: 0;
         }
 
-        .header-left-col {
-            width: 50%;
-            padding-right: 15px;
-        }
-
-        .logo-title-container {
-            display: flex;
-            align-items: center;
-            gap: 12px;
+        /* Columna 1: El Logo */
+        .header-logo-col {
+            width: 90px;
+            padding-right: 12px;
         }
 
         .logo-img {
-            width: 80px;
+            width: 75px;
             height: auto;
             display: block;
-            flex-shrink: 0;
+        }
+
+        /* Columna 2: Título y Lema al lado del logo */
+        .header-title-col {
+            width: 45%;
+            padding-right: 15px;
         }
 
         .school-title {
             font-size: 22px;
             font-weight: bold;
-            color: #5b739c;
+            color: #5b739c; /* Azul exacto */
             margin: 0;
             line-height: 1.1;
             white-space: nowrap;
@@ -64,7 +64,7 @@
         .school-srl {
             font-size: 15px;
             font-weight: bold;
-            color: #a3a3a3;
+            color: #a3a3a3; /* Gris exacto */
             margin-left: 4px;
         }
 
@@ -72,13 +72,14 @@
             font-family: "Times New Roman", Times, serif;
             font-style: italic;
             font-size: 15px;
-            color: #e59b6e;
+            color: #e59b6e; /* Naranja / salmón exacto */
             margin-top: 4px;
             display: block;
         }
 
+        /* Columna 3: Información institucional a la derecha */
         .header-right-col {
-            width: 50%;
+            width: 45%;
             text-align: right;
         }
 
@@ -188,24 +189,24 @@
 </head>
 <body>
 
-    <!-- PARTE 1: ENCABEZADO -->
+    <!-- PARTE 1: ENCABEZADO CON 3 COLUMNAS -->
     <table class="header-table">
         <tr>
-            <td class="header-left-col">
-                <div class="logo-title-container">
-                    <!-- RUTA CONFIGURADA PARA TU PROYECTO FLASK (SIGEM_Mami_Luisa) -->
-                    <img src="{{ url_for('static', filename='img/logo2.png') }}" alt="Centro Educativo Mami Luisa" class="logo-img">
-                    
-                    <div>
-                        <div>
-                            <span class="school-title">Centro Educativo Mami Luisa</span>
-                            <span class="school-srl">S.R.L</span>
-                        </div>
-                        <span class="motto-text">“ Educando con amor para un mundo mejor ”</span>
-                    </div>
-                </div>
+            <!-- Columna 1: El Logo -->
+            <td class="header-logo-col">
+                <img src="{{ url_for('static', filename='img/logo2.png') }}" alt="Logo Mami Luisa" class="logo-img" onerror="this.onerror=null; this.src='../static/img/logo2.png';">
             </td>
 
+            <!-- Columna 2: Título y Lema al lado del logo -->
+            <td class="header-title-col">
+                <div>
+                    <span class="school-title">Centro Educativo Mami Luisa</span>
+                    <span class="school-srl">S.R.L</span>
+                </div>
+                <span class="motto-text">“ Educando con amor para un mundo mejor ”</span>
+            </td>
+
+            <!-- Columna 3: Información institucional a la derecha -->
             <td class="header-right-col">
                 <div class="details-text">
                     <span class="bold">Dirección:</span> C/Castillo Márquez #53. La Romana, Centro Ciudad. <span class="bold">Teléfono:</span> 809-550-7385 / 809-710-3395<br>
