@@ -34,7 +34,6 @@
             padding: 0;
         }
 
-        /* Columna 1: Imagen del Logo */
         .header-logo-col {
             width: 80px;
             padding-right: 10px;
@@ -47,7 +46,6 @@
             display: block;
         }
 
-        /* Columna 2: Título y Lema al lado del logo */
         .header-title-col {
             width: 45%;
             padding-right: 15px;
@@ -79,7 +77,6 @@
             display: block;
         }
 
-        /* Columna 3: Información institucional a la derecha */
         .header-right-col {
             width: 45%;
             text-align: right;
@@ -182,6 +179,14 @@
             height: 19px;
         }
 
+        /* Estilo vertical optimizado para xhtml2pdf */
+        .vertical-text {
+            font-size: 7.5px;
+            font-weight: bold;
+            line-height: 1;
+            padding: 4px 1px;
+        }
+
         @media print {
             body {
                 -webkit-print-color-adjust: exact;
@@ -195,12 +200,9 @@
     <!-- PARTE 1: ENCABEZADO CON 3 COLUMNAS -->
     <table class="header-table">
         <tr>
-            <!-- Columna 1: El Logo usando la ruta absoluta pasada desde Python -->
             <td class="header-logo-col">
                 <img src="{{ logo_path }}" alt="Logo Mami Luisa" class="logo-img">
             </td>
-
-            <!-- Columna 2: Título y Lema -->
             <td class="header-title-col">
                 <div>
                     <span class="school-title">Centro Educativo Mami Luisa</span>
@@ -208,8 +210,6 @@
                 </div>
                 <span class="motto-text">“ Educando con amor para un mundo mejor ”</span>
             </td>
-
-            <!-- Columna 3: Información de la derecha -->
             <td class="header-right-col">
                 <div class="details-text">
                     <span class="bold">Dirección:</span> C/Castillo Márquez #53. La Romana, Centro Ciudad. <span class="bold">Teléfono:</span> 809-550-7385 / 809-710-3395<br>
@@ -260,13 +260,13 @@
                 <th colspan="3" style="font-size: 8px; width: 12%;">
                     POR COMPETENCIA
                 </th>
-                <!-- Del Área -->
-                <th rowspan="2" style="font-size: 7.5px; width: 5%; line-height: 1.1;">
-                    DEL<br>ÁREA
+                <!-- Del Área (Vertical limpio) -->
+                <th rowspan="2" style="width: 4.5%;">
+                    <div class="vertical-text">D<br>E<br>L<br><br>Á<br>R<br>E<br>A</div>
                 </th>
-                <!-- Recuperación -->
-                <th rowspan="2" style="font-size: 7px; width: 6%; line-height: 1.1;">
-                    RECUPERACIÓN
+                <!-- Recuperación (Vertical limpio) -->
+                <th rowspan="2" style="width: 5.5%;">
+                    <div class="vertical-text">R<br>E<br>C<br>U<br>P<br>E<br>R<br>A<br>C<br>I<br>Ó<br>N</div>
                 </th>
             </tr>
             <tr>
