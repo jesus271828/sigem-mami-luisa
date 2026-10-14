@@ -6,7 +6,7 @@
     <style>
         @page {
             size: letter landscape;
-            margin: 0.25cm; /* Márgenes mínimos para que cubra toda la altura de la página */
+            margin: 0.2cm;
         }
 
         body {
@@ -25,8 +25,8 @@
             width: 100%;
             border-collapse: collapse;
             border-bottom: 2px solid #000;
-            padding-bottom: 4px;
-            margin-bottom: 4px;
+            padding-bottom: 5px;
+            margin-bottom: 5px;
         }
 
         .header-table td {
@@ -35,25 +35,25 @@
         }
 
         .header-logo-col {
-            width: 80px;
+            width: 85px;
             padding-right: 10px;
             text-align: left;
         }
 
         .logo-img {
-            width: 70px;
+            width: 75px;
             height: auto;
             display: block;
         }
 
         .header-title-col {
-            width: 45%;
+            width: 44%;
             padding-right: 15px;
             vertical-align: middle;
         }
 
         .school-title {
-            font-size: 22px;
+            font-size: 23px;
             font-weight: bold;
             color: #5b739c;
             margin: 0;
@@ -62,7 +62,7 @@
         }
 
         .school-srl {
-            font-size: 15px;
+            font-size: 16px;
             font-weight: bold;
             color: #a3a3a3;
             margin-left: 4px;
@@ -71,21 +71,21 @@
         .motto-text {
             font-family: "Times New Roman", Times, serif;
             font-style: italic;
-            font-size: 14.5px;
+            font-size: 15px;
             color: #e59b6e;
-            margin-top: 3px;
+            margin-top: 4px;
             display: block;
         }
 
         .header-right-col {
-            width: 45%;
+            width: 46%;
             text-align: right;
             vertical-align: top;
         }
 
         .details-text {
-            font-size: 10.5px;
-            line-height: 1.3;
+            font-size: 11px;
+            line-height: 1.35;
             color: #333;
         }
 
@@ -95,16 +95,16 @@
         }
 
         .report-subtitle {
-            font-size: 11.5px;
+            font-size: 12px;
             font-weight: bold;
             color: #333;
-            margin-top: 3px;
+            margin-top: 4px;
         }
 
         .year-text {
-            font-size: 10.5px;
+            font-size: 11px;
             color: #666;
-            margin-top: 1px;
+            margin-top: 2px;
         }
 
         /* ---------------------------------------------------- */
@@ -114,17 +114,17 @@
             width: 100%;
             border-collapse: collapse;
             border: 2px solid #000;
-            margin-bottom: 4px;
+            margin-bottom: 5px;
         }
 
         .student-table td {
             border-right: 1px solid #000;
-            padding: 4px 6px;
-            font-size: 10.5px;
+            padding: 5px 8px;
+            font-size: 11.5px;
             font-weight: bold;
             text-transform: uppercase;
             vertical-align: middle;
-            height: 20px;
+            height: 22px;
         }
 
         .student-table td:last-child {
@@ -143,7 +143,7 @@
             width: 100%;
             border-collapse: collapse;
             border: 2px solid #000;
-            margin-bottom: 4px;
+            margin-bottom: 5px;
             table-layout: fixed;
         }
 
@@ -152,8 +152,8 @@
             border: 1px solid #000;
             text-align: center;
             vertical-align: middle;
-            padding: 4px 2px;
-            font-size: 9px;
+            padding: 5px 2px;
+            font-size: 10px;
             word-wrap: break-word;
         }
 
@@ -163,7 +163,7 @@
         }
 
         .areas-header {
-            font-size: 13.5px;
+            font-size: 14.5px;
             font-weight: bold;
             text-transform: uppercase;
             width: 26%;
@@ -171,18 +171,19 @@
 
         .area-name {
             text-align: left;
-            padding-left: 6px;
-            font-size: 10px;
+            padding-left: 8px;
+            font-size: 11px;
+            font-weight: bold;
         }
 
         .main-table tbody tr {
-            height: 23px; /* Filas ligeramente más altas para ocupar más espacio vertical */
+            height: 26px; /* Filas más altas con tipografía más grande */
         }
 
         .vertical-text {
-            font-size: 7.5px;
+            font-size: 8px;
             font-weight: bold;
-            line-height: 1;
+            line-height: 1.1;
             padding: 6px 1px;
         }
 
@@ -200,9 +201,9 @@
         .bottom-table th, 
         .bottom-table td {
             border: 1px solid #000;
-            padding: 5px 4px; /* Mayor relleno para expandir verticalmente la tabla inferior */
+            padding: 6px 6px;
             vertical-align: middle;
-            font-size: 8px;
+            font-size: 9.5px; /* Letras ampliadas para cubrir toda la hoja */
             word-wrap: break-word;
         }
 
@@ -265,24 +266,24 @@
         <thead>
             <tr>
                 <th rowspan="2" class="areas-header">ÁREAS CURRICULARES</th>
-                <th colspan="12" style="font-size: 10px;">COMPETENCIAS FUNDAMENTALES</th>
-                <th colspan="5" style="font-size: 10px;">CALIFICACION FINAL</th>
+                <th colspan="12" style="font-size: 11px;">COMPETENCIAS FUNDAMENTALES</th>
+                <th colspan="5" style="font-size: 11px;">CALIFICACION FINAL</th>
             </tr>
             <tr>
                 <!-- C1 -->
-                <th colspan="4" style="font-size: 8px; width: 14%;">
+                <th colspan="4" style="font-size: 9px; width: 14%;">
                     <b>C1</b><br>Comunicativa
                 </th>
                 <!-- C2 -->
-                <th colspan="4" style="font-size: 7.5px; width: 22%;">
+                <th colspan="4" style="font-size: 8.5px; width: 22%;">
                     <b>C2</b><br>Pensamiento Lógico Creativo y Crítico; Resolución de Problemas; Científica y Tecnológica
                 </th>
                 <!-- C3 -->
-                <th colspan="4" style="font-size: 7.5px; width: 20%;">
+                <th colspan="4" style="font-size: 8.5px; width: 20%;">
                     <b>C3</b><br>Ética y Ciudadana; Desarrollo Personal y Espiritual; Ambiental y de la Salud
                 </th>
                 <!-- Por Competencia -->
-                <th colspan="3" style="font-size: 8px; width: 12%;">
+                <th colspan="3" style="font-size: 9px; width: 12%;">
                     POR COMPETENCIA
                 </th>
                 <!-- Del Área -->
@@ -318,7 +319,7 @@
         </tbody>
     </table>
 
-    <!-- PARTE 4: SECCIÓN INFERIOR EXPANDIDA -->
+    <!-- PARTE 4: SECCIÓN INFERIOR AMPLIADA -->
     <table class="bottom-table">
         <thead>
             <tr>
@@ -332,20 +333,20 @@
                 <th style="width: 8%;">ASITENCIA</th>
                 <th style="width: 8%;">AUSENCIA</th>
                 <th colspan="2" style="width: 16%;">% ANUAL<br>
-                    <span style="font-size: 7px; font-weight: normal;">ASITENCIA &nbsp;|&nbsp; AUSENCIA</span>
+                    <span style="font-size: 7.5px; font-weight: normal;">ASITENCIA &nbsp;|&nbsp; AUSENCIA</span>
                 </th>
             </tr>
         </thead>
         <tbody>
             <tr>
-                <td style="font-weight: bold; text-align: center;">89-100</td>
+                <td style="font-weight: bold; text-align: center; font-size: 11px;">89-100</td>
                 <td>Evidencia que el estudiante ha alcanzado un desempeño <b>destacado</b> con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
-                <td style="font-weight: bold; text-align: center;">P1</td>
+                <td style="font-weight: bold; text-align: center; font-size: 11px;">P1</td>
                 <td></td>
                 <td></td>
                 <td style="width: 8%;"></td>
                 <td style="width: 8%;"></td>
-                <td rowspan="4" style="vertical-align: top; font-size: 7.5px; line-height: 1.4;">
+                <td rowspan="4" style="vertical-align: top; font-size: 8.5px; line-height: 1.45;">
                     (P1) Período 1<br>
                     (P2) Período 2<br>
                     (P3) Período 3<br>
@@ -356,27 +357,27 @@
                 </td>
             </tr>
             <tr>
-                <td style="font-weight: bold; text-align: center;">77-88</td>
+                <td style="font-weight: bold; text-align: center; font-size: 11px;">77-88</td>
                 <td>Evidencia que el estudiante ha <b>logrado</b>, en general, los aprendizajes esperados con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
-                <td style="font-weight: bold; text-align: center;">P2</td>
+                <td style="font-weight: bold; text-align: center; font-size: 11px;">P2</td>
                 <td></td>
                 <td></td>
                 <td></td>
                 <td></td>
             </tr>
             <tr>
-                <td style="font-weight: bold; text-align: center;">65 - 76</td>
+                <td style="font-weight: bold; text-align: center; font-size: 11px;">65 - 76</td>
                 <td>Evidencia que el estudiante aún se encuentra <b>en proceso</b> con relación a los aspectos evaluados de las competencias de cada área, durante los periodos y al finalizar el año escolar, mostrando un logro muy básico.</td>
-                <td style="font-weight: bold; text-align: center;">P3</td>
+                <td style="font-weight: bold; text-align: center; font-size: 11px;">P3</td>
                 <td></td>
                 <td></td>
                 <td></td>
                 <td></td>
             </tr>
             <tr>
-                <td style="font-weight: bold; text-align: center;">Menos de 65</td>
+                <td style="font-weight: bold; text-align: center; font-size: 11px;">Menos de 65</td>
                 <td>Evidencia que el estudiante ha alcanzado un desempeño <b>insuficiente</b> con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
-                <td style="font-weight: bold; text-align: center;">P4</td>
+                <td style="font-weight: bold; text-align: center; font-size: 11px;">P4</td>
                 <td></td>
                 <td></td>
                 <td></td>
