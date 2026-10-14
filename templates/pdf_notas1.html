@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Informe de Aprendizaje</title>
+    <title>Informe de Aprendizaje - Centro Educativo Mami Luisa</title>
     <style>
         @page {
             size: letter landscape;
@@ -19,7 +19,7 @@
         }
 
         /* ---------------------------------------------------- */
-        /* PARTE 1: NUEVO ENCABEZADO (DOS COLUMNAS) */
+        /* PARTE 1: ENCABEZADO CON RUTA A STATIC/IMG/LOGO2.PNG  */
         /* ---------------------------------------------------- */
         .header-table {
             width: 100%;
@@ -34,34 +34,28 @@
             padding: 0;
         }
 
-        /* Columna Izquierda: Logo + Título + Lema */
         .header-left-col {
-            width: 48%;
+            width: 50%;
             padding-right: 15px;
         }
 
         .logo-title-container {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 12px;
         }
 
         .logo-img {
-            width: 75px;
+            width: 80px;
             height: auto;
             display: block;
             flex-shrink: 0;
         }
 
-        .school-title-group {
-            display: flex;
-            flex-direction: column;
-        }
-
         .school-title {
             font-size: 22px;
             font-weight: bold;
-            color: #5b739c; /* Azul exacto */
+            color: #5b739c;
             margin: 0;
             line-height: 1.1;
             white-space: nowrap;
@@ -70,7 +64,7 @@
         .school-srl {
             font-size: 15px;
             font-weight: bold;
-            color: #a3a3a3; /* Gris exacto */
+            color: #a3a3a3;
             margin-left: 4px;
         }
 
@@ -78,14 +72,13 @@
             font-family: "Times New Roman", Times, serif;
             font-style: italic;
             font-size: 15px;
-            color: #e59b6e; /* Naranja / salmón exacto */
+            color: #e59b6e;
             margin-top: 4px;
             display: block;
         }
 
-        /* Columna Derecha: Información institucional y del informe */
         .header-right-col {
-            width: 52%;
+            width: 50%;
             text-align: right;
         }
 
@@ -195,13 +188,14 @@
 </head>
 <body>
 
-    <!-- PARTE 1: ENCABEZADO ACTUALIZADO -->
+    <!-- PARTE 1: ENCABEZADO -->
     <table class="header-table">
         <tr>
-            <!-- Columna Izquierda: Logo, Título y Lema -->
             <td class="header-left-col">
                 <div class="logo-title-container">
-                    <img src="logo.png" alt="Logo" class="logo-img" onerror="this.style.display='none'; this.parentNode.innerHTML='<div style=\'width:70px;height:70px;border:1px dashed #ccc;text-align:center;line-height:70px;font-size:9px;\'>[LOGO]</div>';">
+                    <!-- RUTA CONFIGURADA PARA TU PROYECTO FLASK (SIGEM_Mami_Luisa) -->
+                    <img src="{{ url_for('static', filename='img/logo2.png') }}" alt="Centro Educativo Mami Luisa" class="logo-img">
+                    
                     <div>
                         <div>
                             <span class="school-title">Centro Educativo Mami Luisa</span>
@@ -212,7 +206,6 @@
                 </div>
             </td>
 
-            <!-- Columna Derecha: Dirección, Teléfono, Título del Informe y Año Escolar -->
             <td class="header-right-col">
                 <div class="details-text">
                     <span class="bold">Dirección:</span> C/Castillo Márquez #53. La Romana, Centro Ciudad. <span class="bold">Teléfono:</span> 809-550-7385 / 809-710-3395<br>
