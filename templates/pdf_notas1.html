@@ -187,63 +187,27 @@
         }
 
         /* ---------------------------------------------------- */
-        /* PARTE 4: SECCIÓN INFERIOR (ESCALA, ASISTENCIA, LEYENDA) */
+        /* PARTE 4: SECCIÓN INFERIOR UNIFICADA (ESCALA Y ASISTENCIA) */
         /* ---------------------------------------------------- */
-        .footer-container {
+        .bottom-table {
             width: 100%;
             border-collapse: collapse;
+            border: 2px solid #000;
             margin-top: 4px;
-        }
-
-        .footer-container td {
-            vertical-align: top;
-            padding: 0;
-        }
-
-        /* Tabla de Escala de Valoración */
-        .scale-table {
-            width: 100%;
-            border-collapse: collapse;
-            border: 2px solid #000;
             font-size: 8.5px;
         }
 
-        .scale-table th {
+        .bottom-table th, 
+        .bottom-table td {
             border: 1px solid #000;
-            background-color: #f2f2f2;
-            padding: 3px;
-            font-weight: bold;
-            text-align: center;
-        }
-
-        .scale-table td {
-            border: 1px solid #000;
-            padding: 3px 4px;
+            padding: 4px 5px;
             vertical-align: middle;
         }
 
-        /* Tabla de Asistencia */
-        .attendance-table {
-            width: 100%;
-            border-collapse: collapse;
-            border: 2px solid #000;
-            font-size: 8.5px;
-            margin-left: 6px;
-        }
-
-        .attendance-table th {
-            border: 1px solid #000;
-            background-color: #f2f2f2;
-            padding: 3px;
+        .bottom-table th {
             font-weight: bold;
             text-align: center;
-        }
-
-        .attendance-table td {
-            border: 1px solid #000;
-            padding: 3px;
-            text-align: center;
-            vertical-align: middle;
+            background-color: #fff;
         }
 
         @media print {
@@ -352,62 +316,59 @@
         </tbody>
     </table>
 
-    <!-- PARTE 4: SECCIÓN INFERIOR (ESCALA DE VALORACIÓN Y ASISTENCIA) -->
-    <table class="footer-container">
-        <tr>
-            <!-- Columna Izquierda: Escala de Valoración y Leyenda -->
-            <td style="width: 65%;">
-                <table class="scale-table">
-                    <tr>
-                        <th colspan="2">ESCALA DE VALORACIÓN DEL DESARROLLO DE LAS COMPETENCIAS</th>
-                    </tr>
-                    <tr>
-                        <td style="width: 15%; text-align: center; font-weight: bold;">A</td>
-                        <td><b>Avanzado:</b> El estudiante evidencia un dominio sobresaliente de los aprendizajes esperados.</td>
-                    </tr>
-                    <tr>
-                        <td style="text-align: center; font-weight: bold;">B</td>
-                        <td><b>Satisfactorio:</b> El estudiante alcanza los aprendizajes esperados con buen nivel.</td>
-                    </tr>
-                    <tr>
-                        <td style="text-align: center; font-weight: bold;">C</td>
-                        <td><b>En Proceso:</b> El estudiante está en camino de lograr los aprendizajes, requiere acompañamiento.</td>
-                    </tr>
-                    <tr>
-                        <td style="text-align: center; font-weight: bold;">D</td>
-                        <td><b>En Inicio:</b> El estudiante muestra dificultades incipientes y necesita apoyo intensivo.</td>
-                    </tr>
-                </table>
-            </td>
-
-            <!-- Columna Derecha: Resumen de Asistencia -->
-            <td style="width: 35%;">
-                <table class="attendance-table">
-                    <tr>
-                        <th colspan="5">RESUMEN DE ASISTENCIA</th>
-                    </tr>
-                    <tr>
-                        <td style="font-weight: bold;">Períodos</td>
-                        <td style="font-weight: bold;">P1</td>
-                        <td style="font-weight: bold;">P2</td>
-                        <td style="font-weight: bold;">P3</td>
-                        <td style="font-weight: bold;">P4</td>
-                    </tr>
-                    <tr>
-                        <td style="text-align: left; font-weight: bold; padding-left: 5px;">Días Trabajados</td>
-                        <td></td><td></td><td></td><td></td>
-                    </tr>
-                    <tr>
-                        <td style="text-align: left; font-weight: bold; padding-left: 5px;">Días Ausentes</td>
-                        <td></td><td></td><td></td><td></td>
-                    </tr>
-                    <tr>
-                        <td style="text-align: left; font-weight: bold; padding-left: 5px;">Tardanzas</td>
-                        <td></td><td></td><td></td><td></td>
-                    </tr>
-                </table>
-            </td>
-        </tr>
+    <!-- PARTE 4: SECCIÓN INFERIOR IDÉNTICA A LA IMAGEN -->
+    <table class="bottom-table">
+        <thead>
+            <tr>
+                <th style="width: 12%;">Escala numérica</th>
+                <th style="width: 43%;">DESCRIPCIÓN</th>
+                <th colspan="5">RESUMEN DE ASISTENCIA DEL ESTUDIANTE</th>
+                <th rowspan="2" style="width: 15%;">LEYENDA</th>
+            </tr>
+            <tr>
+                <th></th>
+                <th></th>
+                <th style="width: 8%;">PERÍODO</th>
+                <th style="width: 7%;">ASITENCIA</th>
+                <th style="width: 7%;">AUSENCIA</th>
+                <th colspan="2" style="width: 14%;">% ANUAL<br><span style="font-size: 7.5px; font-weight: normal;">ASITENCIA / AUSENCIA</span></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="font-weight: bold; text-align: center;">89-100</td>
+                <td>Evidencia que el estudiante ha alcanzado un desempeño <b>destacado</b> con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
+                <td style="font-weight: bold; text-align: center;">P1</td>
+                <td></td><td></td><td></td><td></td>
+                <td rowspan="4" style="vertical-align: top; font-size: 8px; line-height: 1.4;">
+                    (P1) Período 1<br>
+                    (P2) Período 2<br>
+                    (P3) Período 3<br>
+                    (P4) Período 4<br><br>
+                    (C1) Competencia 1<br>
+                    (C2) Competencia 2<br>
+                    (C3) Competencia 3
+                </td>
+            </tr>
+            <tr>
+                <td style="font-weight: bold; text-align: center;">77-88</td>
+                <td>Evidencia que el estudiante ha <b>logrado</b>, en general, los aprendizajes esperados con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
+                <td style="font-weight: bold; text-align: center;">P2</td>
+                <td></td><td></td><td></td><td></td>
+            </tr>
+            <tr>
+                <td style="font-weight: bold; text-align: center;">65 - 76</td>
+                <td>Evidencia que el estudiante aún se encuentra <b>en proceso</b> con relación a los aspectos evaluados de las competencias de cada área, durante los periodos y al finalizar el año escolar, mostrando un logro muy básico.</td>
+                <td style="font-weight: bold; text-align: center;">P3</td>
+                <td></td><td></td><td></td><td></td>
+            </tr>
+            <tr>
+                <td style="font-weight: bold; text-align: center;">Menos de 65</td>
+                <td>Evidencia que el estudiante ha alcanzado un desempeño <b>insuficiente</b> con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
+                <td style="font-weight: bold; text-align: center;">P4</td>
+                <td></td><td></td><td></td><td></td>
+            </tr>
+        </tbody>
     </table>
 
 </body>
