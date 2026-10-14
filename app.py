@@ -2162,75 +2162,10 @@ def notas1():
                            docente_nombre=docente_guardado,
                            rol_usuario=rol_usuario)
 
-@app.route('/notas/guardadas')
-def ver_notas_guardadas():
-    if 'usuario' not in session and 'user_id' not in session:
-        flash("Debes iniciar sesión para acceder.", "warning")
-        return redirect(url_for('login'))
-
-    try:
-        conn = get_db_connection()
-        is_postgres = DATABASE_URL is not None
-        
-        registros_notas = []
-        estudiantes_lista = []
-
-        if is_postgres:
-            cur = conn.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-            # Consultamos las notas guardadas
-            cur.execute('SELECT * FROM notas1')
-            registros_notas = cur.fetchall()
-            
-            # Consultamos los estudiantes
-            cur.execute('SELECT * FROM estudiantes')
-            estudiantes_lista = cur.fetchall()
-            cur.close()
-        else:
-            conn.row_factory = sqlite3.Row
-            cur = conn.cursor()
-            cur.execute('SELECT * FROM notas1')
-            registros_notas = cur.fetchall()
-            
-            cur.execute('SELECT * FROM estudiantes')
-            estudiantes_lista = cur.fetchall()
-            cur.close()
-            
-        conn.close()
-
-        # Mapeamos los estudiantes por ID
-        estudiantes_map = {str(est['id_estudiante'] if 'id_estudiante' in est else est.get('id')): est for est in estudiantes_lista}
-
-        informes_guardados = []
-        for reg in registros_notas:
-            # Convertimos el registro a diccionario si viene como row de base de datos
-            reg_dict = dict(reg)
-            id_est = str(reg_dict.get('id_estudiante', ''))
-            est_info = estudiantes_map.get(id_est, {})
-            
-            nombre_comp = f"{est_info.get('nombres', '')} {est_info.get('apellidos', '')}".strip()
-            
-            informes_guardados.append({
-                'id': reg_dict.get('id'),
-                'id_estudiante': id_est,
-                'nombre_estudiante': nombre_comp if nombre_comp else f"Estudiante ID: {id_est}",
-                'grado': est_info.get('grado', '1ro a 3ro Primaria'),
-                'seccion': est_info.get('seccion', 'A'),
-                'fecha_actualizacion': str(reg_dict.get('created_at', ''))[:10] if reg_dict.get('created_at') else 'Guardado'
-            })
-
-        return render_template(
-            'ver_notas_guardadas.html',
-            informes=informes_guardados,
-            total_informes=len(informes_guardados)
-        )
-
-    except Exception as e:
-        flash(f"Error al cargar los informes guardados: {str(e)}", "danger")
-        return redirect(url_for('menu'))
-
+import os
 import io
 import json
-from flask import render_template, make_response, request
+from flask import render_template, make_response, request, current_app
 from xhtml2pdf import pisa
 from models import db, Estudiante, Notas1
 
@@ -2241,11 +2176,9 @@ def generar_pdf_notas1():
         if not estudiante_id:
             return "No se ha proporcionado el ID del estudiante", 400
 
-        # 1. Buscar al estudiante por el campo 'id_estudiante' (que es el código varchar que viene en la URL)
-        # Si en tu base de datos el ID es numérico puro, puedes probar también buscando por el id principal.
+        # 1. Buscar al estudiante
         estudiante_obj = Estudiante.query.filter_by(id_estudiante=str(estudiante_id)).first()
         
-        # Si no lo encuentra por id_estudiante, intentamos buscarlo por el id numérico por si acaso
         if not estudiante_obj:
             try:
                 estudiante_obj = Estudiante.query.filter_by(id=int(estudiante_id)).first()
@@ -2255,7 +2188,6 @@ def generar_pdf_notas1():
         if not estudiante_obj:
             return "Estudiante no encontrado en la base de datos", 404
 
-        # Convertir el objeto estudiante a un diccionario
         estudiante = {
             'id': estudiante_obj.id_estudiante or estudiante_obj.id,
             'nombre': estudiante_obj.nombres,
@@ -2263,7 +2195,7 @@ def generar_pdf_notas1():
             'grado': estudiante_obj.grado
         }
 
-        # 2. Consultar el registro de notas en la tabla 'notas1' usando el mismo id_estudiante
+        # 2. Consultar el registro de notas en la tabla 'notas1'
         notas_registro = Notas1.query.filter_by(id_estudiante=str(estudiante_id)).first()
         
         notas_data = {}
@@ -2274,10 +2206,13 @@ def generar_pdf_notas1():
             elif isinstance(datos_brutos, dict):
                 notas_data = datos_brutos
 
-        # 3. Renderizar la plantilla HTML con los datos y la tipografía Tw Cen MT
-        html = render_template('pdf_notas1.html', estudiante=estudiante, notas=notas_data)
+        # 3. Definir la ruta física absoluta del logo para xhtml2pdf
+        logo_path = os.path.join(current_app.root_path, 'static', 'img', 'logo2.png')
 
-        # 4. Generar el PDF utilizando xhtml2pdf en memoria
+        # 4. Renderizar la plantilla HTML pasando el logo_path y los datos
+        html = render_template('pdf_notas1.html', estudiante=estudiante, notas=notas_data, logo_path=logo_path)
+
+        # 5. Generar el PDF utilizando xhtml2pdf en memoria
         pdf_buffer = io.BytesIO()
         pisa_status = pisa.CreatePDF(io.BytesIO(html.encode('utf-8')), dest=pdf_buffer)
 
@@ -2286,7 +2221,7 @@ def generar_pdf_notas1():
 
         pdf_buffer.seek(0)
 
-        # 5. Enviar el archivo PDF resultante al navegador
+        # 6. Enviar el archivo PDF resultante al navegador
         nombre_archivo = f"Informe_Aprendizaje_{estudiante['nombre']}.pdf"
         response = make_response(pdf_buffer.read())
         response.headers['Content-Type'] = 'application/pdf'

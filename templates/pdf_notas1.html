@@ -111,7 +111,7 @@
         }
 
         /* ---------------------------------------------------- */
-        /* PARTE 2: BARRA DATOS DEL ESTUDIANTE */
+        /* PARTE 2: BARRA DATOS DEL ESTUDIANTE                  */
         /* ---------------------------------------------------- */
         .student-table {
             width: 100%;
@@ -140,7 +140,7 @@
         .col-id { width: 20%; }
 
         /* ---------------------------------------------------- */
-        /* PARTE 3: TABLA PRINCIPAL */
+        /* PARTE 3: TABLA PRINCIPAL                             */
         /* ---------------------------------------------------- */
         .main-table {
             width: 100%;
@@ -192,12 +192,12 @@
 </head>
 <body>
 
-    <!-- PARTE 1: ENCABEZADO CON LOGO, TÍTULO Y DATOS -->
+    <!-- PARTE 1: ENCABEZADO CON 3 COLUMNAS -->
     <table class="header-table">
         <tr>
-            <!-- Columna 1: El Logo -->
+            <!-- Columna 1: El Logo usando la ruta absoluta pasada desde Python -->
             <td class="header-logo-col">
-                <img src="{{ url_for('static', filename='img/logo2.png') }}" alt="Logo Mami Luisa" class="logo-img" onerror="this.src='/static/img/logo2.png';">
+                <img src="{{ logo_path }}" alt="Logo Mami Luisa" class="logo-img">
             </td>
 
             <!-- Columna 2: Título y Lema -->
@@ -228,10 +228,10 @@
     <!-- PARTE 2: BARRA DATOS DEL ESTUDIANTE -->
     <table class="student-table">
         <tr>
-            <td class="col-nombre">NOMBRE(S):</td>
-            <td class="col-apellido">APELLIDO (S):</td>
-            <td class="col-orden">NO. DE ORDEN:</td>
-            <td class="col-id">ID ESTUDIANATE:</td>
+            <td class="col-nombre">NOMBRE(S): {{ estudiante.nombre if estudiante else '' }}</td>
+            <td class="col-apellido">APELLIDO (S): {{ estudiante.apellido if estudiante else '' }}</td>
+            <td class="col-orden">NO. DE ORDEN: </td>
+            <td class="col-id">ID ESTUDIANTE: {{ estudiante.id if estudiante else '' }}</td>
         </tr>
     </table>
 
