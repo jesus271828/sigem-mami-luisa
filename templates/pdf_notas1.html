@@ -187,21 +187,23 @@
         }
 
         /* ---------------------------------------------------- */
-        /* PARTE 4: SECCIÓN INFERIOR UNIFICADA (ESCALA Y ASISTENCIA) */
+        /* PARTE 4: SECCIÓN INFERIOR CORREGIDA                 */
         /* ---------------------------------------------------- */
         .bottom-table {
             width: 100%;
             border-collapse: collapse;
             border: 2px solid #000;
             margin-top: 4px;
-            font-size: 8.5px;
+            table-layout: fixed;
         }
 
         .bottom-table th, 
         .bottom-table td {
             border: 1px solid #000;
-            padding: 4px 5px;
+            padding: 3px 4px;
             vertical-align: middle;
+            font-size: 8px;
+            word-wrap: break-word;
         }
 
         .bottom-table th {
@@ -220,7 +222,7 @@
 </head>
 <body>
 
-    <!-- PARTE 1: ENCABEZADO CON 3 COLUMNAS -->
+    <!-- PARTE 1: ENCABEZADO -->
     <table class="header-table">
         <tr>
             <td class="header-logo-col">
@@ -316,22 +318,25 @@
         </tbody>
     </table>
 
-    <!-- PARTE 4: SECCIÓN INFERIOR IDÉNTICA A LA IMAGEN -->
+    <!-- PARTE 4: SECCIÓN INFERIOR CORREGIDA CON ANCHOS EXACTOS -->
     <table class="bottom-table">
         <thead>
             <tr>
-                <th style="width: 12%;">Escala numérica</th>
-                <th style="width: 43%;">DESCRIPCIÓN</th>
-                <th colspan="5">RESUMEN DE ASISTENCIA DEL ESTUDIANTE</th>
-                <th rowspan="2" style="width: 15%;">LEYENDA</th>
+                <th style="width: 10%;">Escala numérica</th>
+                <th style="width: 38%;">DESCRIPCIÓN</th>
+                <th colspan="5" style="width: 38%;">RESUMEN DE ASISTENCIA DEL ESTUDIANTE</th>
+                <th style="width: 14%;">LEYENDA</th>
             </tr>
             <tr>
                 <th></th>
                 <th></th>
-                <th style="width: 8%;">PERÍODO</th>
-                <th style="width: 7%;">ASITENCIA</th>
-                <th style="width: 7%;">AUSENCIA</th>
-                <th colspan="2" style="width: 14%;">% ANUAL<br><span style="font-size: 7.5px; font-weight: normal;">ASITENCIA / AUSENCIA</span></th>
+                <th style="width: 6%;">PERÍODO</th>
+                <th style="width: 8%;">ASITENCIA</th>
+                <th style="width: 8%;">AUSENCIA</th>
+                <th colspan="2" style="width: 16%;">% ANUAL<br>
+                    <span style="font-size: 7px; font-weight: normal;">ASITENCIA &nbsp;|&nbsp; AUSENCIA</span>
+                </th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
@@ -339,8 +344,11 @@
                 <td style="font-weight: bold; text-align: center;">89-100</td>
                 <td>Evidencia que el estudiante ha alcanzado un desempeño <b>destacado</b> con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
                 <td style="font-weight: bold; text-align: center;">P1</td>
-                <td></td><td></td><td></td><td></td>
-                <td rowspan="4" style="vertical-align: top; font-size: 8px; line-height: 1.4;">
+                <td></td>
+                <td></td>
+                <td style="width: 8%;"></td>
+                <td style="width: 8%;"></td>
+                <td rowspan="4" style="vertical-align: top; font-size: 7.5px; line-height: 1.3;">
                     (P1) Período 1<br>
                     (P2) Período 2<br>
                     (P3) Período 3<br>
@@ -354,19 +362,28 @@
                 <td style="font-weight: bold; text-align: center;">77-88</td>
                 <td>Evidencia que el estudiante ha <b>logrado</b>, en general, los aprendizajes esperados con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
                 <td style="font-weight: bold; text-align: center;">P2</td>
-                <td></td><td></td><td></td><td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
             </tr>
             <tr>
                 <td style="font-weight: bold; text-align: center;">65 - 76</td>
                 <td>Evidencia que el estudiante aún se encuentra <b>en proceso</b> con relación a los aspectos evaluados de las competencias de cada área, durante los periodos y al finalizar el año escolar, mostrando un logro muy básico.</td>
                 <td style="font-weight: bold; text-align: center;">P3</td>
-                <td></td><td></td><td></td><td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
             </tr>
             <tr>
                 <td style="font-weight: bold; text-align: center;">Menos de 65</td>
                 <td>Evidencia que el estudiante ha alcanzado un desempeño <b>insuficiente</b> con relación a los aspectos evaluados de las competencias de cada área, durante los períodos y al finalizar el año escolar.</td>
                 <td style="font-weight: bold; text-align: center;">P4</td>
-                <td></td><td></td><td></td><td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
             </tr>
         </tbody>
     </table>
