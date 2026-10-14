@@ -30,32 +30,34 @@
         }
 
         .header-table td {
-            vertical-align: top;
+            vertical-align: middle;
             padding: 0;
         }
 
         /* Columna 1: El Logo */
         .header-logo-col {
-            width: 90px;
-            padding-right: 12px;
+            width: 85px;
+            padding-right: 10px;
+            text-align: left;
         }
 
         .logo-img {
-            width: 75px;
+            width: 70px;
             height: auto;
             display: block;
         }
 
         /* Columna 2: Título y Lema al lado del logo */
         .header-title-col {
-            width: 45%;
+            width: 48%;
             padding-right: 15px;
+            vertical-align: middle;
         }
 
         .school-title {
             font-size: 22px;
             font-weight: bold;
-            color: #5b739c; /* Azul exacto */
+            color: #5b739c;
             margin: 0;
             line-height: 1.1;
             white-space: nowrap;
@@ -64,16 +66,16 @@
         .school-srl {
             font-size: 15px;
             font-weight: bold;
-            color: #a3a3a3; /* Gris exacto */
+            color: #a3a3a3;
             margin-left: 4px;
         }
 
         .motto-text {
             font-family: "Times New Roman", Times, serif;
             font-style: italic;
-            font-size: 15px;
-            color: #e59b6e; /* Naranja / salmón exacto */
-            margin-top: 4px;
+            font-size: 14.5px;
+            color: #e59b6e;
+            margin-top: 3px;
             display: block;
         }
 
@@ -81,6 +83,7 @@
         .header-right-col {
             width: 45%;
             text-align: right;
+            vertical-align: top;
         }
 
         .details-text {
@@ -192,9 +195,9 @@
     <!-- PARTE 1: ENCABEZADO CON 3 COLUMNAS -->
     <table class="header-table">
         <tr>
-            <!-- Columna 1: El Logo -->
+            <!-- Columna 1: El Logo usando ruta directa de Flask -->
             <td class="header-logo-col">
-                <img src="{{ url_for('static', filename='img/logo2.png') }}" alt="Logo Mami Luisa" class="logo-img" onerror="this.onerror=null; this.src='../static/img/logo2.png';">
+                <img src="/static/img/logo2.png" alt="Logo Mami Luisa" class="logo-img">
             </td>
 
             <!-- Columna 2: Título y Lema al lado del logo -->
