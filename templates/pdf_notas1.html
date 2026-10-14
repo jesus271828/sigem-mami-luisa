@@ -19,7 +19,7 @@
         }
 
         /* ---------------------------------------------------- */
-        /* PARTE 1: ENCABEZADO CON LOGO A LA IZQUIERDA          */
+        /* PARTE 1: ENCABEZADO CON LOGO Y TRES COLUMNAS         */
         /* ---------------------------------------------------- */
         .header-table {
             width: 100%;
@@ -34,15 +34,15 @@
             padding: 0;
         }
 
-        /* Columna 1: El Logo */
+        /* Columna 1: Imagen del Logo */
         .header-logo-col {
-            width: 90px;
-            padding-right: 12px;
+            width: 80px;
+            padding-right: 10px;
             text-align: left;
         }
 
         .logo-img {
-            width: 75px;
+            width: 70px;
             height: auto;
             display: block;
         }
@@ -192,15 +192,15 @@
 </head>
 <body>
 
-    <!-- PARTE 1: ENCABEZADO CON 3 COLUMNAS -->
+    <!-- PARTE 1: ENCABEZADO CON LOGO, TÍTULO Y DATOS -->
     <table class="header-table">
         <tr>
-            <!-- Columna 1: El Logo con ruta de Flask y respaldo por si acaso -->
+            <!-- Columna 1: El Logo -->
             <td class="header-logo-col">
-                <img src="{{ url_for('static', filename='img/logo2.png') }}" alt="Logo Mami Luisa" class="logo-img" onerror="this.src='../static/img/logo2.png';">
+                <img src="{{ url_for('static', filename='img/logo2.png') }}" alt="Logo Mami Luisa" class="logo-img" onerror="this.src='/static/img/logo2.png';">
             </td>
 
-            <!-- Columna 2: Título y Lema al lado del logo -->
+            <!-- Columna 2: Título y Lema -->
             <td class="header-title-col">
                 <div>
                     <span class="school-title">Centro Educativo Mami Luisa</span>
@@ -209,7 +209,7 @@
                 <span class="motto-text">“ Educando con amor para un mundo mejor ”</span>
             </td>
 
-            <!-- Columna 3: Información institucional a la derecha -->
+            <!-- Columna 3: Información de la derecha -->
             <td class="header-right-col">
                 <div class="details-text">
                     <span class="bold">Dirección:</span> C/Castillo Márquez #53. La Romana, Centro Ciudad. <span class="bold">Teléfono:</span> 809-550-7385 / 809-710-3395<br>
