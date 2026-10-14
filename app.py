@@ -2162,6 +2162,68 @@ def notas1():
                            docente_nombre=docente_guardado,
                            rol_usuario=rol_usuario)
 
+@app.route('/notas/guardadas')
+def ver_notas_guardadas():
+    if 'usuario' not in session and 'user_id' not in session:
+        flash("Debes iniciar sesión para acceder.", "warning")
+        return redirect(url_for('login'))
+
+    try:
+        conn = get_db_connection()
+        is_postgres = DATABASE_URL is not None
+        
+        registros_notas = []
+        estudiantes_lista = []
+
+        if is_postgres:
+            cur = conn.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute('SELECT * FROM notas1')
+            registros_notas = cur.fetchall()
+            
+            cur.execute('SELECT * FROM estudiantes')
+            estudiantes_lista = cur.fetchall()
+            cur.close()
+        else:
+            conn.row_factory = sqlite3.Row
+            cur = conn.cursor()
+            cur.execute('SELECT * FROM notas1')
+            registros_notas = cur.fetchall()
+            
+            cur.execute('SELECT * FROM estudiantes')
+            estudiantes_lista = cur.fetchall()
+            cur.close()
+            
+        conn.close()
+
+        estudiantes_map = {str(est['id_estudiante'] if 'id_estudiante' in est else est.get('id')): est for est in estudiantes_lista}
+
+        informes_guardados = []
+        for reg in registros_notas:
+            reg_dict = dict(reg)
+            id_est = str(reg_dict.get('id_estudiante', ''))
+            est_info = estudiantes_map.get(id_est, {})
+            
+            nombre_comp = f"{est_info.get('nombres', '')} {est_info.get('apellidos', '')}".strip()
+            
+            informes_guardados.append({
+                'id': reg_dict.get('id'),
+                'id_estudiante': id_est,
+                'nombre_estudiante': nombre_comp if nombre_comp else f"Estudiante ID: {id_est}",
+                'grado': est_info.get('grado', '1ro a 3ro Primaria'),
+                'seccion': est_info.get('seccion', 'A'),
+                'fecha_actualizacion': str(reg_dict.get('created_at', ''))[:10] if reg_dict.get('created_at') else 'Guardado'
+            })
+
+        return render_template(
+            'ver_notas_guardadas.html',
+            informes=informes_guardados,
+            total_informes=len(informes_guardados)
+        )
+
+    except Exception as e:
+        flash(f"Error al cargar los informes guardados: {str(e)}", "danger")
+        return redirect(url_for('menu'))
+
 import os
 import io
 import json
