@@ -187,7 +187,7 @@
         }
 
         /* ---------------------------------------------------- */
-        /* PARTE 4: SECCIÓN INFERIOR CORREGIDA                 */
+        /* PARTE 4: SECCIÓN INFERIOR CON CELDAS COMBINADAS      */
         /* ---------------------------------------------------- */
         .bottom-table {
             width: 100%;
@@ -318,25 +318,22 @@
         </tbody>
     </table>
 
-    <!-- PARTE 4: SECCIÓN INFERIOR CORREGIDA CON ANCHOS EXACTOS -->
+    <!-- PARTE 4: SECCIÓN INFERIOR COMBINADA -->
     <table class="bottom-table">
         <thead>
             <tr>
-                <th style="width: 10%;">Escala numérica</th>
-                <th style="width: 38%;">DESCRIPCIÓN</th>
+                <th rowspan="2" style="width: 10%;">Escala numérica</th>
+                <th rowspan="2" style="width: 38%;">DESCRIPCIÓN</th>
                 <th colspan="5" style="width: 38%;">RESUMEN DE ASISTENCIA DEL ESTUDIANTE</th>
-                <th style="width: 14%;">LEYENDA</th>
+                <th rowspan="2" style="width: 14%;">LEYENDA</th>
             </tr>
             <tr>
-                <th></th>
-                <th></th>
                 <th style="width: 6%;">PERÍODO</th>
                 <th style="width: 8%;">ASITENCIA</th>
                 <th style="width: 8%;">AUSENCIA</th>
                 <th colspan="2" style="width: 16%;">% ANUAL<br>
                     <span style="font-size: 7px; font-weight: normal;">ASITENCIA &nbsp;|&nbsp; AUSENCIA</span>
                 </th>
-                <th></th>
             </tr>
         </thead>
         <tbody>
