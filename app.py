@@ -2895,57 +2895,148 @@ def generar_pdf_por_fecha():
             
         conn.close()
 
+        # Mapeamos y filtramos las planificaciones de la fecha seleccionada
         planificaciones = []
         for p in todos:
             f_str = str(p.get('fecha', ''))
             if fecha_inicio in f_str or fecha_fin in f_str:
                 planificaciones.append({
-                    'docente': p.get('docente', ''),
+                    'docente': p.get('docente') or session.get('nombre_completo', ''),
                     'area': p.get('área') or p.get('area') or 'Informática',
                     'grado_seccion': p.get('grado_seccion', ''),
                     'fecha': f_str,
+                    'estrategias': p.get('estrategias', 'Aprendizaje basado en el juego / Demostración guiada'),
+                    'intencion': p.get('intencion_pedagogica', ''),
+                    'indicador_logro': p.get('indicador_logro', ''),
+                    'competencia_especifica': p.get('competencia_especifica', 'Desarrolla habilidades prácticas en la materia.'),
+                    'actividad_inicio': p.get('actividad_inicio') or p.get('actividades', 'Rutina de inicio.'),
+                    'actividad_desarrollo': p.get('actividad_desarrollo', 'Desarrollo de contenidos.'),
+                    'actividad_cierre': p.get('actividad_cierre', 'Cierre y evaluación.'),
+                    'recursos': p.get('recursos') or p.get('recurso', 'Pizarra, Cuadernos.'),
+                    'recuperacion_pedagogica': p.get('recuperacion_pedagogica', 'Atención individualizada.')
+                })
+
+        # Si por alguna razón no coincide la fecha exacta, enviamos las planificaciones cargadas
+        if not planificaciones:
+            for p in todos:
+                planificaciones.append({
+                    'docente': p.get('docente') or session.get('nombre_completo', ''),
+                    'area': p.get('área') or p.get('area') or 'Informática',
+                    'grado_seccion': p.get('grado_seccion', ''),
+                    'fecha': str(p.get('fecha', '')),
                     'estrategias': p.get('estrategias', ''),
                     'intencion': p.get('intencion_pedagogica', ''),
                     'indicador_logro': p.get('indicador_logro', ''),
                     'competencia_especifica': p.get('competencia_especifica', ''),
-                    'actividad_inicio': p.get('actividad_inicio', ''),
+                    'actividad_inicio': p.get('actividad_inicio') or p.get('actividades', ''),
                     'actividad_desarrollo': p.get('actividad_desarrollo', ''),
                     'actividad_cierre': p.get('actividad_cierre', ''),
-                    'recursos': p.get('recursos', ''),
+                    'recursos': p.get('recursos') or p.get('recurso', ''),
                     'recuperacion_pedagogica': p.get('recuperacion_pedagogica', '')
                 })
 
-        if not planificaciones:
-            # Si no hay filtro exacto, tomamos todas para asegurar que genere el reporte
-            planificaciones = [{
-                'docente': p.get('docente', ''),
-                'area': p.get('área') or p.get('area') or 'Informática',
-                'grado_seccion': p.get('grado_seccion', ''),
-                'fecha': str(p.get('fecha', '')),
-                'estrategias': p.get('estrategias', ''),
-                'intencion': p.get('intencion_pedagogica', ''),
-                'indicador_logro': p.get('indicador_logro', ''),
-                'competencia_especifica': p.get('competencia_especifica', ''),
-                'actividad_inicio': p.get('actividad_inicio', ''),
-                'actividad_desarrollo': p.get('actividad_desarrollo', ''),
-                'actividad_cierre': p.get('actividad_cierre', ''),
-                'recursos': p.get('recursos', ''),
-                'recuperacion_pedagogica': p.get('recuperacion_pedagogica', '')
-            } for p in todos]
+        # Intentamos usar la plantilla cargada o renderizamos en HTML plano de respaldo
+        try:
+            html_content = render_template('pdf_general_template.html', planificaciones=planificaciones)
+        except Exception:
+            # Plantilla HTML incrustada en tablas por si no existe el archivo .html en la carpeta templates
+            html_content = """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <style>
+                    @page { size: letter portrait; margin: 1.5cm; }
+                    body { font-family: Helvetica, Arial, sans-serif; font-size: 10pt; }
+                    .page-break { page-break-after: always; }
+                    table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+                    table, th, td { border: 1px solid #000; padding: 6px; }
+                    .header-bg { background-color: #f0f0f0; font-weight: bold; }
+                    .title { text-align: right; font-size: 14pt; font-weight: bold; }
+                </style>
+            </head>
+            <body>
+            {% for plan in planificaciones %}
+                <table style="border:none;">
+                    <tr style="border:none;">
+                        <td style="border:none; width:60%;">
+                            <strong>Docente:</strong> {{ plan.docente }}<br>
+                            <strong>Área:</strong> {{ plan.area }}
+                        </td>
+                        <td style="border:none; width:40%;" class="title">
+                            Esquema de Planificación Diaria<br>
+                            <span style="font-size:9pt; font-weight:normal;">Nivel Primario</span>
+                        </td>
+                    </tr>
+                </table>
 
-        html_content = render_template('pdf_general_template.html', planificaciones=planificaciones)
-        
+                <table>
+                    <tr>
+                        <td style="width:50%;"><strong>Grado y Sección:</strong> {{ plan.grado_seccion }}</td>
+                        <td style="width:50%;"><strong>Fecha:</strong> {{ plan.fecha }}</td>
+                    </tr>
+                </table>
+
+                <table>
+                    <tr class="header-bg"><td>Estrategias de enseñanza - aprendizaje:</td></tr>
+                    <tr><td>{{ plan.estrategias }}</td></tr>
+                    <tr class="header-bg"><td>Intención pedagógica del día:</td></tr>
+                    <tr><td>{{ plan.intencion }}</td></tr>
+                    <tr class="header-bg"><td>Indicador de logro:</td></tr>
+                    <tr><td>{{ plan.indicador_logro }}</td></tr>
+                </table>
+
+                <table>
+                    <thead>
+                        <tr class="header-bg">
+                            <th style="width:25%;">Competencia específica</th>
+                            <th style="width:15%;">Momentos</th>
+                            <th style="width:40%;">Actividades / Duración</th>
+                            <th style="width:20%;">Recursos</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td rowspan="3">{{ plan.competencia_especifica }}</td>
+                            <td style="font-weight:bold; text-align:center;">Inicio</td>
+                            <td>{{ plan.actividad_inicio }}</td>
+                            <td rowspan="3">{{ plan.recursos }}</td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight:bold; text-align:center;">Desarrollo</td>
+                            <td>{{ plan.actividad_desarrollo }}</td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight:bold; text-align:center;">Cierre</td>
+                            <td>{{ plan.actividad_cierre }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <table>
+                    <tr class="header-bg"><td>Actividades de recuperación pedagógica:</td></tr>
+                    <tr><td>{{ plan.recuperacion_pedagogica }}</td></tr>
+                </table>
+
+                {% if not loop.last %}<div class="page-break"></div>{% endif %}
+            {% endfor %}
+            </body>
+            </html>
+            """
+            from flask import render_template_string
+            html_content = render_template_string(html_content, planificaciones=planificaciones)
+
         pdf_file = BytesIO()
         pisaStatus = pisa.CreatePDF(BytesIO(html_content.encode('utf-8')), dest=pdf_file)
         
         if pisaStatus.err:
-            return "Error al generar el PDF", 500
+            return "Error al generar la estructura del PDF", 500
             
         pdf_file.seek(0)
         return send_file(pdf_file, mimetype='application/pdf', as_attachment=False, download_name=f"Planificacion_{fecha_inicio}.pdf")
         
     except Exception as e:
-        print("Error en PDF por fecha:", e)
+        print("Error al procesar el PDF:", e)
         return f"Error al procesar el PDF: {e}", 500
     
 @app.route('/eliminar_planificacion/<int:id>')
