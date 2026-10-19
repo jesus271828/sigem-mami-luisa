@@ -2816,35 +2816,46 @@ def ver_planificaciones_diarias():
         planificaciones = []
         
         if is_postgres:
-            cur = conn.conn.cursor()
-            # Consultamos directamente de la tabla tal cual está en Supabase
-            cur.execute('SELECT identificador, docente, área, grado_seccion, fecha, estrategias, intencion_pedagogica, indicador_logro, recurso, actividades FROM planificaciones_diarias')
+            cur = conn.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            
+            # Traemos todas las filas directamente para evitar problemas de comillas en nombres con tilde
+            cur.execute('SELECT * FROM planificaciones_diarias ORDER BY "identificación" DESC')
             rows = cur.fetchall()
             
             for r in rows:
+                p = dict(r)
                 planificaciones.append({
-                    'id': r[0],
-                    'docente': r[1],
-                    'area': r[2],
-                    'grado_seccion': r[3],
-                    'fecha': r[4],
-                    'estrategias': r[5],
-                    'intencion': r[6],
-                    'indicador_logro': r[7],
-                    'recursos': r[8],
-                    'actividades': r[9]
+                    'id': p.get('identificación'),
+                    'docente': p.get('docente'),
+                    'materia': p.get('área') or p.get('area') or 'Informática',
+                    'grado_seccion': p.get('grado_seccion'),
+                    'fecha': str(p.get('fecha', '')),
+                    'estrategias': p.get('estrategias'),
+                    'intencion': p.get('intencion_pedagogica'),
+                    'indicador_logro': p.get('indicador_logro')
                 })
             cur.close()
         else:
             conn.row_factory = sqlite3.Row
             cur = conn.cursor()
-            cur.execute('SELECT * FROM planificaciones_diarias')
-            planificaciones = [dict(row) for row in cur.fetchall()]
+            cur.execute('SELECT * FROM planificaciones_diarias ORDER BY identificacion DESC')
+            rows = cur.fetchall()
+            for r in rows:
+                p = dict(r)
+                planificaciones.append({
+                    'id': p.get('identificación') or p.get('identificacion') or p.get('id'),
+                    'docente': p.get('docente'),
+                    'materia': p.get('área') or p.get('area') or 'Informática',
+                    'grado_seccion': p.get('grado_seccion'),
+                    'fecha': str(p.get('fecha', '')),
+                    'estrategias': p.get('estrategias'),
+                    'intencion': p.get('intencion_pedagogica'),
+                    'indicador_logro': p.get('indicador_logro')
+                })
             cur.close()
 
         conn.close()
 
-        # Renderizamos directamente con los datos obtenidos
         return render_template(
             'ver_planificaciones_diarias.html',
             planificaciones=planificaciones,
@@ -2853,9 +2864,9 @@ def ver_planificaciones_diarias():
             total_usuarios=17
         )
     except Exception as e:
-        # Si ocurre un error, lo mostramos en grande en la página web para saber exactamente qué falló
-        return f"<h3>Error detallado en el servidor:</h3><p>{e}</p>", 500
-    
+        return f"<h3>Error al cargar planificaciones:</h3><p>{e}</p>", 500
+
+        
 # --- RUTA PARA GENERAR EL PDF POR FECHA ---
 @app.route('/generar_pdf_por_fecha', methods=['GET'])
 def generar_pdf_por_fecha():
