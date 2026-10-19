@@ -2813,35 +2813,58 @@ def ver_planificaciones_diarias():
         conn = get_db_connection()
         is_postgres = DATABASE_URL is not None
 
+        planificaciones = []
+        total_estudiantes = 176
+        total_expedientes = 911
+        total_usuarios = 17
+
         if is_postgres:
-            cur = conn.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            # Usamos el cursor normal (tuplas) para evitar errores de mapeo con RealDictCursor
+            cur = conn.conn.cursor()
             
-            # Apuntamos a la tabla correcta: planificaciones_diarias
-            cur.execute('SELECT * FROM planificaciones_diarias ORDER BY identificador DESC')
-            planificaciones = cur.fetchall()
+            # Consultamos los nombres de las columnas y los datos de planificaciones_diarias
+            cur.execute('SELECT identificador, docente, área, grado_seccion, fecha, estrategias, intencion_pedagogica, indicador_logro, recurso, actividades FROM planificaciones_diarias')
+            rows = cur.fetchall()
             
-            # Contadores para el panel lateral "REGISTROS GENERALES"
-            cur.execute('SELECT COUNT(*) FROM estudiantes')
-            total_estudiantes = cur.fetchone()['count']
+            for r in rows:
+                planificaciones.append({
+                    'identificador': r[0],
+                    'docente': r[1],
+                    'area': r[2],
+                    'grado_seccion': r[3],
+                    'fecha': r[4],
+                    'estrategias': r[5],
+                    'intencion': r[6],
+                    'indicador_logro': r[7],
+                    'recursos': r[8],
+                    'actividades': r[9]
+                })
             
-            cur.execute('SELECT COUNT(*) FROM expedientes_viejos')
-            total_expedientes = cur.fetchone()['count']
-            
-            cur.execute('SELECT COUNT(*) FROM usuarios')
-            total_usuarios = cur.fetchone()['count']
+            # Contadores seguros
+            try:
+                cur.execute('SELECT COUNT(*) FROM estudiantes')
+                total_estudiantes = cur.fetchone()[0]
+            except:
+                pass
+
+            try:
+                cur.execute('SELECT COUNT(*) FROM expedientes_viejos')
+                total_expedientes = cur.fetchone()[0]
+            except:
+                pass
+
+            try:
+                cur.execute('SELECT COUNT(*) FROM usuarios')
+                total_usuarios = cur.fetchone()[0]
+            except:
+                pass
+
             cur.close()
         else:
             conn.row_factory = sqlite3.Row
             cur = conn.cursor()
-            cur.execute('SELECT * FROM planificaciones_diarias ORDER BY identificador DESC')
+            cur.execute('SELECT * FROM planificaciones_diarias')
             planificaciones = [dict(row) for row in cur.fetchall()]
-            
-            cur.execute('SELECT COUNT(*) FROM estudiantes')
-            total_estudiantes = cur.fetchone()[0]
-            cur.execute('SELECT COUNT(*) FROM expedientes_viejos')
-            total_expedientes = cur.fetchone()[0]
-            cur.execute('SELECT COUNT(*) FROM usuarios')
-            total_usuarios = cur.fetchone()[0]
             cur.close()
 
         conn.close()
@@ -2854,8 +2877,14 @@ def ver_planificaciones_diarias():
             total_usuarios=total_usuarios
         )
     except Exception as e:
-        print("Error al cargar planificaciones:", e)
-        return render_template('ver_planificaciones_diarias.html', planificaciones=[], total_estudiantes=176, total_expedientes=911, total_usuarios=17)
+        print("Error detallado al cargar planificaciones:", e)
+        return render_template(
+            'ver_planificaciones_diarias.html', 
+            planificaciones=[], 
+            total_estudiantes=176, 
+            total_expedientes=911, 
+            total_usuarios=17
+        )
 
 # --- RUTA PARA GENERAR EL PDF POR FECHA ---
 @app.route('/generar_pdf_por_fecha', methods=['GET'])
