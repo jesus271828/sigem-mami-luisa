@@ -2818,17 +2818,14 @@ def ver_planificaciones_diarias():
         if is_postgres:
             cur = conn.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             
-            # Consultamos sin ORDER BY para evitar errores de tildes o nombres de columnas
+            # Consulta directa sin ordenar por columnas conflictivas
             cur.execute('SELECT * FROM planificaciones_diarias')
             rows = cur.fetchall()
             
             for r in rows:
                 p = dict(r)
-                # Buscamos la llave del ID de forma dinámica sin importar cómo esté escrita
-                id_val = p.get('identificación') or p.get('identificacion') or p.get('id') or 1
-                
                 planificaciones.append({
-                    'id': id_val,
+                    'id': p.get('identificación') or p.get('identificacion') or p.get('id') or 1,
                     'docente': p.get('docente', ''),
                     'materia': p.get('área') or p.get('area') or 'Informática',
                     'grado_seccion': p.get('grado_seccion', ''),
