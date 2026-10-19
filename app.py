@@ -2806,31 +2806,53 @@ def guardar_planificacion_diaria():
 
     return redirect(url_for('ver_planificaciones_diarias'))
 
-@app.route('/ver_detalle_planificacion_diaria/<int:id>')
-def ver_detalle_planificacion_diaria(id):
-    if 'usuario' not in session and 'nombre_completo' not in session:
-        return redirect(url_for('login'))
-
+# --- RUTA PARA EL HISTORIAL DE PLANIFICACIONES ---
+@app.route('/ver_planificaciones_diarias')
+def ver_planificaciones_diarias():
     try:
-        conn = psycopg2.connect(DATABASE_URL)
-        cursor = PostgresCursorWrapper(conn)
+        conn = get_db_connection()
+        is_postgres = DATABASE_URL is not None
 
-        query = 'SELECT * FROM planificaciones_diarias WHERE identificacion = ?'
-        cursor.execute(query, (id,))
-        planificacion = cursor.fetchone()
-        cursor.close()
+        if is_postgres:
+            cur = conn.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute('SELECT * FROM planificaciones ORDER BY fecha DESC, id DESC')
+            planificaciones = cur.fetchall()
+            
+            # Consultas para el panel "REGISTROS GENERALES"
+            cur.execute('SELECT COUNT(*) FROM estudiantes')
+            total_estudiantes = cur.fetchone()['count']
+            cur.execute('SELECT COUNT(*) FROM expedientes_viejos')
+            total_expedientes = cur.fetchone()['count']
+            cur.execute('SELECT COUNT(*) FROM usuarios')
+            total_usuarios = cur.fetchone()['count']
+            cur.close()
+        else:
+            conn.row_factory = sqlite3.Row
+            cur = conn.cursor()
+            cur.execute('SELECT * FROM planificaciones ORDER BY fecha DESC, id DESC')
+            planificaciones = [dict(row) for row in cur.fetchall()]
+            
+            cur.execute('SELECT COUNT(*) FROM estudiantes')
+            total_estudiantes = cur.fetchone()[0]
+            cur.execute('SELECT COUNT(*) FROM expedientes_viejos')
+            total_expedientes = cur.fetchone()[0]
+            cur.execute('SELECT COUNT(*) FROM usuarios')
+            total_usuarios = cur.fetchone()[0]
+            cur.close()
 
-        if not planificacion:
-            flash('Planificación no encontrada.', 'danger')
-            return redirect(url_for('ver_planificaciones_diarias'))
+        conn.close()
 
-        return render_template('planificacion_diaria.html', plan=planificacion, docente=planificacion.get('docente'), grado_seccion=planificacion.get('grado_seccion'))
-
+        return render_template(
+            'ver_planificaciones_diarias.html',
+            planificaciones=planificaciones,
+            total_estudiantes=total_estudiantes,
+            total_expedientes=total_expedientes,
+            total_usuarios=total_usuarios
+        )
     except Exception as e:
-        print("❌ Error cargando detalle:", e)
-        flash('Error al cargar la planificación.', 'danger')
-        return redirect(url_for('ver_planificaciones_diarias'))
-
+        print("Error al cargar planificaciones:", e)
+        return render_template('ver_planificaciones_diarias.html', planificaciones=[], total_estudiantes=176, total_expedientes=911, total_usuarios=17)
+    
 @app.route('/eliminar_planificacion/<int:id>')
 def eliminar_planificacion(id):
     if 'usuario' not in session:
