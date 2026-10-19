@@ -2964,44 +2964,105 @@ def generar_pdf_por_fecha():
         print("Error en PDF por fecha:", e)
         return f"Error al procesar el PDF: {e}", 500
     
-@app.route('/generar_pdf_filtrado')
+from io import BytesIO
+from flask import render_template, request, send_file
+from xhtml2pdf import pisa
+import psycopg2.extras
+import sqlite3
+
+@app.route('/generar_pdf_filtrado', methods=['GET'])
 def generar_pdf_filtrado():
     desde_fecha = request.args.get('desde_fecha', '').strip()
     hasta_fecha = request.args.get('hasta_fecha', '').strip()
     area_seleccionada = request.args.get('area', '').strip()
     grado_seleccionado = request.args.get('grado', '').strip()
 
-    cur = get_db_connection()
-
-    query = "SELECT * FROM planificaciones_diarias WHERE 1=1"
-    params = []
-
-    if desde_fecha:
-        query += " AND fecha >= %s"
-        params.append(desde_fecha)
-    if hasta_fecha:
-        query += " AND fecha <= %s"
-        params.append(hasta_fecha)
-    if area_seleccionada:
-        query += " AND area = %s"
-        params.append(area_seleccionada)
-    if grado_seleccionado:
-        query += " AND grado_seccion = %s"
-        params.append(grado_seleccionado)
-
-    query += " ORDER BY id DESC"
-
-    cur.execute(query, tuple(params) if params else None)
-    planificaciones = cur.fetchall() or []
-
-    if hasattr(cur, 'close'):
-        try:
+    try:
+        conn = get_db_connection()
+        is_postgres = DATABASE_URL is not None
+        
+        if is_postgres:
+            cur = conn.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute('SELECT * FROM planificaciones_diarias ORDER BY id DESC')
+            rows = cur.fetchall()
+            todos = [dict(r) for r in rows]
             cur.close()
-        except Exception:
-            pass
+        else:
+            conn.row_factory = sqlite3.Row
+            cur = conn.cursor()
+            cur.execute('SELECT * FROM planificaciones_diarias ORDER BY id DESC')
+            todos = [dict(r) for r in cur.fetchall()]
+            cur.close()
+            
+        conn.close()
 
-    # Llama a la plantilla de planificación diaria horizontal
-    return render_template('pdf_planificacion_diaria.html', planificaciones=planificaciones)
+        # Función auxiliar para convertir fechas a formato DD-MM-YYYY
+        def convertir_a_dd_mm_yyyy(f_str):
+            if not f_str:
+                return ""
+            f_str = str(f_str).split(' ')[0].strip()  # Remover horas si las tiene
+            p = f_str.split('-')
+            if len(p) == 3 and len(p[0]) == 4:
+                return f"{p[2]}-{p[1]}-{p[0]}"
+            return f_str
+
+        # Filtrado manual exacto
+        planificaciones = []
+        for row in todos:
+            f_db = str(row.get('fecha', '')).strip()
+            area_db = str(row.get('area') or row.get('área', '')).strip()
+            grado_db = str(row.get('grado_seccion') or row.get('grado', '')).strip()
+
+            # Filtros de fecha, área y grado
+            cumple_desde = not desde_fecha or f_db >= desde_fecha
+            cumple_hasta = not hasta_fecha or f_db <= hasta_fecha
+            cumple_area = not area_seleccionada or area_db == area_seleccionada
+            cumple_grado = not grado_seleccionado or grado_db == grado_seleccionado
+
+            if cumple_desde and cumple_hasta and cumple_area and cumple_grado:
+                planificaciones.append({
+                    'docente': row.get('docente', ''),
+                    'area': area_db or 'Informática',
+                    'grado_seccion': grado_db,
+                    'fecha': convertir_a_dd_mm_yyyy(f_db),
+                    'estrategias': row.get('estrategias', ''),
+                    'intencion_pedagogica': row.get('intencion_pedagogica') or row.get('intencion', ''),
+                    'indicador_logro': row.get('indicador_logro', ''),
+                    'competencia_especifica': row.get('competencia_especifica', ''),
+                    'actividad_inicio': row.get('actividad_inicio') or row.get('actividades', ''),
+                    'actividad_desarrollo': row.get('actividad_desarrollo', ''),
+                    'actividad_cierre': row.get('actividad_cierre', ''),
+                    'recursos': row.get('recursos') or row.get('recurso', ''),
+                    'recursos_inicio': row.get('recursos_inicio', ''),
+                    'recursos_desarrollo': row.get('recursos_desarrollo', ''),
+                    'recursos_cierre': row.get('recursos_cierre', ''),
+                    'recuperacion_pedagogica': row.get('recuperacion_pedagogica', '')
+                })
+
+        if not planificaciones:
+            return "<h3 style='font-family:sans-serif; padding:20px;'>No se encontraron planificaciones asociadas a los filtros seleccionados.</h3>", 404
+
+        # Renderizar la plantilla HTML original de la planificación
+        html_content = render_template('pdf_planificacion_diaria.html', planificaciones=planificaciones)
+        
+        # Generar el PDF binario mediante xhtml2pdf (pisa)
+        pdf_file = BytesIO()
+        pisaStatus = pisa.CreatePDF(BytesIO(html_content.encode('utf-8')), dest=pdf_file)
+        
+        if pisaStatus.err:
+            return "Error al generar la estructura del PDF", 500
+            
+        pdf_file.seek(0)
+        return send_file(
+            pdf_file, 
+            mimetype='application/pdf', 
+            as_attachment=False, 
+            download_name="Planificaciones_Filtradas.pdf"
+        )
+        
+    except Exception as e:
+        print("Error en PDF filtrado:", e)
+        return f"Error al procesar el PDF: {e}", 500
 
 
     
