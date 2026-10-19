@@ -2964,6 +2964,47 @@ def generar_pdf_por_fecha():
         print("Error en PDF por fecha:", e)
         return f"Error al procesar el PDF: {e}", 500
     
+@app.route('/generar_pdf_filtrado')
+def generar_pdf_filtrado():
+    desde_fecha = request.args.get('desde_fecha', '').strip()
+    hasta_fecha = request.args.get('hasta_fecha', '').strip()
+    area_seleccionada = request.args.get('area', '').strip()
+    grado_seleccionado = request.args.get('grado', '').strip()
+
+    cur = get_db_connection()
+
+    query = "SELECT * FROM planificaciones_diarias WHERE 1=1"
+    params = []
+
+    if desde_fecha:
+        query += " AND fecha >= %s"
+        params.append(desde_fecha)
+    if hasta_fecha:
+        query += " AND fecha <= %s"
+        params.append(hasta_fecha)
+    if area_seleccionada:
+        query += " AND area = %s"
+        params.append(area_seleccionada)
+    if grado_seleccionado:
+        query += " AND grado_seccion = %s"
+        params.append(grado_seleccionado)
+
+    query += " ORDER BY id DESC"
+
+    cur.execute(query, tuple(params) if params else None)
+    planificaciones = cur.fetchall() or []
+
+    if hasattr(cur, 'close'):
+        try:
+            cur.close()
+        except Exception:
+            pass
+
+    # Asegúrate de usar el nombre de tu plantilla PDF existente (ej: pdf_reporte_semanal.html)
+    return render_template('pdf_reporte_semanal.html', planificaciones=planificaciones)
+
+
+    
 @app.route('/eliminar_planificacion/<int:id>')
 def eliminar_planificacion(id):
     if 'usuario' not in session:
