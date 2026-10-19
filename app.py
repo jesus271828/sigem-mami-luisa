@@ -3000,9 +3000,8 @@ def generar_pdf_filtrado():
         except Exception:
             pass
 
-    # Asegúrate de usar el nombre de tu plantilla PDF existente (ej: pdf_reporte_semanal.html)
-    return render_template('pdf_reporte_semanal.html', planificaciones=planificaciones)
-
+    # Llama a la plantilla de planificación diaria horizontal
+    return render_template('pdf_planificacion_diaria.html', planificaciones=planificaciones)
 
     
 @app.route('/eliminar_planificacion/<int:id>')
