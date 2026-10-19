@@ -2815,8 +2815,9 @@ def ver_planificaciones_diarias():
 
         if is_postgres:
             cur = conn.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-            # Ordenamos por ID descendente para evitar conflictos si la columna de fecha se llama diferente
-            cur.execute('SELECT * FROM planificaciones ORDER BY id DESC')
+            
+            # Apuntamos a la tabla correcta: planificaciones_diarias
+            cur.execute('SELECT * FROM planificaciones_diarias ORDER BY identificador DESC')
             planificaciones = cur.fetchall()
             
             # Contadores para el panel lateral "REGISTROS GENERALES"
@@ -2832,7 +2833,7 @@ def ver_planificaciones_diarias():
         else:
             conn.row_factory = sqlite3.Row
             cur = conn.cursor()
-            cur.execute('SELECT * FROM planificaciones ORDER BY id DESC')
+            cur.execute('SELECT * FROM planificaciones_diarias ORDER BY identificador DESC')
             planificaciones = [dict(row) for row in cur.fetchall()]
             
             cur.execute('SELECT COUNT(*) FROM estudiantes')
@@ -2855,7 +2856,6 @@ def ver_planificaciones_diarias():
     except Exception as e:
         print("Error al cargar planificaciones:", e)
         return render_template('ver_planificaciones_diarias.html', planificaciones=[], total_estudiantes=176, total_expedientes=911, total_usuarios=17)
-
 
 # --- RUTA PARA GENERAR EL PDF POR FECHA ---
 @app.route('/generar_pdf_por_fecha', methods=['GET'])
