@@ -2813,41 +2813,49 @@ def ver_planificaciones_diarias():
     area_seleccionada = request.args.get('area', '').strip()
     grado_seleccionado = request.args.get('grado', '').strip()
 
-    conn = get_db_connection()
-    cur = conn.cursor()
+    # Obtener la conexión a la base de datos
+    cur = get_db_connection()
 
-    # 1. Obtener opciones únicas para los desplegables de Filtro
+    # 1. Obtener opciones únicas para los desplegables
     cur.execute("SELECT DISTINCT area FROM planificaciones_diarias WHERE area IS NOT NULL AND area != '' ORDER BY area")
-    lista_areas = [row['area'] if isinstance(row, dict) else row[0] for row in cur.fetchall()]
+    areas_rows = cur.fetchall() or []
+    lista_areas = [row['area'] if isinstance(row, dict) else row[0] for row in areas_rows]
 
     cur.execute("SELECT DISTINCT grado_seccion FROM planificaciones_diarias WHERE grado_seccion IS NOT NULL AND grado_seccion != '' ORDER BY grado_seccion")
-    lista_grados = [row['grado_seccion'] if isinstance(row, dict) else row[0] for row in cur.fetchall()]
+    grados_rows = cur.fetchall() or []
+    lista_grados = [row['grado_seccion'] if isinstance(row, dict) else row[0] for row in grados_rows]
 
-    # 2. Construcción dinámicamente de la consulta filtrada
+    # 2. Construir la consulta dinámicamente
     query = "SELECT * FROM planificaciones_diarias WHERE 1=1"
     params = []
 
     if desde_fecha:
-        query += " AND fecha >= ?"
+        query += " AND fecha >= %s"
         params.append(desde_fecha)
 
     if hasta_fecha:
-        query += " AND fecha <= ?"
+        query += " AND fecha <= %s"
         params.append(hasta_fecha)
 
     if area_seleccionada:
-        query += " AND area = ?"
+        query += " AND area = %s"
         params.append(area_seleccionada)
 
     if grado_seleccionado:
-        query += " AND grado_seccion = ?"
+        query += " AND grado_seccion = %s"
         params.append(grado_seleccionado)
 
     query += " ORDER BY id DESC"
 
-    cur.execute(query, params)
-    planificaciones = cur.fetchall()
-    conn.close()
+    cur.execute(query, tuple(params) if params else None)
+    planificaciones = cur.fetchall() or []
+
+    # Opcional: si la conexión requiere cierre manual según tu helper
+    if hasattr(cur, 'close'):
+        try:
+            cur.close()
+        except Exception:
+            pass
 
     return render_template(
         'ver_planificaciones_diarias.html',
@@ -2860,7 +2868,6 @@ def ver_planificaciones_diarias():
         grado_seleccionado=grado_seleccionado,
         total_registros=len(planificaciones)
     )
-
 
 # --- RUTA PARA GENERAR EL PDF CON FECHA FORMATEADA (DD-MM-YYYY) ---
 @app.route('/generar_pdf_por_fecha', methods=['GET'])
