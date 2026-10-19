@@ -2806,65 +2806,60 @@ def guardar_planificacion_diaria():
 
     return redirect(url_for('ver_planificaciones_diarias'))
 
-# --- RUTA PARA EL HISTORIAL DE PLANIFICACIONES ---
 @app.route('/ver_planificaciones_diarias')
 def ver_planificaciones_diarias():
-    try:
-        conn = get_db_connection()
-        is_postgres = DATABASE_URL is not None
+    desde_fecha = request.args.get('desde_fecha', '').strip()
+    hasta_fecha = request.args.get('hasta_fecha', '').strip()
+    area_seleccionada = request.args.get('area', '').strip()
+    grado_seleccionado = request.args.get('grado', '').strip()
 
-        planificaciones = []
-        
-        if is_postgres:
-            cur = conn.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-            
-            # Consulta directa sin ordenar por columnas conflictivas
-            cur.execute('SELECT * FROM planificaciones_diarias')
-            rows = cur.fetchall()
-            
-            for r in rows:
-                p = dict(r)
-                planificaciones.append({
-                    'id': p.get('identificación') or p.get('identificacion') or p.get('id') or 1,
-                    'docente': p.get('docente', ''),
-                    'materia': p.get('área') or p.get('area') or 'Informática',
-                    'grado_seccion': p.get('grado_seccion', ''),
-                    'fecha': str(p.get('fecha', '')),
-                    'estrategias': p.get('estrategias', ''),
-                    'intencion': p.get('intencion_pedagogica', ''),
-                    'indicador_logro': p.get('indicador_logro', '')
-                })
-            cur.close()
-        else:
-            conn.row_factory = sqlite3.Row
-            cur = conn.cursor()
-            cur.execute('SELECT * FROM planificaciones_diarias')
-            rows = cur.fetchall()
-            for r in rows:
-                p = dict(r)
-                planificaciones.append({
-                    'id': p.get('identificación') or p.get('identificacion') or p.get('id') or 1,
-                    'docente': p.get('docente', ''),
-                    'materia': p.get('área') or p.get('area') or 'Informática',
-                    'grado_seccion': p.get('grado_seccion', ''),
-                    'fecha': str(p.get('fecha', '')),
-                    'estrategias': p.get('estrategias', ''),
-                    'intencion': p.get('intencion_pedagogica', ''),
-                    'indicador_logro': p.get('indicador_logro', '')
-                })
-            cur.close()
+    conn = get_db_connection()
+    cur = conn.cursor()
 
-        conn.close()
+    # 1. Obtener opciones únicas para los desplegables de Filtro
+    cur.execute("SELECT DISTINCT area FROM planificaciones_diarias WHERE area IS NOT NULL AND area != '' ORDER BY area")
+    lista_areas = [row['area'] if isinstance(row, dict) else row[0] for row in cur.fetchall()]
 
-        return render_template(
-            'ver_planificaciones_diarias.html',
-            planificaciones=planificaciones,
-            total_estudiantes=176,
-            total_expedientes=911,
-            total_usuarios=17
-        )
-    except Exception as e:
-        return f"<h3>Error al cargar planificaciones:</h3><p>{e}</p>", 500
+    cur.execute("SELECT DISTINCT grado_seccion FROM planificaciones_diarias WHERE grado_seccion IS NOT NULL AND grado_seccion != '' ORDER BY grado_seccion")
+    lista_grados = [row['grado_seccion'] if isinstance(row, dict) else row[0] for row in cur.fetchall()]
+
+    # 2. Construcción dinámicamente de la consulta filtrada
+    query = "SELECT * FROM planificaciones_diarias WHERE 1=1"
+    params = []
+
+    if desde_fecha:
+        query += " AND fecha >= ?"
+        params.append(desde_fecha)
+
+    if hasta_fecha:
+        query += " AND fecha <= ?"
+        params.append(hasta_fecha)
+
+    if area_seleccionada:
+        query += " AND area = ?"
+        params.append(area_seleccionada)
+
+    if grado_seleccionado:
+        query += " AND grado_seccion = ?"
+        params.append(grado_seleccionado)
+
+    query += " ORDER BY id DESC"
+
+    cur.execute(query, params)
+    planificaciones = cur.fetchall()
+    conn.close()
+
+    return render_template(
+        'ver_planificaciones_diarias.html',
+        planificaciones=planificaciones,
+        lista_areas=lista_areas,
+        lista_grados=lista_grados,
+        desde_fecha=desde_fecha,
+        hasta_fecha=hasta_fecha,
+        area_seleccionada=area_seleccionada,
+        grado_seleccionado=grado_seleccionado,
+        total_registros=len(planificaciones)
+    )
 
 
 # --- RUTA PARA GENERAR EL PDF CON FECHA FORMATEADA (DD-MM-YYYY) ---
