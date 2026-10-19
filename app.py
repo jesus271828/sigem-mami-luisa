@@ -2867,11 +2867,11 @@ def ver_planificaciones_diarias():
         return f"<h3>Error al cargar planificaciones:</h3><p>{e}</p>", 500
 
 
-# --- RUTA PARA GENERAR EL PDF POR FECHA (EN HORIZONTAL Y 1 PÁGINA) ---
+# --- RUTA PARA GENERAR EL PDF POR FECHA (FILTRADO PRECISO) ---
 @app.route('/generar_pdf_por_fecha', methods=['GET'])
 def generar_pdf_por_fecha():
-    fecha_inicio = request.args.get('fecha_inicio')
-    fecha_fin = request.args.get('fecha_fin') or fecha_inicio
+    fecha_inicio = request.args.get('fecha_inicio', '').strip()
+    fecha_fin = (request.args.get('fecha_fin') or fecha_inicio).strip()
 
     if not fecha_inicio:
         return "Por favor selecciona una fecha.", 400
@@ -2895,10 +2895,24 @@ def generar_pdf_por_fecha():
             
         conn.close()
 
+        # Generar variantes de la fecha seleccionada (ej: "2026-10-19" y "19/10/2026")
+        variantes_fecha = [fecha_inicio, fecha_fin]
+        try:
+            partes = fecha_inicio.split('-') # ["2026", "10", "19"]
+            if len(partes) == 3:
+                variantes_fecha.append(f"{partes[2]}/{partes[1]}/{partes[0]}") # "19/10/2026"
+                variantes_fecha.append(f"{int(partes[2])}/{int(partes[1])}/{partes[0]}") # sin ceros a la izquierda
+        except Exception:
+            pass
+
         planificaciones = []
         for p in todos:
-            f_str = str(p.get('fecha', ''))
-            if fecha_inicio in f_str or fecha_fin in f_str:
+            f_str = str(p.get('fecha', '')).strip()
+            
+            # Comprobar si la fecha de la base de datos coincide con alguna variante
+            coincide = any(v in f_str or f_str in v for v in variantes_fecha if v)
+            
+            if coincide:
                 planificaciones.append({
                     'docente': p.get('docente') or session.get('nombre_completo', ''),
                     'area': p.get('área') or p.get('area') or 'Informática',
@@ -2915,26 +2929,10 @@ def generar_pdf_por_fecha():
                     'recuperacion_pedagogica': p.get('recuperacion_pedagogica', '')
                 })
 
-        # Si no hubo coincidencia de fecha, enviamos las encontradas
         if not planificaciones:
-            for p in todos:
-                planificaciones.append({
-                    'docente': p.get('docente') or session.get('nombre_completo', ''),
-                    'area': p.get('área') or p.get('area') or 'Informática',
-                    'grado_seccion': p.get('grado_seccion', ''),
-                    'fecha': str(p.get('fecha', '')),
-                    'estrategias': p.get('estrategias', ''),
-                    'intencion_pedagogica': p.get('intencion_pedagogica') or p.get('intencion', ''),
-                    'indicador_logro': p.get('indicador_logro', ''),
-                    'competencia_especifica': p.get('competencia_especifica', ''),
-                    'actividad_inicio': p.get('actividad_inicio') or p.get('actividades', ''),
-                    'actividad_desarrollo': p.get('actividad_desarrollo', ''),
-                    'actividad_cierre': p.get('actividad_cierre', ''),
-                    'recursos': p.get('recursos') or p.get('recurso', ''),
-                    'recuperacion_pedagogica': p.get('recuperacion_pedagogica', '')
-                })
+            return f"<h3 style='font-family:sans-serif; padding:20px;'>No se encontraron planificaciones registradas para la fecha {fecha_inicio}.</h3>", 404
 
-        # Cargar tu plantilla HTML exacta pdf_planificacion_diaria.html
+        # Renderizar la plantilla horizontal pdf_planificacion_diaria.html
         html_content = render_template('pdf_planificacion_diaria.html', planificaciones=planificaciones)
         
         pdf_file = BytesIO()
@@ -2947,7 +2945,7 @@ def generar_pdf_por_fecha():
         return send_file(pdf_file, mimetype='application/pdf', as_attachment=False, download_name=f"Planificacion_{fecha_inicio}.pdf")
         
     except Exception as e:
-        print("Error en PDF:", e)
+        print("Error en PDF por fecha:", e)
         return f"Error al procesar el PDF: {e}", 500
     
 @app.route('/eliminar_planificacion/<int:id>')
