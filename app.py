@@ -2867,7 +2867,7 @@ def ver_planificaciones_diarias():
         return f"<h3>Error al cargar planificaciones:</h3><p>{e}</p>", 500
 
 
-# --- RUTA PARA GENERAR EL PDF POR FECHA (FILTRADO PRECISO) ---
+# --- RUTA PARA GENERAR EL PDF CON FECHA FORMATEADA (DD-MM-YYYY) ---
 @app.route('/generar_pdf_por_fecha', methods=['GET'])
 def generar_pdf_por_fecha():
     fecha_inicio = request.args.get('fecha_inicio', '').strip()
@@ -2895,44 +2895,58 @@ def generar_pdf_por_fecha():
             
         conn.close()
 
-        # Generar variantes de la fecha seleccionada (ej: "2026-10-19" y "19/10/2026")
-        variantes_fecha = [fecha_inicio, fecha_fin]
+        # Función auxiliar para convertir fechas a formato DD-MM-YYYY
+        def convertir_a_dd_mm_yyyy(f_str):
+            if not f_str:
+                return ""
+            f_str = f_str.split(' ')[0].strip() # Remover horas si las tiene
+            # Si viene como YYYY-MM-DD (ej: 2026-10-01)
+            p = f_str.split('-')
+            if len(p) == 3 and len(p[0]) == 4:
+                return f"{p[2]}-{p[1]}-{p[0]}"
+            return f_str # Si ya está en otro formato, lo devuelve tal cual
+
+        # Generar variantes para buscar sin importar cómo esté guardada en Supabase
+        variantes_busqueda = [fecha_inicio, fecha_fin]
         try:
-            partes = fecha_inicio.split('-') # ["2026", "10", "19"]
-            if len(partes) == 3:
-                variantes_fecha.append(f"{partes[2]}/{partes[1]}/{partes[0]}") # "19/10/2026"
-                variantes_fecha.append(f"{int(partes[2])}/{int(partes[1])}/{partes[0]}") # sin ceros a la izquierda
+            p = fecha_inicio.split('-')
+            if len(p) == 3:
+                if len(p[0]) == 4: # Si el usuario puso YYYY-MM-DD, añadimos DD-MM-YYYY y barras
+                    variantes_busqueda.append(f"{p[2]}-{p[1]}-{p[0]}")
+                    variantes_busqueda.append(f"{p[2]}/{p[1]}/{p[0]}")
+                elif len(p[2]) == 4: # Si el usuario puso DD-MM-YYYY, añadimos YYYY-MM-DD
+                    variantes_busqueda.append(f"{p[2]}-{p[1]}-{p[0]}")
         except Exception:
             pass
 
         planificaciones = []
-        for p in todos:
-            f_str = str(p.get('fecha', '')).strip()
+        for row in todos:
+            f_db = str(row.get('fecha', '')).strip()
             
-            # Comprobar si la fecha de la base de datos coincide con alguna variante
-            coincide = any(v in f_str or f_str in v for v in variantes_fecha if v)
-            
-            if coincide:
+            # Comprobar si coincide con alguna variante de búsqueda
+            if any(v in f_db or f_db in v for v in variantes_busqueda if v):
                 planificaciones.append({
-                    'docente': p.get('docente') or session.get('nombre_completo', ''),
-                    'area': p.get('área') or p.get('area') or 'Informática',
-                    'grado_seccion': p.get('grado_seccion', ''),
-                    'fecha': f_str,
-                    'estrategias': p.get('estrategias', ''),
-                    'intencion_pedagogica': p.get('intencion_pedagogica') or p.get('intencion', ''),
-                    'indicador_logro': p.get('indicador_logro', ''),
-                    'competencia_especifica': p.get('competencia_especifica', ''),
-                    'actividad_inicio': p.get('actividad_inicio') or p.get('actividades', ''),
-                    'actividad_desarrollo': p.get('actividad_desarrollo', ''),
-                    'actividad_cierre': p.get('actividad_cierre', ''),
-                    'recursos': p.get('recursos') or p.get('recurso', ''),
-                    'recuperacion_pedagogica': p.get('recuperacion_pedagogica', '')
+                    'docente': row.get('docente', ''),
+                    'area': row.get('área') or row.get('area') or 'Informática',
+                    'grado_seccion': row.get('grado_seccion', ''),
+                    'fecha': convertir_a_dd_mm_yyyy(f_db), # <-- Aquí se formatea a 01-10-2026
+                    'estrategias': row.get('estrategias', ''),
+                    'intencion_pedagogica': row.get('intencion_pedagogica') or row.get('intencion', ''),
+                    'indicador_logro': row.get('indicador_logro', ''),
+                    'competencia_especifica': row.get('competencia_especifica', ''),
+                    'actividad_inicio': row.get('actividad_inicio') or row.get('actividades', ''),
+                    'actividad_desarrollo': row.get('actividad_desarrollo', ''),
+                    'actividad_cierre': row.get('actividad_cierre', ''),
+                    'recursos': row.get('recursos') or row.get('recurso', ''),
+                    'recursos_inicio': row.get('recursos_inicio', ''),
+                    'recursos_desarrollo': row.get('recursos_desarrollo', ''),
+                    'recursos_cierre': row.get('recursos_cierre', ''),
+                    'recuperacion_pedagogica': row.get('recuperacion_pedagogica', '')
                 })
 
         if not planificaciones:
-            return f"<h3 style='font-family:sans-serif; padding:20px;'>No se encontraron planificaciones registradas para la fecha {fecha_inicio}.</h3>", 404
+            return f"<h3 style='font-family:sans-serif; padding:20px;'>No se encontraron planificaciones asociadas a la fecha {fecha_inicio}.</h3>", 404
 
-        # Renderizar la plantilla horizontal pdf_planificacion_diaria.html
         html_content = render_template('pdf_planificacion_diaria.html', planificaciones=planificaciones)
         
         pdf_file = BytesIO()

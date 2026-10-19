@@ -20,7 +20,7 @@
             line-height: 1.25;
         }
 
-        /* Configuración de Impresión en Horizontal (Landscape) para cubrir toda la página */
+        /* Configuración de Impresión en Horizontal (Landscape) */
         @page {
             size: letter landscape;
             margin: 10mm;
@@ -37,6 +37,10 @@
             table {
                 page-break-inside: avoid;
             }
+        }
+
+        .page-break {
+            page-break-after: always;
         }
 
         .contenedor-planificacion {
@@ -80,7 +84,7 @@
             font-size: 13px;
         }
 
-        /* Tabla Principal ampliada en horizontal */
+        /* Tabla Principal */
         .main-table {
             width: 100%;
             border-collapse: collapse;
@@ -102,13 +106,12 @@
             font-size: 12px;
         }
 
-        /* Distribución de anchos para formato horizontal */
+        /* Distribución de anchos */
         .col-comp { width: 22%; }
         .col-mom  { width: 8%; }
         .col-act  { width: 50%; }
         .col-rec  { width: 20%; }
 
-        /* Celda unificada para Competencia Específica */
         td.competencia-unica {
             vertical-align: top;
             background-color: #fff;
@@ -128,6 +131,7 @@
 </head>
 <body>
 
+{% for plan in planificaciones %}
 <div class="contenedor-planificacion">
 
     <!-- ENCABEZADO -->
@@ -135,7 +139,7 @@
         <tr>
             <td colspan="2" style="width: 50%;">
                 <span class="field-label">Docente:</span><br>
-                <div class="field-value">Luis Felipe Celeste Quezada</div>
+                <div class="field-value">{{ plan.docente }}</div>
             </td>
             <td colspan="2" class="header-title" style="width: 50%;">
                 Esquema de Planificación Diaria<br>
@@ -145,17 +149,17 @@
         <tr>
             <td colspan="4">
                 <span class="field-label">Área:</span><br>
-                <div class="field-value">Informática</div>
+                <div class="field-value">{{ plan.area }}</div>
             </td>
         </tr>
         <tr>
             <td style="width: 25%;">
                 <span class="field-label">Grado y Sección:</span><br>
-                <div class="field-value">1ro A</div>
+                <div class="field-value">{{ plan.grado_seccion }}</div>
             </td>
             <td style="width: 25%;">
                 <span class="field-label">Fecha:</span><br>
-                <div class="field-value">2026-10-01</div>
+                <div class="field-value">{{ plan.fecha }}</div>
             </td>
             <td colspan="2"></td>
         </tr>
@@ -167,7 +171,7 @@
         <tr>
             <td colspan="4" class="bloque-seccion">
                 <div class="bloque-titulo">Estrategias de enseñanza - aprendizaje:</div>
-                Aprendizaje basado en el juego (gamificación) y estimulación sensorial. • Demostración guiada y práctica de motricidad digital. • Repaso continuo mediante rutina inicial.
+                {{ plan.estrategias }}
             </td>
         </tr>
 
@@ -175,7 +179,7 @@
         <tr>
             <td colspan="4" class="bloque-seccion">
                 <div class="bloque-titulo">Intención pedagógica del día:</div>
-                Reconocer los elementos principales del escritorio de la computadora (íconos, fondo, puntero) y ejercitar el control básico del mouse/touchpad (clic y arrastre).
+                {{ plan.intencion_pedagogica }}
             </td>
         </tr>
 
@@ -183,7 +187,7 @@
         <tr>
             <td colspan="4" class="bloque-seccion">
                 <div class="bloque-titulo">Indicador de logro:</div>
-                Identifica el puntero y los íconos en la pantalla y realiza acciones sencillas como hacer clic y arrastrar elementos en un entorno digital guiado.
+                {{ plan.indicador_logro }}
             </td>
         </tr>
 
@@ -198,39 +202,44 @@
         <!-- Filas de Momentos con Competencia Específica Combinada -->
         <tr>
             <td rowspan="3" class="competencia-unica">
-                Coordina movimientos de motricidad fina para interactuar con interfaces gráficas sencillas en dispositivos digitales.
+                {{ plan.competencia_especifica }}
             </td>
             <td><strong>Inicio</strong></td>
             <td>
-                <strong>Rutina de Inicio (Mural Digital):</strong> Proyección del Mural Digital de Reglas creado previamente para hacer una lectura guiada rápida de 2 minutos sobre cómo usar los equipos. • <strong>Juego del Puntero:</strong> El docente mueve el puntero/flecha en la pantalla grande y los niños lo siguen con el dedo en el aire gritando "¡Allí va la flechita!". • Presentación del tema: "La casita de la computadora: El Escritorio y la flechita mágica". Duración: 10 minutos
+                {{ plan.actividad_inicio }}
             </td>
-            <td>Proyector / Pantalla. • Mural Digital de Reglas guardado.</td>
+            <td>{{ plan.recursos_inicio or plan.recursos }}</td>
         </tr>
         <tr>
             <td><strong>Desarrollo</strong></td>
             <td>
-                <strong>Explicación sencilla (5 min):</strong> Comparar el escritorio de Ubuntu/Windows con la mesa de trabajo de su casa: los íconos son como sus juguetes o cuadernos colocados sobre la mesa. • <strong>Práctica Guiada "El Clic de Ratón" (20 min):</strong> Los estudiantes pasan en turnos a la computadora del docente o interactúan con una actividad interactiva de encajar/unir figuras sencillas (ej. GCompris, Tux Paint o juegos de arrastrar formas). • Enseñanza del agarre correcto del mouse (mano en forma de conchita) y la diferencia entre el botón izquierdo y el derecho. Duración: 25 minutos. <strong>Juego de Retroalimentación: "Simón Dice informático":</strong> (ej. Simón dice: me mueven la flechita que se mueve en la pantalla? ¿Qué botón usamos para tocar las cosas en la computadora?). Duración: 10 minutos.
+                {{ plan.actividad_desarrollo }}
             </td>
-            <td>Pizarra y marcadores.</td>
+            <td>{{ plan.recursos_desarrollo or plan.recursos }}</td>
         </tr>
         <tr>
             <td><strong>Cierre</strong></td>
             <td>
-                <strong>Juego de Retroalimentación: "Simón Dice informático":</strong> (ej. Simón dice: me mueven la flechita que se mueve en la pantalla?). Preguntas de metacognición: ¿Cómo se llama la flechita que se mueve en la pantalla? ¿Qué botón usamos para tocar las cosas en la computadora? Duración: 10 minutos
+                {{ plan.actividad_cierre }}
             </td>
-            <td>Pizarra y marcadores.</td>
+            <td>{{ plan.recursos_cierre or plan.recursos }}</td>
         </tr>
 
         <!-- Actividades de recuperación pedagógica -->
         <tr>
             <td colspan="4" class="bloque-seccion">
                 <div class="bloque-titulo">Actividades de recuperación pedagógica:</div>
-                Mural Digital de Compromiso y Guía Táctil: Lectura del mural digital al inicio de cada sesión y apoyo físico "mano sobre mano" del docente para aquellos niños que presenten dificultad al sostener el mouse o coordinar el movimiento de la flecha en la pantalla.
+                {{ plan.recuperacion_pedagogica }}
             </td>
         </tr>
     </table>
 
 </div>
+
+{% if not loop.last %}
+    <div class="page-break"></div>
+{% endif %}
+{% endfor %}
 
 </body>
 </html>
