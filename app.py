@@ -2819,43 +2819,43 @@ def ver_planificaciones_diarias():
         total_usuarios = 17
 
         if is_postgres:
-            # Usamos el cursor normal (tuplas) para evitar errores de mapeo con RealDictCursor
-            cur = conn.conn.cursor()
+            # RealDictCursor convierte automáticamente todas las columnas a llaves del diccionario
+            cur = conn.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             
-            # Consultamos los nombres de las columnas y los datos de planificaciones_diarias
-            cur.execute('SELECT identificador, docente, área, grado_seccion, fecha, estrategias, intencion_pedagogica, indicador_logro, recurso, actividades FROM planificaciones_diarias')
+            # Consultamos la tabla exacta
+            cur.execute('SELECT * FROM planificaciones_diarias ORDER BY identificador DESC')
             rows = cur.fetchall()
             
-            for r in rows:
+            for row in rows:
+                plan_dict = dict(row)
+                # Mapeamos los campos de la BD a las variables que usa el HTML
                 planificaciones.append({
-                    'identificador': r[0],
-                    'docente': r[1],
-                    'area': r[2],
-                    'grado_seccion': r[3],
-                    'fecha': r[4],
-                    'estrategias': r[5],
-                    'intencion': r[6],
-                    'indicador_logro': r[7],
-                    'recursos': r[8],
-                    'actividades': r[9]
+                    'id': plan_dict.get('identificador'),
+                    'docente': plan_dict.get('docente'),
+                    'materia': plan_dict.get('área') or plan_dict.get('area') or 'Informática',
+                    'grado_seccion': plan_dict.get('grado_seccion'),
+                    'fecha': plan_dict.get('fecha'),
+                    'estrategias': plan_dict.get('estrategias'),
+                    'intencion': plan_dict.get('intencion_pedagogica') or plan_dict.get('intencion'),
+                    'indicador_logro': plan_dict.get('indicador_logro')
                 })
             
-            # Contadores seguros
+            # Contadores generales
             try:
                 cur.execute('SELECT COUNT(*) FROM estudiantes')
-                total_estudiantes = cur.fetchone()[0]
+                total_estudiantes = cur.fetchone()['count']
             except:
                 pass
 
             try:
                 cur.execute('SELECT COUNT(*) FROM expedientes_viejos')
-                total_expedientes = cur.fetchone()[0]
+                total_expedientes = cur.fetchone()['count']
             except:
                 pass
 
             try:
                 cur.execute('SELECT COUNT(*) FROM usuarios')
-                total_usuarios = cur.fetchone()[0]
+                total_usuarios = cur.fetchone()['count']
             except:
                 pass
 
@@ -2864,7 +2864,17 @@ def ver_planificaciones_diarias():
             conn.row_factory = sqlite3.Row
             cur = conn.cursor()
             cur.execute('SELECT * FROM planificaciones_diarias')
-            planificaciones = [dict(row) for row in cur.fetchall()]
+            rows = cur.fetchall()
+            for r in rows:
+                d = dict(r)
+                planificaciones.append({
+                    'id': d.get('identificador') or d.get('id'),
+                    'docente': d.get('docente'),
+                    'materia': d.get('área') or d.get('area') or 'Informática',
+                    'grado_seccion': d.get('grado_seccion'),
+                    'fecha': d.get('fecha'),
+                    'intencion': d.get('intencion_pedagogica') or d.get('intencion')
+                })
             cur.close()
 
         conn.close()
@@ -2877,7 +2887,7 @@ def ver_planificaciones_diarias():
             total_usuarios=total_usuarios
         )
     except Exception as e:
-        print("Error detallado al cargar planificaciones:", e)
+        print("Error detallado en ver_planificaciones_diarias:", e)
         return render_template(
             'ver_planificaciones_diarias.html', 
             planificaciones=[], 
