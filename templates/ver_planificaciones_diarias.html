@@ -96,10 +96,10 @@
                             </select>
                         </div>
 
-                        <!-- Botones de Acción -->
+                        <!-- Botón de Filtrar -->
                         <div class="col-md-2 d-flex gap-2">
                             <button type="submit" class="btn btn-primary w-100 fw-semibold">
-                                <i class="bi bi-printer me-1"></i> Generar PDF / Filtrar
+                                <i class="bi bi-funnel-fill me-1"></i> Filtrar
                             </button>
                             <a href="{{ url_for('ver_planificaciones_diarias') }}" class="btn btn-outline-secondary" title="Limpiar Filtros">
                                 <i class="bi bi-arrow-counterclockwise"></i>
@@ -129,7 +129,7 @@
                             </div>
 
                             <h6 class="card-title fw-bold text-dark mt-2 mb-1">
-                                {% if plan.grado %}{{ plan.grado }}{% else %}{{ plan.area }}{% endif %}
+                                {% if plan.grado_seccion %}{{ plan.grado_seccion }}{% elif plan.grado %}{{ plan.grado }}{% else %}{{ plan.area }}{% endif %}
                             </h6>
 
                             <p class="card-text text-secondary small mb-3">
@@ -154,6 +154,19 @@
                 </div>
                 {% endfor %}
             </div>
+
+            <!-- BOTÓN INFERIOR PARA GENERAR PDF DE LO FILTRADO -->
+            {% if planificaciones %}
+            <div class="row mt-4">
+                <div class="col-12 text-center">
+                    <a href="{{ url_for('generar_pdf_filtrado', desde_fecha=desde_fecha, hasta_fecha=hasta_fecha, area=area_seleccionada, grado=grado_seleccionado) }}" 
+                       class="btn btn-danger btn-lg fw-bold shadow px-5 py-3 rounded-pill" 
+                       target="_blank">
+                        <i class="bi bi-file-earmark-pdf-fill me-2"></i> Generar PDF de lo Filtrado ({{ total_registros }} registros)
+                    </a>
+                </div>
+            </div>
+            {% endif %}
 
         </main>
     </div>
