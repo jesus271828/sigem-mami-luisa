@@ -2814,88 +2814,48 @@ def ver_planificaciones_diarias():
         is_postgres = DATABASE_URL is not None
 
         planificaciones = []
-        total_estudiantes = 176
-        total_expedientes = 911
-        total_usuarios = 17
-
+        
         if is_postgres:
-            # RealDictCursor convierte automáticamente todas las columnas a llaves del diccionario
-            cur = conn.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-            
-            # Consultamos la tabla exacta
-            cur.execute('SELECT * FROM planificaciones_diarias ORDER BY identificador DESC')
+            cur = conn.conn.cursor()
+            # Consultamos directamente de la tabla tal cual está en Supabase
+            cur.execute('SELECT identificador, docente, área, grado_seccion, fecha, estrategias, intencion_pedagogica, indicador_logro, recurso, actividades FROM planificaciones_diarias')
             rows = cur.fetchall()
             
-            for row in rows:
-                plan_dict = dict(row)
-                # Mapeamos los campos de la BD a las variables que usa el HTML
+            for r in rows:
                 planificaciones.append({
-                    'id': plan_dict.get('identificador'),
-                    'docente': plan_dict.get('docente'),
-                    'materia': plan_dict.get('área') or plan_dict.get('area') or 'Informática',
-                    'grado_seccion': plan_dict.get('grado_seccion'),
-                    'fecha': plan_dict.get('fecha'),
-                    'estrategias': plan_dict.get('estrategias'),
-                    'intencion': plan_dict.get('intencion_pedagogica') or plan_dict.get('intencion'),
-                    'indicador_logro': plan_dict.get('indicador_logro')
+                    'id': r[0],
+                    'docente': r[1],
+                    'area': r[2],
+                    'grado_seccion': r[3],
+                    'fecha': r[4],
+                    'estrategias': r[5],
+                    'intencion': r[6],
+                    'indicador_logro': r[7],
+                    'recursos': r[8],
+                    'actividades': r[9]
                 })
-            
-            # Contadores generales
-            try:
-                cur.execute('SELECT COUNT(*) FROM estudiantes')
-                total_estudiantes = cur.fetchone()['count']
-            except:
-                pass
-
-            try:
-                cur.execute('SELECT COUNT(*) FROM expedientes_viejos')
-                total_expedientes = cur.fetchone()['count']
-            except:
-                pass
-
-            try:
-                cur.execute('SELECT COUNT(*) FROM usuarios')
-                total_usuarios = cur.fetchone()['count']
-            except:
-                pass
-
             cur.close()
         else:
             conn.row_factory = sqlite3.Row
             cur = conn.cursor()
             cur.execute('SELECT * FROM planificaciones_diarias')
-            rows = cur.fetchall()
-            for r in rows:
-                d = dict(r)
-                planificaciones.append({
-                    'id': d.get('identificador') or d.get('id'),
-                    'docente': d.get('docente'),
-                    'materia': d.get('área') or d.get('area') or 'Informática',
-                    'grado_seccion': d.get('grado_seccion'),
-                    'fecha': d.get('fecha'),
-                    'intencion': d.get('intencion_pedagogica') or d.get('intencion')
-                })
+            planificaciones = [dict(row) for row in cur.fetchall()]
             cur.close()
 
         conn.close()
 
+        # Renderizamos directamente con los datos obtenidos
         return render_template(
             'ver_planificaciones_diarias.html',
             planificaciones=planificaciones,
-            total_estudiantes=total_estudiantes,
-            total_expedientes=total_expedientes,
-            total_usuarios=total_usuarios
-        )
-    except Exception as e:
-        print("Error detallado en ver_planificaciones_diarias:", e)
-        return render_template(
-            'ver_planificaciones_diarias.html', 
-            planificaciones=[], 
-            total_estudiantes=176, 
-            total_expedientes=911, 
+            total_estudiantes=176,
+            total_expedientes=911,
             total_usuarios=17
         )
-
+    except Exception as e:
+        # Si ocurre un error, lo mostramos en grande en la página web para saber exactamente qué falló
+        return f"<h3>Error detallado en el servidor:</h3><p>{e}</p>", 500
+    
 # --- RUTA PARA GENERAR EL PDF POR FECHA ---
 @app.route('/generar_pdf_por_fecha', methods=['GET'])
 def generar_pdf_por_fecha():
