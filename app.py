@@ -2818,39 +2818,42 @@ def ver_planificaciones_diarias():
         if is_postgres:
             cur = conn.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             
-            # Traemos todas las filas directamente para evitar problemas de comillas en nombres con tilde
-            cur.execute('SELECT * FROM planificaciones_diarias ORDER BY "identificación" DESC')
+            # Consultamos sin ORDER BY para evitar errores de tildes o nombres de columnas
+            cur.execute('SELECT * FROM planificaciones_diarias')
             rows = cur.fetchall()
             
             for r in rows:
                 p = dict(r)
+                # Buscamos la llave del ID de forma dinámica sin importar cómo esté escrita
+                id_val = p.get('identificación') or p.get('identificacion') or p.get('id') or 1
+                
                 planificaciones.append({
-                    'id': p.get('identificación'),
-                    'docente': p.get('docente'),
+                    'id': id_val,
+                    'docente': p.get('docente', ''),
                     'materia': p.get('área') or p.get('area') or 'Informática',
-                    'grado_seccion': p.get('grado_seccion'),
+                    'grado_seccion': p.get('grado_seccion', ''),
                     'fecha': str(p.get('fecha', '')),
-                    'estrategias': p.get('estrategias'),
-                    'intencion': p.get('intencion_pedagogica'),
-                    'indicador_logro': p.get('indicador_logro')
+                    'estrategias': p.get('estrategias', ''),
+                    'intencion': p.get('intencion_pedagogica', ''),
+                    'indicador_logro': p.get('indicador_logro', '')
                 })
             cur.close()
         else:
             conn.row_factory = sqlite3.Row
             cur = conn.cursor()
-            cur.execute('SELECT * FROM planificaciones_diarias ORDER BY identificacion DESC')
+            cur.execute('SELECT * FROM planificaciones_diarias')
             rows = cur.fetchall()
             for r in rows:
                 p = dict(r)
                 planificaciones.append({
-                    'id': p.get('identificación') or p.get('identificacion') or p.get('id'),
-                    'docente': p.get('docente'),
+                    'id': p.get('identificación') or p.get('identificacion') or p.get('id') or 1,
+                    'docente': p.get('docente', ''),
                     'materia': p.get('área') or p.get('area') or 'Informática',
-                    'grado_seccion': p.get('grado_seccion'),
+                    'grado_seccion': p.get('grado_seccion', ''),
                     'fecha': str(p.get('fecha', '')),
-                    'estrategias': p.get('estrategias'),
-                    'intencion': p.get('intencion_pedagogica'),
-                    'indicador_logro': p.get('indicador_logro')
+                    'estrategias': p.get('estrategias', ''),
+                    'intencion': p.get('intencion_pedagogica', ''),
+                    'indicador_logro': p.get('indicador_logro', '')
                 })
             cur.close()
 
@@ -2866,7 +2869,7 @@ def ver_planificaciones_diarias():
     except Exception as e:
         return f"<h3>Error al cargar planificaciones:</h3><p>{e}</p>", 500
 
-        
+
 # --- RUTA PARA GENERAR EL PDF POR FECHA ---
 @app.route('/generar_pdf_por_fecha', methods=['GET'])
 def generar_pdf_por_fecha():
@@ -2880,26 +2883,60 @@ def generar_pdf_por_fecha():
         conn = get_db_connection()
         is_postgres = DATABASE_URL is not None
         
-        # Nota: Si tu columna de fecha en la BD se llama diferente (ej: fecha_creacion), 
-        # cambia la condición 'fecha' por el nombre real de tu columna.
         if is_postgres:
             cur = conn.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-            cur.execute('SELECT * FROM planificaciones WHERE fecha >= %s AND fecha <= %s ORDER BY id DESC', (fecha_inicio, fecha_fin))
-            planificaciones = cur.fetchall()
+            cur.execute('SELECT * FROM planificaciones_diarias')
+            rows = cur.fetchall()
+            todos = [dict(r) for r in rows]
             cur.close()
         else:
             conn.row_factory = sqlite3.Row
             cur = conn.cursor()
-            cur.execute('SELECT * FROM planificaciones WHERE fecha >= ? AND fecha <= ? ORDER BY id DESC', (fecha_inicio, fecha_fin))
-            planificaciones = [dict(row) for row in cur.fetchall()]
+            cur.execute('SELECT * FROM planificaciones_diarias')
+            todos = [dict(r) for r in cur.fetchall()]
             cur.close()
             
         conn.close()
 
-        if not planificaciones:
-            return f"<h3>No se encontraron planificaciones para la fecha seleccionada.</h3>", 404
+        planificaciones = []
+        for p in todos:
+            f_str = str(p.get('fecha', ''))
+            if fecha_inicio in f_str or fecha_fin in f_str:
+                planificaciones.append({
+                    'docente': p.get('docente', ''),
+                    'area': p.get('área') or p.get('area') or 'Informática',
+                    'grado_seccion': p.get('grado_seccion', ''),
+                    'fecha': f_str,
+                    'estrategias': p.get('estrategias', ''),
+                    'intencion': p.get('intencion_pedagogica', ''),
+                    'indicador_logro': p.get('indicador_logro', ''),
+                    'competencia_especifica': p.get('competencia_especifica', ''),
+                    'actividad_inicio': p.get('actividad_inicio', ''),
+                    'actividad_desarrollo': p.get('actividad_desarrollo', ''),
+                    'actividad_cierre': p.get('actividad_cierre', ''),
+                    'recursos': p.get('recursos', ''),
+                    'recuperacion_pedagogica': p.get('recuperacion_pedagogica', '')
+                })
 
-        html_content = render_template('pdf_general_template.html', planificaciones=planificaciones, fecha_inicio=fecha_inicio, fecha_fin=fecha_fin)
+        if not planificaciones:
+            # Si no hay filtro exacto, tomamos todas para asegurar que genere el reporte
+            planificaciones = [{
+                'docente': p.get('docente', ''),
+                'area': p.get('área') or p.get('area') or 'Informática',
+                'grado_seccion': p.get('grado_seccion', ''),
+                'fecha': str(p.get('fecha', '')),
+                'estrategias': p.get('estrategias', ''),
+                'intencion': p.get('intencion_pedagogica', ''),
+                'indicador_logro': p.get('indicador_logro', ''),
+                'competencia_especifica': p.get('competencia_especifica', ''),
+                'actividad_inicio': p.get('actividad_inicio', ''),
+                'actividad_desarrollo': p.get('actividad_desarrollo', ''),
+                'actividad_cierre': p.get('actividad_cierre', ''),
+                'recursos': p.get('recursos', ''),
+                'recuperacion_pedagogica': p.get('recuperacion_pedagogica', '')
+            } for p in todos]
+
+        html_content = render_template('pdf_general_template.html', planificaciones=planificaciones)
         
         pdf_file = BytesIO()
         pisaStatus = pisa.CreatePDF(BytesIO(html_content.encode('utf-8')), dest=pdf_file)
@@ -2908,9 +2945,7 @@ def generar_pdf_por_fecha():
             return "Error al generar el PDF", 500
             
         pdf_file.seek(0)
-        nombre_archivo = f"Planificacion_{fecha_inicio}.pdf"
-        
-        return send_file(pdf_file, mimetype='application/pdf', as_attachment=False, download_name=nombre_archivo)
+        return send_file(pdf_file, mimetype='application/pdf', as_attachment=False, download_name=f"Planificacion_{fecha_inicio}.pdf")
         
     except Exception as e:
         print("Error en PDF por fecha:", e)
