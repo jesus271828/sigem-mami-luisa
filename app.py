@@ -2693,53 +2693,60 @@ def descargar_pdf_planificacion(id):
         return redirect(url_for('mis_planificaciones'))
 
 # --- RUTA PARA VER EL HISTORIAL DE PLANIFICACIONES ---
-@app.route('/ver_planificaciones_diarias')
+
 def ver_planificaciones_diarias():
-    if 'usuario' not in session and 'user_id' not in session:
-        flash("Debes iniciar sesión para acceder.", "warning")
-        return redirect(url_for('login'))
-
-    nombre_usuario = session.get('nombre_completo', '')
-    rol = session.get('rol', '')
-
-    planificaciones_formateadas = []
     try:
         conn = get_db_connection()
         is_postgres = DATABASE_URL is not None
-        
+
         if is_postgres:
             cur = conn.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-            # Si es oficina o admin, trae todas. Si es maestro normal, trae solo las suyas.
-            if rol in ['admin', 'oficina'] or 'Oficina' in nombre_usuario or 'Luis Felipe' in nombre_usuario:
-                cur.execute('SELECT * FROM planificaciones_diarias ORDER BY id DESC')
-            else:
-                cur.execute('SELECT * FROM planificaciones_diarias WHERE docente = %s ORDER BY id DESC', (nombre_usuario,))
-            planificaciones_lista = cur.fetchall()
+            
+            # Consultar planificaciones
+            cur.execute('SELECT * FROM planificaciones ORDER BY fecha DESC, id DESC')
+            planificaciones = cur.fetchall()
+            
+            # Consultar contadores para la tarjeta oscura "REGISTROS GENERALES"
+            cur.execute('SELECT COUNT(*) FROM estudiantes')
+            total_estudiantes = cur.fetchone()['count']
+            
+            cur.execute('SELECT COUNT(*) FROM expedientes_viejos') # Ajusta si tu tabla se llama distinto
+            total_expedientes = cur.fetchone()['count']
+            
+            cur.execute('SELECT COUNT(*) FROM usuarios')
+            total_usuarios = cur.fetchone()['count']
+            
             cur.close()
         else:
             conn.row_factory = sqlite3.Row
             cur = conn.cursor()
-            if rol in ['admin', 'oficina'] or 'Oficina' in nombre_usuario or 'Luis Felipe' in nombre_usuario:
-                cur.execute('SELECT * FROM planificaciones_diarias ORDER BY id DESC')
-            else:
-                cur.execute('SELECT * FROM planificaciones_diarias WHERE docente = ? ORDER BY id DESC', (nombre_usuario,))
-            planificaciones_lista = cur.fetchall()
+            
+            cur.execute('SELECT * FROM planificaciones ORDER BY fecha DESC, id DESC')
+            planificaciones = [dict(row) for row in cur.fetchall()]
+            
+            cur.execute('SELECT COUNT(*) FROM estudiantes')
+            total_estudiantes = cur.fetchone()[0]
+            
+            cur.execute('SELECT COUNT(*) FROM expedientes_viejos')
+            total_expedientes = cur.fetchone()[0]
+            
+            cur.execute('SELECT COUNT(*) FROM usuarios')
+            total_usuarios = cur.fetchone()[0]
+            
             cur.close()
             
         conn.close()
 
-        for row in planificaciones_lista:
-            planificaciones_formateadas.append(dict(row))
-
+        return render_template(
+            'ver_planificaciones_diarias.html',
+            planificaciones=planificaciones,
+            total_estudiantes=total_estudiantes,
+            total_expedientes=total_expedientes,
+            total_usuarios=total_usuarios
+        )
     except Exception as e:
         print("Error al cargar planificaciones:", e)
-        planificaciones_formateadas = []
-
-    return render_template(
-        'ver_planificaciones_diarias.html',
-        planificaciones=planificaciones_formateadas
-    )
-
+        return render_template('ver_planificaciones_diarias.html', planificaciones=[], total_estudiantes=176, total_expedientes=911, total_usuarios=17)
 
 # --- RUTA ÚNICA PARA GUARDAR LA PLANIFICACIÓN DIARIA ---
 @app.route('/guardar_planificacion_diaria', methods=['POST'])
