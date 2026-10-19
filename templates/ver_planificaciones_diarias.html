@@ -26,7 +26,8 @@
                     <i class="bi bi-person-circle me-1"></i> Oficina Nivel Primario
                 </div>
                 <div class="d-grid gap-2 mb-4">
-                    <a href="{{ url_for('nueva_planificacion') if 'nueva_planificacion' in url_for.__globals__ else '#' }}" class="btn btn-success btn-sm text-start">
+                    <!-- ENLACE A NUEVA PLANIFICACIÓN -->
+                    <a href="{{ url_for('nueva_planificacion') if 'nueva_planificacion' in url_for.__globals__ else url_for('planificacion_diaria') }}" class="btn btn-success btn-sm text-start fw-bold">
                         <i class="bi bi-plus-circle me-1"></i> Nueva Planificación
                     </a>
                     <a href="{{ url_for('ver_planificaciones_diarias') }}" class="btn btn-outline-light btn-sm text-start active">
@@ -96,7 +97,7 @@
                             </select>
                         </div>
 
-                        <!-- Botón de Filtrar -->
+                        <!-- Botones de Acción de Filtro -->
                         <div class="col-md-2 d-flex gap-2">
                             <button type="submit" class="btn btn-primary w-100 fw-semibold">
                                 <i class="bi bi-funnel-fill me-1"></i> Filtrar
@@ -136,8 +137,11 @@
                                 <strong>Intención:</strong> {{ plan.intencion_pedagogica | truncate(90) }}
                             </p>
 
+                            <!-- BOTÓN DE IMPRIMIR PDF SOLO PARA ESTA PLANIFICACIÓN -->
                             <div class="d-flex justify-content-between align-items-center pt-2 border-top">
-                                <a href="{{ url_for('imprimir_pdf', plan_id=plan.id) if 'imprimir_pdf' in url_for.__globals__ else '#' }}" class="btn btn-outline-primary btn-sm">
+                                <a href="{{ url_for('imprimir_pdf_individual', plan_id=plan.id) }}" 
+                                   class="btn btn-outline-primary btn-sm fw-semibold" 
+                                   target="_blank">
                                     <i class="bi bi-printer me-1"></i> Imprimir PDF
                                 </a>
                                 <small class="text-muted fw-semibold">ID: #{{ plan.id }}</small>
@@ -155,7 +159,7 @@
                 {% endfor %}
             </div>
 
-            <!-- BOTÓN INFERIOR PARA GENERAR PDF DE LO FILTRADO -->
+            <!-- BOTÓN INFERIOR PARA GENERAR PDF DE TODO LO FILTRADO -->
             {% if planificaciones %}
             <div class="row mt-4">
                 <div class="col-12 text-center">
