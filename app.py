@@ -2815,21 +2815,24 @@ def ver_planificaciones_diarias():
 
         if is_postgres:
             cur = conn.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-            cur.execute('SELECT * FROM planificaciones ORDER BY fecha DESC, id DESC')
+            # Ordenamos por ID descendente para evitar conflictos si la columna de fecha se llama diferente
+            cur.execute('SELECT * FROM planificaciones ORDER BY id DESC')
             planificaciones = cur.fetchall()
             
-            # Consultas para el panel "REGISTROS GENERALES"
+            # Contadores para el panel lateral "REGISTROS GENERALES"
             cur.execute('SELECT COUNT(*) FROM estudiantes')
             total_estudiantes = cur.fetchone()['count']
+            
             cur.execute('SELECT COUNT(*) FROM expedientes_viejos')
             total_expedientes = cur.fetchone()['count']
+            
             cur.execute('SELECT COUNT(*) FROM usuarios')
             total_usuarios = cur.fetchone()['count']
             cur.close()
         else:
             conn.row_factory = sqlite3.Row
             cur = conn.cursor()
-            cur.execute('SELECT * FROM planificaciones ORDER BY fecha DESC, id DESC')
+            cur.execute('SELECT * FROM planificaciones ORDER BY id DESC')
             planificaciones = [dict(row) for row in cur.fetchall()]
             
             cur.execute('SELECT COUNT(*) FROM estudiantes')
@@ -2852,6 +2855,56 @@ def ver_planificaciones_diarias():
     except Exception as e:
         print("Error al cargar planificaciones:", e)
         return render_template('ver_planificaciones_diarias.html', planificaciones=[], total_estudiantes=176, total_expedientes=911, total_usuarios=17)
+
+
+# --- RUTA PARA GENERAR EL PDF POR FECHA ---
+@app.route('/generar_pdf_por_fecha', methods=['GET'])
+def generar_pdf_por_fecha():
+    fecha_inicio = request.args.get('fecha_inicio')
+    fecha_fin = request.args.get('fecha_fin') or fecha_inicio
+
+    if not fecha_inicio:
+        return "Por favor selecciona una fecha.", 400
+
+    try:
+        conn = get_db_connection()
+        is_postgres = DATABASE_URL is not None
+        
+        # Nota: Si tu columna de fecha en la BD se llama diferente (ej: fecha_creacion), 
+        # cambia la condición 'fecha' por el nombre real de tu columna.
+        if is_postgres:
+            cur = conn.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute('SELECT * FROM planificaciones WHERE fecha >= %s AND fecha <= %s ORDER BY id DESC', (fecha_inicio, fecha_fin))
+            planificaciones = cur.fetchall()
+            cur.close()
+        else:
+            conn.row_factory = sqlite3.Row
+            cur = conn.cursor()
+            cur.execute('SELECT * FROM planificaciones WHERE fecha >= ? AND fecha <= ? ORDER BY id DESC', (fecha_inicio, fecha_fin))
+            planificaciones = [dict(row) for row in cur.fetchall()]
+            cur.close()
+            
+        conn.close()
+
+        if not planificaciones:
+            return f"<h3>No se encontraron planificaciones para la fecha seleccionada.</h3>", 404
+
+        html_content = render_template('pdf_general_template.html', planificaciones=planificaciones, fecha_inicio=fecha_inicio, fecha_fin=fecha_fin)
+        
+        pdf_file = BytesIO()
+        pisaStatus = pisa.CreatePDF(BytesIO(html_content.encode('utf-8')), dest=pdf_file)
+        
+        if pisaStatus.err:
+            return "Error al generar el PDF", 500
+            
+        pdf_file.seek(0)
+        nombre_archivo = f"Planificacion_{fecha_inicio}.pdf"
+        
+        return send_file(pdf_file, mimetype='application/pdf', as_attachment=False, download_name=nombre_archivo)
+        
+    except Exception as e:
+        print("Error en PDF por fecha:", e)
+        return f"Error al procesar el PDF: {e}", 500
     
 @app.route('/eliminar_planificacion/<int:id>')
 def eliminar_planificacion(id):
@@ -2911,113 +2964,6 @@ def planificacion_diaria():
 
 
 
-import io
-from flask import make_response
-from xhtml2pdf import pisa
-
-@app.route('/imprimir_planificacion_diaria_pdf/<int:id>')
-def imprimir_planificacion_diaria_pdf(id):
-    if 'usuario' not in session and 'user_id' not in session:
-        return redirect(url_for('login'))
-
-    try:
-        conn = get_db_connection()
-        is_postgres = DATABASE_URL is not None
-        
-        plan = None
-        if is_postgres:
-            cur = conn.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-            cur.execute('SELECT * FROM planificaciones_diarias WHERE id = %s', (id,))
-            plan = cur.fetchone()
-            cur.close()
-        else:
-            conn.row_factory = sqlite3.Row
-            cur = conn.cursor()
-            cur.execute('SELECT * FROM planificaciones_diarias WHERE id = ?', (id,))
-            plan = cur.fetchone()
-            cur.close()
-            
-        conn.close()
-
-        if not plan:
-            flash("Planificación no encontrada.", "danger")
-            return redirect(url_for('ver_planificaciones_diarias'))
-
-        # Renderizamos la plantilla HTML para el PDF convirtiendo el objeto a dict
-        plan_dict = dict(plan)
-        
-        html_content = render_template('pdf_planificacion_diaria.html', plan=plan_dict)
-        
-        # Generación del PDF con xhtml2pdf
-        pdf_file = io.BytesIO()
-        pisa_status = pisa.CreatePDF(io.BytesIO(html_content.encode('utf-8')), dest=pdf_file)
-        
-        if pisa_status.err:
-            return "Error al generar el PDF", 500
-
-        pdf_file.seek(0)
-        return send_file(pdf_file, mimetype='application/pdf', as_attachment=False, download_name=f"planificacion_{id}.pdf")
-
-    except Exception as e:
-        print("Error al exportar PDF:", e)
-        flash(f"Error al generar el PDF: {str(e)}", "danger")
-        return redirect(url_for('ver_planificaciones_diarias'))
-
-@app.route('/imprimir_planificaciones_semana_pdf', methods=['GET', 'POST'])
-def imprimir_planificaciones_semana_pdf():
-    if 'usuario' not in session and 'nombre_completo' not in session:
-        return redirect(url_for('login'))
-
-    fecha_inicio = request.args.get('fecha_inicio')
-    fecha_fin = request.args.get('fecha_fin')
-    usuario_actual = session.get('nombre_completo')
-    rol_actual = session.get('rol')
-
-    if not fecha_inicio or not fecha_fin:
-        flash('Por favor seleccione ambas fechas.', 'warning')
-        return redirect(url_for('ver_planificaciones_diarias'))
-
-    # Asegurar que inicio sea menor o igual que fin
-    if fecha_inicio > fecha_fin:
-        fecha_inicio, fecha_fin = fecha_fin, fecha_inicio
-
-    try:
-        conn = psycopg2.connect(DATABASE_URL)
-        cursor = PostgresCursorWrapper(conn)
-
-        if rol_actual in ['admin', 'oficina']:
-            query = 'SELECT * FROM planificaciones_diarias WHERE fecha BETWEEN ? AND ? ORDER BY fecha ASC'
-            cursor.execute(query, (fecha_inicio, fecha_fin))
-        else:
-            query = 'SELECT * FROM planificaciones_diarias WHERE docente = ? AND fecha BETWEEN ? AND ? ORDER BY fecha ASC'
-            cursor.execute(query, (usuario_actual, fecha_inicio, fecha_fin))
-
-        planificaciones = cursor.fetchall()
-        cursor.close()
-
-        if not planificaciones:
-            flash(f'No hay planificaciones registradas entre {fecha_inicio} y {fecha_fin}.', 'warning')
-            return redirect(url_for('ver_planificaciones_diarias'))
-
-        rendered_html = render_template('pdf_reporte_semanal.html', planificaciones=planificaciones, inicio=fecha_inicio, fin=fecha_fin)
-
-        pdf_buffer = io.BytesIO()
-        pisa_status = pisa.CreatePDF(rendered_html, dest=pdf_buffer)
-
-        if pisa_status.err:
-            flash('Error al generar el PDF semanal.', 'danger')
-            return redirect(url_for('ver_planificaciones_diarias'))
-
-        pdf_buffer.seek(0)
-        response = make_response(pdf_buffer.read())
-        response.headers['Content-Type'] = 'application/pdf'
-        response.headers['Content-Disposition'] = f'inline; filename=Reporte_Semanal_{fecha_inicio}_al_{fecha_fin}.pdf'
-        return response
-
-    except Exception as e:
-        print("❌ Error al generar reporte semanal:", e)
-        flash('Error al procesar el reporte.', 'danger')
-        return redirect(url_for('ver_planificaciones_diarias'))
     
 @app.route('/registrar_usuario', methods=['GET', 'POST'])
 def registrar_usuario():
