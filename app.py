@@ -2810,12 +2810,12 @@ from flask import render_template, request, session, redirect, url_for
 
 @app.route('/ver_planificaciones_diarias')
 def ver_planificaciones_diarias():
+    # Capturamos de forma segura el nombre completo o usuario de la sesión actual
     usuario_actual = (
+        session.get('nombre_completo') or 
         session.get('user') or 
         session.get('usuario') or 
         session.get('nombre') or 
-        session.get('nombre_completo') or 
-        session.get('username') or 
         ''
     ).strip()
 
@@ -2856,15 +2856,19 @@ def ver_planificaciones_diarias():
     # Comprobar si el rol actual corresponde a administración u oficina
     es_admin_o_oficina = any(r in rol_actual for r in ['administración', 'administracion', 'oficina', 'admin'])
 
-    # Si NO es administración ni oficina, filtramos únicamente por la columna docente
-    if not es_admin_o_oficina:
+    # Si NO es administración ni oficina, filtramos por su nombre de docente (usando coincidencia parcial ILIKE)
+    if not es_admin_o_oficina and usuario_actual:
         if is_postgres:
             query += f" AND TRIM(docente) ILIKE {ph}"
+            params.append(f"%{usuario_actual}%")
         else:
-            query += f" AND LOWER(TRIM(docente)) = LOWER({ph})"
-        params.append(usuario_actual)
+            query += f" AND LOWER(TRIM(docente)) LIKE LOWER({ph})"
+            params.append(f"%{usuario_actual}%")
+    elif not es_admin_o_oficina and not usuario_actual:
+        # Si por alguna razón la sesión no trae el nombre, no devolvemos registros por seguridad
+        query += " AND 1 = 0"
 
-    # 3. Aplicar los filtros opcionales de los selectores y fechas
+    # 3. Aplicar los filtros opcionales del formulario
     if desde_fecha:
         query += f" AND fecha >= {ph}"
         params.append(desde_fecha)
