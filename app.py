@@ -2806,56 +2806,84 @@ def guardar_planificacion_diaria():
 
     return redirect(url_for('ver_planificaciones_diarias'))
 
+from flask import render_template, request, session, redirect, url_for
+
 @app.route('/ver_planificaciones_diarias')
 def ver_planificaciones_diarias():
+    # 1. Verificar si el usuario está autenticado
+    usuario_actual = session.get('user')  # Ajusta según cómo guardas el usuario en sesión
+    rol_actual = session.get('rol', '').lower() if session.get('rol') else ''
+    docente_nombre = session.get('nombre_completo', '') or usuario_actual
+
     desde_fecha = request.args.get('desde_fecha', '').strip()
     hasta_fecha = request.args.get('hasta_fecha', '').strip()
     area_seleccionada = request.args.get('area', '').strip()
     grado_seleccionado = request.args.get('grado', '').strip()
 
-    # Obtener la conexión a la base de datos
-    cur = get_db_connection()
+    conn = get_db_connection()
+    is_postgres = DATABASE_URL is not None
 
-    # 1. Obtener opciones únicas para los desplegables
-    cur.execute("SELECT DISTINCT area FROM planificaciones_diarias WHERE area IS NOT NULL AND area != '' ORDER BY area")
+    if is_postgres:
+        cur = conn.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    else:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+
+    # 2. Obtener listas únicas para los filtros desplegables
+    cur.execute("SELECT DISTINCT area FROM planificaciones_diarias WHERE area IS NOT NULL AND TRIM(area) != '' ORDER BY area")
     areas_rows = cur.fetchall() or []
     lista_areas = [row['area'] if isinstance(row, dict) else row[0] for row in areas_rows]
 
-    cur.execute("SELECT DISTINCT grado_seccion FROM planificaciones_diarias WHERE grado_seccion IS NOT NULL AND grado_seccion != '' ORDER BY grado_seccion")
+    cur.execute("SELECT DISTINCT grado_seccion FROM planificaciones_diarias WHERE grado_seccion IS NOT NULL AND TRIM(grado_seccion) != '' ORDER BY grado_seccion")
     grados_rows = cur.fetchall() or []
     lista_grados = [row['grado_seccion'] if isinstance(row, dict) else row[0] for row in grados_rows]
 
-    # 2. Construir la consulta dinámicamente
+    # 3. Construir la consulta según el Rol del usuario
     query = "SELECT * FROM planificaciones_diarias WHERE 1=1"
     params = []
+    ph = "%s" if is_postgres else "?"
 
+    # SI NO ES 'administración' NI 'oficina', SE FILTRA SOLO POR SU PROPIA PLANIFICACIÓN / DOCENTE
+    es_admin_o_oficina = any(r in rol_actual for r in ['administración', 'administracion', 'oficina', 'admin'])
+    
+    if not es_admin_o_oficina:
+        if is_postgres:
+            query += f" AND TRIM(docente) ILIKE {ph}"
+        else:
+            query += f" AND LOWER(TRIM(docente)) = LOWER({ph})"
+        params.append(docente_nombre)
+
+    # 4. Aplicar los filtros opcionales del formulario
     if desde_fecha:
-        query += " AND fecha >= %s"
+        query += f" AND fecha >= {ph}"
         params.append(desde_fecha)
 
     if hasta_fecha:
-        query += " AND fecha <= %s"
+        query += f" AND fecha <= {ph}"
         params.append(hasta_fecha)
 
     if area_seleccionada:
-        query += " AND area = %s"
+        if is_postgres:
+            query += f" AND TRIM(area) ILIKE {ph}"
+        else:
+            query += f" AND LOWER(TRIM(area)) = LOWER({ph})"
         params.append(area_seleccionada)
 
     if grado_seleccionado:
-        query += " AND grado_seccion = %s"
+        if is_postgres:
+            query += f" AND TRIM(grado_seccion) ILIKE {ph}"
+        else:
+            query += f" AND LOWER(TRIM(grado_seccion)) = LOWER({ph})"
         params.append(grado_seleccionado)
 
     query += " ORDER BY id DESC"
 
     cur.execute(query, tuple(params) if params else None)
-    planificaciones = cur.fetchall() or []
+    rows = cur.fetchall() or []
+    planificaciones = [dict(r) for r in rows]
 
-    # Opcional: si la conexión requiere cierre manual según tu helper
-    if hasattr(cur, 'close'):
-        try:
-            cur.close()
-        except Exception:
-            pass
+    cur.close()
+    conn.close()
 
     return render_template(
         'ver_planificaciones_diarias.html',
@@ -2866,7 +2894,8 @@ def ver_planificaciones_diarias():
         hasta_fecha=hasta_fecha,
         area_seleccionada=area_seleccionada,
         grado_seleccionado=grado_seleccionado,
-        total_registros=len(planificaciones)
+        total_registros=len(planificaciones),
+        es_admin_o_oficina=es_admin_o_oficina
     )
 
 # --- RUTA PARA GENERAR EL PDF CON FECHA FORMATEADA (DD-MM-YYYY) ---
