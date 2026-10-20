@@ -2810,10 +2810,21 @@ from flask import render_template, request, session, redirect, url_for
 
 @app.route('/ver_planificaciones_diarias')
 def ver_planificaciones_diarias():
-    # 1. Verificar si el usuario está autenticado
-    usuario_actual = session.get('user')  # Ajusta según cómo guardas el usuario en sesión
-    rol_actual = session.get('rol', '').lower() if session.get('rol') else ''
-    docente_nombre = session.get('nombre_completo', '') or usuario_actual
+    # Capturar de forma flexible las posibles llaves de sesión que uses en tu login
+    usuario_actual = (
+        session.get('user') or 
+        session.get('usuario') or 
+        session.get('nombre') or 
+        session.get('nombre_completo') or 
+        session.get('username') or 
+        ''
+    ).strip()
+
+    rol_actual = (
+        session.get('rol') or 
+        session.get('role') or 
+        ''
+    ).strip().lower()
 
     desde_fecha = request.args.get('desde_fecha', '').strip()
     hasta_fecha = request.args.get('hasta_fecha', '').strip()
@@ -2829,7 +2840,7 @@ def ver_planificaciones_diarias():
         conn.row_factory = sqlite3.Row
         cur = conn.cursor()
 
-    # 2. Obtener listas únicas para los filtros desplegables
+    # 1. Obtener listas únicas para los menús desplegables
     cur.execute("SELECT DISTINCT area FROM planificaciones_diarias WHERE area IS NOT NULL AND TRIM(area) != '' ORDER BY area")
     areas_rows = cur.fetchall() or []
     lista_areas = [row['area'] if isinstance(row, dict) else row[0] for row in areas_rows]
@@ -2838,22 +2849,25 @@ def ver_planificaciones_diarias():
     grados_rows = cur.fetchall() or []
     lista_grados = [row['grado_seccion'] if isinstance(row, dict) else row[0] for row in grados_rows]
 
-    # 3. Construir la consulta según el Rol del usuario
+    # 2. Construir la consulta según el Rol del usuario
     query = "SELECT * FROM planificaciones_diarias WHERE 1=1"
     params = []
     ph = "%s" if is_postgres else "?"
 
-    # SI NO ES 'administración' NI 'oficina', SE FILTRA SOLO POR SU PROPIA PLANIFICACIÓN / DOCENTE
+    # Comprobar si el rol actual corresponde a administración u oficina
     es_admin_o_oficina = any(r in rol_actual for r in ['administración', 'administracion', 'oficina', 'admin'])
-    
-    if not es_admin_o_oficina:
-        if is_postgres:
-            query += f" AND TRIM(docente) ILIKE {ph}"
-        else:
-            query += f" AND LOWER(TRIM(docente)) = LOWER({ph})"
-        params.append(docente_nombre)
 
-    # 4. Aplicar los filtros opcionales del formulario
+    # Si NO es administración ni oficina, filtramos por el usuario logueado
+    if not es_admin_o_oficina:
+        # Buscamos tanto en la columna 'docente' como en 'usuario' por si acaso
+        if is_postgres:
+            query += f" AND (TRIM(docente) ILIKE {ph} OR TRIM(usuario) ILIKE {ph})"
+        else:
+            query += f" AND (LOWER(TRIM(docente)) = LOWER({ph}) OR LOWER(TRIM(usuario)) = LOWER({ph}))"
+        params.append(usuario_actual)
+        params.append(usuario_actual)
+
+    # 3. Aplicar los filtros de los selectores y fechas
     if desde_fecha:
         query += f" AND fecha >= {ph}"
         params.append(desde_fecha)
