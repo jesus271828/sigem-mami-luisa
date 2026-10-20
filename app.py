@@ -2810,7 +2810,6 @@ from flask import render_template, request, session, redirect, url_for
 
 @app.route('/ver_planificaciones_diarias')
 def ver_planificaciones_diarias():
-    # Capturar de forma flexible las posibles llaves de sesión que uses en tu login
     usuario_actual = (
         session.get('user') or 
         session.get('usuario') or 
@@ -2857,17 +2856,15 @@ def ver_planificaciones_diarias():
     # Comprobar si el rol actual corresponde a administración u oficina
     es_admin_o_oficina = any(r in rol_actual for r in ['administración', 'administracion', 'oficina', 'admin'])
 
-    # Si NO es administración ni oficina, filtramos por el usuario logueado
+    # Si NO es administración ni oficina, filtramos únicamente por la columna docente
     if not es_admin_o_oficina:
-        # Buscamos tanto en la columna 'docente' como en 'usuario' por si acaso
         if is_postgres:
-            query += f" AND (TRIM(docente) ILIKE {ph} OR TRIM(usuario) ILIKE {ph})"
+            query += f" AND TRIM(docente) ILIKE {ph}"
         else:
-            query += f" AND (LOWER(TRIM(docente)) = LOWER({ph}) OR LOWER(TRIM(usuario)) = LOWER({ph}))"
-        params.append(usuario_actual)
+            query += f" AND LOWER(TRIM(docente)) = LOWER({ph})"
         params.append(usuario_actual)
 
-    # 3. Aplicar los filtros de los selectores y fechas
+    # 3. Aplicar los filtros opcionales de los selectores y fechas
     if desde_fecha:
         query += f" AND fecha >= {ph}"
         params.append(desde_fecha)
