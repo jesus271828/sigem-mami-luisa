@@ -1518,7 +1518,7 @@ def asistencia():
             ).fetchall()
             
             for a in asis_db:
-                id_est = a['id_estudiante'] if hasattr(a, 'keys') else a[0]
+                id_est = str(a['id_estudiante'] if hasattr(a, 'keys') else a[0]).strip()
                 estado_val = a['estado'] if hasattr(a, 'keys') else a[1]
                 asistencia_dict[id_est] = estado_val
 
@@ -1737,7 +1737,7 @@ def asistencia():
     finally:
         conn.close()
 
-    # Cálculo automático para los valores por defecto del Resumen General Global
+    # Totales para la Tabla de Resumen General Global
     gral_mat_ninos_val = meta.get('gral_mat_ninos') if meta and meta.get('gral_mat_ninos') is not None else (tot_pri_mat_ninos + tot_ini_mat_ninos)
     gral_mat_ninas_val = meta.get('gral_mat_ninas') if meta and meta.get('gral_mat_ninas') is not None else (tot_pri_mat_ninas + tot_ini_mat_ninas)
     gral_asis_ninos_val = meta.get('gral_asis_ninos') if meta and meta.get('gral_asis_ninos') is not None else (tot_pri_asis_ninos + tot_ini_asis_ninos)
@@ -1785,10 +1785,10 @@ def guardar_asistencia():
     try:
         for key, value in request.form.items():
             if key.startswith('estado_'):
-                id_estudiante = key.split('_')[1]
+                id_estudiante = key.replace('estado_', '').strip()
                 estado = value
                 
-                if not id_estudiante or id_estudiante.strip() == "":
+                if not id_estudiante:
                     continue
                 
                 existing = conn.execute(
@@ -1798,8 +1798,8 @@ def guardar_asistencia():
                 
                 if existing:
                     conn.execute(
-                        "UPDATE asistencia SET estado = %s WHERE id_estudiante = %s AND fecha = %s",
-                        (estado, id_estudiante, fecha)
+                        "UPDATE asistencia SET estado = %s, grado = %s WHERE id_estudiante = %s AND fecha = %s",
+                        (estado, grado, id_estudiante, fecha)
                     )
                 else:
                     conn.execute(
@@ -1808,14 +1808,15 @@ def guardar_asistencia():
                     )
         
         conn.commit()
-        flash('Asistencia guardada correctamente.', 'success')
+        flash(f'Asistencia de {grado} guardada correctamente.', 'success')
     except Exception as e:
         conn.rollback()
         flash(f'Error al guardar la asistencia: {e}', 'danger')
     finally:
         conn.close()
         
-    return redirect(url_for('asistencia', fecha=fecha, grado=grado))
+    # Redirección LIMPIA sin el parámetro 'grado' para liberar la selección de curso
+    return redirect(url_for('asistencia', fecha=fecha))
 
 
 @app.route('/descargar_reporte_ausencias', methods=['POST', 'GET'])

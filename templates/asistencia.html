@@ -89,24 +89,25 @@
                             </thead>
                             <tbody>
                                 {% for est in estudiantes %}
+                                {% set est_id_str = est.id_estudiante | string | trim %}
+                                {% set estado_actual = asistencia_dict.get(est_id_str, 'Presente') %}
                                 <tr>
                                     <td class="text-center font-weight-bold">{{ loop.index }}</td>
                                     <td>{{ est.id_estudiante }}</td>
                                     <td>{{ est.nombres }} {{ est.apellidos }}</td>
                                     <td class="text-center">
-                                        {% set estado_actual = asistencia_dict.get(est.id_estudiante, 'Presente') %}
                                         <div class="btn-group btn-group-toggle" data-toggle="buttons">
                                             <label class="btn btn-outline-success btn-sm {% if estado_actual == 'Presente' %}active{% endif %}">
-                                                <input type="radio" name="estado_{{ est.id_estudiante }}" value="Presente" autocomplete="off" {% if estado_actual == 'Presente' %}checked{% endif %}> Presente
+                                                <input type="radio" name="estado_{{ est_id_str }}" id="pres_{{ est_id_str }}" value="Presente" autocomplete="off" {% if estado_actual == 'Presente' %}checked{% endif %}> Presente
                                             </label>
                                             <label class="btn btn-outline-warning btn-sm {% if estado_actual == 'Tarde' %}active{% endif %}">
-                                                <input type="radio" name="estado_{{ est.id_estudiante }}" value="Tarde" autocomplete="off" {% if estado_actual == 'Tarde' %}checked{% endif %}> Tarde
+                                                <input type="radio" name="estado_{{ est_id_str }}" id="tard_{{ est_id_str }}" value="Tarde" autocomplete="off" {% if estado_actual == 'Tarde' %}checked{% endif %}> Tarde
                                             </label>
                                             <label class="btn btn-outline-info btn-sm {% if estado_actual == 'Excusa' %}active{% endif %}">
-                                                <input type="radio" name="estado_{{ est.id_estudiante }}" value="Excusa" autocomplete="off" {% if estado_actual == 'Excusa' %}checked{% endif %}> Excusa
+                                                <input type="radio" name="estado_{{ est_id_str }}" id="exc_{{ est_id_str }}" value="Excusa" autocomplete="off" {% if estado_actual == 'Excusa' %}checked{% endif %}> Excusa
                                             </label>
                                             <label class="btn btn-outline-danger btn-sm {% if estado_actual == 'Ausente' %}active{% endif %}">
-                                                <input type="radio" name="estado_{{ est.id_estudiante }}" value="Ausente" autocomplete="off" {% if estado_actual == 'Ausente' %}checked{% endif %}> Ausente
+                                                <input type="radio" name="estado_{{ est_id_str }}" id="aus_{{ est_id_str }}" value="Ausente" autocomplete="off" {% if estado_actual == 'Ausente' %}checked{% endif %}> Ausente
                                             </label>
                                         </div>
                                     </td>
@@ -250,7 +251,7 @@
                         </table>
                     </div>
 
-                    <!-- TABLA RESTAURADA: Resumen General Global (Asistencia Pasada / Acumulada) -->
+                    <!-- TABLA RESTAURADA: Resumen General Global (Asistencia Acumulada / Pasada) -->
                     <h6 class="font-weight-bold text-dark mt-4">RESUMEN GENERAL GLOBAL (Asistencia Acumulada / Pasada)</h6>
                     <div class="table-responsive mb-4">
                         <table class="table table-bordered text-center">
