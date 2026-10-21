@@ -24,28 +24,41 @@ class Estudiante(db.Model):
     grado = db.Column(db.String(50), nullable=False)
     numero_orden = db.Column(db.String(10), nullable=True)
 
-# Modelo para la Planificación
+# Modelo para la Planificación actualizado para coincidir con el HTML
 class Planificacion(db.Model):
     __tablename__ = 'planificacion'
+    
     id = db.Column(db.Integer, primary_key=True)
     docente = db.Column(db.String(100), nullable=False)
-    grado = db.Column(db.String(50), nullable=False)
-    areas = db.Column(db.String(255))
-    modalidad = db.Column(db.String(50))
-    situacion = db.Column(db.Text)
-    competencias = db.Column(db.Text)
-    contenidos = db.Column(db.Text)
-    actividades = db.Column(db.Text)
-    indicadores = db.Column(db.Text)
-    recursos = db.Column(db.Text)
-    evaluacion = db.Column(db.Text)
-    valor = db.Column(db.String(100))
-    efemerides = db.Column(db.Text)
-    duracion = db.Column(db.Integer)
-    f_inicio = db.Column(db.String(20))
-    f_cierre = db.Column(db.String(20))
-
-
+    area = db.Column(db.String(100), nullable=False)          # Cambiado de 'areas' a 'area'
+    grado_seccion = db.Column(db.String(50), nullable=False)   # Cambiado de 'grado' a 'grado_seccion'
+    fecha = db.Column(db.String(20), nullable=True)            # Añadido para el campo fecha
+    
+    # Secciones del esquema diario
+    estrategias = db.Column(db.Text, nullable=True)
+    intencion_pedagogica = db.Column(db.Text, nullable=True)
+    indicador_logro = db.Column(db.Text, nullable=True)        # Cambiado de 'indicadores'
+    competencia_especifica = db.Column(db.Text, nullable=True) # Cambiado de 'competencias'
+    
+    # Momentos de la clase
+    actividad_inicio = db.Column(db.Text, nullable=True)
+    actividad_desarrollo = db.Column(db.Text, nullable=True)
+    actividad_cierre = db.Column(db.Text, nullable=True)
+    
+    recursos = db.Column(db.Text, nullable=True)
+    recuperacion_pedagogica = db.Column(db.Text, nullable=True) # Añadido
+    
+    # Campos adicionales por si los usas en otras partes
+    modalidad = db.Column(db.String(50), nullable=True)
+    situacion = db.Column(db.Text, nullable=True)
+    contenidos = db.Column(db.Text, nullable=True)
+    evaluacion = db.Column(db.Text, nullable=True)
+    valor = db.Column(db.String(100), nullable=True)
+    efemerides = db.Column(db.Text, nullable=True)
+    duracion = db.Column(db.Integer, nullable=True)
+    f_inicio = db.Column(db.String(20), nullable=True)
+    f_cierre = db.Column(db.String(20), nullable=True)
+    
 # Modelo para la tabla notas1
 class Notas1(db.Model):
     __tablename__ = 'notas1'
