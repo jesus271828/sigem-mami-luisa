@@ -1,255 +1,367 @@
+`html
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Planificación Diaria | SIGEM Mami Luisa</title>
+    <title>Esquema de Planificación Diaria - SIGEM Mami Luisa</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --primary-color: #1A237E; }
-        body { background-color: #f0f2f5; font-family: 'Segoe UI', sans-serif; }
-        .sidebar { background: var(--primary-color); color: white; min-height: 100vh; padding: 20px; }
-        .plan-container { background: white; border-radius: 15px; padding: 25px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
-        .table-bordered { border-color: #000 !important; }
-        .table-bordered th, .table-bordered td { border-color: #000 !important; padding: 6px 8px !important; }
-        .form-control, .form-select, .form-control:focus, .form-select:focus { background-color: transparent; border: none; box-shadow: none; font-size: 0.85rem; }
-        .input-line { border-bottom: 1px solid #333; border-radius: 0; padding: 2px 5px; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: "Tw Cen MT", "Century Gothic", sans-serif;
+        }
 
-        /* REGLAS DE IMPRESIÓN OPTIMIZADAS PARA HOJA HORIZONTAL COMPLETA */
+        body {
+            background-color: #f8f9fa;
+            padding: 20px;
+            font-size: 13px;
+            color: #000;
+        }
+
+        @page {
+            size: letter landscape;
+            margin: 10mm;
+        }
+
         @media print {
-            @page {
-                size: letter landscape;
-                margin: 0.3cm !important;
+            body {
+                padding: 0;
+                background: #fff;
             }
-            html, body {
-                background: white !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                width: 100% !important;
-                height: 100% !important;
-                font-size: 11px !important;
-                print-color-adjust: exact;
-                -webkit-print-color-adjust: exact;
-            }
-            .sidebar, .d-print-none, .alert {
+            .no-print {
                 display: none !important;
             }
-            .col-md-9 {
-                width: 100% !important;
-                max-width: 100% !important;
-                flex: 0 0 100% !important;
-                padding: 0 !important;
-                margin: 0 !important;
-            }
-            .plan-container {
+            .contenedor-planificacion {
                 box-shadow: none !important;
-                padding: 0px !important;
                 border: none !important;
-                width: 100% !important;
-                margin: 0 !important;
+                padding: 0 !important;
             }
             table {
-                font-size: 0.72rem !important;
-                width: 100% !important;
-                page-break-inside: avoid !important;
-                margin-bottom: 0 !important;
+                page-break-inside: avoid;
             }
-            .table-bordered th, .table-bordered td {
-                padding: 2px 4px !important;
-                border-color: #000 !important;
-            }
-            textarea, input, select {
-                resize: none !important;
-                border: none !important;
-                background: transparent !important;
-                box-shadow: none !important;
-                padding: 0px !important;
-                margin: 0px !important;
-                font-size: 0.72rem !important;
-                line-height: 1.15 !important;
-                appearance: none;
-                -webkit-appearance: none;
-                height: auto !important;
-            }
-            .row {
-                margin-left: 0 !important;
-                margin-right: 0 !important;
-            }
+        }
+
+        .page-break {
+            page-break-after: always;
+        }
+
+        .contenedor-planificacion {
+            width: 100%;
+            max-width: 100%;
+            background: #fff;
+        }
+
+        /* Encabezado Tabla */
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+        }
+
+        .header-table td {
+            padding: 4px 6px;
+            vertical-align: bottom;
+        }
+
+        .header-title {
+            text-align: right;
+            font-size: 18px;
+            font-weight: bold;
+            letter-spacing: 0.3px;
+        }
+
+        .header-subtitle {
+            text-align: right;
+            font-size: 12px;
+            font-weight: normal;
+        }
+
+        .field-label {
+            font-weight: bold;
+            font-size: 11.5px;
+        }
+
+        .field-value {
+            border-bottom: 1.5px solid #000;
+            padding-bottom: 2px;
+            font-size: 13px;
+        }
+
+        /* Tabla Principal */
+        .main-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 2px solid #000;
+        }
+
+        .main-table th, 
+        .main-table td {
+            border: 1px solid #000;
+            padding: 6px 8px;
+            vertical-align: top;
+            text-align: left;
+            font-size: 11.5px;
+        }
+
+        .main-table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .col-comp { width: 22%; }
+        .col-mom  { width: 8%; }
+        .col-act  { width: 50%; }
+        .col-rec  { width: 20%; }
+
+        td.competencia-unica {
+            vertical-align: top;
+            background-color: #fff;
+        }
+
+        .bloque-seccion {
+            background-color: #fff;
+            padding: 8px 10px;
+        }
+
+        .bloque-titulo {
+            font-weight: bold;
+            font-size: 12px;
+            margin-bottom: 3px;
         }
     </style>
 </head>
 <body>
 
-    <!-- Alertas Flash -->
+<div class="container-fluid no-print mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Planificación Diaria - Nivel Primario</h2>
+        <a href="{{ url_for('menu') }}" class="btn btn-secondary">← Volver al Menú</a>
+    </div>
+
+    <!-- Mensajes Flash -->
     {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        <div class="container mt-3 d-print-none">
+        {% if messages %}
             {% for category, message in messages %}
-                <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
                     {{ message }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             {% endfor %}
-        </div>
-      {% endif %}
+        {% endif %}
     {% endwith %}
 
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Sidebar -->
-            <div class="col-md-3 sidebar d-print-none">
-                <h4 class="mb-4">SIGEM Mami Luisa</h4>
-                <p><i class="fas fa-user-circle"></i> {{ session['nombre_completo'] }} ({{ session['rol'] }})</p>
-                <hr>
-                <a href="{{ url_for('menu_planificacion') }}" class="btn btn-outline-light w-100 mb-3"><i class="fas fa-arrow-left me-2"></i>Volver al Menú</a>
-                <a href="{{ url_for('ver_planificaciones_diarias') }}" class="btn btn-light w-100 mb-3">
-                  <i class="fas fa-folder-open me-2"></i>Ver Planificaciones
-                </a>
-                <a href="{{ url_for('logout') }}" class="btn btn-danger w-100">Cerrar Sesión</a>
-            </div>
+    <!-- Formulario de Registro de Planificación -->
+    <div class="card shadow p-4 mb-5">
+        <h4 class="card-title mb-3">Nueva Planificación Diaria</h4>
+        <form method="POST" action="{{ url_for('planificacion_diaria') }}">
+            <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                    <label class="form-label font-weight-bold">Docente:</label>
+                    <input type="text" class="form-control" value="{{ docente }}" readonly>
+                </div>
 
-            <!-- Contenido Principal -->
-            <div class="col-md-9 p-4">
-                <div class="plan-container">
-                    
-                    <form action="{{ url_for('guardar_planificacion_diaria') }}" method="POST">
-                        <!-- Cabecera del Esquema -->
-                        <div class="row mb-2 align-items-center">
-                            <div class="col-md-7">
-                                <div class="mb-1">
-                                    <label class="fw-bold">Docente:</label>
-                                    <input type="text" name="docente" class="form-control input-line d-inline-block w-75 fw-bold" value="{{ docente }}" readonly>
-                                </div>
-                                <div class="mb-1">
-                                    <label class="fw-bold">Área:</label>
-                                    <input type="text" name="area" class="form-control input-line d-inline-block w-80 fw-bold" 
-                                           value="{{ area_asignada if area_asignada else '' }}" 
-                                           placeholder="Ej. Lengua Española / Matemáticas" 
-                                           {% if session.get('rol') == 'maestro_area' %}readonly{% endif %} required>
-                                </div>
-                                <div class="row">
-                                    <div class="col-md-7 mb-1">
-                                        <label class="fw-bold">Grado y Sección:</label>
-                                        {% if session.get('rol') == 'maestro_area' %}
-                                            <select name="grado_seccion" class="form-select input-line d-inline-block w-50 fw-bold" required>
-                                                <option value="" disabled selected>Seleccione...</option>
-                                                <option value="1ro A">1ro A</option>
-                                                <option value="1ro B">1ro B</option>
-                                                <option value="2do A">2do A</option>
-                                                <option value="2do B">2do B</option>
-                                                <option value="3ro A">3ro A</option>
-                                                <option value="3ro B">3ro B</option>
-                                                <option value="4to A">4to A</option>
-                                                <option value="4to B">4to B</option>
-                                                <option value="5to A">5to A</option>
-                                                <option value="5to B">5to B</option>
-                                                <option value="6to A">6to A</option>
-                                                <option value="6to B">6to B</option>
-                                            </select>
-                                        {% else %}
-                                            <input type="text" name="grado_seccion" class="form-control input-line d-inline-block w-50 fw-bold" value="{{ grado_seccion }}" required>
-                                        {% endif %}
-                                    </div>
-                                    <div class="col-md-5 mb-1">
-                                        <label class="fw-bold">Fecha:</label>
-                                        <input type="date" name="fecha" class="form-control input-line d-inline-block w-60" required>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-5 text-end">
-                                <h4 class="text-primary fw-bold mb-0" style="font-size: 1.3rem; color: #003366 !important;">Esquema de Planificación Diaria</h4>
-                                <h5 class="text-secondary fw-bold" style="font-size: 1.0rem; color: #003366 !important;">Nivel Primario</h5>
-                            </div>
-                        </div>
+                <div class="col-md-4">
+                    <label for="area" class="form-label font-weight-bold">Área / Asignatura:</label>
+                    <select class="form-select" id="area" name="area" required>
+                        <option value="">-- Selecciona el Área --</option>
+                        {% if materias_disponibles %}
+                            {% for mat in materias_disponibles %}
+                                <option value="{{ mat }}">{{ mat }}</option>
+                            {% endfor %}
+                        {% else %}
+                            <option value="Lengua Española">Lengua Española</option>
+                            <option value="Matemáticas">Matemáticas</option>
+                            <option value="Ciencias Naturales">Ciencias Naturales</option>
+                            <option value="Ciencias Sociales">Ciencias Sociales</option>
+                            <option value="Educación Artística">Educación Artística</option>
+                        {% endif %}
+                    </select>
+                </div>
 
-                        <!-- Tabla de Estructura Diaria -->
-                        <table class="table table-bordered border-dark align-middle mb-2">
-                            <tbody>
-                                <tr>
-                                    <td colspan="4">
-                                        <strong class="d-block mb-1" style="font-size: 0.8rem;">Estrategias de enseñanza – aprendizaje:</strong>
-                                        <textarea name="estrategias" class="form-control py-0" rows="2" placeholder="Escribe las estrategias..."></textarea>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td colspan="4">
-                                        <strong class="d-block mb-1" style="font-size: 0.8rem;">Intención pedagógica del día:</strong>
-                                        <textarea name="intencion_pedagogica" class="form-control py-0" rows="2" placeholder="¿Cuál es el propósito de hoy?"></textarea>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td colspan="4">
-                                        <strong class="d-block mb-1" style="font-size: 0.8rem;">Indicador de logro:</strong>
-                                        <textarea name="indicador_logro" class="form-control py-0" rows="2" placeholder="Indica el logro esperado..."></textarea>
-                                    </td>
-                                </tr>
-                                
-                                <!-- Encabezados de la grilla principal -->
-                                <tr class="text-start fw-bold" style="font-size: 0.8rem; background-color: #f8f9fa;">
-                                    <td style="width: 22%;">Competencia específica</td>
-                                    <td style="width: 10%;">Momentos</td>
-                                    <td style="width: 44%;">Actividades / Duración</td>
-                                    <td style="width: 24%;">Recursos:</td>
-                                </tr>
+                <div class="col-md-2">
+                    <label for="grado_seccion" class="form-label font-weight-bold">Grado y Sección:</label>
+                    <select class="form-select" id="grado_seccion" name="grado_seccion" required>
+                        <option value="">-- Grado --</option>
+                        {% for g in grados_disponibles %}
+                            <option value="{{ g }}">{{ g }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
 
-                                <!-- Filas de Momentos con Recursos divididos alineadamente -->
-                                <tr>
-                                    <td rowspan="3" class="align-top">
-                                        <textarea name="competencia_especifica" class="form-control" rows="8" placeholder="Competencias específicas..."></textarea>
-                                    </td>
-                                    <td class="align-top"><strong>Inicio</strong></td>
-                                    <td class="align-top">
-                                        <textarea name="actividad_inicio" class="form-control py-0" rows="2" placeholder="Actividades de inicio..."></textarea>
-                                    </td>
-                                    <td class="align-top">
-                                        <textarea name="recursos_inicio" class="form-control py-0" rows="2" placeholder="Recursos para inicio..."></textarea>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="align-top"><strong>Desarrollo</strong></td>
-                                    <td class="align-top">
-                                        <textarea name="actividad_desarrollo" class="form-control py-0" rows="4" placeholder="Actividades centrales..."></textarea>
-                                    </td>
-                                    <td class="align-top">
-                                        <textarea name="recursos_desarrollo" class="form-control py-0" rows="4" placeholder="Recursos para desarrollo..."></textarea>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td class="align-top"><strong>Cierre</strong></td>
-                                    <td class="align-top">
-                                        <textarea name="actividad_cierre" class="form-control py-0" rows="2" placeholder="Metacognición y cierre..."></textarea>
-                                    </td>
-                                    <td class="align-top">
-                                        <textarea name="recursos_cierre" class="form-control py-0" rows="2" placeholder="Recursos para cierre..."></textarea>
-                                    </td>
-                                </tr>
-
-                                <!-- Fila final de Recuperación Pedagógica -->
-                                <tr>
-                                    <td colspan="4">
-                                        <strong class="d-block mb-1" style="font-size: 0.8rem;">Actividades de recuperación pedagógica:</strong>
-                                        <textarea name="recuperacion_pedagogica" class="form-control py-0" rows="2" placeholder="Actividades de reforzamiento..."></textarea>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-
-                        <!-- Botones de Acción -->
-                        <div class="text-center mt-3 d-print-none">
-                            <button type="submit" class="btn btn-primary px-4 py-2 fw-bold">
-                                <i class="fas fa-save me-2"></i>Guardar Planificación
-                            </button>
-                            <button type="button" onclick="window.print()" class="btn btn-secondary px-4 py-2 fw-bold ms-2">
-                                <i class="fas fa-print me-2"></i>Imprimir / Guardar PDF (Horizontal)
-                            </button>
-                        </div>
-                    </form>
-
+                <div class="col-md-2">
+                    <label for="fecha" class="form-label font-weight-bold">Fecha:</label>
+                    <input type="date" class="form-control" id="fecha" name="fecha" required>
                 </div>
             </div>
-        </div>
+
+            <div class="mb-3">
+                <label for="estrategias" class="form-label font-weight-bold">Estrategias de enseñanza - aprendizaje:</label>
+                <textarea class="form-control" id="estrategias" name="estrategias" rows="2" required></textarea>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label for="intencion_pedagogica" class="form-label font-weight-bold">Intención pedagógica del día:</label>
+                    <textarea class="form-control" id="intencion_pedagogica" name="intencion_pedagogica" rows="2" required></textarea>
+                </div>
+                <div class="col-md-6">
+                    <label for="indicador_logro" class="form-label font-weight-bold">Indicador de logro:</label>
+                    <textarea class="form-control" id="indicador_logro" name="indicador_logro" rows="2" required></textarea>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="competencia_especifica" class="form-label font-weight-bold">Competencia específica:</label>
+                <textarea class="form-control" id="competencia_especifica" name="competencia_especifica" rows="2" required></textarea>
+            </div>
+
+            <div class="card p-3 mb-3 bg-light border">
+                <h5 class="mb-2">Momentos de la Clase</h5>
+                <div class="mb-2">
+                    <label for="actividad_inicio" class="form-label font-weight-bold">Inicio (Actividades / Duración):</label>
+                    <textarea class="form-control" id="actividad_inicio" name="actividad_inicio" rows="2" required></textarea>
+                </div>
+                <div class="mb-2">
+                    <label for="actividad_desarrollo" class="form-label font-weight-bold">Desarrollo (Actividades / Duración):</label>
+                    <textarea class="form-control" id="actividad_desarrollo" name="actividad_desarrollo" rows="3" required></textarea>
+                </div>
+                <div class="mb-2">
+                    <label for="actividad_cierre" class="form-label font-weight-bold">Cierre (Actividades / Duración):</label>
+                    <textarea class="form-control" id="actividad_cierre" name="actividad_cierre" rows="2" required></textarea>
+                </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label for="recursos" class="form-label font-weight-bold">Recursos:</label>
+                    <textarea class="form-control" id="recursos" name="recursos" rows="2" required></textarea>
+                </div>
+                <div class="col-md-6">
+                    <label for="recuperacion_pedagogica" class="form-label font-weight-bold">Actividades de recuperación pedagógica:</label>
+                    <textarea class="form-control" id="recuperacion_pedagogica" name="recuperacion_pedagogica" rows="2"></textarea>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">Guardar Planificación</button>
+        </form>
     </div>
-    
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</div>
+
+<!-- VISTA PREVIA E IMPRESIÓN DEL ESQUEMA HORIZONTAL -->
+<div class="container-fluid">
+    <div class="no-print d-flex justify-content-between align-items-center mb-3">
+        <h3>Vista Previa de Esquemas Guardados</h3>
+        <button onclick="window.print()" class="btn btn-success">🖨️ Imprimir Esquemas</button>
+    </div>
+
+    {% if planificaciones %}
+        {% for plan in planificaciones %}
+        <div class="contenedor-planificacion mb-5 p-3 border shadow-sm">
+
+            <!-- ENCABEZADO -->
+            <table class="header-table">
+                <tr>
+                    <td colspan="2" style="width: 50%;">
+                        <span class="field-label">Docente:</span><br>
+                        <div class="field-value">{{ plan.docente }}</div>
+                    </td>
+                    <td colspan="2" class="header-title" style="width: 50%;">
+                        Esquema de Planificación Diaria<br>
+                        <div class="header-subtitle">Nivel Primario</div>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="4">
+                        <span class="field-label">Área:</span><br>
+                        <div class="field-value">{{ plan.area }}</div>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width: 25%;">
+                        <span class="field-label">Grado y Sección:</span><br>
+                        <div class="field-value">{{ plan.grado_seccion }}</div>
+                    </td>
+                    <td style="width: 25%;">
+                        <span class="field-label">Fecha:</span><br>
+                        <div class="field-value">{{ plan.fecha }}</div>
+                    </td>
+                    <td colspan="2"></td>
+                </tr>
+            </table>
+
+            <!-- TABLA PRINCIPAL DEL ESQUEMA -->
+            <table class="main-table">
+                <tr>
+                    <td colspan="4" class="bloque-seccion">
+                        <div class="bloque-titulo">Estrategias de enseñanza - aprendizaje:</div>
+                        {{ plan.estrategias }}
+                    </td>
+                </tr>
+
+                <tr>
+                    <td colspan="4" class="bloque-seccion">
+                        <div class="bloque-titulo">Intención pedagógica del día:</div>
+                        {{ plan.intencion_pedagogica }}
+                    </td>
+                </tr>
+
+                <tr>
+                    <td colspan="4" class="bloque-seccion">
+                        <div class="bloque-titulo">Indicador de logro:</div>
+                        {{ plan.indicador_logro }}
+                    </td>
+                </tr>
+
+                <tr>
+                    <th class="col-comp">Competencia específica</th>
+                    <th class="col-mom">Momentos</th>
+                    <th class="col-act">Actividades / Duración</th>
+                    <th class="col-rec">Recursos:</th>
+                </tr>
+
+                <tr>
+                    <td rowspan="3" class="competencia-unica">
+                        {{ plan.competencia_especifica }}
+                    </td>
+                    <td><strong>Inicio</strong></td>
+                    <td>{{ plan.actividad_inicio }}</td>
+                    <td>{{ plan.recursos_inicio or plan.recursos }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Desarrollo</strong></td>
+                    <td>{{ plan.actividad_desarrollo }}</td>
+                    <td>{{ plan.recursos_desarrollo or plan.recursos }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Cierre</strong></td>
+                    <td>{{ plan.actividad_cierre }}</td>
+                    <td>{{ plan.recursos_cierre or plan.recursos }}</td>
+                </tr>
+
+                <tr>
+                    <td colspan="4" class="bloque-seccion">
+                        <div class="bloque-titulo">Actividades de recuperación pedagógica:</div>
+                        {{ plan.recuperacion_pedagogica or 'N/A' }}
+                    </td>
+                </tr>
+            </table>
+
+        </div>
+
+        {% if not loop.last %}
+            <div class="page-break"></div>
+        {% endif %}
+        {% endfor %}
+    {% else %}
+        <div class="alert alert-info text-center no-print">
+            No hay planificaciones registradas aún para este docente.
+        </div>
+    {% endif %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
