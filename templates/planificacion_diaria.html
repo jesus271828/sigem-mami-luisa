@@ -13,7 +13,7 @@
         }
 
         body {
-            background-color: #f8f9fa;
+            background-color: #fff;
             padding: 10mm;
             font-size: 12px;
             color: #000;
@@ -46,10 +46,6 @@
         .contenedor-planificacion {
             width: 100%;
             max-width: 100%;
-            background: #fff;
-            padding: 15px;
-            border-radius: 6px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.05);
         }
 
         /* Encabezado */
@@ -69,14 +65,12 @@
             font-size: 18px;
             font-weight: bold;
             letter-spacing: 0.3px;
-            color: #0d6efd;
         }
 
         .header-subtitle {
             text-align: right;
             font-size: 12px;
             font-weight: normal;
-            color: #495057;
         }
 
         .field-label {
@@ -88,20 +82,6 @@
             border-bottom: 1.5px solid #000;
             padding-bottom: 2px;
             font-size: 13px;
-            min-height: 20px;
-        }
-
-        /* Estilo personalizado para el select y inputs dentro del esquema */
-        .form-select-custom {
-            width: 100%;
-            border: none;
-            border-bottom: 1.5px solid #000;
-            background: transparent;
-            font-family: inherit;
-            font-size: 13px;
-            padding: 2px 0;
-            outline: none;
-            cursor: pointer;
         }
 
         /* Tabla Principal */
@@ -169,30 +149,13 @@
         <tr>
             <td colspan="4">
                 <span class="field-label">Área:</span><br>
-                {% if rol_usuario == 'maestro_area' %}
-                    <!-- Menú desplegable para que el maestro de área elija la materia -->
-                    <select name="area" class="form-select-custom" required>
-                        <option value="" disabled selected>Seleccione la materia...</option>
-                        <option value="Lengua Española" {% if plan.area == 'Lengua Española' %}selected{% endif %}>Lengua Española</option>
-                        <option value="Ciencias Sociales" {% if plan.area == 'Ciencias Sociales' %}selected{% endif %}>Ciencias Sociales</option>
-                    </select>
-                {% else %}
-                    <div class="field-value">{{ plan.area }}</div>
-                {% endif %}
+                <div class="field-value">{{ plan.area }}</div>
             </td>
         </tr>
         <tr>
             <td style="width: 25%;">
                 <span class="field-label">Grado y Sección:</span><br>
-                {% if rol_usuario == 'maestro_area' %}
-                    <!-- Grado fijo en Sexto para maestro de área -->
-                    <div class="field-value">
-                        Sexto (6to)
-                        <input type="hidden" name="grado_seccion" value="Sexto">
-                    </div>
-                {% else %}
-                    <div class="field-value">{{ plan.grado_seccion }}</div>
-                {% endif %}
+                <div class="field-value">{{ plan.grado_seccion }}</div>
             </td>
             <td style="width: 25%;">
                 <span class="field-label">Fecha:</span><br>
