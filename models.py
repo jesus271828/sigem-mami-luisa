@@ -24,11 +24,12 @@ class Estudiante(db.Model):
     grado = db.Column(db.String(50), nullable=False)
     numero_orden = db.Column(db.String(10), nullable=True)
 
-# Modelo para la Planificación
 class Planificacion(db.Model):
-    __tablename__ = 'planificaciones_diarias' # <--- CAMBIALO AQUÍ
+    __tablename__ = 'planificaciones_diarias'
     
-    id = db.Column(db.Integer, primary_key=True)
+    # La llave primaria en Supabase se llama 'identificación'
+    id = db.Column('identificación', db.Integer, primary_key=True)
+    
     docente = db.Column(db.String(100), nullable=False)
     area = db.Column(db.String(100), nullable=False)
     grado_seccion = db.Column(db.String(50), nullable=False)
@@ -42,15 +43,10 @@ class Planificacion(db.Model):
     actividad_cierre = db.Column(db.Text, nullable=True)
     recursos = db.Column(db.Text, nullable=True)
     recuperacion_pedagogica = db.Column(db.Text, nullable=True)
-    modalidad = db.Column(db.String(50), nullable=True)
-    situacion = db.Column(db.Text, nullable=True)
-    contenidos = db.Column(db.Text, nullable=True)
-    evaluacion = db.Column(db.Text, nullable=True)
-    valor = db.Column(db.String(100), nullable=True)
-    efemerides = db.Column(db.Text, nullable=True)
-    duracion = db.Column(db.Integer, nullable=True)
-    f_inicio = db.Column(db.String(20), nullable=True)
-    f_cierre = db.Column(db.String(20), nullable=True)
+    fecha_creacion = db.Column(db.DateTime, nullable=True)
+    recursos_inicio = db.Column(db.Text, nullable=True)
+    recursos_desarrollo = db.Column(db.Text, nullable=True)
+    recursos_cierre = db.Column(db.Text, nullable=True)
     
 # Modelo para la tabla notas1
 class Notas1(db.Model):
