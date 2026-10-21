@@ -13,7 +13,7 @@
         }
 
         body {
-            background-color: #fff;
+            background-color: #f8f9fa;
             padding: 10mm;
             font-size: 12px;
             color: #000;
@@ -46,6 +46,10 @@
         .contenedor-planificacion {
             width: 100%;
             max-width: 100%;
+            background: #fff;
+            padding: 15px;
+            border-radius: 6px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.05);
         }
 
         /* Encabezado */
@@ -65,12 +69,14 @@
             font-size: 18px;
             font-weight: bold;
             letter-spacing: 0.3px;
+            color: #0d6efd;
         }
 
         .header-subtitle {
             text-align: right;
             font-size: 12px;
             font-weight: normal;
+            color: #495057;
         }
 
         .field-label {
@@ -82,10 +88,11 @@
             border-bottom: 1.5px solid #000;
             padding-bottom: 2px;
             font-size: 13px;
+            min-height: 20px;
         }
 
-        /* Controles de formulario limpios para integrarse en la tabla */
-        .form-select-custom, .form-control-custom {
+        /* Estilo personalizado para el select y inputs dentro del esquema */
+        .form-select-custom {
             width: 100%;
             border: none;
             border-bottom: 1.5px solid #000;
@@ -94,6 +101,7 @@
             font-size: 13px;
             padding: 2px 0;
             outline: none;
+            cursor: pointer;
         }
 
         /* Tabla Principal */
@@ -161,18 +169,14 @@
         <tr>
             <td colspan="4">
                 <span class="field-label">Área:</span><br>
-                {% if rol_usuario == 'maestro_area' or plan.rol == 'maestro_area' %}
-                    <!-- Si es de área, se muestra como un selector de sus materias -->
+                {% if rol_usuario == 'maestro_area' %}
+                    <!-- Menú desplegable para que el maestro de área elija la materia -->
                     <select name="area" class="form-select-custom" required>
-                        <option value="" disabled {% if not plan.area %}selected{% endif %}>Seleccione la materia...</option>
-                        {% for materia in plan.materias_asignadas %}
-                            <option value="{{ materia }}" {% if plan.area == materia %}selected{% endif %}>
-                                {{ materia }}
-                            </option>
-                        {% endfor %}
+                        <option value="" disabled selected>Seleccione la materia...</option>
+                        <option value="Lengua Española" {% if plan.area == 'Lengua Española' %}selected{% endif %}>Lengua Española</option>
+                        <option value="Ciencias Sociales" {% if plan.area == 'Ciencias Sociales' %}selected{% endif %}>Ciencias Sociales</option>
                     </select>
                 {% else %}
-                    <!-- Si no es de área, se muestra en texto fijo -->
                     <div class="field-value">{{ plan.area }}</div>
                 {% endif %}
             </td>
@@ -180,14 +184,13 @@
         <tr>
             <td style="width: 25%;">
                 <span class="field-label">Grado y Sección:</span><br>
-                {% if rol_usuario == 'maestro_area' or plan.rol == 'maestro_area' %}
-                    <!-- Si es maestro de área, el grado se queda fijo en Sexto -->
+                {% if rol_usuario == 'maestro_area' %}
+                    <!-- Grado fijo en Sexto para maestro de área -->
                     <div class="field-value">
                         Sexto (6to)
                         <input type="hidden" name="grado_seccion" value="Sexto">
                     </div>
                 {% else %}
-                    <!-- De lo contrario muestra el valor o selector predeterminado -->
                     <div class="field-value">{{ plan.grado_seccion }}</div>
                 {% endif %}
             </td>
