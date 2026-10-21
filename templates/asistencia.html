@@ -14,7 +14,8 @@
             <h2><i class="fas fa-calendar-check"></i> Control de Asistencia</h2>
             <a href="{{ url_for('menu') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Volver al Menú</a>
         </div>
-        <!-- Aquí aparecerá la alerta bonita -->
+        
+        <!-- Contenedor de alertas dinámicas -->
         <div id="contenedor-alertas"></div>
         
         <!-- Mensajes Flash -->
@@ -68,7 +69,6 @@
             <div class="card shadow-sm mb-4">
                 <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Estudiantes de {{ grado_seleccionado }} - Fecha: {{ fecha_actual }}</h5>
-                    <!-- Buscador en tiempo real -->
                     <div class="input-group" style="width: 300px;">
                         <div class="input-group-prepend">
                             <span class="input-group-text"><i class="fas fa-search"></i></span>
@@ -137,7 +137,6 @@
             <div class="card-body">
                 <form id="form-reporte" action="{{ url_for('descargar_reporte_ausencias') }}" method="POST">
                     
-                    <!-- Fecha del Reporte -->
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="fecha_reporte">Fecha del Registro y Reporte:</label>
@@ -145,7 +144,7 @@
                         </div>
                     </div>
 
-                    <!-- TABLA 1: Resumen de Estudiantes Desglosada por Grados -->
+                    <!-- TABLA 1: Resumen Primaria ML – L1 -->
                     <h6 class="font-weight-bold text-secondary mt-4">NIVEL PRIMARIO ML – L1 (Resumen por Grados)</h6>
                     <div class="table-responsive mb-4">
                         <table class="table table-bordered text-center">
@@ -173,30 +172,20 @@
                                         <td style="background-color: #cce6ff;">{{ fila.mat_ninos }}</td>
                                         <td style="background-color: #ffcce6;">{{ fila.mat_ninas }}</td>
                                         <td style="background-color: #ffffcc;" class="font-weight-bold">{{ fila.mat_total }}</td>
-                                        <td>{{ fila.asist_ninos if fila.asist_ninos > 0 else '' }}</td>
-                                        <td>{{ fila.asist_ninas if fila.asist_ninas > 0 else '' }}</td>
-                                        <td class="font-weight-bold">{{ fila.asist_total if fila.asist_total > 0 else '' }}</td>
+                                        <td>{{ fila.asist_ninos }}</td>
+                                        <td>{{ fila.asist_ninas }}</td>
+                                        <td class="font-weight-bold">{{ fila.asist_total }}</td>
                                         <td class="text-left text-muted small">{{ fila.ausentes }}</td>
                                     </tr>
                                     {% endfor %}
-                                    <!-- Fila de TOTALES GENERALES -->
                                     <tr class="font-weight-bold">
                                         <td class="bg-dark text-white align-middle">TOTAL</td>
                                         <td style="background-color: #b3d9ff;" class="text-dark">{{ resumen_grados | sum(attribute='mat_ninos') }}</td>
                                         <td style="background-color: #ffb3d9;" class="text-dark">{{ resumen_grados | sum(attribute='mat_ninas') }}</td>
                                         <td style="background-color: #ffff99;" class="text-dark">{{ resumen_grados | sum(attribute='mat_total') }}</td>
-                                        <td class="bg-light">
-                                            {% set total_asist_ninos = resumen_grados | sum(attribute='asist_ninos') %}
-                                            {{ total_asist_ninos if total_asist_ninos > 0 else '' }}
-                                        </td>
-                                        <td class="bg-light">
-                                            {% set total_asist_ninas = resumen_grados | sum(attribute='asist_ninas') %}
-                                            {{ total_asist_ninas if total_asist_ninas > 0 else '' }}
-                                        </td>
-                                        <td style="background-color: #e2f0d9;">
-                                            {% set total_asist_gral = resumen_grados | sum(attribute='asist_total') %}
-                                            {{ total_asist_gral if total_asist_gral > 0 else '' }}
-                                        </td>
+                                        <td class="bg-light">{{ resumen_grados | sum(attribute='asist_ninos') }}</td>
+                                        <td class="bg-light">{{ resumen_grados | sum(attribute='asist_ninas') }}</td>
+                                        <td style="background-color: #e2f0d9;">{{ resumen_grados | sum(attribute='asist_total') }}</td>
                                         <td class="bg-light"></td>
                                     </tr>
                                 {% else %}
@@ -207,133 +196,61 @@
                             </tbody>
                         </table>
                     </div>
-<!-- TABLA 2: NIVEL INICIAL ML – L2             -->
-<!-- ========================================== -->
-<div class="card mb-4">
-    <div class="card-header bg-light font-weight-bold">
-        NIVEL INICIAL ML – L2 (Resumen por Grados)
-    </div>
-    <div class="card-body">
-        <table class="table table-bordered table-striped">
-            <thead class="thead-light">
-                <tr>
-                    <th rowspan="2" class="align-middle text-center">GRADOS</th>
-                    <th colspan="3" class="text-center">MATRICULADOS</th>
-                    <th colspan="3" class="text-center">ASISTENCIA</th>
-                    <th rowspan="2" class="align-middle text-center">Nombre de los ausentes</th>
-                </tr>
-                <tr>
-                    <th class="text-center text-primary">NIÑOS</th>
-                    <th class="text-center text-danger">NIÑAS</th>
-                    <th class="text-center text-warning">TOTAL</th>
-                    <th class="text-center">NIÑOS</th>
-                    <th class="text-center">NIÑAS</th>
-                    <th class="text-center">TOTAL</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for grado in grados_inicial %}
-                <tr>
-                    <td>{{ grado.nombre }}</td>
-                    <td class="text-center table-primary">{{ grado.mat_ninos }}</td>
-                    <td class="text-center table-danger">{{ grado.mat_ninas }}</td>
-                    <td class="text-center table-warning font-weight-bold">{{ grado.mat_total }}</td>
-                    <td class="text-center">{{ grado.asist_ninos }}</td>
-                    <td class="text-center">{{ grado.asist_ninas }}</td>
-                    <td class="text-center">{{ grado.asist_total }}</td>
-                    <td>{{ grado.ausentes_nombres }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-            <tfoot>
-                <tr class="bg-dark text-white font-weight-bold">
-                    <td>TOTAL</td>
-                    <td class="text-center">{{ total_inicial_ninos }}</td>
-                    <td class="text-center">{{ total_inicial_ninas }}</td>
-                    <td class="text-center">{{ total_inicial_general }}</td>
-                    <td class="text-center">{{ total_inicial_asist_ninos }}</td>
-                    <td class="text-center">{{ total_inicial_asist_ninas }}</td>
-                    <td class="text-center bg-success text-white">{{ total_inicial_asist_general }}</td>
-                    <td></td>
-                </tr>
-            </tfoot>
-        </table>
-    </div>
-</div>
-<!-- TABLA 2: Resumen  (AHORA EDITABLE) -->
-                    <h6 class="font-weight-bold text-secondary mt-4">Resumen  (Nivel Inicial)</h6>
-                    <div class="table-responsive mb-4">
-                        <table class="table table-bordered text-center">
-                            <thead class="thead-light">
-                                <tr>
-                                    <th rowspan="2" class="align-middle">TOTAL</th>
-                                    <th colspan="3">MATRICULADOS</th>
-                                    <th colspan="3">ASISTENCIA</th>
-                                </tr>
-                                <tr>
-                                    <th>NIÑOS</th>
-                                    <th>NIÑAS</th>
-                                    <th>TOTAL</th>
-                                    <th>NIÑOS</th>
-                                    <th>NIÑAS</th>
-                                    <th>TOTAL</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td class="font-weight-bold align-middle">TOTAL</td>
-                                    <!-- Matriculados Niños -->
-                                    <td class="bg-light">
-                                        <input type="number" name="gral_mat_ninos" value="{{ meta.get('gral_mat_ninos', 0) }}" class="form-control text-center font-weight-bold" min="0">
-                                    </td>
-                                    <!-- Matriculados Niñas -->
-                                    <td class="bg-light">
-                                        <input type="number" name="gral_mat_ninas" value="{{ meta.get('gral_mat_ninas', 0) }}" class="form-control text-center font-weight-bold" min="0">
-                                    </td>
-                                    <!-- Total Matriculados (calculado visualmente o estático) -->
-                                    <td class="bg-warning text-dark font-weight-bold align-middle">
-                                        {{ (meta.get('gral_mat_ninos', 0) | int) + (meta.get('gral_mat_ninas', 0) | int) }}
-                                    </td>
-                                    <!-- Asistencia Niños -->
-                                    <td>
-                                        <input type="number" name="gral_asis_ninos" value="{{ meta.get('gral_asis_ninos', 0) }}" class="form-control text-center font-weight-bold" min="0">
-                                    </td>
-                                    <!-- Asistencia Niñas -->
-                                    <td>
-                                        <input type="number" name="gral_asis_ninas" value="{{ meta.get('gral_asis_ninas', 0) }}" class="form-control text-center font-weight-bold" min="0">
-                                    </td>
-                                    <!-- Total Asistencia -->
-                                    <td class="bg-success text-white font-weight-bold align-middle">
-                                        {{ (meta.get('gral_asis_ninos', 0) | int) + (meta.get('gral_asis_ninas', 0) | int) }}
-                                    </td>
-                                </tr>
-                            </tbody>
-                                <tr>
-                                    <td class="font-weight-bold bg-light align-middle">TOTAL</td>
-                                    <td style="background-color: #cce6ff;">
-                                        <input type="text" name="global_mat_ninos" class="form-control text-center font-weight-bold text-info" value="{{ meta.global_mat_ninos if meta and meta.global_mat_ninos is not none else (resumen_grados | sum(attribute='mat_ninos')) }}">
-                                    </td>
-                                    <td style="background-color: #ffcce6;">
-                                        <input type="text" name="global_mat_ninas" class="form-control text-center font-weight-bold text-danger" value="{{ meta.global_mat_ninas if meta and meta.global_mat_ninas is not none else (resumen_grados | sum(attribute='asist_ninas')) if resumen_grados else (resumen_grados | sum(attribute='mat_ninas')) }}">
-                                    </td>
-                                    <td style="background-color: #ffc107;">
-                                        <input type="text" name="global_mat_total" class="form-control text-center font-weight-bold text-dark bg-warning" value="{{ meta.global_mat_total if meta and meta.global_mat_total is not none else (resumen_grados | sum(attribute='mat_total')) }}">
-                                    </td>
-                                    <td>
-                                        <input type="text" name="global_asist_ninos" class="form-control text-center font-weight-bold text-success" value="{{ meta.global_asist_ninos if meta and meta.global_asist_ninos is not none else (resumen_grados | sum(attribute='asist_ninos')) }}">
-                                    </td>
-                                    <td>
-                                        <input type="text" name="global_asist_ninas" class="form-control text-center font-weight-bold text-success" value="{{ meta.global_asist_ninas if meta and meta.global_asist_ninas is not none else (resumen_grados | sum(attribute='asist_ninas')) }}">
-                                    </td>
-                                    <td style="background-color: #28a745;">
-                                        <input type="text" name="global_asist_total" class="form-control text-center font-weight-bold text-white bg-success" value="{{ meta.global_asist_total if meta and meta.global_asist_total is not none else (resumen_grados | sum(attribute='asist_total')) }}">
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
+
+                    <!-- TABLA 2: NIVEL INICIAL ML – L2 -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-light font-weight-bold">
+                            NIVEL INICIAL ML – L2 (Resumen por Grados)
+                        </div>
+                        <div class="card-body p-0">
+                            <table class="table table-bordered table-striped mb-0">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th rowspan="2" class="align-middle text-center">GRADOS</th>
+                                        <th colspan="3" class="text-center">MATRICULADOS</th>
+                                        <th colspan="3" class="text-center">ASISTENCIA</th>
+                                        <th rowspan="2" class="align-middle text-center" style="width: 35%;">Nombre de los ausentes</th>
+                                    </tr>
+                                    <tr>
+                                        <th class="text-center text-primary">NIÑOS</th>
+                                        <th class="text-center text-danger">NIÑAS</th>
+                                        <th class="text-center text-warning">TOTAL</th>
+                                        <th class="text-center">NIÑOS</th>
+                                        <th class="text-center">NIÑAS</th>
+                                        <th class="text-center">TOTAL</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for grado in grados_inicial %}
+                                    <tr>
+                                        <td class="font-weight-bold">{{ grado.nombre }}</td>
+                                        <td class="text-center table-primary">{{ grado.mat_ninos }}</td>
+                                        <td class="text-center table-danger">{{ grado.mat_ninas }}</td>
+                                        <td class="text-center table-warning font-weight-bold">{{ grado.mat_total }}</td>
+                                        <td class="text-center">{{ grado.asist_ninos }}</td>
+                                        <td class="text-center">{{ grado.asist_ninas }}</td>
+                                        <td class="text-center font-weight-bold">{{ grado.asist_total }}</td>
+                                        <td class="small text-left text-muted">{{ grado.ausentes_nombres }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot>
+                                    <tr class="bg-dark text-white font-weight-bold">
+                                        <td>TOTAL</td>
+                                        <td class="text-center">{{ total_inicial_ninos }}</td>
+                                        <td class="text-center">{{ total_inicial_ninas }}</td>
+                                        <td class="text-center text-warning">{{ total_inicial_general }}</td>
+                                        <td class="text-center">{{ total_inicial_asist_ninos }}</td>
+                                        <td class="text-center">{{ total_inicial_asist_ninas }}</td>
+                                        <td class="text-center bg-success text-white">{{ total_inicial_asist_general }}</td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
                     </div>
 
-                    <!-- 3. Tabla de Asistencia del Personal -->
+                    <!-- TABLA 3: Asistencia del Personal -->
                     <h6 class="font-weight-bold text-secondary mt-4">Asistencia del Personal</h6>
                     <div class="table-responsive">
                         <table class="table table-bordered">
@@ -373,7 +290,6 @@
                     </div>
                 </form>
 
-                <!-- Botones abajo: Guardar y Generar Reporte PDF -->
                 <div class="row mt-4">
                     <div class="col-md-6 mb-2">
                         <button type="button" onclick="guardarPersonalSolo()" class="btn btn-success btn-lg btn-block shadow-sm">
@@ -394,7 +310,6 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
     
 <script>
-    // Buscador en tiempo real de estudiantes
     document.addEventListener("DOMContentLoaded", function() {
         const inputBuscador = document.getElementById('buscadorEstudiantes');
         if (inputBuscador) {
@@ -435,41 +350,41 @@
         });
     }
 
-function guardarPersonalSolo() {
-    const form = document.getElementById('form-reporte');
-    const formData = new FormData(form);
-    formData.append('action', 'guardar_solo');
+    function guardarPersonalSolo() {
+        const form = document.getElementById('form-reporte');
+        const formData = new FormData(form);
+        formData.append('action', 'guardar_solo');
 
-    fetch("{{ url_for('descargar_reporte_ausencias') }}", {
-        method: 'POST',
-        body: formData
-    }).then(async response => {
-        const contenedor = document.getElementById('contenedor-alertas');
-        
-        if (response.ok) {
-            contenedor.innerHTML = `
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    ¡Datos guardados exitosamente!
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close" onclick="this.parentElement.remove();">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-            `;
-        } else {
-            contenedor.innerHTML = `
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    Hubo un error al guardar los datos.
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close" onclick="this.parentElement.remove();">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-            `;
-        }
-    }).catch(error => {
-        console.error('Error de red:', error);
-        alert('Error de conexión al intentar guardar.');
-    });
-}
+        fetch("{{ url_for('descargar_reporte_ausencias') }}", {
+            method: 'POST',
+            body: formData
+        }).then(async response => {
+            const contenedor = document.getElementById('contenedor-alertas');
+            
+            if (response.ok) {
+                contenedor.innerHTML = `
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        ¡Datos guardados exitosamente!
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close" onclick="this.parentElement.remove();">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                `;
+            } else {
+                contenedor.innerHTML = `
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        Hubo un error al guardar los datos.
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close" onclick="this.parentElement.remove();">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                `;
+            }
+        }).catch(error => {
+            console.error('Error de red:', error);
+            alert('Error de conexión al intentar guardar.');
+        });
+    }
 </script>
 </body>
 </html>
