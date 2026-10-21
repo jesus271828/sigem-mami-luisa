@@ -4,7 +4,6 @@ html
 <head>
     <meta charset="UTF-8">
     <title>Esquema de Planificación Diaria - Horizontal</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         /* Importación de tipografía y regla base */
         * {
@@ -34,7 +33,7 @@ html
                 background: none;
             }
             .no-print {
-                display: none !important;
+                display: none;
             }
             table {
                 page-break-inside: avoid;
@@ -133,118 +132,6 @@ html
 </head>
 <body>
 
-<!-- FORMULARIO DE ENTRADA (NO IMPRESO) -->
-<div class="no-print container-fluid mb-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h3>Registrar Planificación Diaria</h3>
-        <div>
-            <button onclick="window.print()" class="btn btn-primary me-2">🖨️ Imprimir Esquemas</button>
-            <a href="{{ url_for('menu') }}" class="btn btn-secondary">← Volver al Menú</a>
-        </div>
-    </div>
-
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
-
-    <form method="POST" action="{{ url_for('planificacion_diaria') }}" class="card p-3 shadow-sm bg-light mb-4">
-        <div class="row g-2 mb-2">
-            <div class="col-md-3">
-                <label class="form-label font-weight-bold">Área / Asignatura:</label>
-                <select class="form-select" name="area" required>
-                    <option value="">-- Selecciona el Área --</option>
-                    {% if materias_disponibles %}
-                        {% for mat in materias_disponibles %}
-                            <option value="{{ mat }}">{{ mat }}</option>
-                        {% endfor %}
-                    {% else %}
-                        <option value="Lengua Española">Lengua Española</option>
-                        <option value="Matemáticas">Matemáticas</option>
-                        <option value="Ciencias Naturales">Ciencias Naturales</option>
-                        <option value="Ciencias Sociales">Ciencias Sociales</option>
-                        <option value="Educación Artística">Educación Artística</option>
-                    {% endif %}
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label font-weight-bold">Grado y Sección:</label>
-                <select class="form-select" name="grado_seccion" required>
-                    <option value="">-- Grado --</option>
-                    {% for g in grados_disponibles %}
-                        <option value="{{ g }}">{{ g }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label font-weight-bold">Fecha:</label>
-                <input type="date" class="form-control" name="fecha" required>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label font-weight-bold">Docente:</label>
-                <input type="text" class="form-control" value="{{ docente }}" readonly>
-            </div>
-        </div>
-
-        <div class="mb-2">
-            <label class="form-label font-weight-bold">Estrategias de enseñanza - aprendizaje:</label>
-            <textarea class="form-control" name="estrategias" rows="2" required></textarea>
-        </div>
-
-        <div class="row g-2 mb-2">
-            <div class="col-md-6">
-                <label class="form-label font-weight-bold">Intención pedagógica del día:</label>
-                <textarea class="form-control" name="intencion_pedagogica" rows="2" required></textarea>
-            </div>
-            <div class="col-md-6">
-                <label class="form-label font-weight-bold">Indicador de logro:</label>
-                <textarea class="form-control" name="indicador_logro" rows="2" required></textarea>
-            </div>
-        </div>
-
-        <div class="mb-2">
-            <label class="form-label font-weight-bold">Competencia específica:</label>
-            <textarea class="form-control" name="competencia_especifica" rows="2" required></textarea>
-        </div>
-
-        <div class="row g-2 mb-2">
-            <div class="col-md-4">
-                <label class="form-label font-weight-bold">Inicio (Actividad / Duración):</label>
-                <textarea class="form-control" name="actividad_inicio" rows="2" required></textarea>
-            </div>
-            <div class="col-md-4">
-                <label class="form-label font-weight-bold">Desarrollo (Actividad / Duración):</label>
-                <textarea class="form-control" name="actividad_desarrollo" rows="2" required></textarea>
-            </div>
-            <div class="col-md-4">
-                <label class="form-label font-weight-bold">Cierre (Actividad / Duración):</label>
-                <textarea class="form-control" name="actividad_cierre" rows="2" required></textarea>
-            </div>
-        </div>
-
-        <div class="row g-2 mb-3">
-            <div class="col-md-6">
-                <label class="form-label font-weight-bold">Recursos:</label>
-                <textarea class="form-control" name="recursos" rows="2" required></textarea>
-            </div>
-            <div class="col-md-6">
-                <label class="form-label font-weight-bold">Actividades de recuperación pedagógica:</label>
-                <textarea class="form-control" name="recuperacion_pedagogica" rows="2"></textarea>
-            </div>
-        </div>
-
-        <button type="submit" class="btn btn-success">Guardar y Agregar a Esquema</button>
-    </form>
-    <hr>
-</div>
-
-<!-- VISTA PREVIA Y FORMATO DE IMPRESIÓN (TU DISEÑO EXACTO) -->
 {% for plan in planificaciones %}
 <div class="contenedor-planificacion">
 
@@ -355,6 +242,5 @@ html
 {% endif %}
 {% endfor %}
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
