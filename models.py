@@ -27,9 +27,7 @@ class Estudiante(db.Model):
 class Planificacion(db.Model):
     __tablename__ = 'planificaciones_diarias'
     
-    # La llave primaria en Supabase se llama 'identificación'
-    id = db.Column('identificación', db.Integer, primary_key=True)
-    
+    id = db.Column(db.Integer, primary_key=True)
     docente = db.Column(db.String(100), nullable=False)
     area = db.Column(db.String(100), nullable=False)
     grado_seccion = db.Column(db.String(50), nullable=False)
@@ -47,7 +45,7 @@ class Planificacion(db.Model):
     recursos_inicio = db.Column(db.Text, nullable=True)
     recursos_desarrollo = db.Column(db.Text, nullable=True)
     recursos_cierre = db.Column(db.Text, nullable=True)
-    
+
 # Modelo para la tabla notas1
 class Notas1(db.Model):
     __tablename__ = 'notas1'
