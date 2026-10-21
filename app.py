@@ -3297,18 +3297,20 @@ def eliminar_planificacion(id):
     return redirect(url_for('mis_planificaciones'))
 
 
-@app.route('/planificacion_diaria')
+@app.route('/planificacion_diaria', methods=['GET', 'POST'])
 def planificacion_diaria():
-    # Ejemplo: detectas el rol del usuario logueado en la sesión
     rol_actual = session.get('rol', 'maestro_area') 
-    
-    # Las materias que maneja el docente de área
     materias_docente = ["Lengua Española", "Ciencias Sociales"]
     
-    planificaciones = Planificacion.query.all() # O tu consulta habitual
+    # Esto evita que la página muera con Error 500 si la base de datos falla
+    try:
+        planificaciones = Planificacion.query.all()
+    except Exception as e:
+        print("Error al consultar:", e)
+        planificaciones = []
 
     return render_template(
-        'tu_plantilla.html',  # Reemplaza con el nombre de tu archivo html
+        'planificacion_diaria.html', 
         planificaciones=planificaciones,
         rol_usuario=rol_actual,
         materias_docente=materias_docente
