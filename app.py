@@ -1491,7 +1491,6 @@ def asistencia():
         asistencia_dict = {}
 
         if grado_seleccionado:
-            # Normalización del grado seleccionado para evitar fallos por tipo de guión
             grado_busqueda = grado_seleccionado.replace('–', '-').strip()
             
             estudiantes_db = conn.execute(
@@ -1634,7 +1633,6 @@ def asistencia():
         tot_ini_asis_total = 0
 
         for curso_ini in cursos_inicial:
-            # Busqueda insensible a diferencias de guión (– vs -) o tildes básicas
             curso_busqueda = curso_ini.replace('–', '-').replace('Kínder', 'Kinder').replace('Prekínder', 'Prekinder').strip()
             curso_original = curso_ini.strip()
 
@@ -1739,6 +1737,12 @@ def asistencia():
     finally:
         conn.close()
 
+    # Cálculo automático para los valores por defecto del Resumen General Global
+    gral_mat_ninos_val = meta.get('gral_mat_ninos') if meta and meta.get('gral_mat_ninos') is not None else (tot_pri_mat_ninos + tot_ini_mat_ninos)
+    gral_mat_ninas_val = meta.get('gral_mat_ninas') if meta and meta.get('gral_mat_ninas') is not None else (tot_pri_mat_ninas + tot_ini_mat_ninas)
+    gral_asis_ninos_val = meta.get('gral_asis_ninos') if meta and meta.get('gral_asis_ninos') is not None else (tot_pri_asis_ninos + tot_ini_asis_ninos)
+    gral_asis_ninas_val = meta.get('gral_asis_ninas') if meta and meta.get('gral_asis_ninas') is not None else (tot_pri_asis_ninas + tot_ini_asis_ninas)
+
     return render_template('asistencia.html',
                            lista_grados=lista_grados,
                            grado_seleccionado=grado_seleccionado,
@@ -1761,6 +1765,11 @@ def asistencia():
                            total_inicial_asist_ninos=tot_ini_asis_ninos,
                            total_inicial_asist_ninas=tot_ini_asis_ninas,
                            total_inicial_asist_general=tot_ini_asis_total,
+                           # Resumen General Global
+                           gral_mat_ninos_val=gral_mat_ninos_val,
+                           gral_mat_ninas_val=gral_mat_ninas_val,
+                           gral_asis_ninos_val=gral_asis_ninos_val,
+                           gral_asis_ninas_val=gral_asis_ninas_val,
                            meta=meta)
 
 

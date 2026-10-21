@@ -250,6 +250,51 @@
                         </table>
                     </div>
 
+                    <!-- TABLA RESTAURADA: Resumen General Global (Asistencia Pasada / Acumulada) -->
+                    <h6 class="font-weight-bold text-dark mt-4">RESUMEN GENERAL GLOBAL (Asistencia Acumulada / Pasada)</h6>
+                    <div class="table-responsive mb-4">
+                        <table class="table table-bordered text-center">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th rowspan="2" class="align-middle">CONCEPTO</th>
+                                    <th colspan="3">MATRICULADOS</th>
+                                    <th colspan="3">ASISTENCIA</th>
+                                </tr>
+                                <tr>
+                                    <th class="text-primary">NIÑOS</th>
+                                    <th class="text-danger">NIÑAS</th>
+                                    <th class="text-warning">TOTAL</th>
+                                    <th>NIÑOS</th>
+                                    <th>NIÑAS</th>
+                                    <th>TOTAL</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="font-weight-bold text-left bg-light">Totales Globales del Centro</td>
+                                    <td>
+                                        <input type="number" name="gral_mat_ninos" class="form-control text-center font-weight-bold" value="{{ gral_mat_ninos_val }}">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="gral_mat_ninas" class="form-control text-center font-weight-bold" value="{{ gral_mat_ninas_val }}">
+                                    </td>
+                                    <td class="table-warning font-weight-bold align-middle">
+                                        {{ gral_mat_ninos_val + gral_mat_ninas_val }}
+                                    </td>
+                                    <td>
+                                        <input type="number" name="gral_asis_ninos" class="form-control text-center font-weight-bold" value="{{ gral_asis_ninos_val }}">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="gral_asis_ninas" class="form-control text-center font-weight-bold" value="{{ gral_asis_ninas_val }}">
+                                    </td>
+                                    <td class="bg-success text-white font-weight-bold align-middle">
+                                        {{ gral_asis_ninos_val + gral_asis_ninas_val }}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
                     <!-- TABLA 3: Asistencia del Personal -->
                     <h6 class="font-weight-bold text-dark mt-4">Asistencia del Personal</h6>
                     <div class="table-responsive">
