@@ -1491,9 +1491,17 @@ def asistencia():
         asistencia_dict = {}
 
         if grado_seleccionado:
+            # Normalización del grado seleccionado para evitar fallos por tipo de guión
+            grado_busqueda = grado_seleccionado.replace('–', '-').strip()
+            
             estudiantes_db = conn.execute(
-                "SELECT id_estudiante, nombres, apellidos FROM estudiantes WHERE grado = %s ORDER BY nombres ASC", 
-                (grado_seleccionado,)
+                """
+                SELECT id_estudiante, nombres, apellidos 
+                FROM estudiantes 
+                WHERE REPLACE(grado, '–', '-') = %s OR grado = %s 
+                ORDER BY nombres ASC
+                """, 
+                (grado_busqueda, grado_seleccionado)
             ).fetchall()
             
             estudiantes = [
@@ -1502,8 +1510,12 @@ def asistencia():
             ]
 
             asis_db = conn.execute(
-                "SELECT id_estudiante, estado FROM asistencia WHERE grado = %s AND fecha = %s",
-                (grado_seleccionado, fecha_actual)
+                """
+                SELECT id_estudiante, estado 
+                FROM asistencia 
+                WHERE (REPLACE(grado, '–', '-') = %s OR grado = %s) AND fecha = %s
+                """,
+                (grado_busqueda, grado_seleccionado, fecha_actual)
             ).fetchall()
             
             for a in asis_db:
@@ -1513,20 +1525,34 @@ def asistencia():
 
         # --- CÁLCULO DETALLADO PARA LA TABLA SUPERIOR (Primaria Secciones A) ---
         resumen_grados = []
+        tot_pri_mat_ninos = 0
+        tot_pri_mat_ninas = 0
+        tot_pri_mat_total = 0
+        tot_pri_asis_ninos = 0
+        tot_pri_asis_ninas = 0
+        tot_pri_asis_total = 0
+
         for curso in cursos_resumen:
+            curso_busqueda = curso.replace('–', '-').strip()
+
             mat_db = conn.execute(
-                "SELECT sexo, COUNT(*) FROM estudiantes WHERE grado = %s GROUP BY sexo", 
-                (curso,)
+                """
+                SELECT sexo, COUNT(*) 
+                FROM estudiantes 
+                WHERE REPLACE(grado, '–', '-') = %s OR grado = %s 
+                GROUP BY sexo
+                """, 
+                (curso_busqueda, curso)
             ).fetchall()
             
             m_ninos = 0
             m_ninas = 0
             for row in mat_db:
-                sexo_val = row['sexo'] if hasattr(row, 'keys') else row[0]
+                sexo_val = str(row['sexo'] if hasattr(row, 'keys') else row[0]).strip().lower()
                 count_val = row['count'] if hasattr(row, 'keys') else row[1]
-                if sexo_val in ['Masculino', 'M']:
+                if sexo_val in ['masculino', 'm', 'niño', 'nino']:
                     m_ninos = count_val
-                elif sexo_val in ['Femenino', 'F']:
+                elif sexo_val in ['femenino', 'f', 'niña', 'nina']:
                     m_ninas = count_val
             m_total = m_ninos + m_ninas
 
@@ -1535,20 +1561,22 @@ def asistencia():
                 SELECT e.sexo, COUNT(a.id_estudiante) 
                 FROM asistencia a
                 JOIN estudiantes e ON a.id_estudiante = e.id_estudiante
-                WHERE a.fecha = %s AND e.grado = %s AND a.estado IN ('Presente', 'Tarde', 'Excusa')
+                WHERE a.fecha = %s 
+                  AND (REPLACE(e.grado, '–', '-') = %s OR e.grado = %s)
+                  AND a.estado IN ('Presente', 'Tarde', 'Excusa')
                 GROUP BY e.sexo
                 """,
-                (fecha_actual, curso)
+                (fecha_actual, curso_busqueda, curso)
             ).fetchall()
 
             a_ninos = 0
             a_ninas = 0
             for row in asis_db_curso:
-                sexo_val = row['sexo'] if hasattr(row, 'keys') else row[0]
+                sexo_val = str(row['sexo'] if hasattr(row, 'keys') else row[0]).strip().lower()
                 count_val = row['count'] if hasattr(row, 'keys') else row[1]
-                if sexo_val in ['Masculino', 'M']:
+                if sexo_val in ['masculino', 'm', 'niño', 'nino']:
                     a_ninos = count_val
-                elif sexo_val in ['Femenino', 'F']:
+                elif sexo_val in ['femenino', 'f', 'niña', 'nina']:
                     a_ninas = count_val
             a_total = a_ninos + a_ninas
 
@@ -1557,10 +1585,12 @@ def asistencia():
                 SELECT e.nombres, e.apellidos, a.estado 
                 FROM estudiantes e
                 JOIN asistencia a ON e.id_estudiante = a.id_estudiante
-                WHERE a.fecha = %s AND e.grado = %s AND a.estado IN ('Ausente', 'Excusa')
+                WHERE a.fecha = %s 
+                  AND (REPLACE(e.grado, '–', '-') = %s OR e.grado = %s)
+                  AND a.estado IN ('Ausente', 'Excusa')
                 ORDER BY e.nombres ASC
                 """,
-                (fecha_actual, curso)
+                (fecha_actual, curso_busqueda, curso)
             ).fetchall()
 
             nombres_ausentes = []
@@ -1587,6 +1617,13 @@ def asistencia():
                 'ausentes': str_ausentes
             })
 
+            tot_pri_mat_ninos += m_ninos
+            tot_pri_mat_ninas += m_ninas
+            tot_pri_mat_total += m_total
+            tot_pri_asis_ninos += a_ninos
+            tot_pri_asis_ninas += a_ninas
+            tot_pri_asis_total += a_total
+
         # --- CÁLCULO DETALLADO PARA LA TABLA INFERIOR (Nivel Inicial ML – L2) ---
         resumen_inicial = []
         tot_ini_mat_ninos = 0
@@ -1597,19 +1634,30 @@ def asistencia():
         tot_ini_asis_total = 0
 
         for curso_ini in cursos_inicial:
+            # Busqueda insensible a diferencias de guión (– vs -) o tildes básicas
+            curso_busqueda = curso_ini.replace('–', '-').replace('Kínder', 'Kinder').replace('Prekínder', 'Prekinder').strip()
+            curso_original = curso_ini.strip()
+
             mat_ini_db = conn.execute(
-                "SELECT sexo, COUNT(*) FROM estudiantes WHERE grado = %s GROUP BY sexo", 
-                (curso_ini,)
+                """
+                SELECT sexo, COUNT(*) 
+                FROM estudiantes 
+                WHERE REPLACE(REPLACE(grado, '–', '-'), 'í', 'i') = %s 
+                   OR REPLACE(grado, '–', '-') = %s 
+                   OR grado = %s 
+                GROUP BY sexo
+                """, 
+                (curso_busqueda.replace('í', 'i'), curso_busqueda, curso_original)
             ).fetchall()
             
             m_ninos_ini = 0
             m_ninas_ini = 0
             for row in mat_ini_db:
-                sexo_val = row['sexo'] if hasattr(row, 'keys') else row[0]
+                sexo_val = str(row['sexo'] if hasattr(row, 'keys') else row[0]).strip().lower()
                 count_val = row['count'] if hasattr(row, 'keys') else row[1]
-                if sexo_val in ['Masculino', 'M']:
+                if sexo_val in ['masculino', 'm', 'niño', 'nino']:
                     m_ninos_ini = count_val
-                elif sexo_val in ['Femenino', 'F']:
+                elif sexo_val in ['femenino', 'f', 'niña', 'nina']:
                     m_ninas_ini = count_val
             m_total_ini = m_ninos_ini + m_ninas_ini
 
@@ -1618,20 +1666,24 @@ def asistencia():
                 SELECT e.sexo, COUNT(a.id_estudiante) 
                 FROM asistencia a
                 JOIN estudiantes e ON a.id_estudiante = e.id_estudiante
-                WHERE a.fecha = %s AND e.grado = %s AND a.estado IN ('Presente', 'Tarde', 'Excusa')
+                WHERE a.fecha = %s 
+                  AND (REPLACE(REPLACE(e.grado, '–', '-'), 'í', 'i') = %s 
+                       OR REPLACE(e.grado, '–', '-') = %s 
+                       OR e.grado = %s)
+                  AND a.estado IN ('Presente', 'Tarde', 'Excusa')
                 GROUP BY e.sexo
                 """,
-                (fecha_actual, curso_ini)
+                (fecha_actual, curso_busqueda.replace('í', 'i'), curso_busqueda, curso_original)
             ).fetchall()
 
             a_ninos_ini = 0
             a_ninas_ini = 0
             for row in asis_ini_db:
-                sexo_val = row['sexo'] if hasattr(row, 'keys') else row[0]
+                sexo_val = str(row['sexo'] if hasattr(row, 'keys') else row[0]).strip().lower()
                 count_val = row['count'] if hasattr(row, 'keys') else row[1]
-                if sexo_val in ['Masculino', 'M']:
+                if sexo_val in ['masculino', 'm', 'niño', 'nino']:
                     a_ninos_ini = count_val
-                elif sexo_val in ['Femenino', 'F']:
+                elif sexo_val in ['femenino', 'f', 'niña', 'nina']:
                     a_ninas_ini = count_val
             a_total_ini = a_ninos_ini + a_ninas_ini
 
@@ -1640,10 +1692,14 @@ def asistencia():
                 SELECT e.nombres, e.apellidos, a.estado 
                 FROM estudiantes e
                 JOIN asistencia a ON e.id_estudiante = a.id_estudiante
-                WHERE a.fecha = %s AND e.grado = %s AND a.estado IN ('Ausente', 'Excusa')
+                WHERE a.fecha = %s 
+                  AND (REPLACE(REPLACE(e.grado, '–', '-'), 'í', 'i') = %s 
+                       OR REPLACE(e.grado, '–', '-') = %s 
+                       OR e.grado = %s)
+                  AND a.estado IN ('Ausente', 'Excusa')
                 ORDER BY e.nombres ASC
                 """,
-                (fecha_actual, curso_ini)
+                (fecha_actual, curso_busqueda.replace('í', 'i'), curso_busqueda, curso_original)
             ).fetchall()
 
             nombres_ausentes_ini = []
@@ -1691,6 +1747,14 @@ def asistencia():
                            asistencia_dict=asistencia_dict,
                            resumen_grados=resumen_grados,
                            grados_inicial=resumen_inicial,
+                           # Totales de Nivel Primario
+                           tot_pri_mat_ninos=tot_pri_mat_ninos,
+                           tot_pri_mat_ninas=tot_pri_mat_ninas,
+                           tot_pri_mat_total=tot_pri_mat_total,
+                           tot_pri_asis_ninos=tot_pri_asis_ninos,
+                           tot_pri_asis_ninas=tot_pri_asis_ninas,
+                           tot_pri_asis_total=tot_pri_asis_total,
+                           # Totales de Nivel Inicial
                            total_inicial_ninos=tot_ini_mat_ninos,
                            total_inicial_ninas=tot_ini_mat_ninas,
                            total_inicial_general=tot_ini_mat_total,
@@ -1835,19 +1899,26 @@ def descargar_reporte_ausencias():
         tot_asis_total = 0
 
         for curso in cursos_resumen:
+            curso_busqueda = curso.replace('–', '-').strip()
+
             mat_db = conn.execute(
-                "SELECT sexo, COUNT(*) FROM estudiantes WHERE grado = %s GROUP BY sexo", 
-                (curso,)
+                """
+                SELECT sexo, COUNT(*) 
+                FROM estudiantes 
+                WHERE REPLACE(grado, '–', '-') = %s OR grado = %s 
+                GROUP BY sexo
+                """, 
+                (curso_busqueda, curso)
             ).fetchall()
             
             m_ninos = 0
             m_ninas = 0
             for row in mat_db:
-                sexo_val = row['sexo'] if hasattr(row, 'keys') else row[0]
+                sexo_val = str(row['sexo'] if hasattr(row, 'keys') else row[0]).strip().lower()
                 count_val = row['count'] if hasattr(row, 'keys') else row[1]
-                if sexo_val in ['Masculino', 'M']:
+                if sexo_val in ['masculino', 'm', 'niño', 'nino']:
                     m_ninos = count_val
-                elif sexo_val in ['Femenino', 'F']:
+                elif sexo_val in ['femenino', 'f', 'niña', 'nina']:
                     m_ninas = count_val
             m_total = m_ninos + m_ninas
 
@@ -1856,20 +1927,22 @@ def descargar_reporte_ausencias():
                 SELECT e.sexo, COUNT(a.id_estudiante) 
                 FROM asistencia a
                 JOIN estudiantes e ON a.id_estudiante = e.id_estudiante
-                WHERE a.fecha = %s AND e.grado = %s AND a.estado IN ('Presente', 'Tarde')
+                WHERE a.fecha = %s 
+                  AND (REPLACE(e.grado, '–', '-') = %s OR e.grado = %s)
+                  AND a.estado IN ('Presente', 'Tarde', 'Excusa')
                 GROUP BY e.sexo
                 """,
-                (fecha_str, curso)
+                (fecha_str, curso_busqueda, curso)
             ).fetchall()
 
             a_ninos = 0
             a_ninas = 0
             for row in asis_db_curso:
-                sexo_val = row['sexo'] if hasattr(row, 'keys') else row[0]
+                sexo_val = str(row['sexo'] if hasattr(row, 'keys') else row[0]).strip().lower()
                 count_val = row['count'] if hasattr(row, 'keys') else row[1]
-                if sexo_val in ['Masculino', 'M']:
+                if sexo_val in ['masculino', 'm', 'niño', 'nino']:
                     a_ninos = count_val
-                elif sexo_val in ['Femenino', 'F']:
+                elif sexo_val in ['femenino', 'f', 'niña', 'nina']:
                     a_ninas = count_val
             a_total = a_ninos + a_ninas
 
@@ -1878,10 +1951,12 @@ def descargar_reporte_ausencias():
                 SELECT e.nombres, e.apellidos, a.estado 
                 FROM estudiantes e
                 JOIN asistencia a ON e.id_estudiante = a.id_estudiante
-                WHERE a.fecha = %s AND e.grado = %s AND a.estado IN ('Ausente', 'Excusa')
+                WHERE a.fecha = %s 
+                  AND (REPLACE(e.grado, '–', '-') = %s OR e.grado = %s)
+                  AND a.estado IN ('Ausente', 'Excusa')
                 ORDER BY e.nombres ASC
                 """,
-                (fecha_str, curso)
+                (fecha_str, curso_busqueda, curso)
             ).fetchall()
 
             nombres_ausentes = []
