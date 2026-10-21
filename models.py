@@ -24,31 +24,24 @@ class Estudiante(db.Model):
     grado = db.Column(db.String(50), nullable=False)
     numero_orden = db.Column(db.String(10), nullable=True)
 
-# Modelo para la Planificación actualizado para coincidir con el HTML
+# Modelo para la Planificación
 class Planificacion(db.Model):
-    __tablename__ = 'planificacion'
+    __tablename__ = 'planificaciones_diarias' # <--- CAMBIALO AQUÍ
     
     id = db.Column(db.Integer, primary_key=True)
     docente = db.Column(db.String(100), nullable=False)
-    area = db.Column(db.String(100), nullable=False)          # Cambiado de 'areas' a 'area'
-    grado_seccion = db.Column(db.String(50), nullable=False)   # Cambiado de 'grado' a 'grado_seccion'
-    fecha = db.Column(db.String(20), nullable=True)            # Añadido para el campo fecha
-    
-    # Secciones del esquema diario
+    area = db.Column(db.String(100), nullable=False)
+    grado_seccion = db.Column(db.String(50), nullable=False)
+    fecha = db.Column(db.String(20), nullable=True)
     estrategias = db.Column(db.Text, nullable=True)
     intencion_pedagogica = db.Column(db.Text, nullable=True)
-    indicador_logro = db.Column(db.Text, nullable=True)        # Cambiado de 'indicadores'
-    competencia_especifica = db.Column(db.Text, nullable=True) # Cambiado de 'competencias'
-    
-    # Momentos de la clase
+    indicador_logro = db.Column(db.Text, nullable=True)
+    competencia_especifica = db.Column(db.Text, nullable=True)
     actividad_inicio = db.Column(db.Text, nullable=True)
     actividad_desarrollo = db.Column(db.Text, nullable=True)
     actividad_cierre = db.Column(db.Text, nullable=True)
-    
     recursos = db.Column(db.Text, nullable=True)
-    recuperacion_pedagogica = db.Column(db.Text, nullable=True) # Añadido
-    
-    # Campos adicionales por si los usas en otras partes
+    recuperacion_pedagogica = db.Column(db.Text, nullable=True)
     modalidad = db.Column(db.String(50), nullable=True)
     situacion = db.Column(db.Text, nullable=True)
     contenidos = db.Column(db.Text, nullable=True)
