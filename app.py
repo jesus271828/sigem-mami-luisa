@@ -3361,10 +3361,11 @@ def registrar_usuario():
             password = request.form['contrasena']
             rol = request.form['rol']
             
-            # Si es maestro de área, guardamos el área especializada y dejamos curso como None
+            # Si es maestro de área, capturamos las materias marcadas y las unimos separadas por coma
             if rol == 'maestro_area':
                 curso_asignado = None
-                area_especializada = request.form.get('area_especializada')
+                lista_materias = request.form.getlist('materias')
+                area_especializada = ", ".join(lista_materias) if lista_materias else None
             else:
                 curso_asignado = request.form.get('curso_asignado')
                 area_especializada = None
@@ -3376,7 +3377,7 @@ def registrar_usuario():
                 if is_postgres:
                     cur = conexion.conn.cursor()
                     cur.execute("UPDATE usuarios SET nombre_completo = %s, username = %s, password = %s, rol = %s, curso_asignado = %s, area_especializada = %s WHERE id = %s",
-                               (nombre_completo, username, password, rol, curso_asignado, area_especializada, id_usuario))
+                                 (nombre_completo, username, password, rol, curso_asignado, area_especializada, id_usuario))
                     conexion.conn.commit()
                     cur.close()
                 else:
@@ -3385,11 +3386,11 @@ def registrar_usuario():
                     conexion.commit()
                 flash('Maestro actualizado con éxito.', 'success')
             else:
-                # Insertar NUEVO usuario (Sin tocar ni enviar la columna id para que use el autoincremental de la secuencia)
+                # Insertar NUEVO usuario
                 if is_postgres:
                     cur = conexion.conn.cursor()
                     cur.execute("INSERT INTO usuarios (nombre_completo, username, password, rol, curso_asignado, area_especializada) VALUES (%s, %s, %s, %s, %s, %s)",
-                               (nombre_completo, username, password, rol, curso_asignado, area_especializada))
+                                 (nombre_completo, username, password, rol, curso_asignado, area_especializada))
                     conexion.conn.commit()
                     cur.close()
                 else:
@@ -3400,7 +3401,7 @@ def registrar_usuario():
                 
             return redirect(url_for('registrar_usuario'))
         
-        # Obtener lista de todos los maestros (tanto regulares como de área)
+        # Obtener lista de todos los maestros
         if is_postgres:
             cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             cur.execute("SELECT * FROM usuarios WHERE LOWER(rol) IN ('maestro', 'maestro_area') ORDER BY id DESC")
