@@ -3404,8 +3404,6 @@ def planificacion_diaria():
     )
 
 
-
-    
 @app.route('/registrar_usuario', methods=['GET', 'POST'])
 def registrar_usuario():
     if session.get('rol') not in ['oficina', 'admin']:
