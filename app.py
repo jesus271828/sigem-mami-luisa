@@ -3297,33 +3297,22 @@ def eliminar_planificacion(id):
     return redirect(url_for('mis_planificaciones'))
 
 
-@app.route('/planificacion_diaria', methods=['GET', 'POST'])
+@app.route('/planificacion_diaria')
 def planificacion_diaria():
-    if 'usuario' not in session and 'user_id' not in session:
-        flash("Debes iniciar sesión para acceder.", "warning")
-        return redirect(url_for('login'))
+    # Supongamos que obtienes el usuario de la sesión actual
+    # (Ajusta esto según cómo guardes el rol y las materias en tu base de datos o sesión)
+    rol_actual = session.get('rol', 'maestro_area') 
     
-    # Obtenemos el nombre del docente (verificando nombre_completo o usuario como respaldo)
-    nombre_docente = session.get('nombre_completo') or session.get('usuario') or session.get('nombre', '')
-    rol = session.get('rol', '')
-    area_asignada = session.get('area_especializada', session.get('curso_asignado', ''))
+    # Lista de materias que maneja el docente de área (ej: Keila)
+    materias_docente = ["Lengua Española", "Ciencias Sociales"]
     
-    # Lista de grados estándar del centro educativo
-    grados_disponibles = [
-        "1ro A", "1ro B", "2do A", "2do B", "3ro A", "3ro B",
-        "4to A", "4to B", "5to A", "5to B", "6to A", "6to B"
-    ]
-
-    if request.method == 'POST':
-        # Lógica de guardado
-        pass
+    planificaciones = Planificacion.query.all() # o tu consulta habitual
 
     return render_template(
-        'planificacion_diaria.html',
-        docente=nombre_docente,  # <-- CORREGIDO: coincide con {{ docente }} en la plantilla
-        rol=rol,
-        area_asignada=area_asignada,
-        grados_disponibles=grados_disponibles
+        'tu_plantilla.html', 
+        planificaciones=planificaciones,
+        rol_usuario=rol_actual,
+        materias_docente=materias_docente
     )
 
 
