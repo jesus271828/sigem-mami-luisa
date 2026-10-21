@@ -3299,17 +3299,16 @@ def eliminar_planificacion(id):
 
 @app.route('/planificacion_diaria')
 def planificacion_diaria():
-    # Supongamos que obtienes el usuario de la sesión actual
-    # (Ajusta esto según cómo guardes el rol y las materias en tu base de datos o sesión)
+    # Ejemplo: detectas el rol del usuario logueado en la sesión
     rol_actual = session.get('rol', 'maestro_area') 
     
-    # Lista de materias que maneja el docente de área (ej: Keila)
+    # Las materias que maneja el docente de área
     materias_docente = ["Lengua Española", "Ciencias Sociales"]
     
-    planificaciones = Planificacion.query.all() # o tu consulta habitual
+    planificaciones = Planificacion.query.all() # O tu consulta habitual
 
     return render_template(
-        'tu_plantilla.html', 
+        'tu_plantilla.html',  # Reemplaza con el nombre de tu archivo html
         planificaciones=planificaciones,
         rol_usuario=rol_actual,
         materias_docente=materias_docente
