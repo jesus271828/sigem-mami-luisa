@@ -29,7 +29,7 @@
         <div class="card shadow p-4 mb-5">
             <h3 class="mb-3 text-center">{% if maestro_a_editar %}Editar Usuario{% else %}Registrar Nuevo Maestro / Personal{% endif %}</h3>
             
-            <!-- Mensajes Flash limpios y corregidos -->
+            <!-- Mensajes Flash -->
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
@@ -87,17 +87,47 @@
                     </select>
                 </div>
 
-                <!-- Campo dinámico para Área Especializada (Maestros de área) -->
+                <!-- Campo dinámico para Asignación de Materias (Maestros de área) -->
                 <div class="mb-3" id="div_area_especializada" style="display: none;">
-                    <label for="area_especializada" class="form-label">Área Especializada</label>
-                    <select class="form-select" name="area_especializada" id="area_especializada">
-                        <option value="">Selecciona el área...</option>
-                        <option value="Educación Física" {% if maestro_a_editar and maestro_a_editar.area_especializada == 'Educación Física' %}selected{% endif %}>Educación Física</option>
-                        <option value="Inglés" {% if maestro_a_editar and maestro_a_editar.area_especializada == 'Inglés' %}selected{% endif %}>Inglés</option>
-                        <option value="Educación Artística" {% if maestro_a_editar and maestro_a_editar.area_especializada == 'Educación Artística' %}selected{% endif %}>Educación Artística</option>
-                        <option value="Informática" {% if maestro_a_editar and maestro_a_editar.area_especializada == 'Informática' %}selected{% endif %}>Informática</option>
-                        <option value="Formación Integral" {% if maestro_a_editar and maestro_a_editar.area_especializada == 'Formación Integral' %}selected{% endif %}>Formación Integral, Humana y Religiosa</option>
-                    </select>
+                    <label class="form-label font-weight-bold">Asignación de Materias (Selecciona las asignaturas que imparte):</label>
+                    <div class="card p-3 bg-white border">
+                        <div class="row">
+                            <!-- Opción 1: Maestro con 3 materias -->
+                            <div class="col-md-6 border-end">
+                                <span class="badge bg-primary mb-2">Bloque 1 (3 Materias)</span>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="materias" value="Matemáticas" id="mat"
+                                        {% if maestro_a_editar and maestro_a_editar.area_especializada and 'Matemáticas' in maestro_a_editar.area_especializada %}checked{% endif %}>
+                                    <label class="form-check-label" for="mat">Matemáticas</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="materias" value="Ciencias Naturales" id="cn"
+                                        {% if maestro_a_editar and maestro_a_editar.area_especializada and 'Ciencias Naturales' in maestro_a_editar.area_especializada %}checked{% endif %}>
+                                    <label class="form-check-label" for="cn">Ciencias Naturales</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="materias" value="Educación Artística" id="art"
+                                        {% if maestro_a_editar and maestro_a_editar.area_especializada and 'Educación Artística' in maestro_a_editar.area_especializada %}checked{% endif %}>
+                                    <label class="form-check-label" for="art">Educación Artística</label>
+                                </div>
+                            </div>
+                            
+                            <!-- Opción 2: Maestro con 2 materias -->
+                            <div class="col-md-6 ps-md-4">
+                                <span class="badge bg-info text-dark mb-2">Bloque 2 (2 Materias)</span>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="materias" value="Lengua Española" id="esp"
+                                        {% if maestro_a_editar and maestro_a_editar.area_especializada and 'Lengua Española' in maestro_a_editar.area_especializada %}checked{% endif %}>
+                                    <label class="form-check-label" for="esp">Lengua Española</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="materias" value="Ciencias Sociales" id="soc"
+                                        {% if maestro_a_editar and maestro_a_editar.area_especializada and 'Ciencias Sociales' in maestro_a_editar.area_especializada %}checked{% endif %}>
+                                    <label class="form-check-label" for="soc">Ciencias Sociales</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <button type="submit" class="btn btn-primary w-100">{% if maestro_a_editar %}Actualizar Usuario{% else %}Registrar{% endif %}</button>
