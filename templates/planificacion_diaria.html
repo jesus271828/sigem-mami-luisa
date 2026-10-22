@@ -120,18 +120,33 @@
                                     <label class="fw-bold">Docente:</label>
                                     <input type="text" name="docente" class="form-control input-line d-inline-block w-75 fw-bold" value="{{ docente }}" readonly>
                                 </div>
+                                
+                                <!-- CAMPO ÁREAS CONDICIONAL SOLO PARA USUARIOS ESPECÍFICOS -->
                                 <div class="mb-1">
                                     <label class="fw-bold">Área:</label>
-                                    <input type="text" name="area" class="form-control input-line d-inline-block w-80 fw-bold" 
-                                           value="{{ area_asignada if area_asignada else '' }}" 
-                                           placeholder="Ej. Lengua Española / Matemáticas" 
-                                           {% if session.get('rol') == 'maestro_area' %}readonly{% endif %} required>
+                                    {% set usuarios_especiales = ['Keila Fenelon Lureano'] %}
+                                    {% set lista_areas = (area_asignada or '').replace(',', '/').split('/') %}
+                                    
+                                    {% if session.get('nombre_completo') in usuarios_especiales and lista_areas | length > 1 %}
+                                        <select name="area" id="select_area" class="form-select input-line d-inline-block w-80 fw-bold" required>
+                                            <option value="" disabled selected>Seleccione el área...</option>
+                                            {% for item in lista_areas %}
+                                                <option value="{{ item.strip() }}">{{ item.strip() }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    {% else %}
+                                        <input type="text" name="area" id="select_area" class="form-control input-line d-inline-block w-80 fw-bold" 
+                                               value="{{ area_asignada if area_asignada else '' }}" 
+                                               placeholder="Ej. Lengua Española / Matemáticas" 
+                                               {% if session.get('rol') == 'maestro_area' %}readonly{% endif %} required>
+                                    {% endif %}
                                 </div>
+
                                 <div class="row">
                                     <div class="col-md-7 mb-1">
                                         <label class="fw-bold">Grado y Sección:</label>
                                         {% if session.get('rol') == 'maestro_area' %}
-                                            <select name="grado_seccion" class="form-select input-line d-inline-block w-50 fw-bold" required>
+                                            <select name="grado_seccion" id="select_grado_seccion" class="form-select input-line d-inline-block w-50 fw-bold" required>
                                                 <option value="" disabled selected>Seleccione...</option>
                                                 <option value="1ro A">1ro A</option>
                                                 <option value="1ro B">1ro B</option>
@@ -147,7 +162,7 @@
                                                 <option value="6to B">6to B</option>
                                             </select>
                                         {% else %}
-                                            <input type="text" name="grado_seccion" class="form-control input-line d-inline-block w-50 fw-bold" value="{{ grado_seccion }}" required>
+                                            <input type="text" name="grado_seccion" id="select_grado_seccion" class="form-control input-line d-inline-block w-50 fw-bold" value="{{ grado_seccion }}" required>
                                         {% endif %}
                                     </div>
                                     <div class="col-md-5 mb-1">
@@ -251,5 +266,17 @@
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Script para marcar 6to A de forma automática solo si se cargó el selector para la usuaria especial -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const areaElement = document.getElementById('select_area');
+            const gradoElement = document.getElementById('select_grado_seccion');
+
+            if (areaElement && areaElement.tagName === 'SELECT' && gradoElement) {
+                gradoElement.value = '6to A';
+            }
+        });
+    </script>
 </body>
 </html>
