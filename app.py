@@ -2798,13 +2798,19 @@ def ver_planificaciones_diarias():
     if 'usuario' not in session and 'nombre_completo' not in session:
         return redirect(url_for('login'))
 
-    # Obtener el área del docente desde la sesión o asignar por defecto si es Keila
     usuario_actual = session.get('nombre_completo', '')
-    area_docente = session.get('area', '')
+    
+    # Recuperamos el área asignada de la columna 'área_especializada'[cite: 6]
+    area_docente = session.get('area_especializada', '')
+    
+    # Verificamos si tiene múltiples materias (separadas por coma o barra)
+    tiene_multiples_areas = False
+    if area_docente:
+        lista_areas = [a.strip() for a in area_docente.replace(',', '/').split('/') if a.strip()]
+        tiene_multiples_areas = len(lista_areas) > 1
 
-    # Respaldo automático para Keila Fenelon Lureano
-    if usuario_actual == 'Keila Fenelon Lureano' and not area_docente:
-        area_docente = 'Lengua Española / Matemáticas'
+    # Si tiene 2 o más áreas asignadas (como área_maestro)[cite: 6], forzamos '6to A', de lo contrario tomamos el curso asignado
+    grado_docente = '6to A' if tiene_multiples_areas else session.get('curso_asignado', '')
 
     try:
         conn = get_db_connection()
@@ -2817,7 +2823,7 @@ def ver_planificaciones_diarias():
             cur.execute('SELECT * FROM planificaciones ORDER BY fecha DESC, id DESC')
             planificaciones = cur.fetchall()
             
-            # Consultar contadores
+            # Consultar contadores para la tarjeta oscura "REGISTROS GENERALES"
             cur.execute('SELECT COUNT(*) FROM estudiantes')
             total_estudiantes = cur.fetchone()['count']
             
@@ -2856,7 +2862,7 @@ def ver_planificaciones_diarias():
             total_usuarios=total_usuarios,
             docente=usuario_actual,
             area_asignada=area_docente,
-            grado_seccion='6to A' if usuario_actual == 'Keila Fenelon Lureano' else session.get('grado_seccion', '')
+            grado_seccion=grado_docente
         )
     except Exception as e:
         print("Error al cargar planificaciones:", e)
@@ -2868,7 +2874,7 @@ def ver_planificaciones_diarias():
             total_usuarios=17,
             docente=usuario_actual,
             area_asignada=area_docente,
-            grado_seccion='6to A' if usuario_actual == 'Keila Fenelon Lureano' else ''
+            grado_seccion=grado_docente
         )
 
 # --- RUTA ÚNICA PARA GUARDAR LA PLANIFICACIÓN DIARIA ---
