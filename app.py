@@ -2583,24 +2583,33 @@ def planificacion():
     if not grado_actual or grado_actual == 'None':
         grado_actual = 'Primer Grado'
     
+    # Obtenemos el área asignada desde la sesión
+    area_asignada = session.get('area', '')
+    
     usuario_info = {
         'nombre_completo': session.get('nombre_completo', ''),
-        'curso_asignado': grado_actual
+        'curso_asignado': grado_actual,
+        'area': area_asignada
     }
     
     return render_template(
         'planificacion.html', 
         usuario=usuario_info, 
-        grado=grado_actual
+        grado=grado_actual,
+        area_asignada=area_asignada
     )
 
 @app.route('/mis_planificaciones')
 def mis_planificaciones():
+    # Verificar sesión activa
     if 'usuario' not in session and 'nombre_completo' not in session:
         return redirect(url_for('login'))
 
     usuario_actual = session.get('nombre_completo')
     rol_actual = session.get('rol')
+
+    conn = None
+    planificaciones = []
 
     try:
         conn = psycopg2.connect(DATABASE_URL)
@@ -2612,7 +2621,7 @@ def mis_planificaciones():
             query = 'SELECT * FROM planificaciones ORDER BY id DESC'
             cursor.execute(query)
         else:
-            query = 'SELECT * FROM planificaciones WHERE docente = ? ORDER BY id DESC'
+            query = 'SELECT * FROM planificaciones WHERE docente = %s ORDER BY id DESC'
             cursor.execute(query, (usuario_actual,))
 
         planificaciones = cursor.fetchall()
@@ -2620,8 +2629,10 @@ def mis_planificaciones():
     except Exception as e:
         print("❌ Error obteniendo planificaciones:", e)
         planificaciones = []
+    finally:
+        if conn:
+            conn.close()
 
-    # AQUÍ ESTÁ LA CLAVE: Usamos el nombre exacto de tu archivo HTML
     return render_template('mis_planificaciones.html', planificaciones=planificaciones)
 
 @app.route('/guardar_planificacion', methods=['POST'])
