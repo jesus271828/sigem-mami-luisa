@@ -2793,7 +2793,19 @@ def descargar_pdf_planificacion(id):
 
 # --- RUTA PARA VER EL HISTORIAL DE PLANIFICACIONES ---
 
+@app.route('/ver_planificaciones_diarias')
 def ver_planificaciones_diarias():
+    if 'usuario' not in session and 'nombre_completo' not in session:
+        return redirect(url_for('login'))
+
+    # Obtener el área del docente desde la sesión o asignar por defecto si es Keila
+    usuario_actual = session.get('nombre_completo', '')
+    area_docente = session.get('area', '')
+
+    # Respaldo automático para Keila Fenelon Lureano
+    if usuario_actual == 'Keila Fenelon Lureano' and not area_docente:
+        area_docente = 'Lengua Española / Matemáticas'
+
     try:
         conn = get_db_connection()
         is_postgres = DATABASE_URL is not None
@@ -2805,11 +2817,11 @@ def ver_planificaciones_diarias():
             cur.execute('SELECT * FROM planificaciones ORDER BY fecha DESC, id DESC')
             planificaciones = cur.fetchall()
             
-            # Consultar contadores para la tarjeta oscura "REGISTROS GENERALES"
+            # Consultar contadores
             cur.execute('SELECT COUNT(*) FROM estudiantes')
             total_estudiantes = cur.fetchone()['count']
             
-            cur.execute('SELECT COUNT(*) FROM expedientes_viejos') # Ajusta si tu tabla se llama distinto
+            cur.execute('SELECT COUNT(*) FROM expedientes_viejos')
             total_expedientes = cur.fetchone()['count']
             
             cur.execute('SELECT COUNT(*) FROM usuarios')
@@ -2841,11 +2853,23 @@ def ver_planificaciones_diarias():
             planificaciones=planificaciones,
             total_estudiantes=total_estudiantes,
             total_expedientes=total_expedientes,
-            total_usuarios=total_usuarios
+            total_usuarios=total_usuarios,
+            docente=usuario_actual,
+            area_asignada=area_docente,
+            grado_seccion='6to A' if usuario_actual == 'Keila Fenelon Lureano' else session.get('grado_seccion', '')
         )
     except Exception as e:
         print("Error al cargar planificaciones:", e)
-        return render_template('ver_planificaciones_diarias.html', planificaciones=[], total_estudiantes=176, total_expedientes=911, total_usuarios=17)
+        return render_template(
+            'ver_planificaciones_diarias.html', 
+            planificaciones=[], 
+            total_estudiantes=176, 
+            total_expedientes=911, 
+            total_usuarios=17,
+            docente=usuario_actual,
+            area_asignada=area_docente,
+            grado_seccion='6to A' if usuario_actual == 'Keila Fenelon Lureano' else ''
+        )
 
 # --- RUTA ÚNICA PARA GUARDAR LA PLANIFICACIÓN DIARIA ---
 @app.route('/guardar_planificacion_diaria', methods=['POST'])
