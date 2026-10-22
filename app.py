@@ -1478,7 +1478,7 @@ def asistencia():
     # 2. Cursos para la TABLA INFERIOR (Nivel Inicial ML – L2)
     cursos_inicial = [
         'Párvulos', 'Prekínder – A', 'Prekínder – B', 
-        'Kínder – A', 'Kínder – B', 'Preprimario – A', 'Preprimario – B'
+        'Kínder – A',  'Preprimario – A', 'Preprimario – B'
     ]
 
     conn = get_db_connection()
