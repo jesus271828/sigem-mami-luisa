@@ -2575,26 +2575,33 @@ def menu_planificacion():
 # ==============================================================================
 # 1. RUTA PARA CARGAR Y VISUALIZAR LA PLANIFICACIÓN DIARIA
 # ==============================================================================
-@app.route('/planificacion_diaria', methods=['GET'])
-def vista_planificacion_diaria():
+@app.route('/ver_planificaciones_diarias')
+def ver_planificaciones_diarias():
     if 'usuario' not in session and 'nombre_completo' not in session:
         return redirect(url_for('login'))
+        
+    usuario_actual = session.get('nombre_completo')
+    rol_actual = session.get('rol')
     
-    nombre_docente = session.get('nombre_completo', '')
-    
-    # 1. Traemos el área desde la columna 'area_especializada' de Supabase
-    area_docente = session.get('area_especializada') or session.get('area') or ''
-    
-    # 2. Traemos el grado/curso asignado
-    grado_docente = session.get('curso_asignado') or session.get('grado_seccion') or ''
+    try:
+        conn = psycopg2.connect(DATABASE_URL)
+        cursor = PostgresCursorWrapper(conn)
+        
+        # Si es de oficina o admin ve todo, si es docente solo ve lo suyo
+        if rol_actual in ['admin', 'oficina']:
+            query = 'SELECT * FROM planificaciones_diarias ORDER BY fecha DESC'
+            cursor.execute(query)
+        else:
+            query = 'SELECT * FROM planificaciones_diarias WHERE docente = ? ORDER BY fecha DESC'
+            cursor.execute(query, (usuario_actual,))
+            
+        planificaciones = cursor.fetchall()
+        cursor.close()
+    except Exception as e:
+        print("❌ Error obteniendo planificaciones diarias:", e)
+        planificaciones = []
 
-    return render_template(
-        'planificacion_diaria.html', 
-        docente=nombre_docente,
-        area=area_docente,
-        grado_seccion=grado_docente
-    )
-
+    return render_template('ver_planificaciones_diarias.html', planificaciones=planificaciones)
 # ==============================================================================
 # 2. RUTA PARA GUARDAR LA PLANIFICACIÓN DIARIA EN LA BASE DE DATOS
 # ==============================================================================
