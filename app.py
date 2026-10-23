@@ -2577,20 +2577,16 @@ def menu_planificacion():
 # ==============================================================================
 @app.route('/planificacion_diaria', methods=['GET'])
 def vista_planificacion_diaria():
-    # Verificar que haya una sesión activa
     if 'usuario' not in session and 'nombre_completo' not in session:
         return redirect(url_for('login'))
     
-    # 1. Obtenemos el grado/sección de la sesión de manera segura
-    grado_actual = session.get('curso_asignado', session.get('grado_seccion', 'Primer Grado'))
-    if not grado_actual or str(grado_actual).strip() in ['None', '']:
-        grado_actual = 'Primer Grado'
+    # Asegúrate de extraer el grado/curso real de la sesión
+    grado_actual = session.get('curso_asignado', session.get('grado_seccion', ''))
     
-    # 2. Obtenemos el área asignada y el nombre del docente desde la sesión
+    # Asegúrate de extraer el área real de la sesión
     area_asignada = session.get('area', '')
     nombre_docente = session.get('nombre_completo', '')
     
-    # Renderizamos la plantilla pasando las variables autocompletadas
     return render_template(
         'planificacion_diaria.html', 
         docente=nombre_docente,
