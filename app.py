@@ -2692,6 +2692,7 @@ def ver_detalle_planificacion_diaria(id):
         flash('Error al cargar la planificación.', 'danger')
         return redirect(url_for('ver_planificaciones_diarias'))
 
+    
 from io import BytesIO
 from xhtml2pdf import pisa
 from flask import make_response, render_template
@@ -2743,9 +2744,6 @@ def descargar_pdf_planificacion(id):
         print("❌ Error al generar PDF:", e)
         flash("Error al generar el documento PDF.", "danger")
         return redirect(url_for('mis_planificaciones'))
-
-
-from flask import render_template, request, session, redirect, url_for
 
 
 # --- RUTA PARA GENERAR EL PDF CON FECHA FORMATEADA (DD-MM-YYYY) ---
@@ -2842,6 +2840,62 @@ def generar_pdf_por_fecha():
     except Exception as e:
         print("Error en PDF por fecha:", e)
         return f"Error al procesar el PDF: {e}", 500
+    
+@app.route('/imprimir_planificaciones_semana_pdf', methods=['GET', 'POST'])
+def imprimir_planificaciones_semana_pdf():
+    if 'usuario' not in session and 'nombre_completo' not in session:
+        return redirect(url_for('login'))
+
+    fecha_inicio = request.args.get('fecha_inicio')
+    fecha_fin = request.args.get('fecha_fin')
+    usuario_actual = session.get('nombre_completo')
+    rol_actual = session.get('rol')
+
+    if not fecha_inicio or not fecha_fin:
+        flash('Por favor seleccione ambas fechas.', 'warning')
+        return redirect(url_for('ver_planificaciones_diarias'))
+
+    # Asegurar que inicio sea menor o igual que fin
+    if fecha_inicio > fecha_fin:
+        fecha_inicio, fecha_fin = fecha_fin, fecha_inicio
+
+    try:
+        conn = psycopg2.connect(DATABASE_URL)
+        cursor = PostgresCursorWrapper(conn)
+
+        if rol_actual in ['admin', 'oficina']:
+            query = 'SELECT * FROM planificaciones_diarias WHERE fecha BETWEEN ? AND ? ORDER BY fecha ASC'
+            cursor.execute(query, (fecha_inicio, fecha_fin))
+        else:
+            query = 'SELECT * FROM planificaciones_diarias WHERE docente = ? AND fecha BETWEEN ? AND ? ORDER BY fecha ASC'
+            cursor.execute(query, (usuario_actual, fecha_inicio, fecha_fin))
+
+        planificaciones = cursor.fetchall()
+        cursor.close()
+
+        if not planificaciones:
+            flash(f'No hay planificaciones registradas entre {fecha_inicio} y {fecha_fin}.', 'warning')
+            return redirect(url_for('ver_planificaciones_diarias'))
+
+        rendered_html = render_template('pdf_reporte_semanal.html', planificaciones=planificaciones, inicio=fecha_inicio, fin=fecha_fin)
+
+        pdf_buffer = io.BytesIO()
+        pisa_status = pisa.CreatePDF(rendered_html, dest=pdf_buffer)
+
+        if pisa_status.err:
+            flash('Error al generar el PDF semanal.', 'danger')
+            return redirect(url_for('ver_planificaciones_diarias'))
+
+        pdf_buffer.seek(0)
+        response = make_response(pdf_buffer.read())
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = f'inline; filename=Reporte_Semanal_{fecha_inicio}_al_{fecha_fin}.pdf'
+        return response
+
+    except Exception as e:
+        print("❌ Error al generar reporte semanal:", e)
+        flash('Error al procesar el reporte.', 'danger')
+        return redirect(url_for('ver_planificaciones_diarias'))
     
 from io import BytesIO
 from flask import render_template, request, send_file
