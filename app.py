@@ -2603,19 +2603,17 @@ def guardar_planificacion_diaria():
     if 'usuario' not in session and 'nombre_completo' not in session:
         return redirect(url_for('login'))
 
-    # 1. Datos del encabezado (Priorizamos primero el valor enviado en el formulario HTML)
+    # Captura de datos del formulario y sesión
     docente = request.form.get('docente') or session.get('nombre_completo', '')
     area = request.form.get('area') or session.get('area_especializada') or session.get('area', '')
     grado_seccion = request.form.get('grado_seccion') or session.get('curso_asignado', '')
     fecha = request.form.get('fecha')
     
-    # 2. Campos de texto del esquema
     estrategias = request.form.get('estrategias') or ''
     intencion_pedagogica = request.form.get('intencion_pedagogica') or ''
     indicador_logro = request.form.get('indicador_logro') or ''
     competencia_especifica = request.form.get('competencia_especifica') or ''
     
-    # 3. Momentos de la clase (Coincidiendo exactamente con name="..." de tu HTML)
     actividades_inicio = request.form.get('actividad_inicio') or ''
     recursos_inicio = request.form.get('recursos_inicio') or ''
     
@@ -2632,6 +2630,7 @@ def guardar_planificacion_diaria():
         conn = psycopg2.connect(DATABASE_URL)
         cursor = PostgresCursorWrapper(conn)
         
+        # Uso de %s estándar para PostgreSQL
         query = '''
             INSERT INTO planificaciones_diarias 
             (
@@ -2640,7 +2639,7 @@ def guardar_planificacion_diaria():
                 actividades_desarrollo, recursos_desarrollo, actividades_cierre, recursos_cierre, 
                 recuperacion_pedagogica
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         '''
         cursor.execute(query, (
             docente, area, grado_seccion, fecha, estrategias, intencion_pedagogica,
@@ -2652,8 +2651,8 @@ def guardar_planificacion_diaria():
         cursor.close()
         flash('¡Planificación diaria guardada con éxito!', 'success')
     except Exception as e:
-        print("❌ Error en la base de datos al guardar la planificación diaria:", e)
-        flash('Error al guardar el registro diario en la base de datos.', 'danger')
+        print("❌ Error detallado en la base de datos:", e)
+        flash(f'Error al guardar el registro diario: {e}', 'danger')
     finally:
         if conn:
             conn.close()
