@@ -2667,6 +2667,31 @@ def guardar_planificacion_diaria():
 
     return redirect(url_for('vista_planificacion_diaria'))
 
+@app.route('/ver_detalle_planificacion_diaria/<int:id>')
+def ver_detalle_planificacion_diaria(id):
+    if 'usuario' not in session and 'nombre_completo' not in session:
+        return redirect(url_for('login'))
+
+    try:
+        conn = psycopg2.connect(DATABASE_URL)
+        cursor = PostgresCursorWrapper(conn)
+
+        query = 'SELECT * FROM planificaciones_diarias WHERE identificacion = ?'
+        cursor.execute(query, (id,))
+        planificacion = cursor.fetchone()
+        cursor.close()
+
+        if not planificacion:
+            flash('Planificación no encontrada.', 'danger')
+            return redirect(url_for('ver_planificaciones_diarias'))
+
+        return render_template('planificacion_diaria.html', plan=planificacion, docente=planificacion.get('docente'), grado_seccion=planificacion.get('grado_seccion'))
+
+    except Exception as e:
+        print("❌ Error cargando detalle:", e)
+        flash('Error al cargar la planificación.', 'danger')
+        return redirect(url_for('ver_planificaciones_diarias'))
+
 from io import BytesIO
 from xhtml2pdf import pisa
 from flask import make_response, render_template
