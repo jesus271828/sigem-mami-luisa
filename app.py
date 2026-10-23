@@ -2580,13 +2580,19 @@ def vista_planificacion_diaria():
     if 'usuario' not in session and 'nombre_completo' not in session:
         return redirect(url_for('login'))
     
-    # Asegúrate de extraer el grado/curso real de la sesión
-    grado_actual = session.get('curso_asignado', session.get('grado_seccion', ''))
+    # 1. Nombre del docente
+    nombre_docente = session.get('nombre_completo', session.get('usuario', ''))
     
-    # Asegúrate de extraer el área real de la sesión
-    area_asignada = session.get('area', '')
-    nombre_docente = session.get('nombre_completo', '')
+    # 2. Área (buscamos en 'area', 'materia' o 'especialidad')
+    area_asignada = session.get('area', session.get('materia', session.get('especialidad', '')))
     
+    # 3. Grado y Sección (buscamos en 'curso_asignado', 'grado_seccion' o 'grado')
+    grado_actual = session.get('curso_asignado', session.get('grado_seccion', session.get('grado', 'Primer Grado')))
+    
+    # Si el grado llega a estar vacío o dice un valor incorrecto, asignamos uno por defecto
+    if not grado_actual or str(grado_actual).strip() in ['None', '']:
+        grado_actual = 'Primer Grado'
+
     return render_template(
         'planificacion_diaria.html', 
         docente=nombre_docente,
