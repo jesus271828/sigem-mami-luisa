@@ -2614,13 +2614,14 @@ def guardar_planificacion_diaria():
     indicador_logro = request.form.get('indicador_logro') or ''
     competencia_especifica = request.form.get('competencia_especifica') or ''
     
-    actividades_inicio = request.form.get('actividad_inicio') or ''
+    # Momentos de la clase (en singular, igual que en Supabase)
+    actividad_inicio = request.form.get('actividad_inicio') or ''
     recursos_inicio = request.form.get('recursos_inicio') or ''
     
-    actividades_desarrollo = request.form.get('actividad_desarrollo') or ''
+    actividad_desarrollo = request.form.get('actividad_desarrollo') or ''
     recursos_desarrollo = request.form.get('recursos_desarrollo') or ''
     
-    actividades_cierre = request.form.get('actividad_cierre') or ''
+    actividad_cierre = request.form.get('actividad_cierre') or ''
     recursos_cierre = request.form.get('recursos_cierre') or ''
     
     recuperacion_pedagogica = request.form.get('recuperacion_pedagogica') or ''
@@ -2630,21 +2631,21 @@ def guardar_planificacion_diaria():
         conn = psycopg2.connect(DATABASE_URL)
         cursor = PostgresCursorWrapper(conn)
         
-        # Uso de %s estándar para PostgreSQL
+        # Consulta SQL con los nombres exactos de las columnas en Supabase
         query = '''
             INSERT INTO planificaciones_diarias 
             (
                 docente, area, grado_seccion, fecha, estrategias, intencion_pedagogica, 
-                indicador_logro, competencia_especifica, actividades_inicio, recursos_inicio, 
-                actividades_desarrollo, recursos_desarrollo, actividades_cierre, recursos_cierre, 
+                indicador_logro, competencia_especifica, actividad_inicio, recursos_inicio, 
+                actividad_desarrollo, recursos_desarrollo, actividad_cierre, recursos_cierre, 
                 recuperacion_pedagogica
             )
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         '''
         cursor.execute(query, (
             docente, area, grado_seccion, fecha, estrategias, intencion_pedagogica,
-            indicador_logro, competencia_especifica, actividades_inicio, recursos_inicio,
-            actividades_desarrollo, recursos_desarrollo, actividades_cierre, recursos_cierre,
+            indicador_logro, competencia_especifica, actividad_inicio, recursos_inicio,
+            actividad_desarrollo, recursos_desarrollo, actividad_cierre, recursos_cierre,
             recuperacion_pedagogica
         ))
         conn.commit()
