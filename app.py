@@ -2580,18 +2580,25 @@ def vista_planificacion_diaria():
     if 'usuario' not in session and 'nombre_completo' not in session:
         return redirect(url_for('login'))
     
-    # 1. Nombre del docente
+    # Imprime toda la sesión en los logs de Render para salir de dudas
+    print("SESSION ACTUAL:", dict(session))
+    
     nombre_docente = session.get('nombre_completo', session.get('usuario', ''))
     
-    # 2. Área (buscamos en 'area', 'materia' o 'especialidad')
-    area_asignada = session.get('area', session.get('materia', session.get('especialidad', '')))
+    # Capturamos los valores tal cual vienen
+    posible_area = session.get('area', session.get('materia', ''))
+    posible_grado = session.get('curso_asignado', session.get('grado_seccion', session.get('grado', '')))
     
-    # 3. Grado y Sección (buscamos en 'curso_asignado', 'grado_seccion' o 'grado')
-    grado_actual = session.get('curso_asignado', session.get('grado_seccion', session.get('grado', 'Primer Grado')))
+    # Si el área está vacía pero el "grado" tiene un texto que parece área (como Informática, Matemáticas, etc.)
+    # Lo corregimos automáticamente aquí:
+    areas_conocidas = ['informática', 'informatica', 'lengua española', 'matemáticas', 'matematicas', 'ciencias sociales', 'ciencias naturales', 'ingles', 'educación física']
     
-    # Si el grado llega a estar vacío o dice un valor incorrecto, asignamos uno por defecto
-    if not grado_actual or str(grado_actual).strip() in ['None', '']:
-        grado_actual = 'Primer Grado'
+    if not posible_area and str(posible_grado).lower() in [a.lower() for a in areas_conocidas]:
+        area_asignada = posible_grado
+        grado_actual = 'Primer Grado A'  # Grado por defecto o ajústalo si tienes otro
+    else:
+        area_asignada = posible_area
+        grado_actual = posible_grado if posible_grado and str(posible_grado) != 'None' else 'Primer Grado A'
 
     return render_template(
         'planificacion_diaria.html', 
@@ -2599,7 +2606,6 @@ def vista_planificacion_diaria():
         area=area_asignada,
         grado_seccion=grado_actual
     )
-
 
 # ==============================================================================
 # 2. RUTA PARA GUARDAR LA PLANIFICACIÓN DIARIA EN LA BASE DE DATOS
