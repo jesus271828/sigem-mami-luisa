@@ -116,42 +116,34 @@
                         <!-- Cabecera del Esquema -->
                         <div class="row mb-2 align-items-center">
                             <div class="col-md-7">
+                                <!-- DOCENTE -->
                                 <div class="mb-1">
                                     <label class="fw-bold">Docente:</label>
                                     <input type="text" name="docente" class="form-control input-line d-inline-block w-75 fw-bold" value="{{ docente }}" readonly>
                                 </div>
                                 
-                                <!-- CAMPO ÁREAS CONDICIONAL SEGÚN ÁREA ESPECIALIZADA -->
+                                <!-- ÁREA (Automática y de lectura) -->
                                 <div class="mb-1">
                                     <label class="fw-bold">Área:</label>
-                                    {% if area_asignada %}
-                                        <!-- Menú desplegable para docentes con área especializada -->
-                                        <select name="area" id="select_area" class="form-select input-line d-inline-block w-80 fw-bold" required>
-                                            <option value="" disabled selected>Seleccione el área a planificar...</option>
-                                            {% for item in area_asignada.replace(',', '/').split('/') %}
-                                                {% set item_limpio = item.strip() %}
-                                                {% if item_limpio %}
-                                                    <option value="{{ item_limpio }}">{{ item_limpio }}</option>
-                                                {% endif %}
-                                            {% endfor %}
-                                        </select>
-                                    {% else %}
-                                        <!-- Input normal si no tiene área especializada asignada -->
-                                        <input type="text" name="area" id="select_area" class="form-control input-line d-inline-block w-80 fw-bold" 
-                                               placeholder="Ej. Lengua Española / Matemáticas" required>
-                                    {% endif %}
+                                    <input type="text" name="area" id="select_area" class="form-control input-line d-inline-block w-80 fw-bold" value="{{ area_asignada or area }}" readonly placeholder="Ej. Informática">
                                 </div>
 
                                 <div class="row">
+                                    <!-- GRADO Y SECCIÓN (Desplegable seleccionable para elegir el curso) -->
                                     <div class="col-md-7 mb-1">
                                         <label class="fw-bold">Grado y Sección:</label>
-                                        {% if area_asignada or session.get('rol') == 'área_maestro' %}
-                                            <!-- Grado fijo en 6to A para maestros con área especializada -->
-                                            <input type="text" name="grado_seccion" id="select_grado_seccion" class="form-control input-line d-inline-block w-50 fw-bold" value="6to A" readonly required>
-                                        {% else %}
-                                            <!-- Grado por defecto del docente normal -->
-                                            <input type="text" name="grado_seccion" id="select_grado_seccion" class="form-control input-line d-inline-block w-50 fw-bold" value="{{ grado_seccion }}" required>
-                                        {% endif %}
+                                        <select name="grado_seccion" id="select_grado_seccion" class="form-select input-line d-inline-block w-60 fw-bold" required>
+                                            <option value="" disabled {% if not grado_seccion %}selected{% endif %}>Seleccione el curso...</option>
+                                            <option value="Primer Grado A" {% if grado_seccion == 'Primer Grado A' %}selected{% endif %}>Primer Grado A</option>
+                                            <option value="Primer Grado B" {% if grado_seccion == 'Primer Grado B' %}selected{% endif %}>Primer Grado B</option>
+                                            <option value="Segundo Grado A" {% if grado_seccion == 'Segundo Grado A' %}selected{% endif %}>Segundo Grado A</option>
+                                            <option value="Segundo Grado B" {% if grado_seccion == 'Segundo Grado B' %}selected{% endif %}>Segundo Grado B</option>
+                                            <option value="Tercer Grado A" {% if grado_seccion == 'Tercer Grado A' %}selected{% endif %}>Tercer Grado A</option>
+                                            <option value="Tercer Grado B" {% if grado_seccion == 'Tercer Grado B' %}selected{% endif %}>Tercer Grado B</option>
+                                            <option value="Cuarto Grado A" {% if grado_seccion == 'Cuarto Grado A' %}selected{% endif %}>Cuarto Grado A</option>
+                                            <option value="Quinto Grado A" {% if grado_seccion == 'Quinto Grado A' %}selected{% endif %}>Quinto Grado A</option>
+                                            <option value="Sexto Grado A" {% if grado_seccion == 'Sexto Grado A' %}selected{% endif %}>Sexto Grado A</option>
+                                        </select>
                                     </div>
                                     <div class="col-md-5 mb-1">
                                         <label class="fw-bold">Fecha:</label>
