@@ -2575,36 +2575,18 @@ def menu_planificacion():
 # ==============================================================================
 # 1. RUTA PARA CARGAR Y VISUALIZAR LA PLANIFICACIÓN DIARIA
 # ==============================================================================
-@app.route('/planificacion_diaria', methods=['GET'])
-def vista_planificacion_diaria():
-    if 'usuario' not in session and 'nombre_completo' not in session:
+@app.route('/planificacion_diaria', methods=['GET', 'POST'])
+def planificacion_diaria():
+    if 'nombre_completo' not in session:
         return redirect(url_for('login'))
     
-    # Imprime toda la sesión en los logs de Render para salir de dudas
-    print("SESSION ACTUAL:", dict(session))
-    
-    nombre_docente = session.get('nombre_completo', session.get('usuario', ''))
-    
-    # Capturamos los valores tal cual vienen
-    posible_area = session.get('area', session.get('materia', ''))
-    posible_grado = session.get('curso_asignado', session.get('grado_seccion', session.get('grado', '')))
-    
-    # Si el área está vacía pero el "grado" tiene un texto que parece área (como Informática, Matemáticas, etc.)
-    # Lo corregimos automáticamente aquí:
-    areas_conocidas = ['informática', 'informatica', 'lengua española', 'matemáticas', 'matematicas', 'ciencias sociales', 'ciencias naturales', 'ingles', 'educación física']
-    
-    if not posible_area and str(posible_grado).lower() in [a.lower() for a in areas_conocidas]:
-        area_asignada = posible_grado
-        grado_actual = 'Primer Grado A'  # Grado por defecto o ajústalo si tienes otro
-    else:
-        area_asignada = posible_area
-        grado_actual = posible_grado if posible_grado and str(posible_grado) != 'None' else 'Primer Grado A'
+    docente_nombre = session.get('nombre_completo', '')
+    grado_curso = session.get('curso_asignado', '')
 
     return render_template(
         'planificacion_diaria.html', 
-        docente=nombre_docente,
-        area=area_asignada,
-        grado_seccion=grado_actual
+        docente=docente_nombre, 
+        grado_seccion=grado_curso
     )
 
 # ==============================================================================
