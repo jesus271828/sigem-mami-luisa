@@ -2573,8 +2573,8 @@ def menu_planificacion():
 
 
 # 2. RUTA PARA CREAR O EDITAR LA UNIDAD DE APRENDIZAJE
-@app.route('/planificacion')
-def planificacion():
+@app.route('/planificacion_diaria')
+def planificacion_diaria():
     if 'usuario' not in session and 'nombre_completo' not in session:
         return redirect(url_for('login'))
     
@@ -2583,20 +2583,15 @@ def planificacion():
     if not grado_actual or grado_actual == 'None':
         grado_actual = 'Primer Grado'
     
-    # Obtenemos el área asignada desde la sesión
+    # Obtenemos el área y el nombre completo desde la sesión
     area_asignada = session.get('area', '')
-    
-    usuario_info = {
-        'nombre_completo': session.get('nombre_completo', ''),
-        'curso_asignado': grado_actual,
-        'area': area_asignada
-    }
+    nombre_docente = session.get('nombre_completo', '')
     
     return render_template(
-        'planificacion.html', 
-        usuario=usuario_info, 
-        grado=grado_actual,
-        area_asignada=area_asignada
+        'planificacion_diaria.html', 
+        docente=nombre_docente,
+        area=area_asignada,
+        grado_seccion=grado_actual
     )
 
 @app.route('/mis_planificaciones')
