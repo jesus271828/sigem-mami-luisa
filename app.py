@@ -2802,67 +2802,8 @@ def ver_planificaciones_diarias():
             grado_seccion=grado_docente
         )
 
-# --- RUTA ÚNICA PARA GUARDAR LA PLANIFICACIÓN DIARIA ---
-@app.route('/guardar_planificacion_diaria', methods=['POST'])
-def guardar_planificacion_diaria():
-    if 'usuario' not in session and 'user_id' not in session:
-        return redirect(url_for('login'))
-
-    docente = request.form.get('docente')
-    area = request.form.get('area')
-    grado_seccion = request.form.get('grado_seccion')
-    fecha = request.form.get('fecha')
-    
-    estrategias = request.form.get('estrategias')
-    intencion_pedagogica = request.form.get('intencion_pedagogica')
-    indicador_logro = request.form.get('indicador_logro')
-    competencia_especifica = request.form.get('competencia_especifica')
-    
-    actividad_inicio = request.form.get('actividad_inicio')
-    actividad_desarrollo = request.form.get('actividad_desarrollo')
-    actividad_cierre = request.form.get('actividad_cierre')
-    
-    # Recursos divididos por momento
-    recursos_inicio = request.form.get('recursos_inicio')
-    recursos_desarrollo = request.form.get('recursos_desarrollo')
-    recursos_cierre = request.form.get('recursos_cierre')
-    
-    recuperacion_pedagogica = request.form.get('recuperacion_pedagogica')
-
-    try:
-        conn = get_db_connection()
-        is_postgres = DATABASE_URL is not None
-        
-        if is_postgres:
-            cur = conn.conn.cursor()
-            cur.execute('''
-                INSERT INTO planificaciones_diarias 
-                (docente, area, grado_seccion, fecha, estrategias, intencion_pedagogica, indicador_logro, competencia_especifica, actividad_inicio, actividad_desarrollo, actividad_cierre, recursos_inicio, recursos_desarrollo, recursos_cierre, recuperacion_pedagogica)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-            ''', (docente, area, grado_seccion, fecha, estrategias, intencion_pedagogica, indicador_logro, competencia_especifica, actividad_inicio, actividad_desarrollo, actividad_cierre, recursos_inicio, recursos_desarrollo, recursos_cierre, recuperacion_pedagogica))
-            conn.conn.commit()
-            cur.close()
-        else:
-            cur = conn.cursor()
-            cur.execute('''
-                INSERT INTO planificaciones_diarias 
-                (docente, area, grado_seccion, fecha, estrategias, intencion_pedagogica, indicador_logro, competencia_especifica, actividad_inicio, actividad_desarrollo, actividad_cierre, recursos_inicio, recursos_desarrollo, recursos_cierre, recuperacion_pedagogica)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (docente, area, grado_seccion, fecha, estrategias, intencion_pedagogica, indicador_logro, competencia_especifica, actividad_inicio, actividad_desarrollo, actividad_cierre, recursos_inicio, recursos_desarrollo, recursos_cierre, recuperacion_pedagogica))
-            conn.commit()
-            cur.close()
-            
-        conn.close()
-        flash("Planificación guardada correctamente.", "success")
-    except Exception as e:
-        print("Error al guardar planificación:", e)
-        flash("Ocurrió un error al guardar la planificación.", "danger")
-
-    return redirect(url_for('ver_planificaciones_diarias'))
 
 from flask import render_template, request, session, redirect, url_for
-
-
 
 
 # --- RUTA PARA GENERAR EL PDF CON FECHA FORMATEADA (DD-MM-YYYY) ---
