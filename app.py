@@ -2603,26 +2603,26 @@ def guardar_planificacion_diaria():
     if 'usuario' not in session and 'nombre_completo' not in session:
         return redirect(url_for('login'))
 
-    # Obtención de datos del encabezado (prioriza la sesión o el valor enviado)
-    docente = session.get('nombre_completo', request.form.get('docente'))
-    area = session.get('area', request.form.get('area'))
-    grado_seccion = session.get('curso_asignado', request.form.get('grado_seccion'))
+    # 1. Datos del encabezado (Priorizamos primero el valor enviado en el formulario HTML)
+    docente = request.form.get('docente') or session.get('nombre_completo', '')
+    area = request.form.get('area') or session.get('area_especializada') or session.get('area', '')
+    grado_seccion = request.form.get('grado_seccion') or session.get('curso_asignado', '')
     fecha = request.form.get('fecha')
     
-    # Campos específicos de la planificación diaria
+    # 2. Campos de texto del esquema
     estrategias = request.form.get('estrategias') or ''
     intencion_pedagogica = request.form.get('intencion_pedagogica') or ''
     indicador_logro = request.form.get('indicador_logro') or ''
     competencia_especifica = request.form.get('competencia_especifica') or ''
     
-    # Momentos de la clase (Inicio, Desarrollo, Cierre)
-    actividades_inicio = request.form.get('actividades_inicio') or ''
+    # 3. Momentos de la clase (Coincidiendo exactamente con name="..." de tu HTML)
+    actividades_inicio = request.form.get('actividad_inicio') or ''
     recursos_inicio = request.form.get('recursos_inicio') or ''
     
-    actividades_desarrollo = request.form.get('actividades_desarrollo') or ''
+    actividades_desarrollo = request.form.get('actividad_desarrollo') or ''
     recursos_desarrollo = request.form.get('recursos_desarrollo') or ''
     
-    actividades_cierre = request.form.get('actividades_cierre') or ''
+    actividades_cierre = request.form.get('actividad_cierre') or ''
     recursos_cierre = request.form.get('recursos_cierre') or ''
     
     recuperacion_pedagogica = request.form.get('recuperacion_pedagogica') or ''
@@ -2652,13 +2652,13 @@ def guardar_planificacion_diaria():
         cursor.close()
         flash('¡Planificación diaria guardada con éxito!', 'success')
     except Exception as e:
-        print("❌ Error al guardar la planificación diaria:", e)
+        print("❌ Error en la base de datos al guardar la planificación diaria:", e)
         flash('Error al guardar el registro diario en la base de datos.', 'danger')
     finally:
         if conn:
             conn.close()
 
-    return redirect(url_for('mis_planificaciones'))
+    return redirect(url_for('vista_planificacion_diaria'))
 
 from io import BytesIO
 from xhtml2pdf import pisa
