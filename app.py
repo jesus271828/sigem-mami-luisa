@@ -2575,19 +2575,7 @@ def menu_planificacion():
 # ==============================================================================
 # 1. RUTA PARA CARGAR Y VISUALIZAR LA PLANIFICACIÓN DIARIA
 # ==============================================================================
-@app.route('/planificacion_diaria', methods=['GET', 'POST'])
-def planificacion_diaria():
-    if 'nombre_completo' not in session:
-        return redirect(url_for('login'))
-    
-    docente_nombre = session.get('nombre_completo', '')
-    grado_curso = session.get('curso_asignado', '')
 
-    return render_template(
-        'planificacion_diaria.html', 
-        docente=docente_nombre, 
-        grado_seccion=grado_curso
-    )
 
 # ==============================================================================
 # 2. RUTA PARA GUARDAR LA PLANIFICACIÓN DIARIA EN LA BASE DE DATOS
