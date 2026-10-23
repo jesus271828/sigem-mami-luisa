@@ -2575,7 +2575,39 @@ def menu_planificacion():
 # ==============================================================================
 # 1. RUTA PARA CARGAR Y VISUALIZAR LA PLANIFICACIÓN DIARIA
 # ==============================================================================
+@app.route('/planificacion_diaria', methods=['GET'])
+def vista_planificacion_diaria():
+    if 'usuario' not in session and 'nombre_completo' not in session:
+        return redirect(url_for('login'))
+    
+    # Imprimimos la sesión en consola para referencia interna en Render
+    print("SESSION ACTUAL:", dict(session))
+    
+    nombre_docente = session.get('nombre_completo', session.get('usuario', ''))
+    
+    # Buscamos el área en cualquiera de las posibles llaves de la sesión
+    area_asignada = (
+        session.get('area') or 
+        session.get('materia') or 
+        session.get('especialidad') or 
+        session.get('curso_asignado') or # Por si acaso el área estaba guardada aquí
+        'Informática'                  # Valor de respaldo si todo lo demás falla
+    )
+    
+    # Buscamos el grado en cualquiera de las posibles llaves
+    grado_actual = (
+        session.get('grado_seccion') or 
+        session.get('grado') or 
+        session.get('curso') or 
+        'Primer Grado A'
+    )
 
+    return render_template(
+        'planificacion_diaria.html', 
+        docente=nombre_docente,
+        area=area_asignada,
+        grado_seccion=grado_actual
+    )
 
 # ==============================================================================
 # 2. RUTA PARA GUARDAR LA PLANIFICACIÓN DIARIA EN LA BASE DE DATOS
