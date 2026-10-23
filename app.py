@@ -2572,21 +2572,25 @@ def menu_planificacion():
     return render_template('menu_planificacion.html')
 
 
-# 2. RUTA PARA CREAR O EDITAR LA UNIDAD DE APRENDIZAJE
-@app.route('/planificacion_diaria')
-def planificacion_diaria():
+# ==============================================================================
+# 1. RUTA PARA CARGAR Y VISUALIZAR LA PLANIFICACIÓN DIARIA
+# ==============================================================================
+@app.route('/planificacion_diaria', methods=['GET'])
+def vista_planificacion_diaria():
+    # Verificar que haya una sesión activa
     if 'usuario' not in session and 'nombre_completo' not in session:
         return redirect(url_for('login'))
     
-    # Obtenemos el grado de la sesión de manera segura
+    # 1. Obtenemos el grado/sección de la sesión de manera segura
     grado_actual = session.get('curso_asignado', session.get('grado_seccion', 'Primer Grado'))
-    if not grado_actual or grado_actual == 'None':
+    if not grado_actual or str(grado_actual).strip() in ['None', '']:
         grado_actual = 'Primer Grado'
     
-    # Obtenemos el área y el nombre completo desde la sesión
+    # 2. Obtenemos el área asignada y el nombre del docente desde la sesión
     area_asignada = session.get('area', '')
     nombre_docente = session.get('nombre_completo', '')
     
+    # Renderizamos la plantilla pasando las variables autocompletadas
     return render_template(
         'planificacion_diaria.html', 
         docente=nombre_docente,
@@ -2594,143 +2598,69 @@ def planificacion_diaria():
         grado_seccion=grado_actual
     )
 
-@app.route('/mis_planificaciones')
-def mis_planificaciones():
-    # Verificar sesión activa
+
+# ==============================================================================
+# 2. RUTA PARA GUARDAR LA PLANIFICACIÓN DIARIA EN LA BASE DE DATOS
+# ==============================================================================
+@app.route('/guardar_planificacion_diaria', methods=['POST'])
+def guardar_planificacion_diaria():
     if 'usuario' not in session and 'nombre_completo' not in session:
         return redirect(url_for('login'))
 
-    usuario_actual = session.get('nombre_completo')
-    rol_actual = session.get('rol')
+    # Obtención de datos del encabezado (prioriza la sesión o el valor enviado)
+    docente = session.get('nombre_completo', request.form.get('docente'))
+    area = session.get('area', request.form.get('area'))
+    grado_seccion = session.get('curso_asignado', request.form.get('grado_seccion'))
+    fecha = request.form.get('fecha')
+    
+    # Campos específicos de la planificación diaria
+    estrategias = request.form.get('estrategias') or ''
+    intencion_pedagogica = request.form.get('intencion_pedagogica') or ''
+    indicador_logro = request.form.get('indicador_logro') or ''
+    competencia_especifica = request.form.get('competencia_especifica') or ''
+    
+    # Momentos de la clase (Inicio, Desarrollo, Cierre)
+    actividades_inicio = request.form.get('actividades_inicio') or ''
+    recursos_inicio = request.form.get('recursos_inicio') or ''
+    
+    actividades_desarrollo = request.form.get('actividades_desarrollo') or ''
+    recursos_desarrollo = request.form.get('recursos_desarrollo') or ''
+    
+    actividades_cierre = request.form.get('actividades_cierre') or ''
+    recursos_cierre = request.form.get('recursos_cierre') or ''
+    
+    recuperacion_pedagogica = request.form.get('recuperacion_pedagogica') or ''
 
     conn = None
-    planificaciones = []
-
-    try:
-        conn = psycopg2.connect(DATABASE_URL)
-        cursor = PostgresCursorWrapper(conn)
-
-        # Si el usuario es de oficina o admin, ve todas las planificaciones
-        # Si es docente, ve únicamente las creadas por él
-        if rol_actual in ['admin', 'oficina']:
-            query = 'SELECT * FROM planificaciones ORDER BY id DESC'
-            cursor.execute(query)
-        else:
-            query = 'SELECT * FROM planificaciones WHERE docente = %s ORDER BY id DESC'
-            cursor.execute(query, (usuario_actual,))
-
-        planificaciones = cursor.fetchall()
-        cursor.close()
-    except Exception as e:
-        print("❌ Error obteniendo planificaciones:", e)
-        planificaciones = []
-    finally:
-        if conn:
-            conn.close()
-
-    return render_template('mis_planificaciones.html', planificaciones=planificaciones)
-
-@app.route('/guardar_planificacion', methods=['POST'])
-def guardar_planificacion():
-    if 'usuario' not in session and 'nombre_completo' not in session:
-        return redirect(url_for('login'))
-
-    docente = session.get('nombre_completo')
-    
-    # 1. Datos de Identificación y Configuración
-    grado = request.form.get('grado')
-    modalidad = request.form.get('modalidad')
-    areas_art = request.form.get('areas_art')
-    ejes = request.form.get('ejes')
-    duracion = request.form.get('duracion')
-    f_inicio = request.form.get('f_inicio') or None
-    f_cierre = request.form.get('f_cierre') or None
-    valor_mes = request.form.get('valor_mes')
-    efemerides = request.form.get('efemerides')
-    situacion = request.form.get('situacion')
-    
-    mes = request.form.get('mes') or valor_mes or "General"
-    
-    areas_list = request.form.getlist('areas')
-    areas = ", ".join(areas_list) if areas_list else ""
-    area = areas_list[0] if areas_list else (request.form.get('area') or "General")
-
-    estrategias_list = request.form.getlist('estrategias')
-    estrategias = ", ".join(estrategias_list) if estrategias_list else ""
-    
-    tecnicas_list = request.form.getlist('tecnicas')
-    tecnicas = ", ".join(tecnicas_list) if tecnicas_list else ""
-
-    # 2. Competencias
-    comp_comunicativa = request.form.get('comp_comunicativa') or ''
-    comp_pensamiento = request.form.get('comp_pensamiento') or ''
-    comp_etica = request.form.get('comp_etica') or ''
-    
-    competencias_fundamentales_texto = f"Comunicativa: {comp_comunicativa}\nPensamiento: {comp_pensamiento}\nÉtica: {comp_etica}".strip()
-    comp_unificadas = competencias_fundamentales_texto
-    
-    # 3. Contenidos
-    contenidos_conceptos = request.form.get('contenidos_conceptos') or ''
-    contenidos_procedimientos = request.form.get('contenidos_procedimientos') or ''
-    contenidos_actitudes = request.form.get('contenidos_actitudes') or ''
-    
-    contenidos_unificados = f"Conceptos: {contenidos_conceptos}\nProcedimientos: {contenidos_procedimientos}\nActitudes: {contenidos_actitudes}".strip()
-    
-    # 4. Indicadores, Actividades y Recursos
-    indicadores = request.form.get('indicadores')
-    actividades_ensenanza = request.form.get('actividades_ensenanza') or ''
-    actividades_aprendizaje = request.form.get('actividades_aprendizaje') or ''
-    actividades_evaluacion = request.form.get('actividades_evaluacion') or ''
-    medios_recursos = request.form.get('medios_recursos')
-    
-    actividades_unificadas = f"Enseñanza: {actividades_ensenanza}\nAprendizaje: {actividades_aprendizaje}\nEvaluación: {actividades_evaluacion}".strip()
-    
-    # 5. Evaluación
-    evaluacion_criterios = request.form.get('evaluacion_criterios') or ''
-    evaluacion_tecnicas = request.form.get('evaluacion_tecnicas') or ''
-    evaluacion_unificada = f"Criterios: {evaluacion_criterios}\nTécnicas: {evaluacion_tecnicas}".strip()
-
     try:
         conn = psycopg2.connect(DATABASE_URL)
         cursor = PostgresCursorWrapper(conn)
         
-        # AQUÍ CAMBIAMOS 'área' por 'area' SIN TILDE para que coincida con Supabase
         query = '''
-            INSERT INTO planificaciones 
+            INSERT INTO planificaciones_diarias 
             (
-                docente, mes, area, grado, modalidad, areas_art, ejes, duracion, f_inicio, f_cierre, 
-                valor_mes, efemerides, situacion, situacion_aprendizaje,
-                competencias_fundamentales, comp_comunicativa, comp_pensamiento, comp_etica, competencias, competencias_especificas,
-                contenidos_conceptos, contenidos_procedimientos, contenidos_actitudes, contenidos, contenidos_conceptuales, contenidos_procedimentales, contenidos_actitudinales,
-                indicadores, actividades_ensenanza, actividades_aprendizaje, actividades_evaluacion, actividades,
-                medios_recursos, recursos, evaluacion_criterios, evaluacion_tecnicas, evaluacion,
-                areas, estrategias, tecnicas, grado_seccion
+                docente, area, grado_seccion, fecha, estrategias, intencion_pedagogica, 
+                indicador_logro, competencia_especifica, actividades_inicio, recursos_inicio, 
+                actividades_desarrollo, recursos_desarrollo, actividades_cierre, recursos_cierre, 
+                recuperacion_pedagogica
             )
-            VALUES (
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
-                ?, ?, ?, ?,
-                ?, ?, ?, ?, ?, ?,
-                ?, ?, ?, ?, ?, ?, ?,
-                ?, ?, ?, ?, ?,
-                ?, ?, ?, ?, ?,
-                ?, ?, ?, ?
-            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         '''
         cursor.execute(query, (
-            docente, mes, area, grado, modalidad, areas_art, ejes, duracion, f_inicio, f_cierre,
-            valor_mes, efemerides, situacion, situacion,
-            competencias_fundamentales_texto, comp_comunicativa, comp_pensamiento, comp_etica, comp_unificadas, comp_unificadas,
-            contenidos_conceptos, contenidos_procedimientos, contenidos_actitudes, contenidos_unificados, contenidos_conceptos, contenidos_procedimientos, contenidos_actitudes,
-            indicadores, actividades_ensenanza, actividades_aprendizaje, actividades_evaluacion, actividades_unificadas,
-            medios_recursos, medios_recursos, evaluacion_criterios, evaluacion_tecnicas, evaluacion_unificada,
-            areas, estrategias, tecnicas, grado
+            docente, area, grado_seccion, fecha, estrategias, intencion_pedagogica,
+            indicador_logro, competencia_especifica, actividades_inicio, recursos_inicio,
+            actividades_desarrollo, recursos_desarrollo, actividades_cierre, recursos_cierre,
+            recuperacion_pedagogica
         ))
         conn.commit()
         cursor.close()
-        flash('¡Planificación guardada con éxito!', 'success')
+        flash('¡Planificación diaria guardada con éxito!', 'success')
     except Exception as e:
-        print("❌ Error al guardar planificación:", e)
-        flash('Error al guardar el registro en la base de datos.', 'danger')
+        print("❌ Error al guardar la planificación diaria:", e)
+        flash('Error al guardar el registro diario en la base de datos.', 'danger')
+    finally:
+        if conn:
+            conn.close()
 
     return redirect(url_for('mis_planificaciones'))
 
