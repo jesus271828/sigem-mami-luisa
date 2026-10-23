@@ -2580,26 +2580,22 @@ def vista_planificacion_diaria():
     if 'usuario' not in session and 'nombre_completo' not in session:
         return redirect(url_for('login'))
     
-    # Imprimimos la sesión en consola para referencia interna en Render
-    print("SESSION ACTUAL:", dict(session))
-    
     nombre_docente = session.get('nombre_completo', session.get('usuario', ''))
     
-    # Buscamos el área en cualquiera de las posibles llaves de la sesión
+    # Rescatamos el área priorizando la columna 'area_especializada' de tu tabla de Supabase
     area_asignada = (
+        session.get('area_especializada') or 
         session.get('area') or 
         session.get('materia') or 
-        session.get('especialidad') or 
-        session.get('curso_asignado') or # Por si acaso el área estaba guardada aquí
-        'Informática'                  # Valor de respaldo si todo lo demás falla
+        ''
     )
     
-    # Buscamos el grado en cualquiera de las posibles llaves
+    # Rescatamos el curso asignado (si lo tiene)
     grado_actual = (
+        session.get('curso_asignado') or 
         session.get('grado_seccion') or 
         session.get('grado') or 
-        session.get('curso') or 
-        'Primer Grado A'
+        ''
     )
 
     return render_template(
