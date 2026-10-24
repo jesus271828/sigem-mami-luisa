@@ -122,20 +122,17 @@
                                     <input type="text" name="docente" class="form-control input-line d-inline-block w-75 fw-bold" value="{{ docente or session.get('nombre_completo', '') }}" readonly>
                                 </div>
                                 
-                                <!-- ÁREA (Si es maestro de área se muestra fijo; si es maestro fijo muestra sus materias en una lista) -->
+                                <!-- ÁREA (Fijo si es maestro de área, lista desplegable si es maestro fijo) -->
                                 <div class="mb-1">
                                     <label class="fw-bold">Área:</label>
-                                    {% if session.get('rol') in ['maestro_area', 'área_maestro', 'area_maestro'] %}
-                                        <input type="text" name="area" id="select_area" class="form-control input-line d-inline-block w-80 fw-bold" value="{{ area_asignada or area or '' }}" readonly placeholder="Ej. Informática">
+                                    {% set rol_check = rol_usuario | default(session.get('rol', '')) | lower %}
+                                    {% if 'area' in rol_check or 'área' in rol_check %}
+                                        <input type="text" name="area" id="select_area" class="form-control input-line d-inline-block w-80 fw-bold" value="{{ area_asignada or '' }}" readonly>
                                     {% else %}
                                         <select name="area" id="select_area" class="form-select input-line d-inline-block w-80 fw-bold" required>
                                             <option value="" disabled selected>Seleccione el área...</option>
                                             {% if area_asignada %}
                                                 {% for materia in area_asignada.split(',') %}
-                                                    <option value="{{ materia.strip() }}">{{ materia.strip() }}</option>
-                                                {% endfor %}
-                                            {% elif area %}
-                                                {% for materia in area.split(',') %}
                                                     <option value="{{ materia.strip() }}">{{ materia.strip() }}</option>
                                                 {% endfor %}
                                             {% endif %}
@@ -144,23 +141,23 @@
                                 </div>
 
                                 <div class="row">
-                                    <!-- GRADO Y SECCIÓN (Si es maestro fijo muestra su curso cargado fijo; si es maestro de área muestra lista desplegable) -->
+                                    <!-- GRADO Y SECCIÓN (Fijo si es maestro fijo, lista desplegable si es maestro de área) -->
                                     <div class="col-md-7 mb-1">
                                         <label class="fw-bold">Grado y Sección:</label>
-                                        {% if session.get('rol') == 'maestro' %}
+                                        {% set rol_check = rol_usuario | default(session.get('rol', '')) | lower %}
+                                        {% if rol_check == 'maestro' %}
                                             <input type="text" name="grado_seccion" id="select_grado_seccion" class="form-control input-line d-inline-block w-60 fw-bold" value="{{ grado_seccion or '' }}" readonly>
                                         {% else %}
                                             <select name="grado_seccion" id="select_grado_seccion" class="form-select input-line d-inline-block w-60 fw-bold" required>
                                                 <option value="" disabled {% if not grado_seccion %}selected{% endif %}>Seleccione el curso...</option>
-                                                <option value="Primer Grado A" {% if grado_seccion == 'Primer Grado A' %}selected{% endif %}>Primer Grado A</option>
-                                                <option value="Primer Grado B" {% if grado_seccion == 'Primer Grado B' %}selected{% endif %}>Primer Grado B</option>
-                                                <option value="Segundo Grado A" {% if grado_seccion == 'Segundo Grado A' %}selected{% endif %}>Segundo Grado A</option>
-                                                <option value="Segundo Grado B" {% if grado_seccion == 'Segundo Grado B' %}selected{% endif %}>Segundo Grado B</option>
-                                                <option value="Tercer Grado A" {% if grado_seccion == 'Tercer Grado A' %}selected{% endif %}>Tercer Grado A</option>
-                                                <option value="Tercer Grado B" {% if grado_seccion == 'Tercer Grado B' %}selected{% endif %}>Tercer Grado B</option>
-                                                <option value="Cuarto Grado A" {% if grado_seccion == 'Cuarto Grado A' %}selected{% endif %}>Cuarto Grado A</option>
-                                                <option value="Quinto Grado A" {% if grado_seccion == 'Quinto Grado A' %}selected{% endif %}>Quinto Grado A</option>
-                                                <option value="Sexto Grado A" {% if grado_seccion == 'Sexto Grado A' %}selected{% endif %}>Sexto Grado A</option>
+                                                <option value="Párvulos" {% if grado_seccion == 'Párvulos' %}selected{% endif %}>Párvulos</option>
+                                                <option value="Pre-Primario" {% if grado_seccion == 'Pre-Primario' %}selected{% endif %}>Pre-Primario</option>
+                                                <option value="Primero" {% if grado_seccion == 'Primero' %}selected{% endif %}>Primero</option>
+                                                <option value="Segundo" {% if grado_seccion == 'Segundo' %}selected{% endif %}>Segundo</option>
+                                                <option value="Tercero" {% if grado_seccion == 'Tercero' %}selected{% endif %}>Tercero</option>
+                                                <option value="Cuarto" {% if grado_seccion == 'Cuarto' %}selected{% endif %}>Cuarto</option>
+                                                <option value="Quinto" {% if grado_seccion == 'Quinto' %}selected{% endif %}>Quinto</option>
+                                                <option value="Sexto" {% if grado_seccion == 'Sexto' %}selected{% endif %}>Sexto</option>
                                             </select>
                                         {% endif %}
                                     </div>

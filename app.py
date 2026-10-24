@@ -3099,12 +3099,10 @@ def eliminar_planificacion(id):
 
 @app.route('/planificacion_diaria', methods=['GET', 'POST'])
 def planificacion_diaria():
-    # Verificamos si el usuario ha iniciado sesión comprobando las claves comunes
     if 'id' not in session and 'user_id' not in session and 'nombre_completo' not in session:
         flash('Por favor, inicie sesión para acceder a la planificación.', 'danger')
-        return redirect(url_for('login')) # O cámbialo a tu ruta de inicio de sesión si es diferente
+        return redirect(url_for('login'))
         
-    # Obtenemos el ID del usuario activo de la sesión
     user_id = session.get('id') or session.get('user_id')
     
     conexion = get_db_connection()
@@ -3113,13 +3111,11 @@ def planificacion_diaria():
     docente_actual = None
 
     try:
-        # Consultamos los datos reales del usuario logueado en la base de datos
         if is_postgres:
             cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             if user_id:
                 cur.execute("SELECT * FROM usuarios WHERE id = %s", (user_id,))
             else:
-                # Fallback por nombre si el ID no está en sesión
                 cur.execute("SELECT * FROM usuarios WHERE nombre_completo = %s", (session.get('nombre_completo'),))
             docente_actual = cur.fetchone()
             cur.close()
@@ -3137,9 +3133,12 @@ def planificacion_diaria():
     finally:
         conexion.close()
 
-    # Si encontramos al docente en la base de datos, usamos sus datos reales; si no, de la sesión
     nombre_docente = docente_actual['nombre_completo'] if docente_actual else session.get('nombre_completo', '')
-    rol_actual = docente_actual['rol'] if docente_actual else session.get('rol', 'maestro_area')
+    
+    # Normalizamos el rol para evitar conflictos entre 'area_maestro', 'área_maestro' y 'maestro_area'
+    rol_bruto = docente_actual['rol'] if docente_actual else session.get('rol', 'maestro')
+    rol_actual = rol_bruto.strip().lower()
+
     area_asignada = docente_actual['area_especializada'] if docente_actual else session.get('area_especializada', '')
     curso_asignado = docente_actual['curso_asignado'] if docente_actual else session.get('curso_asignado', '')
 
