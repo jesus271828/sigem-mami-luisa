@@ -3099,21 +3099,50 @@ def eliminar_planificacion(id):
 
 @app.route('/planificacion_diaria', methods=['GET', 'POST'])
 def planificacion_diaria():
-    rol_actual = session.get('rol', 'maestro_area') 
-    materias_docente = ["Lengua Española", "Ciencias Sociales"]
+    # Verificamos que el usuario haya iniciado sesión
+    if 'user_id' not in session and 'id' not in session:
+        flash('Por favor, inicie sesión primero.', 'danger')
+        return redirect(url_for('login'))
+        
+    user_id = session.get('user_id') or session.get('id')
     
-    # Esto evita que la página muera con Error 500 si la base de datos falla
+    conexion = get_db_connection()
+    is_postgres = DATABASE_URL is not None
+    
+    docente_actual = None
+
     try:
-        planificaciones = Planificacion.query.all()
+        # Consultamos los datos reales del usuario logueado en la base de datos
+        if is_postgres:
+            cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute("SELECT * FROM usuarios WHERE id = %s", (user_id,))
+            docente_actual = cur.fetchone()
+            cur.close()
+        else:
+            conexion.row_factory = sqlite3.Row
+            cursor = conexion.execute("SELECT * FROM usuarios WHERE id = ?", (user_id,))
+            docente_actual = cursor.fetchone()
+            
     except Exception as e:
-        print("Error al consultar:", e)
-        planificaciones = []
+        print("--- ERROR AL CONSULTAR DOCENTE EN PLANIFICACIÓN:", e)
+        docente_actual = None
+    finally:
+        conexion.close()
+
+    # Si por alguna razón no se encuentra el usuario, usamos valores por defecto
+    rol_actual = docente_actual['rol'] if docente_actual else session.get('rol', 'maestro_area')
+    nombre_docente = docente_actual['nombre_completo'] if docente_actual else session.get('nombre_completo', '')
+    
+    # Extraemos el área especializada o curso asignado directamente de la BD
+    area_asignada = docente_actual['area_especializada'] if docente_actual else ''
+    curso_asignado = docente_actual['curso_asignado'] if docente_actual else ''
 
     return render_template(
         'planificacion_diaria.html', 
-        planificaciones=planificaciones,
+        docente=nombre_docente,
         rol_usuario=rol_actual,
-        materias_docente=materias_docente
+        area_asignada=area_asignada,
+        grado_seccion=curso_asignado
     )
 
 
