@@ -3099,12 +3099,13 @@ def eliminar_planificacion(id):
 
 @app.route('/planificacion_diaria', methods=['GET', 'POST'])
 def planificacion_diaria():
-    # Verificamos que el usuario haya iniciado sesión
-    if 'user_id' not in session and 'id' not in session:
-        flash('Por favor, inicie sesión primero.', 'danger')
-        return redirect(url_for('login'))
+    # Verificamos si el usuario ha iniciado sesión comprobando las claves comunes
+    if 'id' not in session and 'user_id' not in session and 'nombre_completo' not in session:
+        flash('Por favor, inicie sesión para acceder a la planificación.', 'danger')
+        return redirect(url_for('login')) # O cámbialo a tu ruta de inicio de sesión si es diferente
         
-    user_id = session.get('user_id') or session.get('id')
+    # Obtenemos el ID del usuario activo de la sesión
+    user_id = session.get('id') or session.get('user_id')
     
     conexion = get_db_connection()
     is_postgres = DATABASE_URL is not None
@@ -3115,12 +3116,19 @@ def planificacion_diaria():
         # Consultamos los datos reales del usuario logueado en la base de datos
         if is_postgres:
             cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-            cur.execute("SELECT * FROM usuarios WHERE id = %s", (user_id,))
+            if user_id:
+                cur.execute("SELECT * FROM usuarios WHERE id = %s", (user_id,))
+            else:
+                # Fallback por nombre si el ID no está en sesión
+                cur.execute("SELECT * FROM usuarios WHERE nombre_completo = %s", (session.get('nombre_completo'),))
             docente_actual = cur.fetchone()
             cur.close()
         else:
             conexion.row_factory = sqlite3.Row
-            cursor = conexion.execute("SELECT * FROM usuarios WHERE id = ?", (user_id,))
+            if user_id:
+                cursor = conexion.execute("SELECT * FROM usuarios WHERE id = ?", (user_id,))
+            else:
+                cursor = conexion.execute("SELECT * FROM usuarios WHERE nombre_completo = ?", (session.get('nombre_completo'),))
             docente_actual = cursor.fetchone()
             
     except Exception as e:
@@ -3129,13 +3137,11 @@ def planificacion_diaria():
     finally:
         conexion.close()
 
-    # Si por alguna razón no se encuentra el usuario, usamos valores por defecto
-    rol_actual = docente_actual['rol'] if docente_actual else session.get('rol', 'maestro_area')
+    # Si encontramos al docente en la base de datos, usamos sus datos reales; si no, de la sesión
     nombre_docente = docente_actual['nombre_completo'] if docente_actual else session.get('nombre_completo', '')
-    
-    # Extraemos el área especializada o curso asignado directamente de la BD
-    area_asignada = docente_actual['area_especializada'] if docente_actual else ''
-    curso_asignado = docente_actual['curso_asignado'] if docente_actual else ''
+    rol_actual = docente_actual['rol'] if docente_actual else session.get('rol', 'maestro_area')
+    area_asignada = docente_actual['area_especializada'] if docente_actual else session.get('area_especializada', '')
+    curso_asignado = docente_actual['curso_asignado'] if docente_actual else session.get('curso_asignado', '')
 
     return render_template(
         'planificacion_diaria.html', 
