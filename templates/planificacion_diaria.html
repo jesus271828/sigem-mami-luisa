@@ -116,50 +116,30 @@
                         <!-- Cabecera del Esquema -->
                         <div class="row mb-2 align-items-center">
                             <div class="col-md-7">
-                                <!-- DOCENTE (Toma automáticamente el nombre completo) -->
+                                <!-- DOCENTE -->
                                 <div class="mb-1">
                                     <label class="fw-bold">Docente:</label>
                                     <input type="text" name="docente" class="form-control input-line d-inline-block w-75 fw-bold" value="{{ docente or session.get('nombre_completo', '') }}" readonly>
                                 </div>
                                 
-                                <!-- ÁREA (Fijo si es maestro de área, lista desplegable si es maestro fijo) -->
+                                <!-- ÁREA (Lista desplegable con las materias asignadas) -->
                                 <div class="mb-1">
                                     <label class="fw-bold">Área:</label>
-                                    {% set rol_check = rol_usuario | default(session.get('rol', '')) | lower %}
-                                    {% if 'area' in rol_check or 'área' in rol_check %}
-                                        <input type="text" name="area" id="select_area" class="form-control input-line d-inline-block w-80 fw-bold" value="{{ area_asignada or '' }}" readonly>
-                                    {% else %}
-                                        <select name="area" id="select_area" class="form-select input-line d-inline-block w-80 fw-bold" required>
-                                            <option value="" disabled selected>Seleccione el área...</option>
-                                            {% if area_asignada %}
-                                                {% for materia in area_asignada.split(',') %}
-                                                    <option value="{{ materia.strip() }}">{{ materia.strip() }}</option>
-                                                {% endfor %}
-                                            {% endif %}
-                                        </select>
-                                    {% endif %}
+                                    <select name="area" id="select_area" class="form-select input-line d-inline-block w-80 fw-bold" required>
+                                        <option value="" disabled selected>Seleccione el área...</option>
+                                        {% if area_asignada %}
+                                            {% for materia in area_asignada.split(',') %}
+                                                <option value="{{ materia.strip() }}">{{ materia.strip() }}</option>
+                                            {% endfor %}
+                                        {% endif %}
+                                    </select>
                                 </div>
 
                                 <div class="row">
-                                    <!-- GRADO Y SECCIÓN (Fijo si es maestro fijo, lista desplegable si es maestro de área) -->
+                                    <!-- GRADO Y SECCIÓN (Fijo y bloqueado de solo lectura) -->
                                     <div class="col-md-7 mb-1">
                                         <label class="fw-bold">Grado y Sección:</label>
-                                        {% set rol_check = rol_usuario | default(session.get('rol', '')) | lower %}
-                                        {% if rol_check == 'maestro' %}
-                                            <input type="text" name="grado_seccion" id="select_grado_seccion" class="form-control input-line d-inline-block w-60 fw-bold" value="{{ grado_seccion or '' }}" readonly>
-                                        {% else %}
-                                            <select name="grado_seccion" id="select_grado_seccion" class="form-select input-line d-inline-block w-60 fw-bold" required>
-                                                <option value="" disabled {% if not grado_seccion %}selected{% endif %}>Seleccione el curso...</option>
-                                                <option value="Párvulos" {% if grado_seccion == 'Párvulos' %}selected{% endif %}>Párvulos</option>
-                                                <option value="Pre-Primario" {% if grado_seccion == 'Pre-Primario' %}selected{% endif %}>Pre-Primario</option>
-                                                <option value="Primero" {% if grado_seccion == 'Primero' %}selected{% endif %}>Primero</option>
-                                                <option value="Segundo" {% if grado_seccion == 'Segundo' %}selected{% endif %}>Segundo</option>
-                                                <option value="Tercero" {% if grado_seccion == 'Tercero' %}selected{% endif %}>Tercero</option>
-                                                <option value="Cuarto" {% if grado_seccion == 'Cuarto' %}selected{% endif %}>Cuarto</option>
-                                                <option value="Quinto" {% if grado_seccion == 'Quinto' %}selected{% endif %}>Quinto</option>
-                                                <option value="Sexto" {% if grado_seccion == 'Sexto' %}selected{% endif %}>Sexto</option>
-                                            </select>
-                                        {% endif %}
+                                        <input type="text" name="grado_seccion" id="select_grado_seccion" class="form-control input-line d-inline-block w-60 fw-bold" value="{{ grado_seccion or '' }}" readonly>
                                     </div>
                                     <div class="col-md-5 mb-1">
                                         <label class="fw-bold">Fecha:</label>
@@ -249,9 +229,6 @@
                         <div class="text-center mt-3 d-print-none">
                             <button type="submit" class="btn btn-primary px-4 py-2 fw-bold">
                                 <i class="fas fa-save me-2"></i>Guardar Planificación
-                            </button>
-                            <button type="button" onclick="window.print()" class="btn btn-secondary px-4 py-2 fw-bold ms-2">
-                                <i class="fas fa-print me-2"></i>Imprimir / Guardar PDF (Horizontal)
                             </button>
                         </div>
                     </form>
