@@ -164,10 +164,8 @@
             {% if planificaciones %}
             <div class="row mt-4">
                 <div class="col-12 text-center">
-                    <a href="{{ url_for('generar_pdf_filtrado', desde_fecha=desde_fecha, hasta_fecha=hasta_fecha, area=area_seleccionada, grado=grado_seleccionado) }}" 
-                       class="btn btn-danger btn-lg fw-bold shadow px-5 py-3 rounded-pill" 
-                       target="_blank">
-                        <i class="bi bi-file-earmark-pdf-fill me-2"></i> Generar PDF de lo Filtrado ({{ total_registros }} registros)
+                    <a href="{{ url_for('generar_pdf_filtrado', desde_fecha=desde_fecha, hasta_fecha=hasta_fecha, area=area_seleccionada, grado=grado_seleccionado) }}" class="btn btn-danger">
+                       <i class="fas fa-file-pdf me-2"></i>Generar PDF de lo Filtrado
                     </a>
                 </div>
             </div>
