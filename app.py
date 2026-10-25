@@ -2890,152 +2890,103 @@ def ver_planificaciones_diarias():
     )
 
 
-# --- RUTA PARA GENERAR EL PDF FILTRADO ---
-@app.route('/generar_pdf_filtrado', methods=['GET'])
-def generar_pdf_filtrado():
-    desde_fecha = request.args.get('desde_fecha', '').strip()
-    hasta_fecha = request.args.get('hasta_fecha', '').strip()
-    area_seleccionada = request.args.get('area', '').strip()
-    grado_seleccionado = request.args.get('grado', '').strip()
+@app.route('/imprimir_planificacion_diaria_pdf/<int:id>')
+def imprimir_planificacion_diaria_pdf(id):
+    if 'usuario' not in session and 'nombre_completo' not in session:
+        return redirect(url_for('login'))
 
     try:
-        conn = get_db_connection()
-        is_postgres = DATABASE_URL is not None
-        
-        if is_postgres:
-            cur = conn.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-            cur.execute('SELECT * FROM planificaciones_diarias ORDER BY id DESC')
-            rows = cur.fetchall()
-            todos = [dict(r) for r in rows]
-            cur.close()
+        conn = psycopg2.connect(DATABASE_URL)
+        cursor = PostgresCursorWrapper(conn)
+
+        query = 'SELECT * FROM planificaciones_diarias WHERE id = ?'
+        cursor.execute(query, (id,))
+        planificacion = cursor.fetchone()
+        cursor.close()
+
+        print(f"🔍 Datos recuperados para PDF ID {id}: {planificacion}")
+
+        if not planificacion:
+            flash('Planificación no encontrada.', 'danger')
+            return redirect(url_for('ver_planificaciones_diarias'))
+
+        # Renderizar la plantilla HTML pasando el diccionario
+        rendered_html = render_template('pdf_planificacion_diaria.html', plan=planificacion)
+
+        pdf_buffer = io.BytesIO()
+        pisa_status = pisa.CreatePDF(rendered_html, dest=pdf_buffer)
+
+        if pisa_status.err:
+            print("❌ Error de pisa al generar PDF:", pisa_status.err)
+            flash('Error al generar el documento PDF.', 'danger')
+            return redirect(url_for('ver_planificaciones_diarias'))
+
+        pdf_buffer.seek(0)
+        response = make_response(pdf_buffer.read())
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = f'inline; filename=Planificacion_Diaria_{id}.pdf'
+        return response
+
+    except Exception as e:
+        print("❌ Error crítico al generar PDF de planificación diaria:", e)
+        flash('Error al procesar la solicitud del PDF.', 'danger')
+        return redirect(url_for('ver_planificaciones_diarias'))
+
+@app.route('/imprimir_planificaciones_semana_pdf', methods=['GET', 'POST'])
+def imprimir_planificaciones_semana_pdf():
+    if 'usuario' not in session and 'nombre_completo' not in session:
+        return redirect(url_for('login'))
+
+    fecha_inicio = request.args.get('fecha_inicio')
+    fecha_fin = request.args.get('fecha_fin')
+    usuario_actual = session.get('nombre_completo')
+    rol_actual = session.get('rol')
+
+    if not fecha_inicio or not fecha_fin:
+        flash('Por favor seleccione ambas fechas.', 'warning')
+        return redirect(url_for('ver_planificaciones_diarias'))
+
+    # Asegurar que inicio sea menor o igual que fin
+    if fecha_inicio > fecha_fin:
+        fecha_inicio, fecha_fin = fecha_fin, fecha_inicio
+
+    try:
+        conn = psycopg2.connect(DATABASE_URL)
+        cursor = PostgresCursorWrapper(conn)
+
+        if rol_actual in ['admin', 'oficina']:
+            query = 'SELECT * FROM planificaciones_diarias WHERE fecha BETWEEN ? AND ? ORDER BY fecha ASC'
+            cursor.execute(query, (fecha_inicio, fecha_fin))
         else:
-            conn.row_factory = sqlite3.Row
-            cur = conn.cursor()
-            cur.execute('SELECT * FROM planificaciones_diarias ORDER BY id DESC')
-            todos = [dict(r) for r in cur.fetchall()]
-            cur.close()
-            
-        conn.close()
+            query = 'SELECT * FROM planificaciones_diarias WHERE docente = ? AND fecha BETWEEN ? AND ? ORDER BY fecha ASC'
+            cursor.execute(query, (usuario_actual, fecha_inicio, fecha_fin))
 
-        planificaciones = []
-        for row in todos:
-            f_db = limpiar_str(row.get('fecha', '')).strip()
-            area_db = limpiar_str(row.get('area') or row.get('área', '')).strip()
-            grado_db = limpiar_str(row.get('grado_seccion') or row.get('grado', '')).strip()
-
-            cumple_desde = not desde_fecha or f_db >= desde_fecha
-            cumple_hasta = not hasta_fecha or f_db <= hasta_fecha
-            cumple_area = not area_seleccionada or area_db == area_seleccionada
-            cumple_grado = not grado_seleccionado or grado_db == grado_seleccionado
-
-            if cumple_desde and cumple_hasta and cumple_area and cumple_grado:
-                planificaciones.append({
-                    'docente': limpiar_str(row.get('docente', '')),
-                    'area': area_db or 'Informática',
-                    'grado_seccion': grado_db,
-                    'fecha': convertir_a_dd_mm_yyyy(f_db),
-                    'estrategias': limpiar_str(row.get('estrategias', '')),
-                    'intencion_pedagogica': limpiar_str(row.get('intencion_pedagogica') or row.get('intencion', '')),
-                    'indicador_logro': limpiar_str(row.get('indicador_logro', '')),
-                    'competencia_especifica': limpiar_str(row.get('competencia_especifica', '')),
-                    'actividad_inicio': limpiar_str(row.get('actividad_inicio') or row.get('actividades', '')),
-                    'actividad_desarrollo': limpiar_str(row.get('actividad_desarrollo', '')),
-                    'actividad_cierre': limpiar_str(row.get('actividad_cierre', '')),
-                    'recursos': limpiar_str(row.get('recursos') or row.get('recurso', '')),
-                    'recursos_inicio': limpiar_str(row.get('recursos_inicio', '')),
-                    'recursos_desarrollo': limpiar_str(row.get('recursos_desarrollo', '')),
-                    'recursos_cierre': limpiar_str(row.get('recursos_cierre', '')),
-                    'recuperacion_pedagogica': limpiar_str(row.get('recuperacion_pedagogica', ''))
-                })
+        planificaciones = cursor.fetchall()
+        cursor.close()
 
         if not planificaciones:
-            return "<h3 style='font-family:sans-serif; padding:20px;'>No se encontraron planificaciones asociadas a los filtros seleccionados.</h3>", 404
+            flash(f'No hay planificaciones registradas entre {fecha_inicio} y {fecha_fin}.', 'warning')
+            return redirect(url_for('ver_planificaciones_diarias'))
 
-        html_content = render_template('pdf_planificacion_diaria.html', planificaciones=planificaciones)
-        
-        pdf_file = BytesIO()
-        pisaStatus = pisa.CreatePDF(html_content, dest=pdf_file)
-        
-        if pisaStatus.err:
-            return "Error al generar la estructura del PDF", 500
-            
-        pdf_file.seek(0)
-        return send_file(
-            pdf_file, 
-            mimetype='application/pdf', 
-            as_attachment=False, 
-            download_name="Planificaciones_Filtradas.pdf"
-        )
-        
-    except Exception as e:
-        print("Error en PDF filtrado:", e)
-        return f"Error al procesar el PDF: {e}", 500
+        rendered_html = render_template('pdf_reporte_semanal.html', planificaciones=planificaciones, inicio=fecha_inicio, fin=fecha_fin)
 
+        pdf_buffer = io.BytesIO()
+        pisa_status = pisa.CreatePDF(rendered_html, dest=pdf_buffer)
 
-# --- RUTA PARA IMPRIMIR PDF INDIVIDUAL ---
-@app.route('/imprimir_pdf_individual/<int:plan_id>')
-def imprimir_pdf_individual(plan_id):
-    try:
-        conn = get_db_connection()
-        is_postgres = DATABASE_URL is not None
+        if pisa_status.err:
+            flash('Error al generar el PDF semanal.', 'danger')
+            return redirect(url_for('ver_planificaciones_diarias'))
 
-        if is_postgres:
-            cur = conn.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-            cur.execute('SELECT * FROM planificaciones_diarias WHERE id = %s', (plan_id,))
-            row = cur.fetchone()
-            cur.close()
-        else:
-            conn.row_factory = sqlite3.Row
-            cur = conn.cursor()
-            cur.execute('SELECT * FROM planificaciones_diarias WHERE id = ?', (plan_id,))
-            row = cur.fetchone()
-            cur.close()
-
-        conn.close()
-
-        if not row:
-            return "Planificación no encontrada", 404
-
-        row_dict = dict(row)
-
-        planificaciones = [{
-            'docente': limpiar_str(row_dict.get('docente', '')),
-            'area': limpiar_str(row_dict.get('area') or row_dict.get('área', '')) or 'Informática',
-            'grado_seccion': limpiar_str(row_dict.get('grado_seccion') or row_dict.get('grado', '')),
-            'fecha': convertir_a_dd_mm_yyyy(limpiar_str(row_dict.get('fecha', ''))),
-            'estrategias': limpiar_str(row_dict.get('estrategias', '')),
-            'intencion_pedagogica': limpiar_str(row_dict.get('intencion_pedagogica') or row_dict.get('intencion', '')),
-            'indicador_logro': limpiar_str(row_dict.get('indicador_logro', '')),
-            'competencia_especifica': limpiar_str(row_dict.get('competencia_especifica', '')),
-            'actividad_inicio': limpiar_str(row_dict.get('actividad_inicio') or row_dict.get('actividades', '')),
-            'actividad_desarrollo': limpiar_str(row_dict.get('actividad_desarrollo', '')),
-            'actividad_cierre': limpiar_str(row_dict.get('actividad_cierre', '')),
-            'recursos': limpiar_str(row_dict.get('recursos') or row_dict.get('recurso', '')),
-            'recursos_inicio': limpiar_str(row_dict.get('recursos_inicio', '')),
-            'recursos_desarrollo': limpiar_str(row_dict.get('recursos_desarrollo', '')),
-            'recursos_cierre': limpiar_str(row_dict.get('recursos_cierre', '')),
-            'recuperacion_pedagogica': limpiar_str(row_dict.get('recuperacion_pedagogica', ''))
-        }]
-
-        html_content = render_template('pdf_planificacion_diaria.html', planificaciones=planificaciones)
-
-        pdf_file = BytesIO()
-        pisaStatus = pisa.CreatePDF(html_content, dest=pdf_file)
-
-        if pisaStatus.err:
-            return "Error al generar el PDF", 500
-
-        pdf_file.seek(0)
-        return send_file(
-            pdf_file,
-            mimetype='application/pdf',
-            as_attachment=False,
-            download_name=f"Planificacion_{plan_id}.pdf"
-        )
+        pdf_buffer.seek(0)
+        response = make_response(pdf_buffer.read())
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = f'inline; filename=Reporte_Semanal_{fecha_inicio}_al_{fecha_fin}.pdf'
+        return response
 
     except Exception as e:
-        print(f"Error en PDF individual (ID {plan_id}):", e)
-        return f"Error al procesar el PDF: {e}", 500
+        print("❌ Error al generar reporte semanal:", e)
+        flash('Error al procesar el reporte.', 'danger')
+        return redirect(url_for('ver_planificaciones_diarias'))
         
 @app.route('/eliminar_planificacion/<int:id>')
 def eliminar_planificacion(id):
