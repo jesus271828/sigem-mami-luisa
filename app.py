@@ -2780,116 +2780,8 @@ def limpiar_str(val):
         return ", ".join(map(str, val))
     return str(val)
 
-def convertir_a_dd_mm_yyyy(f_str):
-    if not f_str:
-        return ""
-    f_str = str(f_str).split(' ')[0].strip()  # Remover horas si las tiene
-    p = f_str.split('-')
-    if len(p) == 3 and len(p[0]) == 4:
-        return f"{p[2]}-{p[1]}-{p[0]}"
-    return f_str
 
-
-# --- RUTA DE VER PLANIFICACIONES (Filtros y Roles) ---
-@app.route('/ver_planificaciones_diarias', methods=['GET'])
-def ver_planificaciones_diarias():
-    if 'usuario' not in session and 'nombre_completo' not in session and 'id' not in session:
-        return redirect(url_for('login'))
-
-    desde_fecha = request.args.get('desde_fecha', '').strip()
-    hasta_fecha = request.args.get('hasta_fecha', '').strip()
-    area_filtro = request.args.get('area', '').strip()
-    grado_filtro = request.args.get('grado', '').strip()
-
-    rol_actual = str(session.get('rol', '')).strip().lower()
-    nombre_usuario = str(session.get('nombre_completo', '')).strip()
-
-    conn = None
-    planificaciones = []
-    lista_areas = []
-    lista_grados = []
-    total_registros = 0
-    total_estudiantes = 0
-    total_expedientes = 0
-    total_usuarios = 0
-
-    try:
-        conn = psycopg2.connect(DATABASE_URL)
-        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-
-        # Contadores generales para la barra lateral
-        cursor.execute("SELECT COUNT(*) FROM estudiantes")
-        res_est = cursor.fetchone()
-        total_estudiantes = res_est['count'] if res_est else 0
-
-        cursor.execute("SELECT COUNT(*) FROM usuarios")
-        res_usu = cursor.fetchone()
-        total_usuarios = res_usu['count'] if res_usu else 0
-
-        try:
-            cursor.execute("SELECT COUNT(*) FROM expedientes_viejos")
-            res_exp = cursor.fetchone()
-            total_expedientes = res_exp['count'] if res_exp else 0
-        except:
-            total_expedientes = 0
-
-        # Listas únicas para los selectores
-        cursor.execute("SELECT DISTINCT TRIM(area) as area FROM planificaciones_diarias WHERE area IS NOT NULL AND area != ''")
-        lista_areas = [row['area'] for row in cursor.fetchall() if row['area']]
-
-        cursor.execute("SELECT DISTINCT TRIM(grado_seccion) as grado_seccion FROM planificaciones_diarias WHERE grado_seccion IS NOT NULL AND grado_seccion != ''")
-        lista_grados = [row['grado_seccion'] for row in cursor.fetchall() if row['grado_seccion']]
-
-        # Consulta con filtros y restricción por rol
-        query = "SELECT * FROM planificaciones_diarias WHERE 1=1"
-        params = []
-
-        if rol_actual not in ['admin', 'administrador', 'oficina', 'director', 'dirección']:
-            query += " AND TRIM(docente) = %s"
-            params.append(nombre_usuario)
-
-        if desde_fecha:
-            query += " AND fecha >= %s"
-            params.append(desde_fecha)
-        if hasta_fecha:
-            query += " AND fecha <= %s"
-            params.append(hasta_fecha)
-        if area_filtro:
-            query += " AND TRIM(area) = %s"
-            params.append(area_filtro)
-        if grado_filtro:
-            query += " AND TRIM(grado_seccion) = %s"
-            params.append(grado_filtro)
-
-        query += " ORDER BY fecha DESC"
-
-        cursor.execute(query, params)
-        planificaciones = cursor.fetchall()
-        total_registros = len(planificaciones)
-
-        cursor.close()
-    except Exception as e:
-        print("❌ Error al obtener planificaciones:", e)
-    finally:
-        if conn:
-            conn.close()
-
-    return render_template(
-        'ver_planificaciones_diarias.html',
-        planificaciones=planificaciones,
-        lista_areas=lista_areas,
-        lista_grados=lista_grados,
-        desde_fecha=desde_fecha,
-        hasta_fecha=hasta_fecha,
-        area_seleccionada=area_filtro,
-        grado_seleccionado=grado_filtro,
-        total_registros=total_registros,
-        total_estudiantes=total_estudiantes,
-        total_expedientes=total_expedientes,
-        total_usuarios=total_usuarios
-    )
-
-
+# --- RUTA PARA IMPRIMIR PDF INDIVIDUAL ---
 @app.route('/imprimir_planificacion_diaria_pdf/<int:id>')
 def imprimir_planificacion_diaria_pdf(id):
     if 'usuario' not in session and 'nombre_completo' not in session:
@@ -2897,27 +2789,45 @@ def imprimir_planificacion_diaria_pdf(id):
 
     try:
         conn = psycopg2.connect(DATABASE_URL)
-        cursor = PostgresCursorWrapper(conn)
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-        query = 'SELECT * FROM planificaciones_diarias WHERE id = ?'
+        # Corregido: PostgreSQL usa %s en lugar de ?
+        query = 'SELECT * FROM planificaciones_diarias WHERE id = %s'
         cursor.execute(query, (id,))
-        planificacion = cursor.fetchone()
+        row = cursor.fetchone()
         cursor.close()
+        conn.close()
 
-        print(f"🔍 Datos recuperados para PDF ID {id}: {planificacion}")
-
-        if not planificacion:
+        if not row:
             flash('Planificación no encontrada.', 'danger')
             return redirect(url_for('ver_planificaciones_diarias'))
 
-        # Renderizar la plantilla HTML pasando el diccionario
+        # Limpiar campos para evitar el error 'list' object has no attribute 'startswith'
+        planificacion = {
+            'docente': limpiar_str(row.get('docente', '')),
+            'area': limpiar_str(row.get('area') or row.get('área', '')) or 'Informática',
+            'grado_seccion': limpiar_str(row.get('grado_seccion') or row.get('grado', '')),
+            'fecha': limpiar_str(row.get('fecha', '')),
+            'estrategias': limpiar_str(row.get('estrategias', '')),
+            'intencion_pedagogica': limpiar_str(row.get('intencion_pedagogica') or row.get('intencion', '')),
+            'indicador_logro': limpiar_str(row.get('indicador_logro', '')),
+            'competencia_especifica': limpiar_str(row.get('competencia_especifica', '')),
+            'actividad_inicio': limpiar_str(row.get('actividad_inicio') or row.get('actividades', '')),
+            'actividad_desarrollo': limpiar_str(row.get('actividad_desarrollo', '')),
+            'actividad_cierre': limpiar_str(row.get('actividad_cierre', '')),
+            'recursos': limpiar_str(row.get('recursos') or row.get('recurso', '')),
+            'recursos_inicio': limpiar_str(row.get('recursos_inicio', '')),
+            'recursos_desarrollo': limpiar_str(row.get('recursos_desarrollo', '')),
+            'recursos_cierre': limpiar_str(row.get('recursos_cierre', '')),
+            'recuperacion_pedagogica': limpiar_str(row.get('recuperacion_pedagogica', ''))
+        }
+
         rendered_html = render_template('pdf_planificacion_diaria.html', plan=planificacion)
 
         pdf_buffer = io.BytesIO()
         pisa_status = pisa.CreatePDF(rendered_html, dest=pdf_buffer)
 
         if pisa_status.err:
-            print("❌ Error de pisa al generar PDF:", pisa_status.err)
             flash('Error al generar el documento PDF.', 'danger')
             return redirect(url_for('ver_planificaciones_diarias'))
 
@@ -2932,6 +2842,8 @@ def imprimir_planificacion_diaria_pdf(id):
         flash('Error al procesar la solicitud del PDF.', 'danger')
         return redirect(url_for('ver_planificaciones_diarias'))
 
+
+# --- RUTA PARA REPORTE SEMANAL EN PDF ---
 @app.route('/imprimir_planificaciones_semana_pdf', methods=['GET', 'POST'])
 def imprimir_planificaciones_semana_pdf():
     if 'usuario' not in session and 'nombre_completo' not in session:
@@ -2940,29 +2852,51 @@ def imprimir_planificaciones_semana_pdf():
     fecha_inicio = request.args.get('fecha_inicio')
     fecha_fin = request.args.get('fecha_fin')
     usuario_actual = session.get('nombre_completo')
-    rol_actual = session.get('rol')
+    rol_actual = str(session.get('rol', '')).strip().lower()
 
     if not fecha_inicio or not fecha_fin:
         flash('Por favor seleccione ambas fechas.', 'warning')
         return redirect(url_for('ver_planificaciones_diarias'))
 
-    # Asegurar que inicio sea menor o igual que fin
     if fecha_inicio > fecha_fin:
         fecha_inicio, fecha_fin = fecha_fin, fecha_inicio
 
     try:
         conn = psycopg2.connect(DATABASE_URL)
-        cursor = PostgresCursorWrapper(conn)
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-        if rol_actual in ['admin', 'oficina']:
-            query = 'SELECT * FROM planificaciones_diarias WHERE fecha BETWEEN ? AND ? ORDER BY fecha ASC'
+        # Corregido: uso de %s para PostgreSQL
+        if rol_actual in ['admin', 'administrador', 'oficina', 'director', 'dirección']:
+            query = 'SELECT * FROM planificaciones_diarias WHERE fecha BETWEEN %s AND %s ORDER BY fecha ASC'
             cursor.execute(query, (fecha_inicio, fecha_fin))
         else:
-            query = 'SELECT * FROM planificaciones_diarias WHERE docente = ? AND fecha BETWEEN ? AND ? ORDER BY fecha ASC'
+            query = 'SELECT * FROM planificaciones_diarias WHERE docente = %s AND fecha BETWEEN %s AND %s ORDER BY fecha ASC'
             cursor.execute(query, (usuario_actual, fecha_inicio, fecha_fin))
 
-        planificaciones = cursor.fetchall()
+        rows = cursor.fetchall()
         cursor.close()
+        conn.close()
+
+        planificaciones = []
+        for row in rows:
+            planificaciones.append({
+                'docente': limpiar_str(row.get('docente', '')),
+                'area': limpiar_str(row.get('area') or row.get('área', '')) or 'Informática',
+                'grado_seccion': limpiar_str(row.get('grado_seccion') or row.get('grado', '')),
+                'fecha': limpiar_str(row.get('fecha', '')),
+                'estrategias': limpiar_str(row.get('estrategias', '')),
+                'intencion_pedagogica': limpiar_str(row.get('intencion_pedagogica') or row.get('intencion', '')),
+                'indicador_logro': limpiar_str(row.get('indicador_logro', '')),
+                'competencia_especifica': limpiar_str(row.get('competencia_especifica', '')),
+                'actividad_inicio': limpiar_str(row.get('actividad_inicio') or row.get('actividades', '')),
+                'actividad_desarrollo': limpiar_str(row.get('actividad_desarrollo', '')),
+                'actividad_cierre': limpiar_str(row.get('actividad_cierre', '')),
+                'recursos': limpiar_str(row.get('recursos') or row.get('recurso', '')),
+                'recursos_inicio': limpiar_str(row.get('recursos_inicio', '')),
+                'recursos_desarrollo': limpiar_str(row.get('recursos_desarrollo', '')),
+                'recursos_cierre': limpiar_str(row.get('recursos_cierre', '')),
+                'recuperacion_pedagogica': limpiar_str(row.get('recuperacion_pedagogica', ''))
+            })
 
         if not planificaciones:
             flash(f'No hay planificaciones registradas entre {fecha_inicio} y {fecha_fin}.', 'warning')
