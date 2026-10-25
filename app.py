@@ -2767,18 +2767,99 @@ def ver_detalle_planificacion_diaria(id):
         return redirect(url_for('ver_planificaciones_diarias'))
 
 from io import BytesIO
-from flask import render_template, request, send_file, redirect, url_for, flash, session
+from flask import render_template, request, send_file, redirect, url_for, flash, session, make_response
 from xhtml2pdf import pisa
 import psycopg2.extras
 import sqlite3
+import io
 
-# --- FUNCIÓN AUXILIAR PARA EVITAR EL ERROR DE LISTAS EN EL PDF ---
+# --- FUNCIÓN AUXILIAR DE LIMPIEZA ---
 def limpiar_str(val):
     if val is None:
         return ""
     if isinstance(val, list):
         return ", ".join(map(str, val))
     return str(val)
+
+def convertir_a_dd_mm_yyyy(f_str):
+    if not f_str:
+        return ""
+    f_str = str(f_str).split(' ')[0].strip()
+    p = f_str.split('-')
+    if len(p) == 3 and len(p[0]) == 4:
+        return f"{p[2]}-{p[1]}-{p[0]}"
+    return f_str
+
+
+# --- RUTA PARA GENERAR EL PDF FILTRADO (El nombre debe ser 'generar_pdf_filtrado') ---
+@app.route('/generar_pdf_filtrado', methods=['GET'])
+def generar_pdf_filtrado():
+    desde_fecha = request.args.get('desde_fecha', '').strip()
+    hasta_fecha = request.args.get('hasta_fecha', '').strip()
+    area_seleccionada = request.args.get('area', '').strip()
+    grado_seleccionado = request.args.get('grado', '').strip()
+
+    try:
+        conn = psycopg2.connect(DATABASE_URL)
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute('SELECT * FROM planificaciones_diarias ORDER BY id DESC')
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+
+        planificaciones = []
+        for row in rows:
+            f_db = limpiar_str(row.get('fecha', '')).strip()
+            area_db = limpiar_str(row.get('area') or row.get('área', '')).strip()
+            grado_db = limpiar_str(row.get('grado_seccion') or row.get('grado', '')).strip()
+
+            cumple_desde = not desde_fecha or f_db >= desde_fecha
+            cumple_hasta = not hasta_fecha or f_db <= hasta_fecha
+            cumple_area = not area_seleccionada or area_db == area_seleccionada
+            cumple_grado = not grado_seleccionado or grado_db == grado_seleccionado
+
+            if cumple_desde and cumple_hasta and cumple_area and cumple_grado:
+                planificaciones.append({
+                    'docente': limpiar_str(row.get('docente', '')),
+                    'area': area_db or 'Informática',
+                    'grado_seccion': grado_db,
+                    'fecha': convertir_a_dd_mm_yyyy(f_db),
+                    'estrategias': limpiar_str(row.get('estrategias', '')),
+                    'intencion_pedagogica': limpiar_str(row.get('intencion_pedagogica') or row.get('intencion', '')),
+                    'indicador_logro': limpiar_str(row.get('indicador_logro', '')),
+                    'competencia_especifica': limpiar_str(row.get('competencia_especifica', '')),
+                    'actividad_inicio': limpiar_str(row.get('actividad_inicio') or row.get('actividades', '')),
+                    'actividad_desarrollo': limpiar_str(row.get('actividad_desarrollo', '')),
+                    'actividad_cierre': limpiar_str(row.get('actividad_cierre', '')),
+                    'recursos': limpiar_str(row.get('recursos') or row.get('recurso', '')),
+                    'recursos_inicio': limpiar_str(row.get('recursos_inicio', '')),
+                    'recursos_desarrollo': limpiar_str(row.get('recursos_desarrollo', '')),
+                    'recursos_cierre': limpiar_str(row.get('recursos_cierre', '')),
+                    'recuperacion_pedagogica': limpiar_str(row.get('recuperacion_pedagogica', ''))
+                })
+
+        if not planificaciones:
+            return "<h3 style='font-family:sans-serif; padding:20px;'>No se encontraron planificaciones asociadas a los filtros seleccionados.</h3>", 404
+
+        html_content = render_template('pdf_planificacion_diaria.html', planificaciones=planificaciones)
+        
+        pdf_file = BytesIO()
+        pisaStatus = pisa.CreatePDF(html_content, dest=pdf_file)
+        
+        if pisaStatus.err:
+            return "Error al generar la estructura del PDF", 500
+            
+        pdf_file.seek(0)
+        return send_file(
+            pdf_file, 
+            mimetype='application/pdf', 
+            as_attachment=False, 
+            download_name="Planificaciones_Filtradas.pdf"
+        )
+        
+    except Exception as e:
+        print("Error en PDF filtrado:", e)
+        return f"Error al procesar el PDF: {e}", 500
 
 
 # --- RUTA PARA IMPRIMIR PDF INDIVIDUAL ---
@@ -2791,7 +2872,6 @@ def imprimir_planificacion_diaria_pdf(id):
         conn = psycopg2.connect(DATABASE_URL)
         cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-        # Corregido: PostgreSQL usa %s en lugar de ?
         query = 'SELECT * FROM planificaciones_diarias WHERE id = %s'
         cursor.execute(query, (id,))
         row = cursor.fetchone()
@@ -2802,7 +2882,6 @@ def imprimir_planificacion_diaria_pdf(id):
             flash('Planificación no encontrada.', 'danger')
             return redirect(url_for('ver_planificaciones_diarias'))
 
-        # Limpiar campos para evitar el error 'list' object has no attribute 'startswith'
         planificacion = {
             'docente': limpiar_str(row.get('docente', '')),
             'area': limpiar_str(row.get('area') or row.get('área', '')) or 'Informática',
@@ -2817,7 +2896,7 @@ def imprimir_planificacion_diaria_pdf(id):
             'actividad_cierre': limpiar_str(row.get('actividad_cierre', '')),
             'recursos': limpiar_str(row.get('recursos') or row.get('recurso', '')),
             'recursos_inicio': limpiar_str(row.get('recursos_inicio', '')),
-            'recursos_desarrollo': limpiar_str(row.get('recursos_desarrollo', '')),
+            'recursos_desارrollo': limpiar_str(row.get('recursos_desarrollo', '')),
             'recursos_cierre': limpiar_str(row.get('recursos_cierre', '')),
             'recuperacion_pedagogica': limpiar_str(row.get('recuperacion_pedagogica', ''))
         }
