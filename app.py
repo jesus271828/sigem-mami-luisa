@@ -2581,10 +2581,10 @@ def ver_planificaciones_diarias():
         return redirect(url_for('login'))
 
     # Capturar parámetros de filtro
-    desde_fecha = request.args.get('desde_fecha', '')
-    hasta_fecha = request.args.get('hasta_fecha', '')
-    area_filtro = request.args.get('area', '')
-    grado_filtro = request.args.get('grado', '')
+    desde_fecha = request.args.get('desde_fecha', '').strip()
+    hasta_fecha = request.args.get('hasta_fecha', '').strip()
+    area_filtro = request.args.get('area', '').strip()
+    grado_filtro = request.args.get('grado', '').strip()
 
     conn = None
     planificaciones = []
@@ -2599,7 +2599,7 @@ def ver_planificaciones_diarias():
         conn = psycopg2.connect(DATABASE_URL)
         cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-        # 1. Contadores generales para la barra lateral desde la BD
+        # 1. Contadores generales para la barra lateral
         cursor.execute("SELECT COUNT(*) FROM estudiantes")
         res_est = cursor.fetchone()
         total_estudiantes = res_est['count'] if res_est else 0
@@ -2608,7 +2608,6 @@ def ver_planificaciones_diarias():
         res_usu = cursor.fetchone()
         total_usuarios = res_usu['count'] if res_usu else 0
 
-        # Expedientes (puedes ajustar el nombre de la tabla si es distinta, ej. expedientes_viejos)
         try:
             cursor.execute("SELECT COUNT(*) FROM expedientes_viejos")
             res_exp = cursor.fetchone()
@@ -2616,14 +2615,14 @@ def ver_planificaciones_diarias():
         except:
             total_expedientes = 0
 
-        # 2. Obtener listas únicas para los selectores de filtro
-        cursor.execute("SELECT DISTINCT area FROM planificaciones_diarias WHERE area IS NOT NULL AND area != ''")
-        lista_areas = [row['area'] for row in cursor.fetchall()]
+        # 2. Listas únicas limpias para los selectores
+        cursor.execute("SELECT DISTINCT TRIM(area) as area FROM planificaciones_diarias WHERE area IS NOT NULL AND area != ''")
+        lista_areas = [row['area'] for row in cursor.fetchall() if row['area']]
 
-        cursor.execute("SELECT DISTINCT grado_seccion FROM planificaciones_diarias WHERE grado_seccion IS NOT NULL AND grado_seccion != ''")
-        lista_grados = [row['grado_seccion'] for row in cursor.fetchall()]
+        cursor.execute("SELECT DISTINCT TRIM(grado_seccion) as grado_seccion FROM planificaciones_diarias WHERE grado_seccion IS NOT NULL AND grado_seccion != ''")
+        lista_grados = [row['grado_seccion'] for row in cursor.fetchall() if row['grado_seccion']]
 
-        # 3. Construir consulta con filtros dinámicos
+        # 3. Consulta con filtros robustos
         query = "SELECT * FROM planificaciones_diarias WHERE 1=1"
         params = []
 
@@ -2634,10 +2633,10 @@ def ver_planificaciones_diarias():
             query += " AND fecha <= %s"
             params.append(hasta_fecha)
         if area_filtro:
-            query += " AND area = %s"
+            query += " AND TRIM(area) = %s"
             params.append(area_filtro)
         if grado_filtro:
-            query += " AND grado_seccion = %s"
+            query += " AND TRIM(grado_seccion) = %s"
             params.append(grado_filtro)
 
         query += " ORDER BY fecha DESC"
