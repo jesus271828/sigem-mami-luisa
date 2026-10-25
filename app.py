@@ -2847,17 +2847,20 @@ def generar_pdf_filtrado():
             flash('No se encontraron planificaciones para los filtros seleccionados.', 'warning')
             return redirect(url_for('ver_planificaciones_diarias'))
 
-        # PASAMOS CADA PLANIFICACIÓN INDIVIDUALMENTE USANDO LA VARIABLE 'plan' QUE YA FUNCIONA
         pdf_buffer = BytesIO()
         
-        # HTML base acumulado para evitar depender de bucles complejos en plantillas externas
+        # HTML con la propiedad CSS 'size: letter landscape;' para ponerlo en horizontal
         html_acumulado = """
         <!DOCTYPE html>
         <html lang="es">
         <head>
             <meta charset="UTF-8">
             <style>
-                body { font-family: Helvetica, Arial, sans-serif; font-size: 11px; color: #333; margin: 0; padding: 10px; }
+                @page {
+                    size: letter landscape;
+                    margin: 1cm;
+                }
+                body { font-family: Helvetica, Arial, sans-serif; font-size: 11px; color: #333; margin: 0; padding: 0; }
                 .page-break { page-break-after: always; }
                 table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
                 th, td { border: 1px solid #000; padding: 6px 8px; vertical-align: top; font-size: 10px; }
@@ -2868,7 +2871,7 @@ def generar_pdf_filtrado():
 
         for idx, p in enumerate(planificaciones):
             html_acumulado += f"""
-            <div style="margin-bottom: 30px;">
+            <div style="margin-bottom: 20px;">
                 <table>
                     <tr>
                         <td style="width: 60%; border: none;">
@@ -2887,7 +2890,10 @@ def generar_pdf_filtrado():
                     <tr><td colspan="4"><strong>Intención pedagógica:</strong> {p['intencion_pedagogica']}</td></tr>
                     <tr><td colspan="4"><strong>Indicador de logro:</strong> {p['indicador_logro']}</td></tr>
                     <tr style="background-color: #f8f9fa; font-weight: bold;">
-                        <td>Competencia específica</td><td>Momentos</td><td>Actividades</td><td>Recursos</td>
+                        <td style="width: 22%;">Competencia específica</td>
+                        <td style="width: 10%;">Momentos</td>
+                        <td style="width: 48%;">Actividades</td>
+                        <td style="width: 20%;">Recursos</td>
                     </tr>
                     <tr>
                         <td rowspan="3">{p['competencia_especifica']}</td>
@@ -2920,10 +2926,6 @@ def generar_pdf_filtrado():
             as_attachment=False, 
             download_name="Planificaciones_Filtradas.pdf"
         )
-        
-    except Exception as e:
-        print("Error en PDF filtrado:", e)
-        return f"Error al procesar el PDF: {e}", 500
         
     except Exception as e:
         print("Error en PDF filtrado:", e)
