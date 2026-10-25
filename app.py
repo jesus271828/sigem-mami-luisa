@@ -2771,8 +2771,8 @@ from flask import render_template, request, send_file, redirect, url_for, flash,
 from xhtml2pdf import pisa
 import psycopg2.extras
 import sqlite3
-import io
 
+# --- FUNCIÓN AUXILIAR PARA EVITAR EL ERROR DE LISTAS EN EL PDF ---
 def limpiar_str(val):
     if val is None:
         return ""
@@ -2780,6 +2780,117 @@ def limpiar_str(val):
         return ", ".join(map(str, val))
     return str(val)
 
+def convertir_a_dd_mm_yyyy(f_str):
+    if not f_str:
+        return ""
+    f_str = str(f_str).split(' ')[0].strip()  # Remover horas si las tiene
+    p = f_str.split('-')
+    if len(p) == 3 and len(p[0]) == 4:
+        return f"{p[2]}-{p[1]}-{p[0]}"
+    return f_str
+
+
+# --- RUTA DE VER PLANIFICACIONES (Filtros y Roles) ---
+@app.route('/ver_planificaciones_diarias', methods=['GET'])
+def ver_planificaciones_diarias():
+    if 'usuario' not in session and 'nombre_completo' not in session and 'id' not in session:
+        return redirect(url_for('login'))
+
+    desde_fecha = request.args.get('desde_fecha', '').strip()
+    hasta_fecha = request.args.get('hasta_fecha', '').strip()
+    area_filtro = request.args.get('area', '').strip()
+    grado_filtro = request.args.get('grado', '').strip()
+
+    rol_actual = str(session.get('rol', '')).strip().lower()
+    nombre_usuario = str(session.get('nombre_completo', '')).strip()
+
+    conn = None
+    planificaciones = []
+    lista_areas = []
+    lista_grados = []
+    total_registros = 0
+    total_estudiantes = 0
+    total_expedientes = 0
+    total_usuarios = 0
+
+    try:
+        conn = psycopg2.connect(DATABASE_URL)
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        # Contadores generales para la barra lateral
+        cursor.execute("SELECT COUNT(*) FROM estudiantes")
+        res_est = cursor.fetchone()
+        total_estudiantes = res_est['count'] if res_est else 0
+
+        cursor.execute("SELECT COUNT(*) FROM usuarios")
+        res_usu = cursor.fetchone()
+        total_usuarios = res_usu['count'] if res_usu else 0
+
+        try:
+            cursor.execute("SELECT COUNT(*) FROM expedientes_viejos")
+            res_exp = cursor.fetchone()
+            total_expedientes = res_exp['count'] if res_exp else 0
+        except:
+            total_expedientes = 0
+
+        # Listas únicas para los selectores
+        cursor.execute("SELECT DISTINCT TRIM(area) as area FROM planificaciones_diarias WHERE area IS NOT NULL AND area != ''")
+        lista_areas = [row['area'] for row in cursor.fetchall() if row['area']]
+
+        cursor.execute("SELECT DISTINCT TRIM(grado_seccion) as grado_seccion FROM planificaciones_diarias WHERE grado_seccion IS NOT NULL AND grado_seccion != ''")
+        lista_grados = [row['grado_seccion'] for row in cursor.fetchall() if row['grado_seccion']]
+
+        # Consulta con filtros y restricción por rol
+        query = "SELECT * FROM planificaciones_diarias WHERE 1=1"
+        params = []
+
+        if rol_actual not in ['admin', 'administrador', 'oficina', 'director', 'dirección']:
+            query += " AND TRIM(docente) = %s"
+            params.append(nombre_usuario)
+
+        if desde_fecha:
+            query += " AND fecha >= %s"
+            params.append(desde_fecha)
+        if hasta_fecha:
+            query += " AND fecha <= %s"
+            params.append(hasta_fecha)
+        if area_filtro:
+            query += " AND TRIM(area) = %s"
+            params.append(area_filtro)
+        if grado_filtro:
+            query += " AND TRIM(grado_seccion) = %s"
+            params.append(grado_filtro)
+
+        query += " ORDER BY fecha DESC"
+
+        cursor.execute(query, params)
+        planificaciones = cursor.fetchall()
+        total_registros = len(planificaciones)
+
+        cursor.close()
+    except Exception as e:
+        print("❌ Error al obtener planificaciones:", e)
+    finally:
+        if conn:
+            conn.close()
+
+    return render_template(
+        'ver_planificaciones_diarias.html',
+        planificaciones=planificaciones,
+        lista_areas=lista_areas,
+        lista_grados=lista_grados,
+        desde_fecha=desde_fecha,
+        hasta_fecha=hasta_fecha,
+        area_seleccionada=area_filtro,
+        grado_seleccionado=grado_filtro,
+        total_registros=total_registros,
+        total_estudiantes=total_estudiantes,
+        total_expedientes=total_expedientes,
+        total_usuarios=total_usuarios
+    )
+
+
+# --- RUTA PARA GENERAR EL PDF FILTRADO ---
 @app.route('/generar_pdf_filtrado', methods=['GET'])
 def generar_pdf_filtrado():
     desde_fecha = request.args.get('desde_fecha', '').strip()
@@ -2805,15 +2916,6 @@ def generar_pdf_filtrado():
             cur.close()
             
         conn.close()
-
-        def convertir_a_dd_mm_yyyy(f_str):
-            if not f_str:
-                return ""
-            f_str = str(f_str).split(' ')[0].strip()
-            p = f_str.split('-')
-            if len(p) == 3 and len(p[0]) == 4:
-                return f"{p[2]}-{p[1]}-{p[0]}"
-            return f_str
 
         planificaciones = []
         for row in todos:
@@ -2870,6 +2972,7 @@ def generar_pdf_filtrado():
         return f"Error al procesar el PDF: {e}", 500
 
 
+# --- RUTA PARA IMPRIMIR PDF INDIVIDUAL ---
 @app.route('/imprimir_pdf_individual/<int:plan_id>')
 def imprimir_pdf_individual(plan_id):
     try:
@@ -2894,15 +2997,6 @@ def imprimir_pdf_individual(plan_id):
             return "Planificación no encontrada", 404
 
         row_dict = dict(row)
-
-        def convertir_a_dd_mm_yyyy(f_str):
-            if not f_str:
-                return ""
-            f_str = str(f_str).split(' ')[0].strip()
-            p = f_str.split('-')
-            if len(p) == 3 and len(p[0]) == 4:
-                return f"{p[2]}-{p[1]}-{p[0]}"
-            return f_str
 
         planificaciones = [{
             'docente': limpiar_str(row_dict.get('docente', '')),
