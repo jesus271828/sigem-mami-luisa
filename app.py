@@ -2780,17 +2780,6 @@ def limpiar_str(val):
         return ", ".join(map(str, val))
     return str(val)
 
-def convertir_a_dd_mm_yyyy(f_str):
-    if not f_str:
-        return ""
-    f_str = str(f_str).split(' ')[0].strip()
-    p = f_str.split('-')
-    if len(p) == 3 and len(p[0]) == 4:
-        return f"{p[2]}-{p[1]}-{p[0]}"
-    return f_str
-
-
-# --- RUTA PARA GENERAR EL PDF FILTRADO ---
 @app.route('/generar_pdf_filtrado', methods=['GET'])
 def generar_pdf_filtrado():
     desde_fecha = request.args.get('desde_fecha', '').strip()
@@ -2828,9 +2817,9 @@ def generar_pdf_filtrado():
 
         planificaciones = []
         for row in todos:
-            f_db = str(row.get('fecha', '')).strip()
-            area_db = str(row.get('area') or row.get('área', '')).strip()
-            grado_db = str(row.get('grado_seccion') or row.get('grado', '')).strip()
+            f_db = limpiar_str(row.get('fecha', '')).strip()
+            area_db = limpiar_str(row.get('area') or row.get('área', '')).strip()
+            grado_db = limpiar_str(row.get('grado_seccion') or row.get('grado', '')).strip()
 
             cumple_desde = not desde_fecha or f_db >= desde_fecha
             cumple_hasta = not hasta_fecha or f_db <= hasta_fecha
@@ -2839,22 +2828,22 @@ def generar_pdf_filtrado():
 
             if cumple_desde and cumple_hasta and cumple_area and cumple_grado:
                 planificaciones.append({
-                    'docente': str(row.get('docente', '')),
+                    'docente': limpiar_str(row.get('docente', '')),
                     'area': area_db or 'Informática',
                     'grado_seccion': grado_db,
                     'fecha': convertir_a_dd_mm_yyyy(f_db),
-                    'estrategias': str(row.get('estrategias', '')),
-                    'intencion_pedagogica': str(row.get('intencion_pedagogica') or row.get('intencion', '')),
-                    'indicador_logro': str(row.get('indicador_logro', '')),
-                    'competencia_especifica': str(row.get('competencia_especifica', '')),
-                    'actividad_inicio': str(row.get('actividad_inicio') or row.get('actividades', '')),
-                    'actividad_desarrollo': str(row.get('actividad_desarrollo', '')),
-                    'actividad_cierre': str(row.get('actividad_cierre', '')),
-                    'recursos': str(row.get('recursos') or row.get('recurso', '')),
-                    'recursos_inicio': str(row.get('recursos_inicio', '')),
-                    'recursos_desarrollo': str(row.get('recursos_desarrollo', '')),
-                    'recursos_cierre': str(row.get('recursos_cierre', '')),
-                    'recuperacion_pedagogica': str(row.get('recuperacion_pedagogica', ''))
+                    'estrategias': limpiar_str(row.get('estrategias', '')),
+                    'intencion_pedagogica': limpiar_str(row.get('intencion_pedagogica') or row.get('intencion', '')),
+                    'indicador_logro': limpiar_str(row.get('indicador_logro', '')),
+                    'competencia_especifica': limpiar_str(row.get('competencia_especifica', '')),
+                    'actividad_inicio': limpiar_str(row.get('actividad_inicio') or row.get('actividades', '')),
+                    'actividad_desarrollo': limpiar_str(row.get('actividad_desarrollo', '')),
+                    'actividad_cierre': limpiar_str(row.get('actividad_cierre', '')),
+                    'recursos': limpiar_str(row.get('recursos') or row.get('recurso', '')),
+                    'recursos_inicio': limpiar_str(row.get('recursos_inicio', '')),
+                    'recursos_desarrollo': limpiar_str(row.get('recursos_desarrollo', '')),
+                    'recursos_cierre': limpiar_str(row.get('recursos_cierre', '')),
+                    'recuperacion_pedagogica': limpiar_str(row.get('recuperacion_pedagogica', ''))
                 })
 
         if not planificaciones:
@@ -2863,7 +2852,6 @@ def generar_pdf_filtrado():
         html_content = render_template('pdf_planificacion_diaria.html', planificaciones=planificaciones)
         
         pdf_file = BytesIO()
-        # CORREGIDO: Pasamos html_content directamente como string (en vez de BytesIO envuelto)
         pisaStatus = pisa.CreatePDF(html_content, dest=pdf_file)
         
         if pisaStatus.err:
@@ -2882,8 +2870,6 @@ def generar_pdf_filtrado():
         return f"Error al procesar el PDF: {e}", 500
 
 
-
-# --- RUTA PARA IMPRIMIR PDF INDIVIDUAL ---
 @app.route('/imprimir_pdf_individual/<int:plan_id>')
 def imprimir_pdf_individual(plan_id):
     try:
@@ -2909,6 +2895,15 @@ def imprimir_pdf_individual(plan_id):
 
         row_dict = dict(row)
 
+        def convertir_a_dd_mm_yyyy(f_str):
+            if not f_str:
+                return ""
+            f_str = str(f_str).split(' ')[0].strip()
+            p = f_str.split('-')
+            if len(p) == 3 and len(p[0]) == 4:
+                return f"{p[2]}-{p[1]}-{p[0]}"
+            return f_str
+
         planificaciones = [{
             'docente': limpiar_str(row_dict.get('docente', '')),
             'area': limpiar_str(row_dict.get('area') or row_dict.get('área', '')) or 'Informática',
@@ -2931,7 +2926,7 @@ def imprimir_pdf_individual(plan_id):
         html_content = render_template('pdf_planificacion_diaria.html', planificaciones=planificaciones)
 
         pdf_file = BytesIO()
-        pisaStatus = pisa.CreatePDF(BytesIO(html_content.encode('utf-8')), dest=pdf_file)
+        pisaStatus = pisa.CreatePDF(html_content, dest=pdf_file)
 
         if pisaStatus.err:
             return "Error al generar el PDF", 500
