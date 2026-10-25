@@ -2575,33 +2575,98 @@ def menu_planificacion():
 # ==============================================================================
 # 1. RUTA PARA CARGAR Y VISUALIZAR LA PLANIFICACIÓN DIARIA
 # ==============================================================================
-@app.route('/ver_planificaciones_diarias')
+@app.route('/ver_planificaciones_diarias', methods=['GET'])
 def ver_planificaciones_diarias():
-    if 'usuario' not in session and 'nombre_completo' not in session:
+    if 'usuario' not in session and 'nombre_completo' not in session and 'id' not in session:
         return redirect(url_for('login'))
-        
-    usuario_actual = session.get('nombre_completo')
-    rol_actual = session.get('rol')
-    
+
+    # Capturar parámetros de filtro
+    desde_fecha = request.args.get('desde_fecha', '')
+    hasta_fecha = request.args.get('hasta_fecha', '')
+    area_filtro = request.args.get('area', '')
+    grado_filtro = request.args.get('grado', '')
+
+    conn = None
+    planificaciones = []
+    lista_areas = []
+    lista_grados = []
+    total_registros = 0
+    total_estudiantes = 0
+    total_expedientes = 0
+    total_usuarios = 0
+
     try:
         conn = psycopg2.connect(DATABASE_URL)
-        cursor = PostgresCursorWrapper(conn)
-        
-        # Si es de oficina o admin ve todo, si es docente solo ve lo suyo
-        if rol_actual in ['admin', 'oficina']:
-            query = 'SELECT * FROM planificaciones_diarias ORDER BY fecha DESC'
-            cursor.execute(query)
-        else:
-            query = 'SELECT * FROM planificaciones_diarias WHERE docente = ? ORDER BY fecha DESC'
-            cursor.execute(query, (usuario_actual,))
-            
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        # 1. Contadores generales para la barra lateral desde la BD
+        cursor.execute("SELECT COUNT(*) FROM estudiantes")
+        res_est = cursor.fetchone()
+        total_estudiantes = res_est['count'] if res_est else 0
+
+        cursor.execute("SELECT COUNT(*) FROM usuarios")
+        res_usu = cursor.fetchone()
+        total_usuarios = res_usu['count'] if res_usu else 0
+
+        # Expedientes (puedes ajustar el nombre de la tabla si es distinta, ej. expedientes_viejos)
+        try:
+            cursor.execute("SELECT COUNT(*) FROM expedientes_viejos")
+            res_exp = cursor.fetchone()
+            total_expedientes = res_exp['count'] if res_exp else 0
+        except:
+            total_expedientes = 0
+
+        # 2. Obtener listas únicas para los selectores de filtro
+        cursor.execute("SELECT DISTINCT area FROM planificaciones_diarias WHERE area IS NOT NULL AND area != ''")
+        lista_areas = [row['area'] for row in cursor.fetchall()]
+
+        cursor.execute("SELECT DISTINCT grado_seccion FROM planificaciones_diarias WHERE grado_seccion IS NOT NULL AND grado_seccion != ''")
+        lista_grados = [row['grado_seccion'] for row in cursor.fetchall()]
+
+        # 3. Construir consulta con filtros dinámicos
+        query = "SELECT * FROM planificaciones_diarias WHERE 1=1"
+        params = []
+
+        if desde_fecha:
+            query += " AND fecha >= %s"
+            params.append(desde_fecha)
+        if hasta_fecha:
+            query += " AND fecha <= %s"
+            params.append(hasta_fecha)
+        if area_filtro:
+            query += " AND area = %s"
+            params.append(area_filtro)
+        if grado_filtro:
+            query += " AND grado_seccion = %s"
+            params.append(grado_filtro)
+
+        query += " ORDER BY fecha DESC"
+
+        cursor.execute(query, params)
         planificaciones = cursor.fetchall()
+        total_registros = len(planificaciones)
+
         cursor.close()
     except Exception as e:
-        print("❌ Error obteniendo planificaciones diarias:", e)
-        planificaciones = []
+        print("❌ Error al obtener planificaciones:", e)
+    finally:
+        if conn:
+            conn.close()
 
-    return render_template('ver_planificaciones_diarias.html', planificaciones=planificaciones)
+    return render_template(
+        'ver_planificaciones_diarias.html',
+        planificaciones=planificaciones,
+        lista_areas=lista_areas,
+        lista_grados=lista_grados,
+        desde_fecha=desde_fecha,
+        hasta_fecha=hasta_fecha,
+        area_seleccionada=area_filtro,
+        grado_seleccionado=grado_filtro,
+        total_registros=total_registros,
+        total_estudiantes=total_estudiantes,
+        total_expedientes=total_expedientes,
+        total_usuarios=total_usuarios
+    )
 # ==============================================================================
 # 2. RUTA PARA GUARDAR LA PLANIFICACIÓN DIARIA EN LA BASE DE DATOS
 # ==============================================================================

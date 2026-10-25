@@ -7,6 +7,7 @@
     <!-- Bootstrap 5 CSS & Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         body { background-color: #f4f6f9; }
         .sidebar { background-color: #1b2559; min-height: 100vh; color: white; }
@@ -26,8 +27,7 @@
                     <p><i class="fas fa-user-circle"></i> {{ session['nombre_completo'] }} ({{ session['rol'] }})</p>
                 </div>
                 <div class="d-grid gap-2 mb-4">
-                    <!-- ENLACE A NUEVA PLANIFICACIÓN -->
-                    <a href="{{ url_for('nueva_planificacion') if 'nueva_planificacion' in url_for.__globals__ else url_for('planificacion_diaria') }}" class="btn btn-success btn-sm text-start fw-bold">
+                    <a href="{{ url_for('planificacion_diaria') }}" class="btn btn-success btn-sm text-start fw-bold">
                         <i class="bi bi-plus-circle me-1"></i> Nueva Planificación
                     </a>
                     <a href="{{ url_for('ver_planificaciones_diarias') }}" class="btn btn-outline-light btn-sm text-start active">
@@ -35,24 +35,29 @@
                     </a>
                 </div>
                 
+                <!-- Registros Generales con datos dinámicos de la BD -->
                 <div class="bg-dark bg-opacity-25 p-2 rounded mb-3">
                     <small class="text-uppercase text-warning fw-bold d-block mb-2" style="font-size: 0.7rem;">Registros Generales</small>
                     <div class="d-flex justify-content-between align-items-center small mb-1">
                         <span><i class="bi bi-people me-1"></i> Estudiantes:</span>
-                        <span class="badge bg-primary">176</span>
+                        <span class="badge bg-primary">{{ total_estudiantes }}</span>
                     </div>
                     <div class="d-flex justify-content-between align-items-center small mb-1">
                         <span><i class="bi bi-folder2 me-1"></i> Expedientes Viejos:</span>
-                        <span class="badge bg-secondary">911</span>
+                        <span class="badge bg-secondary">{{ total_expedientes }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center small mb-1">
+                        <span><i class="bi bi-person-badge me-1"></i> Usuarios:</span>
+                        <span class="badge bg-success">{{ total_usuarios }}</span>
                     </div>
                     <div class="d-flex justify-content-between align-items-center small">
-                        <span><i class="bi bi-person-badge me-1"></i> Usuarios:</span>
-                        <span class="badge bg-success">17</span>
+                        <span><i class="bi bi-journal-text me-1"></i> Planificaciones:</span>
+                        <span class="badge bg-warning text-dark">{{ total_registros }}</span>
                     </div>
                 </div>
             </div>
             
-            <a href="{{ url_for('logout') if 'logout' in url_for.__globals__ else '#' }}" class="btn btn-danger btn-sm w-100">Cerrar Sesión</a>
+            <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm w-100">Cerrar Sesión</a>
         </div>
 
         <!-- Main Content Area -->
@@ -130,14 +135,14 @@
                             </div>
 
                             <h6 class="card-title fw-bold text-dark mt-2 mb-1">
-                                {% if plan.grado_seccion %}{{ plan.grado_seccion }}{% elif plan.grado %}{{ plan.grado }}{% else %}{{ plan.area }}{% endif %}
+                                {{ plan.grado_seccion or plan.area }}
                             </h6>
 
                             <p class="card-text text-secondary small mb-3">
                                 <strong>Intención:</strong> {{ plan.intencion_pedagogica | truncate(90) }}
                             </p>
 
-                            <!-- BOTÓN DE IMPRIMIR PDF SOLO PARA ESTA PLANIFICACIÓN -->
+                            <!-- BOTÓN DE IMPRIMIR PDF INDIVIDUAL -->
                             <div class="d-flex justify-content-between align-items-center pt-2 border-top">
                                 <a href="{{ url_for('imprimir_pdf_individual', plan_id=plan.id) }}" 
                                    class="btn btn-outline-primary btn-sm fw-semibold" 
