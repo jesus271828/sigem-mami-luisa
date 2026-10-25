@@ -2748,12 +2748,14 @@ def ver_detalle_planificacion_diaria(id):
 
     try:
         conn = psycopg2.connect(DATABASE_URL)
-        cursor = PostgresCursorWrapper(conn)
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-        query = 'SELECT * FROM planificaciones_diarias WHERE identificacion = ?'
+        # Corregido: Usar id y el placeholder %s para PostgreSQL
+        query = 'SELECT * FROM planificaciones_diarias WHERE id = %s'
         cursor.execute(query, (id,))
         planificacion = cursor.fetchone()
         cursor.close()
+        conn.close()
 
         if not planificacion:
             flash('Planificación no encontrada.', 'danger')
@@ -2791,7 +2793,7 @@ def convertir_a_dd_mm_yyyy(f_str):
     return f_str
 
 
-# --- RUTA PARA GENERAR EL PDF FILTRADO (El nombre debe ser 'generar_pdf_filtrado') ---
+# --- RUTA PARA GENERAR EL PDF FILTRADO ---
 @app.route('/generar_pdf_filtrado', methods=['GET'])
 def generar_pdf_filtrado():
     desde_fecha = request.args.get('desde_fecha', '').strip()
@@ -2819,7 +2821,6 @@ def generar_pdf_filtrado():
             cumple_grado = not grado_seleccionado or grado_db == grado_seleccionado
 
             if cumple_desde and cumple_hasta and cumple_area and cumple_grado:
-                # Nos aseguramos de forzar conversión a string limpio de CADA campo
                 planificaciones.append({
                     'docente': limpiar_str(row.get('docente', '')),
                     'area': area_db or 'Informática',
@@ -2897,7 +2898,7 @@ def imprimir_planificacion_diaria_pdf(id):
             'actividad_cierre': limpiar_str(row.get('actividad_cierre', '')),
             'recursos': limpiar_str(row.get('recursos') or row.get('recurso', '')),
             'recursos_inicio': limpiar_str(row.get('recursos_inicio', '')),
-            'recursos_desارrollo': limpiar_str(row.get('recursos_desarrollo', '')),
+            'recursos_desarrollo': limpiar_str(row.get('recursos_desarrollo', '')),
             'recursos_cierre': limpiar_str(row.get('recursos_cierre', '')),
             'recuperacion_pedagogica': limpiar_str(row.get('recuperacion_pedagogica', ''))
         }
@@ -2945,7 +2946,6 @@ def imprimir_planificaciones_semana_pdf():
         conn = psycopg2.connect(DATABASE_URL)
         cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-        # Corregido: uso de %s para PostgreSQL
         if rol_actual in ['admin', 'administrador', 'oficina', 'director', 'dirección']:
             query = 'SELECT * FROM planificaciones_diarias WHERE fecha BETWEEN %s AND %s ORDER BY fecha ASC'
             cursor.execute(query, (fecha_inicio, fecha_fin))
@@ -3004,7 +3004,7 @@ def imprimir_planificaciones_semana_pdf():
         
 @app.route('/eliminar_planificacion/<int:id>')
 def eliminar_planificacion(id):
-    if 'usuario' not in session:
+    if 'usuario' not in session and 'nombre_completo' not in session:
         return redirect(url_for('login'))
         
     conexion = get_db_connection()
@@ -3013,11 +3013,12 @@ def eliminar_planificacion(id):
     try:
         if is_postgres:
             cur = conexion.conn.cursor()
-            cur.execute("DELETE FROM planificaciones WHERE id = %s", (id,))
+            # Corregido: nombre de la tabla planificaciones_diarias
+            cur.execute("DELETE FROM planificaciones_diarias WHERE id = %s", (id,))
             conexion.conn.commit()
             cur.close()
         else:
-            conexion.execute("DELETE FROM planificaciones WHERE id = ?", (id,))
+            conexion.execute("DELETE FROM planificaciones_diarias WHERE id = ?", (id,))
             conexion.commit()
         flash('Planificación eliminada con éxito.', 'success')
     except Exception as e:
@@ -3026,7 +3027,7 @@ def eliminar_planificacion(id):
     finally:
         conexion.close()
 
-    return redirect(url_for('mis_planificaciones'))
+    return redirect(url_for('ver_planificaciones_diarias'))
 
 
 @app.route('/planificacion_diaria', methods=['GET', 'POST'])
@@ -3067,11 +3068,10 @@ def planificacion_diaria():
 
     nombre_docente = docente_actual['nombre_completo'] if docente_actual else session.get('nombre_completo', '')
     
-    # Normalizamos el rol para evitar conflictos entre 'area_maestro', 'área_maestro' y 'maestro_area'
     rol_bruto = docente_actual['rol'] if docente_actual else session.get('rol', 'maestro')
     rol_actual = rol_bruto.strip().lower()
 
-    area_asignada = docente_actual['area_especializada'] if docente_actual else session.get('area_especializada', '')
+    area_asignada = docente_actual['area_especializada'] if docente_actual else session.get('area_asignada', '')
     curso_asignado = docente_actual['curso_asignado'] if docente_actual else session.get('curso_asignado', '')
 
     return render_template(
