@@ -2586,6 +2586,10 @@ def ver_planificaciones_diarias():
     area_filtro = request.args.get('area', '').strip()
     grado_filtro = request.args.get('grado', '').strip()
 
+    # Datos del usuario actual en sesión
+    rol_actual = str(session.get('rol', '')).strip().lower()
+    nombre_usuario = str(session.get('nombre_completo', '')).strip()
+
     conn = None
     planificaciones = []
     lista_areas = []
@@ -2599,7 +2603,7 @@ def ver_planificaciones_diarias():
         conn = psycopg2.connect(DATABASE_URL)
         cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-        # 1. Contadores generales para la barra lateral
+        # 1. Contadores generales para la barra lateral (Se quedan intactos)
         cursor.execute("SELECT COUNT(*) FROM estudiantes")
         res_est = cursor.fetchone()
         total_estudiantes = res_est['count'] if res_est else 0
@@ -2615,16 +2619,21 @@ def ver_planificaciones_diarias():
         except:
             total_expedientes = 0
 
-        # 2. Listas únicas limpias para los selectores
+        # 2. Listas únicas para los selectores
         cursor.execute("SELECT DISTINCT TRIM(area) as area FROM planificaciones_diarias WHERE area IS NOT NULL AND area != ''")
         lista_areas = [row['area'] for row in cursor.fetchall() if row['area']]
 
         cursor.execute("SELECT DISTINCT TRIM(grado_seccion) as grado_seccion FROM planificaciones_diarias WHERE grado_seccion IS NOT NULL AND grado_seccion != ''")
         lista_grados = [row['grado_seccion'] for row in cursor.fetchall() if row['grado_seccion']]
 
-        # 3. Consulta con filtros robustos
+        # 3. Consulta con filtros y restricción por rol
         query = "SELECT * FROM planificaciones_diarias WHERE 1=1"
         params = []
+
+        # Si NO es administrador, oficina o dirección, se limita estrictamente a su nombre de docente
+        if rol_actual not in ['admin', 'administrador', 'oficina', 'director', 'dirección']:
+            query += " AND TRIM(docente) = %s"
+            params.append(nombre_usuario)
 
         if desde_fecha:
             query += " AND fecha >= %s"
