@@ -2665,7 +2665,8 @@ def guardar_planificacion_diaria():
         if conn:
             conn.close()
 
-    return redirect(url_for('vista_planificacion_diaria'))
+    # CORREGIDO: Apunta al nombre real de la ruta en Flask
+    return redirect(url_for('planificacion_diaria'))
 
 @app.route('/ver_detalle_planificacion_diaria/<int:id>')
 def ver_detalle_planificacion_diaria(id):
