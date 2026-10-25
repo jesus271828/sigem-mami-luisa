@@ -2819,6 +2819,7 @@ def generar_pdf_filtrado():
             cumple_grado = not grado_seleccionado or grado_db == grado_seleccionado
 
             if cumple_desde and cumple_hasta and cumple_area and cumple_grado:
+                # Nos aseguramos de forzar conversión a string limpio de CADA campo
                 planificaciones.append({
                     'docente': limpiar_str(row.get('docente', '')),
                     'area': area_db or 'Informática',
