@@ -2796,6 +2796,9 @@ def convertir_a_dd_mm_yyyy(f_str):
 # --- RUTA PARA GENERAR EL PDF FILTRADO ---
 @app.route('/generar_pdf_filtrado', methods=['GET'])
 def generar_pdf_filtrado():
+    if 'usuario' not in session and 'nombre_completo' not in session:
+        return redirect(url_for('login'))
+
     desde_fecha = request.args.get('desde_fecha', '').strip()
     hasta_fecha = request.args.get('hasta_fecha', '').strip()
     area_seleccionada = request.args.get('area', '').strip()
@@ -2841,23 +2844,86 @@ def generar_pdf_filtrado():
                 })
 
         if not planificaciones:
-            return "<h3 style='font-family:sans-serif; padding:20px;'>No se encontraron planificaciones asociadas a los filtros seleccionados.</h3>", 404
+            flash('No se encontraron planificaciones para los filtros seleccionados.', 'warning')
+            return redirect(url_for('ver_planificaciones_diarias'))
 
-        html_content = render_template('pdf_planificacion_diaria.html', planificaciones=planificaciones)
+        # PASAMOS CADA PLANIFICACIÓN INDIVIDUALMENTE USANDO LA VARIABLE 'plan' QUE YA FUNCIONA
+        pdf_buffer = BytesIO()
         
-        pdf_file = BytesIO()
-        pisaStatus = pisa.CreatePDF(html_content, dest=pdf_file)
+        # HTML base acumulado para evitar depender de bucles complejos en plantillas externas
+        html_acumulado = """
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                body { font-family: Helvetica, Arial, sans-serif; font-size: 11px; color: #333; margin: 0; padding: 10px; }
+                .page-break { page-break-after: always; }
+                table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+                th, td { border: 1px solid #000; padding: 6px 8px; vertical-align: top; font-size: 10px; }
+            </style>
+        </head>
+        <body>
+        """
+
+        for idx, p in enumerate(planificaciones):
+            html_acumulado += f"""
+            <div style="margin-bottom: 30px;">
+                <table>
+                    <tr>
+                        <td style="width: 60%; border: none;">
+                            <div><strong>Docente:</strong> {p['docente']}</div>
+                            <div><strong>Área:</strong> {p['area']}</div>
+                            <div><strong>Grado y Sección:</strong> {p['grado_seccion']}</div>
+                            <div><strong>Fecha:</strong> {p['fecha']}</div>
+                        </td>
+                        <td style="width: 40%; border: none; text-align: right;">
+                            <h4 style="color: #003366; margin: 0;">Esquema de Planificación</h4>
+                        </td>
+                    </tr>
+                </table>
+                <table>
+                    <tr><td colspan="4"><strong>Estrategias:</strong> {p['estrategias']}</td></tr>
+                    <tr><td colspan="4"><strong>Intención pedagógica:</strong> {p['intencion_pedagogica']}</td></tr>
+                    <tr><td colspan="4"><strong>Indicador de logro:</strong> {p['indicador_logro']}</td></tr>
+                    <tr style="background-color: #f8f9fa; font-weight: bold;">
+                        <td>Competencia específica</td><td>Momentos</td><td>Actividades</td><td>Recursos</td>
+                    </tr>
+                    <tr>
+                        <td rowspan="3">{p['competencia_especifica']}</td>
+                        <td><strong>Inicio</strong></td><td>{p['actividad_inicio']}</td><td>{p['recursos_inicio']}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Desarrollo</strong></td><td>{p['actividad_desarrollo']}</td><td>{p['recursos_desarrollo']}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Cierre</strong></td><td>{p['actividad_cierre']}</td><td>{p['recursos_cierre']}</td>
+                    </tr>
+                    <tr><td colspan="4"><strong>Recuperación pedagógica:</strong> {p['recuperacion_pedagogica']}</td></tr>
+                </table>
+            </div>
+            """
+            if idx < len(planificaciones) - 1:
+                html_acumulado += '<div class="page-break"></div>'
+
+        html_acumulado += "</body></html>"
+
+        pisa_status = pisa.CreatePDF(html_acumulado, dest=pdf_buffer)
         
-        if pisaStatus.err:
+        if pisa_status.err:
             return "Error al generar la estructura del PDF", 500
             
-        pdf_file.seek(0)
+        pdf_buffer.seek(0)
         return send_file(
-            pdf_file, 
+            pdf_buffer, 
             mimetype='application/pdf', 
             as_attachment=False, 
             download_name="Planificaciones_Filtradas.pdf"
         )
+        
+    except Exception as e:
+        print("Error en PDF filtrado:", e)
+        return f"Error al procesar el PDF: {e}", 500
         
     except Exception as e:
         print("Error en PDF filtrado:", e)
