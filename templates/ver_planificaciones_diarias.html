@@ -123,7 +123,7 @@
                 <span class="badge bg-secondary fs-6">Total: {{ total_registros }}</span>
             </div>
 
-            <!-- Listado de Tarjetas (Más grandes con col-md-6) -->
+            <!-- Listado de Tarjetas -->
             <div class="row g-3">
                 {% for plan in planificaciones %}
                 <div class="col-md-6">
@@ -144,7 +144,9 @@
 
                             <!-- BOTÓN DE IMPRIMIR PDF INDIVIDUAL -->
                             <div class="d-flex justify-content-between align-items-center pt-3 border-top">
-                                  <a href="{{ url_for('imprimir_planificacion_diaria_pdf', id=plan.id) }}">Imprimir PDF</a>
+                                <a href="{{ url_for('imprimir_planificacion_diaria_pdf', id=plan.id) }}" class="btn btn-sm btn-outline-primary fw-bold">
+                                    <i class="fas fa-print me-1"></i> Imprimir PDF
+                                </a>
                                 <small class="text-muted fw-semibold">ID: #{{ plan.id }}</small>
                             </div>
                         </div>
@@ -164,7 +166,7 @@
             {% if planificaciones %}
             <div class="row mt-4">
                 <div class="col-12 text-center">
-                    <a href="{{ url_for('generar_pdf_filtrado', desde_fecha=desde_fecha, hasta_fecha=hasta_fecha, area=area_seleccionada, grado=grado_seleccionado) }}" class="btn btn-danger">
+                    <a href="{{ url_for('generar_pdf_por_fecha', fecha_inicio=desde_fecha, fecha_fin=hasta_fecha, area=area_seleccionada, grado=grado_seleccionado) }}" class="btn btn-danger">
                        <i class="fas fa-file-pdf me-2"></i>Generar PDF de lo Filtrado
                     </a>
                 </div>
