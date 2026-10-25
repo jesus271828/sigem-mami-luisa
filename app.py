@@ -2766,14 +2766,13 @@ def ver_detalle_planificacion_diaria(id):
         flash('Error al cargar la planificación.', 'danger')
         return redirect(url_for('ver_planificaciones_diarias'))
 
-  from io import BytesIO
+from io import BytesIO
 from flask import render_template, request, send_file, redirect, url_for, flash, session
 from xhtml2pdf import pisa
 import psycopg2.extras
 import sqlite3
 import io
 
-# --- FUNCIÓN AUXILIAR PARA EVITAR EL ERROR DE LISTAS EN EL PDF ---
 def limpiar_str(val):
     if val is None:
         return ""
@@ -2784,7 +2783,7 @@ def limpiar_str(val):
 def convertir_a_dd_mm_yyyy(f_str):
     if not f_str:
         return ""
-    f_str = str(f_str).split(' ')[0].strip()  # Remover horas si las tiene
+    f_str = str(f_str).split(' ')[0].strip()
     p = f_str.split('-')
     if len(p) == 3 and len(p[0]) == 4:
         return f"{p[2]}-{p[1]}-{p[0]}"
