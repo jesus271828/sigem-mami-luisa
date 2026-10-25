@@ -2,181 +2,97 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Historial de Planificaciones Diarias - SIGEM Mami Luisa</title>
-    <!-- Bootstrap 5 CSS & Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <title>Planificación Diaria | SIGEM Mami Luisa</title>
     <style>
-        body { background-color: #f4f6f9; }
-        .sidebar { background-color: #1b2559; min-height: 100vh; color: white; }
-        .sidebar .nav-link { color: #a3b1cc; }
-        .sidebar .nav-link.active, .sidebar .nav-link:hover { color: #ffffff; background-color: rgba(255,255,255,0.1); }
-        .badge-area { background-color: #0d6efd; font-size: 0.8rem; }
+        body { font-family: 'Helvetica', 'Arial', sans-serif; font-size: 11px; color: #333; margin: 0; padding: 10px; }
+        .page-break { page-break-after: always; }
+        .plan-container { width: 100%; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        table th, table td { border: 1px solid #000; padding: 6px 8px; vertical-align: top; font-size: 10px; }
+        .header-title { text-align: right; }
+        .header-title h4 { color: #003366; margin: 0; font-size: 14px; }
+        .header-title h5 { color: #003366; margin: 2px 0 0 0; font-size: 11px; }
     </style>
 </head>
 <body>
-<div class="container-fluid">
-    <div class="row">
-        <!-- Sidebar Navigation -->
-        <div class="col-md-3 col-lg-2 sidebar p-3 d-flex flex-column justify-content-between">
-            <div>
-                <h4 class="fw-bold mb-4">SIGEM Mami Luisa</h4>
-                <div class="small mb-3 text-light">
-                    <p><i class="fas fa-user-circle"></i> {{ session['nombre_completo'] }} ({{ session['rol'] }})</p>
-                </div>
-                <div class="d-grid gap-2 mb-4">
-                    <a href="{{ url_for('planificacion_diaria') }}" class="btn btn-success btn-sm text-start fw-bold">
-                        <i class="bi bi-plus-circle me-1"></i> Nueva Planificación
-                    </a>
-                    <a href="{{ url_for('ver_planificaciones_diarias') }}" class="btn btn-outline-light btn-sm text-start active">
-                        <i class="bi bi-folder me-1"></i> Ver Planificaciones
-                    </a>
-                </div>
-                
-                <!-- Registros Generales con datos dinámicos de la BD -->
-                <div class="bg-dark bg-opacity-25 p-2 rounded mb-3">
-                    <small class="text-uppercase text-warning fw-bold d-block mb-2" style="font-size: 0.7rem;">Registros Generales</small>
-                    <div class="d-flex justify-content-between align-items-center small mb-1">
-                        <span><i class="bi bi-people me-1"></i> Estudiantes:</span>
-                        <span class="badge bg-primary">{{ total_estudiantes }}</span>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center small mb-1">
-                        <span><i class="bi bi-folder2 me-1"></i> Expedientes Viejos:</span>
-                        <span class="badge bg-secondary">{{ total_expedientes }}</span>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center small mb-1">
-                        <span><i class="bi bi-person-badge me-1"></i> Usuarios:</span>
-                        <span class="badge bg-success">{{ total_usuarios }}</span>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center small">
-                        <span><i class="bi bi-journal-text me-1"></i> Planificaciones:</span>
-                        <span class="badge bg-warning text-dark">{{ total_registros }}</span>
-                    </div>
-                </div>
-            </div>
+
+    {% set lista = planificaciones if planificaciones is defined and planificaciones else [plan] %}
+
+    {% for p in lista %}
+    <div class="plan-container {% if not loop.last %}page-break{% endif %}">
+        
+        <!-- Cabecera -->
+        <table>
+            <tr>
+                <td style="width: 60%; border: none;">
+                    <div style="margin-bottom: 4px;"><strong>Docente:</strong> {{ p.docente }}</div>
+                    <div style="margin-bottom: 4px;"><strong>Área:</strong> {{ p.area }}</div>
+                    <div style="margin-bottom: 4px;"><strong>Grado y Sección:</strong> {{ p.grado_seccion }}</div>
+                    <div><strong>Fecha:</strong> {{ p.fecha }}</div>
+                </td>
+                <td style="width: 40%; border: none;" class="header-title">
+                    <h4>Esquema de Planificación Diaria</h4>
+                    <h5>Nivel Primario</h5>
+                </td>
+            </tr>
+        </table>
+
+        <!-- Tabla Principal -->
+        <table>
+            <tr>
+                <td colspan="4">
+                    <strong style="font-size: 10px;">Estrategias de enseñanza – aprendizaje:</strong><br>
+                    {{ p.estrategias }}
+                </td>
+            </tr>
+            <tr>
+                <td colspan="4">
+                    <strong style="font-size: 10px;">Intención pedagógica del día:</strong><br>
+                    {{ p.intencion_pedagogica }}
+                </td>
+            </tr>
+            <tr>
+                <td colspan="4">
+                    <strong style="font-size: 10px;">Indicador de logro:</strong><br>
+                    {{ p.indicador_logro }}
+                </td>
+            </tr>
             
-            <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm w-100">Cerrar Sesión</a>
-        </div>
+            <tr style="background-color: #f8f9fa; font-weight: bold;">
+                <td style="width: 22%;">Competencia específica</td>
+                <td style="width: 10%;">Momentos</td>
+                <td style="width: 44%;">Actividades / Duración</td>
+                <td style="width: 24%;">Recursos</td>
+            </tr>
 
-        <!-- Main Content Area -->
-        <main class="col-md-9 col-lg-10 ms-sm-auto px-md-4 py-4">
-            
-            <!-- Panel de Filtros -->
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-body p-4">
-                    <form method="GET" action="{{ url_for('ver_planificaciones_diarias') }}" class="row g-3 align-items-end">
-                        
-                        <!-- Desde la fecha -->
-                        <div class="col-md-3">
-                            <label for="desde_fecha" class="form-label text-secondary small fw-bold">Desde la fecha:</label>
-                            <input type="date" class="form-control" id="desde_fecha" name="desde_fecha" value="{{ desde_fecha }}">
-                        </div>
+            <tr>
+                <td rowspan="3">
+                    {{ p.competencia_especifica }}
+                </td>
+                <td><strong>Inicio</strong></td>
+                <td>{{ p.actividad_inicio }}</td>
+                <td>{{ p.recursos_inicio }}</td>
+            </tr>
+            <tr>
+                <td><strong>Desarrollo</strong></td>
+                <td>{{ p.actividad_desarrollo }}</td>
+                <td>{{ p.recursos_desarrollo }}</td>
+            </tr>
+            <tr>
+                <td><strong>Cierre</strong></td>
+                <td>{{ p.actividad_cierre }}</td>
+                <td>{{ p.recursos_cierre }}</td>
+            </tr>
 
-                        <!-- Hasta la fecha -->
-                        <div class="col-md-3">
-                            <label for="hasta_fecha" class="form-label text-secondary small fw-bold">Hasta la fecha (opcional):</label>
-                            <input type="date" class="form-control" id="hasta_fecha" name="hasta_fecha" value="{{ hasta_fecha }}">
-                        </div>
-
-                        <!-- Filtro por Área -->
-                        <div class="col-md-2">
-                            <label for="area" class="form-label text-secondary small fw-bold">Área:</label>
-                            <select class="form-select" id="area" name="area">
-                                <option value="">Todas las áreas</option>
-                                {% for a in lista_areas %}
-                                    <option value="{{ a }}" {% if a == area_seleccionada %}selected{% endif %}>{{ a }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-
-                        <!-- Filtro por Grado -->
-                        <div class="col-md-2">
-                            <label for="grado" class="form-label text-secondary small fw-bold">Grado:</label>
-                            <select class="form-select" id="grado" name="grado">
-                                <option value="">Todos los grados</option>
-                                {% for g in lista_grados %}
-                                    <option value="{{ g }}" {% if g == grado_seleccionado %}selected{% endif %}>{{ g }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-
-                        <!-- Botones de Acción de Filtro -->
-                        <div class="col-md-2 d-flex gap-2">
-                            <button type="submit" class="btn btn-primary w-100 fw-semibold">
-                                <i class="bi bi-funnel-fill me-1"></i> Filtrar
-                            </button>
-                            <a href="{{ url_for('ver_planificaciones_diarias') }}" class="btn btn-outline-secondary" title="Limpiar Filtros">
-                                <i class="bi bi-arrow-counterclockwise"></i>
-                            </a>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <!-- Header de Secciones y Contador -->
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="fw-bold text-primary mb-0">
-                    <i class="bi bi-folder-fill me-2"></i>Historial de Planificaciones Diarias
-                </h5>
-                <span class="badge bg-secondary fs-6">Total: {{ total_registros }}</span>
-            </div>
-
-            <!-- Listado de Tarjetas -->
-            <div class="row g-3">
-                {% for plan in planificaciones %}
-                <div class="col-md-6">
-                    <div class="card h-100 border-0 shadow-sm rounded-3 p-2">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="badge badge-area text-white px-2 py-1">{{ plan.area }}</span>
-                                <small class="text-muted"><i class="bi bi-calendar3 me-1"></i>{{ plan.fecha }}</small>
-                            </div>
-
-                            <h5 class="card-title fw-bold text-dark mt-2 mb-2">
-                                {{ plan.grado_seccion or plan.area }}
-                            </h5>
-
-                            <p class="card-text text-secondary mb-3">
-                                <strong>Intención:</strong> {{ plan.intencion_pedagogica }}
-                            </p>
-
-                            <!-- BOTÓN DE IMPRIMIR PDF INDIVIDUAL -->
-                            <div class="d-flex justify-content-between align-items-center pt-3 border-top">
-                                <a href="{{ url_for('imprimir_planificacion_diaria_pdf', id=plan.id) }}" class="btn btn-sm btn-outline-primary fw-bold">
-                                    <i class="fas fa-print me-1"></i> Imprimir PDF
-                                </a>
-                                <small class="text-muted fw-semibold">ID: #{{ plan.id }}</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                {% else %}
-                <div class="col-12">
-                    <div class="alert alert-info text-center py-4 rounded-3" role="alert">
-                        <i class="bi bi-info-circle fs-4 d-block mb-2"></i>
-                        No se encontraron planificaciones que coincidan con los filtros seleccionados.
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-
-            <!-- BOTÓN INFERIOR PARA GENERAR PDF DE TODO LO FILTRADO -->
-            {% if planificaciones %}
-            <div class="row mt-4">
-                <div class="col-12 text-center">
-                    <a href="{{ url_for('generar_pdf_filtrado', desde_fecha=desde_fecha, hasta_fecha=hasta_fecha, area=area_seleccionada, grado=grado_seleccionado) }}" class="btn btn-danger">
-                       <i class="fas fa-file-pdf me-2"></i>Generar PDF de lo Filtrado
-                    </a>
-                </div>
-            </div>
-            {% endif %}
-
-        </main>
+            <tr>
+                <td colspan="4">
+                    <strong style="font-size: 10px;">Actividades de recuperación pedagógica:</strong><br>
+                    {{ p.recuperacion_pedagogica }}
+                </td>
+            </tr>
+        </table>
     </div>
-</div>
+    {% endfor %}
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
