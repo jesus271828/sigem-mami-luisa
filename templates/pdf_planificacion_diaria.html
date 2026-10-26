@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Esquema de Planificación Diaria</title>
     <style>
-        /* CONFIGURACIÓN PARA HORIZONTAL (LANDSCAPE) */
+        /* Configuración para tamaño Carta en Horizontal (Landscape) */
         @page {
             size: letter landscape;
             margin: 1cm;
@@ -72,7 +72,7 @@
         </tr>
     </table>
 
-    <!-- Estructura de la Planificación en Tabla Oficial (Horizontal) -->
+    <!-- Estructura de la Planificación idéntica al formulario web -->
     <table class="form-table">
         <!-- Estrategias -->
         <tr>
@@ -113,11 +113,10 @@
             </td>
             <td class="label-bold">Inicio</td>
             <td>
-                {{ plan.actividad_inicio }}<br>
-                {% if plan.recursos_inicio %}<small>Recursos: {{ plan.recursos_inicio }}</small>{% endif %}
+                {{ plan.actividad_inicio }}
             </td>
-            <td rowspan="3">
-                {{ plan.recursos }}
+            <td>
+                {{ plan.recursos_inicio }}
             </td>
         </tr>
 
@@ -125,8 +124,10 @@
         <tr>
             <td class="label-bold">Desarrollo</td>
             <td>
-                {{ plan.actividad_desarrollo }}<br>
-                {% if plan.recursos_desarrollo %}<small>Recursos: {{ plan.recursos_desarrollo }}</small>{% endif %}
+                {{ plan.actividad_desarrollo }}
+            </td>
+            <td>
+                {{ plan.recursos_desarrollo }}
             </td>
         </tr>
 
@@ -134,8 +135,10 @@
         <tr>
             <td class="label-bold">Cierre</td>
             <td>
-                {{ plan.actividad_cierre }}<br>
-                {% if plan.recursos_cierre %}<small>Recursos: {{ plan.recursos_cierre }}</small>{% endif %}
+                {{ plan.actividad_cierre }}
+            </td>
+            <td>
+                {{ plan.recursos_cierre }}
             </td>
         </tr>
 
