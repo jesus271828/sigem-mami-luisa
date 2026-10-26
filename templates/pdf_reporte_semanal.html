@@ -2,244 +2,154 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Esquema de Planificación Diaria - Horizontal</title>
+    <title>Esquema de Planificación Diaria</title>
     <style>
-        /* Importación de tipografía y regla base */
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: "Tw Cen MT", "Century Gothic", sans-serif;
+        /* Configuración para tamaño Carta en Horizontal (Landscape) */
+        @page {
+            size: letter landscape;
+            margin: 1cm;
         }
 
         body {
-            background-color: #fff;
-            padding: 10mm;
-            font-size: 12px;
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 10pt;
             color: #000;
-            line-height: 1.25;
+            margin: 0;
+            padding: 0;
         }
 
-        /* Configuración de Impresión en Horizontal (Landscape) */
-        @page {
-            size: letter landscape;
-            margin: 10mm;
-        }
-
-        @media print {
-            body {
-                padding: 0;
-                background: none;
-            }
-            .no-print {
-                display: none;
-            }
-            table {
-                page-break-inside: avoid;
-            }
-        }
-
-        .page-break {
-            page-break-after: always;
-        }
-
-        .contenedor-planificacion {
-            width: 100%;
-            max-width: 100%;
-        }
-
-        /* Encabezado */
         .header-table {
             width: 100%;
-            border-collapse: collapse;
             margin-bottom: 10px;
         }
 
-        .header-table td {
-            padding: 4px 6px;
-            vertical-align: bottom;
-        }
-
-        .header-title {
+        .title-right {
             text-align: right;
-            font-size: 18px;
             font-weight: bold;
-            letter-spacing: 0.3px;
+            color: #1b2559;
+            font-size: 14pt;
         }
 
-        .header-subtitle {
+        .subtitle-right {
             text-align: right;
-            font-size: 12px;
-            font-weight: normal;
-        }
-
-        .field-label {
             font-weight: bold;
-            font-size: 11.5px;
+            font-size: 10pt;
         }
 
-        .field-value {
-            border-bottom: 1.5px solid #000;
-            padding-bottom: 2px;
-            font-size: 13px;
-        }
-
-        /* Tabla Principal */
-        .main-table {
+        /* Tabla principal que cubre todo el ancho horizontal */
+        table.form-table {
             width: 100%;
             border-collapse: collapse;
-            border: 2px solid #000;
+            margin-top: 5px;
         }
 
-        .main-table th, 
-        .main-table td {
+        table.form-table th, table.form-table td {
             border: 1px solid #000;
             padding: 6px 8px;
             vertical-align: top;
-            text-align: left;
-            font-size: 11.5px;
+            font-size: 9.5pt;
         }
 
-        .main-table th {
-            background-color: #f2f2f2;
+        .label-bold {
             font-weight: bold;
-            font-size: 12px;
-        }
-
-        /* Distribución de anchos */
-        .col-comp { width: 22%; }
-        .col-mom  { width: 8%; }
-        .col-act  { width: 50%; }
-        .col-rec  { width: 20%; }
-
-        td.competencia-unica {
-            vertical-align: top;
-            background-color: #fff;
-        }
-
-        .bloque-seccion {
-            background-color: #fff;
-            padding: 8px 10px;
-        }
-
-        .bloque-titulo {
-            font-weight: bold;
-            font-size: 12px;
-            margin-bottom: 3px;
         }
     </style>
 </head>
 <body>
 
-{% for plan in planificaciones %}
-<div class="contenedor-planificacion">
-
-    <!-- ENCABEZADO -->
+    <!-- Encabezado -->
     <table class="header-table">
         <tr>
-            <td colspan="2" style="width: 50%;">
-                <span class="field-label">Docente:</span><br>
-                <div class="field-value">{{ plan.docente }}</div>
+            <td>
+                <strong>Docente:</strong> {{ plan.docente }}<br>
+                <strong>Área:</strong> {{ plan.area }}<br>
+                <strong>Grado y Sección:</strong> {{ plan.grado_seccion }} &nbsp;&nbsp;&nbsp;&nbsp; <strong>Fecha:</strong> {{ plan.fecha }}
             </td>
-            <td colspan="2" class="header-title" style="width: 50%;">
-                Esquema de Planificación Diaria<br>
-                <div class="header-subtitle">Nivel Primario</div>
+            <td style="text-align: right;">
+                <div class="title-right">Esquema de Planificación Diaria</div>
+                <div class="subtitle-right">Nivel Primario</div>
             </td>
-        </tr>
-        <tr>
-            <td colspan="4">
-                <span class="field-label">Área:</span><br>
-                <div class="field-value">{{ plan.area }}</div>
-            </td>
-        </tr>
-        <tr>
-            <td style="width: 25%;">
-                <span class="field-label">Grado y Sección:</span><br>
-                <div class="field-value">{{ plan.grado_seccion if plan.grado_seccion else plan.grado }}</div>
-            </td>
-            <td style="width: 25%;">
-                <span class="field-label">Fecha:</span><br>
-                <div class="field-value">{{ plan.fecha }}</div>
-            </td>
-            <td colspan="2"></td>
         </tr>
     </table>
 
-    <!-- TABLA PRINCIPAL DEL ESQUEMA -->
-    <table class="main-table">
-        <!-- Estrategias de enseñanza - aprendizaje -->
+    <!-- Estructura de la Planificación idéntica al formulario web -->
+    <table class="form-table">
+        <!-- Estrategias -->
         <tr>
-            <td colspan="4" class="bloque-seccion">
-                <div class="bloque-titulo">Estrategias de enseñanza - aprendizaje:</div>
-                {{ plan.estrategias }}
+            <td colspan="4">
+                <span class="label-bold">Estrategias de enseñanza – aprendizaje:</span><br>
+                <div style="margin-top: 3px;">{{ plan.estrategias }}</div>
             </td>
         </tr>
 
-        <!-- Intención pedagógica del día -->
+        <!-- Intención Pedagógica -->
         <tr>
-            <td colspan="4" class="bloque-seccion">
-                <div class="bloque-titulo">Intención pedagógica del día:</div>
-                {{ plan.intencion_pedagogica }}
+            <td colspan="4">
+                <span class="label-bold">Intención pedagógica del día:</span><br>
+                <div style="margin-top: 3px;">{{ plan.intencion_pedagogica }}</div>
             </td>
         </tr>
 
-        <!-- Indicador de logro -->
+        <!-- Indicador de Logro -->
         <tr>
-            <td colspan="4" class="bloque-seccion">
-                <div class="bloque-titulo">Indicador de logro:</div>
-                {{ plan.indicador_logro if plan.indicador_logro else plan.indicadores_logro }}
+            <td colspan="4">
+                <span class="label-bold">Indicador de logro:</span><br>
+                <div style="margin-top: 3px;">{{ plan.indicador_logro }}</div>
             </td>
         </tr>
 
-        <!-- Encabezados de la matriz -->
-        <tr>
-            <th class="col-comp">Competencia específica</th>
-            <th class="col-mom">Momentos</th>
-            <th class="col-act">Actividades / Duración</th>
-            <th class="col-rec">Recursos:</th>
+        <!-- Cabeceras de la Sección Central -->
+        <tr style="background-color: #f2f2f2;">
+            <td style="width: 22%;" class="label-bold">Competencia específica</td>
+            <td style="width: 10%;" class="label-bold">Momentos</td>
+            <td style="width: 50%;" class="label-bold">Actividades / Duración</td>
+            <td style="width: 18%;" class="label-bold">Recursos</td>
         </tr>
 
-        <!-- Filas de Momentos con Competencia Específica Combinada -->
+        <!-- Fila: INICIO -->
         <tr>
-            <td rowspan="3" class="competencia-unica">
-                {{ plan.competencia_especifica if plan.competencia_especifica else plan.competencias_especificas }}
+            <td rowspan="3">
+                {{ plan.competencia_especifica }}
             </td>
-            <td><strong>Inicio</strong></td>
+            <td class="label-bold">Inicio</td>
             <td>
                 {{ plan.actividad_inicio }}
             </td>
-            <td>{{ plan.recursos_inicio if plan.recursos_inicio else plan.recursos }}</td>
+            <td>
+                {{ plan.recursos_inicio }}
+            </td>
         </tr>
+
+        <!-- Fila: DESARROLLO -->
         <tr>
-            <td><strong>Desarrollo</strong></td>
+            <td class="label-bold">Desarrollo</td>
             <td>
                 {{ plan.actividad_desarrollo }}
             </td>
-            <td>{{ plan.recursos_desarrollo if plan.recursos_desarrollo else plan.recursos }}</td>
+            <td>
+                {{ plan.recursos_desarrollo }}
+            </td>
         </tr>
+
+        <!-- Fila: CIERRE -->
         <tr>
-            <td><strong>Cierre</strong></td>
+            <td class="label-bold">Cierre</td>
             <td>
                 {{ plan.actividad_cierre }}
             </td>
-            <td>{{ plan.recursos_cierre if plan.recursos_cierre else plan.recursos }}</td>
+            <td>
+                {{ plan.recursos_cierre }}
+            </td>
         </tr>
 
         <!-- Actividades de recuperación pedagógica -->
         <tr>
-            <td colspan="4" class="bloque-seccion">
-                <div class="bloque-titulo">Actividades de recuperación pedagógica:</div>
-                {{ plan.recuperacion_pedagogica if plan.recuperacion_pedagogica else plan.actividades_recuperacion }}
+            <td colspan="4">
+                <span class="label-bold">Actividades de recuperación pedagógica:</span><br>
+                <div style="margin-top: 3px;">{{ plan.recuperacion_pedagogica }}</div>
             </td>
         </tr>
     </table>
-
-</div>
-
-{% if not loop.last %}
-    <div class="page-break"></div>
-{% endif %}
-{% endfor %}
 
 </body>
 </html>
