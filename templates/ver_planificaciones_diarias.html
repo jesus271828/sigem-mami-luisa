@@ -144,8 +144,8 @@
 
                             <!-- BOTÓN DE IMPRIMIR PDF INDIVIDUAL -->
                             <div class="d-flex justify-content-between align-items-center pt-3 border-top">
-                                <a href="{{ url_for('imprimir_planificacion_diaria_pdf', id=plan.id) }}" class="btn btn-sm btn-outline-primary fw-bold">
-                                    <i class="fas fa-print me-1"></i> Imprimir PDF
+                                <a href="{{ url_for('imprimir_planificacion_diaria_pdf', id=plan.id) }}" target="_blank" class="btn btn-sm btn-outline-primary fw-bold">
+                                   <i class="fas fa-print me-1"></i> Imprimir PDF
                                 </a>
                                 <small class="text-muted fw-semibold">ID: #{{ plan.id }}</small>
                             </div>

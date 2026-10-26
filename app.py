@@ -2977,7 +2977,8 @@ def imprimir_planificacion_diaria_pdf(id):
         pisa_status = pisa.CreatePDF(rendered_html, dest=pdf_buffer)
 
         if pisa_status.err:
-            flash('Error al generar el documento PDF.', 'danger')
+            print(f"❌ Error de xhtml2pdf en planificación ID {id}:", pisa_status.err)
+            flash('Error al generar el documento PDF (Revisa la consola para más detalles).', 'danger')
             return redirect(url_for('ver_planificaciones_diarias'))
 
         pdf_buffer.seek(0)
@@ -2987,8 +2988,8 @@ def imprimir_planificacion_diaria_pdf(id):
         return response
 
     except Exception as e:
-        print("❌ Error crítico al generar PDF de planificación diaria:", e)
-        flash('Error al procesar la solicitud del PDF.', 'danger')
+        print("❌ Error crítico al generar PDF de planificación diaria:", str(e))
+        flash(f'Error al procesar la solicitud: {str(e)}', 'danger')
         return redirect(url_for('ver_planificaciones_diarias'))
 
 
