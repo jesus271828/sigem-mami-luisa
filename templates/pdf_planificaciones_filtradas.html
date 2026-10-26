@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Reporte de Planificaciones Diarias</title>
+    <style>
+        @page {
+            size: letter landscape;
+            margin: 1cm;
+        }
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 10pt;
+            color: #000;
+            margin: 0;
+            padding: 0;
+        }
+        .header-table {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        .title-right {
+            text-align: right;
+            font-weight: bold;
+            color: #1b2559;
+            font-size: 14pt;
+        }
+        .subtitle-right {
+            text-align: right;
+            font-weight: bold;
+            font-size: 10pt;
+        }
+        table.form-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 5px;
+        }
+        table.form-table th, table.form-table td {
+            border: 1px solid #000;
+            padding: 6px 8px;
+            vertical-align: top;
+            font-size: 9.5pt;
+        }
+        .label-bold {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    {% for plan in planificaciones %}
+    <!-- Encabezado -->
+    <table class="header-table">
+        <tr>
+            <td>
+                <strong>Docente:</strong> {{ plan.docente }}<br>
+                <strong>Área:</strong> {{ plan.area }}<br>
+                <strong>Grado y Sección:</strong> {{ plan.grado_seccion }}      <strong>Fecha:</strong> {{ plan.fecha }}
+            </td>
+            <td style="text-align: right;">
+                <div class="title-right">Esquema de Planificación Diaria</div>
+                <div class="subtitle-right">Nivel Primario</div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Tabla Oficial de Planificación -->
+    <table class="form-table">
+        <tr>
+            <td colspan="4">
+                <span class="label-bold">Estrategias de enseñanza – aprendizaje:</span><br>
+                <div style="margin-top: 3px;">{{ plan.estrategias }}</div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="4">
+                <span class="label-bold">Intención pedagógica del día:</span><br>
+                <div style="margin-top: 3px;">{{ plan.intencion_pedagogica }}</div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="4">
+                <span class="label-bold">Indicador de logro:</span><br>
+                <div style="margin-top: 3px;">{{ plan.indicador_logro }}</div>
+            </td>
+        </tr>
+        <tr style="background-color: #f2f2f2;">
+            <td style="width: 22%;" class="label-bold">Competencia específica</td>
+            <td style="width: 10%;" class="label-bold">Momentos</td>
+            <td style="width: 50%;" class="label-bold">Actividades / Duración</td>
+            <td style="width: 18%;" class="label-bold">Recursos</td>
+        </tr>
+        <tr>
+            <td rowspan="3">{{ plan.competencia_especifica }}</td>
+            <td class="label-bold">Inicio</td>
+            <td>{{ plan.actividad_inicio }}</td>
+            <td>{{ plan.recursos_inicio }}</td>
+        </tr>
+        <tr>
+            <td class="label-bold">Desarrollo</td>
+            <td>{{ plan.actividad_desarrollo }}</td>
+            <td>{{ plan.recursos_desarrollo }}</td>
+        </tr>
+        <tr>
+            <td class="label-bold">Cierre</td>
+            <td>{{ plan.actividad_cierre }}</td>
+            <td>{{ plan.recursos_cierre }}</td>
+        </tr>
+        <tr>
+            <td colspan="4">
+                <span class="label-bold">Actividades de recuperación pedagógica:</span><br>
+                <div style="margin-top: 3px;">{{ plan.recuperacion_pedagogica }}</div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Salto de página automático entre planificaciones -->
+    {% if not loop.last %}
+    <pdf:nextpage>
+    {% endif %}
+
+    {% endfor %}
+
+</body>
+</html>
