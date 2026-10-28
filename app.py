@@ -2722,7 +2722,7 @@ def planificacion():
     curso_asignado = session.get('curso_asignado', '')
     
     # Determinamos si es un profesor de área (Informática, Inglés, Educación Física, Música, etc.)
-    es_area = (rol_actual == 'área_maestro')
+    es_area = (rol_actual == 'área_especializada')
     
     grado_actual = curso_asignado if not es_area else ''
     if not grado_actual or grado_actual == 'None':
