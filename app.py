@@ -2714,19 +2714,18 @@ def menu_planificacion():
     return render_template('menu_planificacion.html')
 
 
+from flask import render_template, session, redirect, url_for, request, flash
 
-from flask import render_template, session, redirect, url_for
-
-@app.route('/planificacion')
+@app.route('/planificacion', methods=['GET'])
 def planificacion():
-    # Verifica si el usuario ha iniciado sesión
+    # Comprobamos si el usuario ha iniciado sesión
     if 'usuario' not in session:
-        return redirect(url_for('login')) # O la ruta de inicio de sesión que uses
+        flash("Por favor, inicia sesión primero.", "warning")
+        return redirect(url_for('login')) # Ajusta 'login' al nombre de tu ruta de inicio de sesión
     
-    # Obtenemos los datos del usuario actual desde la sesión
     usuario_actual = session['usuario']
     
-    # Pasamos la variable 'usuario' al template
+    # Renderizamos la plantilla pasándole la variable usuario
     return render_template('planificacion.html', usuario=usuario_actual)
 
 # ==============================================================================
