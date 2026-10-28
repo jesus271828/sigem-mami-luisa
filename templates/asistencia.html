@@ -25,20 +25,57 @@
                     <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
                         {{ message }}
                         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
+                            <span aria-hidden="true">×</span>
                         </button>
                     </div>
                 {% endfor %}
             {% endif %}
         {% endwith %}
 
-        <!-- Formulario de Selección de Curso y Fecha -->
+        <!-- NUEVO APARTADO APARTE: Consulta por Rango de Fechas y Curso -->
+        <div class="card shadow-sm mb-4 border-info">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-filter"></i> Consulta de Asistencia por Rango de Fechas y Curso</h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" action="{{ url_for('asistencia') }}">
+                    <div class="row align-items-end">
+                        <div class="col-md-4 form-group mb-md-0">
+                            <label for="curso_filtro" class="font-weight-bold">Curso:</label>
+                            <select name="curso_filtro" id="curso_filtro" class="form-control" required>
+                                <option value="">-- Elija un curso --</option>
+                                {% for curso in lista_grados %}
+                                    <option value="{{ curso }}" {% if curso_filtro == curso %}selected{% endif %}>
+                                        {{ curso }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3 form-group mb-md-0">
+                            <label for="fecha_desde" class="font-weight-bold">Fecha Desde:</label>
+                            <input type="date" name="fecha_desde" id="fecha_desde" class="form-control" value="{{ fecha_desde_actual or fecha_actual }}" required>
+                        </div>
+                        <div class="col-md-3 form-group mb-md-0">
+                            <label for="fecha_hasta" class="font-weight-bold">Fecha Hasta:</label>
+                            <input type="date" name="fecha_hasta" id="fecha_hasta" class="form-control" value="{{ fecha_hasta_actual or fecha_actual }}" required>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-info btn-block text-white shadow-sm font-weight-bold">
+                                <i class="fas fa-search"></i> Consultar
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Formulario de Selección de Curso y Fecha Diario -->
         <div class="card shadow-sm mb-4">
             <div class="card-body">
                 <form method="GET" action="{{ url_for('asistencia') }}">
                     <div class="row">
                         <div class="col-md-6 form-group">
-                            <label for="grado">Seleccionar Curso (Primaria / Inicial):</label>
+                            <label for="grado">Seleccionar Curso (Pase de Lista Diario):</label>
                             <select name="grado" id="grado" class="form-control" onchange="this.form.submit()" required>
                                 <option value="">-- Elija un curso --</option>
                                 {% for curso in lista_grados %}
@@ -251,7 +288,7 @@
                         </table>
                     </div>
 
-                    <!-- TABLA 2: Resumen (AHORA EDITABLE) -->
+                    <!-- TABLA 2: Resumen (EDITABLE) -->
                     <h6 class="font-weight-bold text-secondary mt-4">Resumen (Nivel Inicial)</h6>
                     <div class="table-responsive mb-4">
                         <table class="table table-bordered text-center">
@@ -273,29 +310,23 @@
                             <tbody>
                                 <tr>
                                     <td class="font-weight-bold align-middle">TOTAL</td>
-                                    <!-- Matriculados Niños -->
                                     <td class="bg-light">
-                                        <input type="number" name="gral_mat_ninos" value="{{ meta.get('gral_mat_ninos', 0) }}" class="form-control text-center font-weight-bold" min="0">
+                                        <input type="number" name="gral_mat_ninos" value="{{ meta.get('gral_mat_ninos', 0) if meta else 0 }}" class="form-control text-center font-weight-bold" min="0">
                                     </td>
-                                    <!-- Matriculados Niñas -->
                                     <td class="bg-light">
-                                        <input type="number" name="gral_mat_ninas" value="{{ meta.get('gral_mat_ninas', 0) }}" class="form-control text-center font-weight-bold" min="0">
+                                        <input type="number" name="gral_mat_ninas" value="{{ meta.get('gral_mat_ninas', 0) if meta else 0 }}" class="form-control text-center font-weight-bold" min="0">
                                     </td>
-                                    <!-- Total Matriculados (calculado visualmente o estático) -->
                                     <td class="bg-warning text-dark font-weight-bold align-middle">
-                                        {{ (meta.get('gral_mat_ninos', 0) | int) + (meta.get('gral_mat_ninas', 0) | int) }}
+                                        {{ ((meta.get('gral_mat_ninos', 0) if meta else 0) | int) + ((meta.get('gral_mat_ninas', 0) if meta else 0) | int) }}
                                     </td>
-                                    <!-- Asistencia Niños -->
                                     <td>
-                                        <input type="number" name="gral_asis_ninos" value="{{ meta.get('gral_asis_ninos', 0) }}" class="form-control text-center font-weight-bold" min="0">
+                                        <input type="number" name="gral_asis_ninos" value="{{ meta.get('gral_asis_ninos', 0) if meta else 0 }}" class="form-control text-center font-weight-bold" min="0">
                                     </td>
-                                    <!-- Asistencia Niñas -->
                                     <td>
-                                        <input type="number" name="gral_asis_ninas" value="{{ meta.get('gral_asis_ninas', 0) }}" class="form-control text-center font-weight-bold" min="0">
+                                        <input type="number" name="gral_asis_ninas" value="{{ meta.get('gral_asis_ninas', 0) if meta else 0 }}" class="form-control text-center font-weight-bold" min="0">
                                     </td>
-                                    <!-- Total Asistencia -->
                                     <td class="bg-success text-white font-weight-bold align-middle">
-                                        {{ (meta.get('gral_asis_ninos', 0) | int) + (meta.get('gral_asis_ninas', 0) | int) }}
+                                        {{ ((meta.get('gral_asis_ninos', 0) if meta else 0) | int) + ((meta.get('gral_asis_ninas', 0) if meta else 0) | int) }}
                                     </td>
                                 </tr>
                             </tbody>
@@ -303,22 +334,22 @@
                                 <tr>
                                     <td class="font-weight-bold bg-light align-middle">TOTAL</td>
                                     <td style="background-color: #cce6ff;">
-                                        <input type="text" name="global_mat_ninos" class="form-control text-center font-weight-bold text-info" value="{{ meta.global_mat_ninos if meta and meta.global_mat_ninos is not none else (resumen_grados | sum(attribute='mat_ninos')) }}">
+                                        <input type="text" name="global_mat_ninos" class="form-control text-center font-weight-bold text-info" value="{{ meta.global_mat_ninos if meta and meta.global_mat_ninos is not none else (resumen_grados | sum(attribute='mat_ninos') if resumen_grados else 0) }}">
                                     </td>
                                     <td style="background-color: #ffcce6;">
-                                        <input type="text" name="global_mat_ninas" class="form-control text-center font-weight-bold text-danger" value="{{ meta.global_mat_ninas if meta and meta.global_mat_ninas is not none else (resumen_grados | sum(attribute='asist_ninas')) if resumen_grados else (resumen_grados | sum(attribute='mat_ninas')) }}">
+                                        <input type="text" name="global_mat_ninas" class="form-control text-center font-weight-bold text-danger" value="{{ meta.global_mat_ninas if meta and meta.global_mat_ninas is not none else (resumen_grados | sum(attribute='mat_ninas') if resumen_grados else 0) }}">
                                     </td>
                                     <td style="background-color: #ffc107;">
-                                        <input type="text" name="global_mat_total" class="form-control text-center font-weight-bold text-dark bg-warning" value="{{ meta.global_mat_total if meta and meta.global_mat_total is not none else (resumen_grados | sum(attribute='mat_total')) }}">
+                                        <input type="text" name="global_mat_total" class="form-control text-center font-weight-bold text-dark bg-warning" value="{{ meta.global_mat_total if meta and meta.global_mat_total is not none else (resumen_grados | sum(attribute='mat_total') if resumen_grados else 0) }}">
                                     </td>
                                     <td>
-                                        <input type="text" name="global_asist_ninos" class="form-control text-center font-weight-bold text-success" value="{{ meta.global_asist_ninos if meta and meta.global_asist_ninos is not none else (resumen_grados | sum(attribute='asist_ninos')) }}">
+                                        <input type="text" name="global_asist_ninos" class="form-control text-center font-weight-bold text-success" value="{{ meta.global_asist_ninos if meta and meta.global_asist_ninos is not none else (resumen_grados | sum(attribute='asist_ninos') if resumen_grados else 0) }}">
                                     </td>
                                     <td>
-                                        <input type="text" name="global_asist_ninas" class="form-control text-center font-weight-bold text-success" value="{{ meta.global_asist_ninas if meta and meta.global_asist_ninas is not none else (resumen_grados | sum(attribute='asist_ninas')) }}">
+                                        <input type="text" name="global_asist_ninas" class="form-control text-center font-weight-bold text-success" value="{{ meta.global_asist_ninas if meta and meta.global_asist_ninas is not none else (resumen_grados | sum(attribute='asist_ninas') if resumen_grados else 0) }}">
                                     </td>
                                     <td style="background-color: #28a745;">
-                                        <input type="text" name="global_asist_total" class="form-control text-center font-weight-bold text-white bg-success" value="{{ meta.global_asist_total if meta and meta.global_asist_total is not none else (resumen_grados | sum(attribute='asist_total')) }}">
+                                        <input type="text" name="global_asist_total" class="form-control text-center font-weight-bold text-white bg-success" value="{{ meta.global_asist_total if meta and meta.global_asist_total is not none else (resumen_grados | sum(attribute='asist_total') if resumen_grados else 0) }}">
                                     </td>
                                 </tr>
                             </tbody>
@@ -441,7 +472,7 @@
                     <div class="alert alert-success alert-dismissible fade show" role="alert">
                         ¡Datos guardados exitosamente!
                         <button type="button" class="close" data-dismiss="alert" aria-label="Close" onclick="this.parentElement.remove();">
-                            <span aria-hidden="true">&times;</span>
+                            <span aria-hidden="true">×</span>
                         </button>
                     </div>
                 `;
@@ -450,7 +481,7 @@
                     <div class="alert alert-danger alert-dismissible fade show" role="alert">
                         Hubo un error al guardar los datos.
                         <button type="button" class="close" data-dismiss="alert" aria-label="Close" onclick="this.parentElement.remove();">
-                            <span aria-hidden="true">&times;</span>
+                            <span aria-hidden="true">×</span>
                         </button>
                     </div>
                 `;
