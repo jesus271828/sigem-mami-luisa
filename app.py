@@ -2716,21 +2716,159 @@ def menu_planificacion():
 
 @app.route('/planificacion')
 def planificacion():
-    # Esto te mostrará en la terminal de VS Code qué hay guardado en la sesión
-    print("CONTENIDO DE LA SESION:", dict(session))
-    
-    # Si usas 'user_id' o cualquier otra clave con la que guardes el login:
-    user_id = session.get('user_id') or session.get('id')
-    
-    if not user_id:
-        print("No se encontró user_id en la sesión, redirigiendo a login...")
+    if 'usuario' not in session and 'nombre_completo' not in session:
         return redirect(url_for('login'))
     
-    # Consultar Supabase
-    response = supabase.table('usuarios').select('*').eq('id', user_id).execute()
-    usuario = response.data[0] if response.data else {}
+    # Obtenemos el grado de la sesión de manera segura
+    grado_actual = session.get('curso_asignado', session.get('grado_seccion', 'Primer Grado'))
+    if not grado_actual or grado_actual == 'None':
+        grado_actual = 'Primer Grado'
     
-    return render_template('planificacion.html', usuario=usuario)
+    usuario_info = {
+        'nombre_completo': session.get('nombre_completo', ''),
+        'curso_asignado': grado_actual
+    }
+    
+    return render_template(
+        'planificacion.html', 
+        usuario=usuario_info, 
+        grado=grado_actual
+    )
+
+@app.route('/mis_planificaciones')
+def mis_planificaciones():
+    if 'usuario' not in session and 'nombre_completo' not in session:
+        return redirect(url_for('login'))
+
+    usuario_actual = session.get('nombre_completo')
+    rol_actual = session.get('rol')
+
+    try:
+        conn = psycopg2.connect(DATABASE_URL)
+        cursor = PostgresCursorWrapper(conn)
+
+        # Si el usuario es de oficina o admin, ve todas las planificaciones
+        # Si es docente, ve únicamente las creadas por él
+        if rol_actual in ['admin', 'oficina']:
+            query = 'SELECT * FROM planificaciones ORDER BY id DESC'
+            cursor.execute(query)
+        else:
+            query = 'SELECT * FROM planificaciones WHERE docente = ? ORDER BY id DESC'
+            cursor.execute(query, (usuario_actual,))
+
+        planificaciones = cursor.fetchall()
+        cursor.close()
+    except Exception as e:
+        print("❌ Error obteniendo planificaciones:", e)
+        planificaciones = []
+
+    # AQUÍ ESTÁ LA CLAVE: Usamos el nombre exacto de tu archivo HTML
+    return render_template('mis_planificaciones.html', planificaciones=planificaciones)
+
+@app.route('/guardar_planificacion', methods=['POST'])
+def guardar_planificacion():
+    if 'usuario' not in session and 'nombre_completo' not in session:
+        return redirect(url_for('login'))
+
+    docente = session.get('nombre_completo')
+    
+    # 1. Datos de Identificación y Configuración
+    grado = request.form.get('grado')
+    modalidad = request.form.get('modalidad')
+    areas_art = request.form.get('areas_art')
+    ejes = request.form.get('ejes')
+    duracion = request.form.get('duracion')
+    f_inicio = request.form.get('f_inicio') or None
+    f_cierre = request.form.get('f_cierre') or None
+    valor_mes = request.form.get('valor_mes')
+    efemerides = request.form.get('efemerides')
+    situacion = request.form.get('situacion')
+    
+    mes = request.form.get('mes') or valor_mes or "General"
+    
+    areas_list = request.form.getlist('areas')
+    areas = ", ".join(areas_list) if areas_list else ""
+    area = areas_list[0] if areas_list else (request.form.get('area') or "General")
+
+    estrategias_list = request.form.getlist('estrategias')
+    estrategias = ", ".join(estrategias_list) if estrategias_list else ""
+    
+    tecnicas_list = request.form.getlist('tecnicas')
+    tecnicas = ", ".join(tecnicas_list) if tecnicas_list else ""
+
+    # 2. Competencias
+    comp_comunicativa = request.form.get('comp_comunicativa') or ''
+    comp_pensamiento = request.form.get('comp_pensamiento') or ''
+    comp_etica = request.form.get('comp_etica') or ''
+    
+    competencias_fundamentales_texto = f"Comunicativa: {comp_comunicativa}\nPensamiento: {comp_pensamiento}\nÉtica: {comp_etica}".strip()
+    comp_unificadas = competencias_fundamentales_texto
+    
+    # 3. Contenidos
+    contenidos_conceptos = request.form.get('contenidos_conceptos') or ''
+    contenidos_procedimientos = request.form.get('contenidos_procedimientos') or ''
+    contenidos_actitudes = request.form.get('contenidos_actitudes') or ''
+    
+    contenidos_unificados = f"Conceptos: {contenidos_conceptos}\nProcedimientos: {contenidos_procedimientos}\nActitudes: {contenidos_actitudes}".strip()
+    
+    # 4. Indicadores, Actividades y Recursos
+    indicadores = request.form.get('indicadores')
+    actividades_ensenanza = request.form.get('actividades_ensenanza') or ''
+    actividades_aprendizaje = request.form.get('actividades_aprendizaje') or ''
+    actividades_evaluacion = request.form.get('actividades_evaluacion') or ''
+    medios_recursos = request.form.get('medios_recursos')
+    
+    actividades_unificadas = f"Enseñanza: {actividades_ensenanza}\nAprendizaje: {actividades_aprendizaje}\nEvaluación: {actividades_evaluacion}".strip()
+    
+    # 5. Evaluación
+    evaluacion_criterios = request.form.get('evaluacion_criterios') or ''
+    evaluacion_tecnicas = request.form.get('evaluacion_tecnicas') or ''
+    evaluacion_unificada = f"Criterios: {evaluacion_criterios}\nTécnicas: {evaluacion_tecnicas}".strip()
+
+    try:
+        conn = psycopg2.connect(DATABASE_URL)
+        cursor = PostgresCursorWrapper(conn)
+        
+        # AQUÍ CAMBIAMOS 'área' por 'area' SIN TILDE para que coincida con Supabase
+        query = '''
+            INSERT INTO planificaciones 
+            (
+                docente, mes, area, grado, modalidad, areas_art, ejes, duracion, f_inicio, f_cierre, 
+                valor_mes, efemerides, situacion, situacion_aprendizaje,
+                competencias_fundamentales, comp_comunicativa, comp_pensamiento, comp_etica, competencias, competencias_especificas,
+                contenidos_conceptos, contenidos_procedimientos, contenidos_actitudes, contenidos, contenidos_conceptuales, contenidos_procedimentales, contenidos_actitudinales,
+                indicadores, actividades_ensenanza, actividades_aprendizaje, actividades_evaluacion, actividades,
+                medios_recursos, recursos, evaluacion_criterios, evaluacion_tecnicas, evaluacion,
+                areas, estrategias, tecnicas, grado_seccion
+            )
+            VALUES (
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
+                ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?,
+                ?, ?, ?, ?, ?,
+                ?, ?, ?, ?
+            )
+        '''
+        cursor.execute(query, (
+            docente, mes, area, grado, modalidad, areas_art, ejes, duracion, f_inicio, f_cierre,
+            valor_mes, efemerides, situacion, situacion,
+            competencias_fundamentales_texto, comp_comunicativa, comp_pensamiento, comp_etica, comp_unificadas, comp_unificadas,
+            contenidos_conceptos, contenidos_procedimientos, contenidos_actitudes, contenidos_unificados, contenidos_conceptos, contenidos_procedimientos, contenidos_actitudes,
+            indicadores, actividades_ensenanza, actividades_aprendizaje, actividades_evaluacion, actividades_unificadas,
+            medios_recursos, medios_recursos, evaluacion_criterios, evaluacion_tecnicas, evaluacion_unificada,
+            areas, estrategias, tecnicas, grado
+        ))
+        conn.commit()
+        cursor.close()
+        flash('¡Planificación guardada con éxito!', 'success')
+    except Exception as e:
+        print("❌ Error al guardar planificación:", e)
+        flash('Error al guardar el registro en la base de datos.', 'danger')
+
+    return redirect(url_for('mis_planificaciones'))
+
 
 # ==============================================================================
 # 1. RUTA PARA CARGAR Y VISUALIZAR LA PLANIFICACIÓN DIARIA
