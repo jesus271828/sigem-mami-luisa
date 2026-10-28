@@ -2718,75 +2718,15 @@ from flask import render_template, session, redirect, url_for, request, flash
 
 @app.route('/planificacion', methods=['GET'])
 def planificacion():
-    # Verificamos si el usuario ha iniciado sesión
+    # Comprobamos si el usuario ha iniciado sesión
     if 'usuario' not in session:
-        flash("Por favor, inicia sesión para acceder a la planificación.", "warning")
-        return redirect(url_for('login'))
+        flash("Por favor, inicia sesión primero.", "warning")
+        return redirect(url_for('login')) # Ajusta 'login' al nombre de tu ruta de inicio de sesión
     
-    # Obtenemos los datos del usuario actual desde la sesión
     usuario_actual = session['usuario']
     
-    # Renderizamos la plantilla pasándole el diccionario del usuario
+    # Renderizamos la plantilla pasándole la variable usuario
     return render_template('planificacion.html', usuario=usuario_actual)
-
-
-@app.route('/guardar_planificacion', methods=['POST'])
-def guardar_planificacion():
-    # Verificamos que el usuario esté autenticado
-    if 'usuario' not in session:
-        return redirect(url_for('login'))
-    
-    usuario_actual = session['usuario']
-    
-    # 1. Capturamos los campos principales del formulario
-    grado = request.form.get('grado')
-    docente = request.form.get('docente')
-    
-    # Para checkboxes múltiples (como áreas y estrategias) usamos getlist
-    areas = request.form.getlist('areas')
-    modalidad = request.form.get('modalidad')
-    areas_art = request.form.get('areas_art')
-    ejes = request.form.get('ejes')
-    
-    estrategias = request.form.getlist('estrategias')
-    tecnicas = request.form.getlist('tecnicas')
-    duracion = request.form.get('duracion')
-    f_inicio = request.form.get('f_inicio')
-    f_cierre = request.form.get('f_cierre')
-    
-    valor_mes = request.form.get('valor_mes')
-    efemerides = request.form.get('efemerides')
-    situacion = request.form.get('situacion')
-    
-    # Desglose curricular y tablas
-    comp_comunicativa = request.form.get('comp_comunicativa')
-    comp_pensamiento = request.form.get('comp_pensamiento')
-    comp_etica = request.form.get('comp_etica')
-    
-    contenidos_conceptos = request.form.get('contenidos_conceptos')
-    contenidos_procedimientos = request.form.get('contenidos_procedimientos')
-    contenidos_actitudes = request.form.get('contenidos_actitudes')
-    indicadores = request.form.get('indicadores')
-    
-    actividades_ensenanza = request.form.get('actividades_ensenanza')
-    actividades_aprendizaje = request.form.get('actividades_aprendizaje')
-    actividades_evaluacion = request.form.get('actividades_evaluacion')
-    medios_recursos = request.form.get('medios_recursos')
-    
-    evaluacion_criterios = request.form.get('evaluacion_criterios')
-    evaluacion_tecnicas = request.form.get('evaluacion_tecnicas')
-
-    # 2. Aquí realizas la inserción en tu base de datos Supabase usando tu conexión habitual
-    # Ejemplo:
-    # supabase.table('planificaciones').insert({
-    #     'docente': docente,
-    #     'grado': grado,
-    #     'situacion': situacion,
-    #     # ... demás campos ...
-    # }).execute()
-
-    flash("¡Planificación guardada correctamente!", "success")
-    return redirect(url_for('mis_planificaciones'))
 
 # ==============================================================================
 # 1. RUTA PARA CARGAR Y VISUALIZAR LA PLANIFICACIÓN DIARIA
@@ -3255,14 +3195,58 @@ def eliminar_planificacion(id):
     return redirect(url_for('ver_planificaciones_diarias'))
 
 
-@app.route('/planificacion', methods=['GET'])
-def planificacion():
-    if 'usuario' not in session:
+@app.route('/planificacion_diaria', methods=['GET', 'POST'])
+def planificacion_diaria():
+    if 'id' not in session and 'user_id' not in session and 'nombre_completo' not in session:
+        flash('Por favor, inicie sesión para acceder a la planificación.', 'danger')
         return redirect(url_for('login'))
+        
+    user_id = session.get('id') or session.get('user_id')
     
-    # Asegúrate de enviar la variable 'usuario'
-    usuario_actual = session['usuario']
-    return render_template('planificacion.html', usuario=usuario_actual)
+    conexion = get_db_connection()
+    is_postgres = DATABASE_URL is not None
+    
+    docente_actual = None
+
+    try:
+        if is_postgres:
+            cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            if user_id:
+                cur.execute("SELECT * FROM usuarios WHERE id = %s", (user_id,))
+            else:
+                cur.execute("SELECT * FROM usuarios WHERE nombre_completo = %s", (session.get('nombre_completo'),))
+            docente_actual = cur.fetchone()
+            cur.close()
+        else:
+            conexion.row_factory = sqlite3.Row
+            if user_id:
+                cursor = conexion.execute("SELECT * FROM usuarios WHERE id = ?", (user_id,))
+            else:
+                cursor = conexion.execute("SELECT * FROM usuarios WHERE nombre_completo = ?", (session.get('nombre_completo'),))
+            docente_actual = cursor.fetchone()
+            
+    except Exception as e:
+        print("--- ERROR AL CONSULTAR DOCENTE EN PLANIFICACIÓN:", e)
+        docente_actual = None
+    finally:
+        conexion.close()
+
+    nombre_docente = docente_actual['nombre_completo'] if docente_actual else session.get('nombre_completo', '')
+    
+    rol_bruto = docente_actual['rol'] if docente_actual else session.get('rol', 'maestro')
+    rol_actual = rol_bruto.strip().lower()
+
+    area_asignada = docente_actual['area_especializada'] if docente_actual else session.get('area_asignada', '')
+    curso_asignado = docente_actual['curso_asignado'] if docente_actual else session.get('curso_asignado', '')
+
+    return render_template(
+        'planificacion_diaria.html', 
+        docente=nombre_docente,
+        rol_usuario=rol_actual,
+        area_asignada=area_asignada,
+        grado_seccion=curso_asignado
+    )
+
 
 @app.route('/registrar_usuario', methods=['GET', 'POST'])
 def registrar_usuario():
