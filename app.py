@@ -2716,17 +2716,25 @@ def menu_planificacion():
 
 from flask import render_template, session, redirect, url_for, request, flash
 
-@app.route('/planificacion', methods=['GET'])
+@app.route('/planificacion')
 def planificacion():
-    # Comprobamos si el usuario ha iniciado sesión
-    if 'usuario' not in session:
-        flash("Por favor, inicia sesión primero.", "warning")
-        return redirect(url_for('login')) # Ajusta 'login' al nombre de tu ruta de inicio de sesión
+    # Si guardas el ID o el nombre de usuario en la sesión:
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
     
-    usuario_actual = session['usuario']
+    user_id = session['user_id']
     
-    # Renderizamos la plantilla pasándole la variable usuario
-    return render_template('planificacion.html', usuario=usuario_actual)
+    # Consultamos la tabla 'usuarios' en Supabase
+    response = supabase.table('usuarios').select('*').eq('id', user_id).execute()
+    
+    # Verificamos si trajo datos
+    if response.data:
+        usuario = response.data[0]
+    else:
+        usuario = {}
+        
+    # ¡Importante! Pasar usuario=usuario aquí
+    return render_template('planificacion.html', usuario=usuario)
 
 # ==============================================================================
 # 1. RUTA PARA CARGAR Y VISUALIZAR LA PLANIFICACIÓN DIARIA
