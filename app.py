@@ -2718,27 +2718,19 @@ def planificacion():
     if 'usuario' not in session and 'nombre_completo' not in session:
         return redirect(url_for('login'))
     
+    # Obtenemos los datos de la sesión incluyen el rol
     rol_actual = session.get('rol', '')
-    curso_asignado = session.get('curso_asignado', '')
-    
-    # Determinamos si es un profesor de área (Informática, Inglés, Educación Física, Música, etc.)
-    es_area = (rol_actual == 'área_especializada')
-    
-    grado_actual = curso_asignado if not es_area else ''
-    if not grado_actual or grado_actual == 'None':
-        grado_actual = ''
+    grado_actual = session.get('curso_asignado', '')
     
     usuario_info = {
         'nombre_completo': session.get('nombre_completo', ''),
-        'curso_asignado': curso_asignado,
-        'rol': rol_actual,
-        'es_area': es_area
+        'curso_asignado': grado_actual,
+        'rol': rol_actual  # <-- ¡ESTO FALTABA! Vital para el HTML
     }
     
     return render_template(
         'planificacion.html', 
-        usuario=usuario_info, 
-        grado=grado_actual
+        usuario=usuario_info
     )
 
 @app.route('/mis_planificaciones')
