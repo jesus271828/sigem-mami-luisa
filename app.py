@@ -2575,8 +2575,10 @@ def menu_planificacion():
 
 @app.route('/planificacion')
 def planificacion():
-    # Tu lógica aquí
-    return render_template('planificacion.html')
+    # Asegúrate de obtener o definir el diccionario 'usuario' (ej. desde session['user'])
+    usuario_actual = ... # tu lógica para obtener el usuario de la sesión
+    
+    return render_template('planificacion.html', usuario=usuario_actual)
 
 # ==============================================================================
 # 1. RUTA PARA CARGAR Y VISUALIZAR LA PLANIFICACIÓN DIARIA
