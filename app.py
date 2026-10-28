@@ -3195,20 +3195,6 @@ def eliminar_planificacion(id):
     return redirect(url_for('ver_planificaciones_diarias'))
 
 
-@app.route('/planificacion')
-def planificacion():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-    
-    user_id = session['user_id']
-    
-    # Consultamos el usuario en Supabase
-    response = supabase.table('usuarios').select('*').eq('id', user_id).execute()
-    
-    usuario = response.data[0] if response.data else {}
-    
-    # IMPORTANTE: Asegúrate de pasar usuario=usuario en el render_template
-    return render_template('planificacion.html', usuario=usuario)
 
 
 @app.route('/registrar_usuario', methods=['GET', 'POST'])
