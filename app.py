@@ -2713,20 +2713,26 @@ def menu_planificacion():
     
     return render_template('menu_planificacion.html')
 
-
 @app.route('/planificacion')
 def planificacion():
     if 'usuario' not in session and 'nombre_completo' not in session:
         return redirect(url_for('login'))
     
-    # Obtenemos el grado de la sesión de manera segura
-    grado_actual = session.get('curso_asignado', session.get('grado_seccion', 'Primer Grado'))
+    rol_actual = session.get('rol', '')
+    curso_asignado = session.get('curso_asignado', '')
+    
+    # Determinamos si es un profesor de área (Informática, Inglés, Educación Física, Música, etc.)
+    es_area = (rol_actual == 'área_maestro')
+    
+    grado_actual = curso_asignado if not es_area else ''
     if not grado_actual or grado_actual == 'None':
-        grado_actual = 'Primer Grado'
+        grado_actual = ''
     
     usuario_info = {
         'nombre_completo': session.get('nombre_completo', ''),
-        'curso_asignado': grado_actual
+        'curso_asignado': curso_asignado,
+        'rol': rol_actual,
+        'es_area': es_area
     }
     
     return render_template(
