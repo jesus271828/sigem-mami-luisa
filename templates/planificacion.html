@@ -136,10 +136,10 @@
                             <span class="lema">"Educando con amor para un mundo mejor"</span>
                         </div>
                         <div class="info-line">
-                            <b>Dirección:</b> C/Castillo Márquez #53. La Romana. &nbsp;|&nbsp; <b>Tel:</b> 809-550-7385
+                            <b>Dirección:</b> C/Castillo Márquez #53. La Romana.  |  <b>Tel:</b> 809-550-7385
                         </div>
                         <div class="info-line">
-                            <b>Regional:</b> 05 San Pedro &nbsp;|&nbsp; <b>Distrito:</b> 05-03 La Romana &nbsp;|&nbsp; <b>Código:</b> 07121
+                            <b>Regional:</b> 05 San Pedro  |  <b>Distrito:</b> 05-03 La Romana  |  <b>Código:</b> 07121
                         </div>
                         <div class="info-line" style="font-weight: bold; color: #1d4ed8; margin-top: 4px;">
                             UNIDAD DE APRENDIZAJE - NIVEL PRIMARIO | Tanda Matutina
@@ -160,7 +160,21 @@
                         </div>
                         <div class="col-md-4">
                             <label>Grado:</label>
-                            <input type="text" name="grado" class="form-control fw-bold text-primary" value="{{ usuario['curso_asignado'] }}" readonly>
+                            {% if usuario['tipo_usuario'] == 'area' %}
+                                <!-- Si es profesor de área, permite elegir el curso/grado -->
+                                <select name="grado" class="form-select fw-bold text-primary" required>
+                                    <option value="" disabled selected>Seleccione el grado...</option>
+                                    <option value="1er Grado">1er Grado</option>
+                                    <option value="2do Grado">2do Grado</option>
+                                    <option value="3er Grado">3er Grado</option>
+                                    <option value="4to Grado">4to Grado</option>
+                                    <option value="5to Grado">5to Grado</option>
+                                    <option value="6to Grado">6to Grado</option>
+                                </select>
+                            {% else %}
+                                <!-- Si es maestro fijo, trae el grado asignado por defecto -->
+                                <input type="text" name="grado" class="form-control fw-bold text-primary" value="{{ usuario['curso_asignado'] }}" readonly>
+                            {% endif %}
                         </div>
                         <div class="col-md-12">
                             <label>Docente:</label>
@@ -175,7 +189,7 @@
                         <div class="section-box">
                             <label>Áreas Curriculares:</label>
                             <div class="row mt-2">
-                                {% for area in ['Lengua española', 'Matemáticas', 'Ciencias Sociales', 'Ciencias de la Naturaleza', 'Educación Física', 'Educación Artística', 'Formación Integral', 'Lenguas Extranjeras'] %}
+                                {% for area in ['Lengua española', 'Matemáticas', 'Ciencias Sociales', 'Ciencias de la Naturaleza', 'Educación Física', 'Música', 'Informática', 'Formación Integral', 'Lenguas Extranjeras'] %}
                                 <div class="col-6 mb-2">
                                     <div class="form-check">
                                         <input class="form-check-input" type="checkbox" name="areas" value="{{ area }}" id="area_{{ loop.index }}">
@@ -347,7 +361,7 @@
                         </table>
                     </div>
 
-                    <!-- INDICADORES DE LOGRO (Ubicado justo antes de las actividades) -->
+                    <!-- INDICADORES DE LOGRO -->
                     <div class="mb-4">
                         <label>Indicadores de logro:</label>
                         <textarea name="indicadores" class="form-control" rows="3" placeholder="Escriba los indicadores de logro..."></textarea>
