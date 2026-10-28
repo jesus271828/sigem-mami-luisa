@@ -2572,6 +2572,12 @@ def menu_planificacion():
     return render_template('menu_planificacion.html')
 
 
+
+@app.route('/planificacion')
+def planificacion():
+    # Tu lógica aquí
+    return render_template('planificacion.html')
+
 # ==============================================================================
 # 1. RUTA PARA CARGAR Y VISUALIZAR LA PLANIFICACIÓN DIARIA
 # ==============================================================================
