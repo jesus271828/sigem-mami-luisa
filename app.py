@@ -2044,6 +2044,52 @@ def descargar_reporte_ausencias():
     response.headers['Content-Disposition'] = f'inline; filename=Control_Asistencia_{fecha_str}.pdf'
     return response
 
+@app.route('/descargar_reporte_rango', methods=['POST'])
+def descargar_reporte_rango():
+    # Capturar los datos específicos del nuevo formulario de rangos
+    fecha_desde = request.form.get('fecha_desde')
+    fecha_hasta = request.form.get('fecha_hasta')
+    curso_filtro = request.form.get('curso_filtro')
+    
+    logo_path = Path(current_app.root_path, 'static', 'img', 'logo2.png').as_uri()
+
+    conn = get_db_connection()
+    try:
+        # Aquí puedes hacer la consulta acumulada de asistencia usando BETWEEN
+        # para el curso seleccionado entre fecha_desde y fecha_hasta
+        
+        # Ejemplo de consulta filtrando por rango de fechas y curso:
+        asistencias_rango = conn.execute(
+            """
+            SELECT a.*, e.nombres, e.apellidos, e.sexo, e.grado 
+            FROM asistencia a
+            JOIN estudiantes e ON a.id_estudiante = e.id_estudiante
+            WHERE e.grado = %s AND a.fecha BETWEEN %s AND %s
+            """,
+            (curso_filtro, fecha_desde, fecha_hasta)
+        ).fetchall()
+
+        # Procesas los datos para pasarlos al template del PDF o a uno específico para rangos
+        
+    finally:
+        conn.close()
+
+    # Renderizas el HTML para el PDF con el rango
+    rendered_html = render_template('control_asistencia_pdf.html',
+        logo_path=logo_path,
+        anio_escolar="2026-2027",
+        fecha_formateada=f"Desde el {fecha_desde} hasta el {fecha_hasta}",
+        curso_titulo=curso_filtro,
+        # ... demás variables que necesites pasarle a tu plantilla
+    )
+
+    pdf_bytes = HTML(string=rendered_html).write_pdf()
+    
+    response = make_response(pdf_bytes)
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = f'inline; filename=Reporte_Rango_{curso_filtro}.pdf'
+    return response
+
 @app.route('/generar_pdf/<path:id_estudiante>')
 def generar_pdf(id_estudiante):
     if 'usuario' not in session:
