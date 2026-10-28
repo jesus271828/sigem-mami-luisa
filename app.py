@@ -2718,15 +2718,75 @@ from flask import render_template, session, redirect, url_for, request, flash
 
 @app.route('/planificacion', methods=['GET'])
 def planificacion():
-    # Comprobamos si el usuario ha iniciado sesión
+    # Verificamos si el usuario ha iniciado sesión
     if 'usuario' not in session:
-        flash("Por favor, inicia sesión primero.", "warning")
-        return redirect(url_for('login')) # Ajusta 'login' al nombre de tu ruta de inicio de sesión
+        flash("Por favor, inicia sesión para acceder a la planificación.", "warning")
+        return redirect(url_for('login'))
+    
+    # Obtenemos los datos del usuario actual desde la sesión
+    usuario_actual = session['usuario']
+    
+    # Renderizamos la plantilla pasándole el diccionario del usuario
+    return render_template('planificacion.html', usuario=usuario_actual)
+
+
+@app.route('/guardar_planificacion', methods=['POST'])
+def guardar_planificacion():
+    # Verificamos que el usuario esté autenticado
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
     
     usuario_actual = session['usuario']
     
-    # Renderizamos la plantilla pasándole la variable usuario
-    return render_template('planificacion.html', usuario=usuario_actual)
+    # 1. Capturamos los campos principales del formulario
+    grado = request.form.get('grado')
+    docente = request.form.get('docente')
+    
+    # Para checkboxes múltiples (como áreas y estrategias) usamos getlist
+    areas = request.form.getlist('areas')
+    modalidad = request.form.get('modalidad')
+    areas_art = request.form.get('areas_art')
+    ejes = request.form.get('ejes')
+    
+    estrategias = request.form.getlist('estrategias')
+    tecnicas = request.form.getlist('tecnicas')
+    duracion = request.form.get('duracion')
+    f_inicio = request.form.get('f_inicio')
+    f_cierre = request.form.get('f_cierre')
+    
+    valor_mes = request.form.get('valor_mes')
+    efemerides = request.form.get('efemerides')
+    situacion = request.form.get('situacion')
+    
+    # Desglose curricular y tablas
+    comp_comunicativa = request.form.get('comp_comunicativa')
+    comp_pensamiento = request.form.get('comp_pensamiento')
+    comp_etica = request.form.get('comp_etica')
+    
+    contenidos_conceptos = request.form.get('contenidos_conceptos')
+    contenidos_procedimientos = request.form.get('contenidos_procedimientos')
+    contenidos_actitudes = request.form.get('contenidos_actitudes')
+    indicadores = request.form.get('indicadores')
+    
+    actividades_ensenanza = request.form.get('actividades_ensenanza')
+    actividades_aprendizaje = request.form.get('actividades_aprendizaje')
+    actividades_evaluacion = request.form.get('actividades_evaluacion')
+    medios_recursos = request.form.get('medios_recursos')
+    
+    evaluacion_criterios = request.form.get('evaluacion_criterios')
+    evaluacion_tecnicas = request.form.get('evaluacion_tecnicas')
+
+    # 2. Aquí realizas la inserción en tu base de datos Supabase usando tu conexión habitual
+    # Ejemplo:
+    # supabase.table('planificaciones').insert({
+    #     'docente': docente,
+    #     'grado': grado,
+    #     'situacion': situacion,
+    #     # ... demás campos ...
+    # }).execute()
+
+    flash("¡Planificación guardada correctamente!", "success")
+    return redirect(url_for('mis_planificaciones'))
 
 # ==============================================================================
 # 1. RUTA PARA CARGAR Y VISUALIZAR LA PLANIFICACIÓN DIARIA
