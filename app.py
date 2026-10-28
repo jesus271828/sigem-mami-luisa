@@ -2573,11 +2573,18 @@ def menu_planificacion():
 
 
 
+from flask import render_template, session, redirect, url_for
+
 @app.route('/planificacion')
 def planificacion():
-    # Asegúrate de obtener o definir el diccionario 'usuario' (ej. desde session['user'])
-    usuario_actual = ... # tu lógica para obtener el usuario de la sesión
+    # Verifica si el usuario ha iniciado sesión
+    if 'usuario' not in session:
+        return redirect(url_for('login')) # O la ruta de inicio de sesión que uses
     
+    # Obtenemos los datos del usuario actual desde la sesión
+    usuario_actual = session['usuario']
+    
+    # Pasamos la variable 'usuario' al template
     return render_template('planificacion.html', usuario=usuario_actual)
 
 # ==============================================================================
