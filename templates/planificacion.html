@@ -160,7 +160,7 @@
                         </div>
                         <div class="col-md-4">
                             <label>Grado:</label>
-                            {% if usuario['tipo_usuario'] == 'area' %}
+                            {% if usuario['rol'] == 'área_maestro' or usuario.get('tipo_usuario') == 'área_especializada' %}
                                 <!-- Si es profesor de área, permite elegir el curso/grado -->
                                 <select name="grado" class="form-select fw-bold text-primary" required>
                                     <option value="" disabled selected>Seleccione el grado...</option>
@@ -173,7 +173,7 @@
                                 </select>
                             {% else %}
                                 <!-- Si es maestro fijo, trae el grado asignado por defecto -->
-                                <input type="text" name="grado" class="form-control fw-bold text-primary" value="{{ usuario['curso_asignado'] }}" readonly>
+                               <input type="text" name="grado" class="form-control fw-bold text-primary" value="{{ usuario['curso_asignado'] }}" readonly>
                             {% endif %}
                         </div>
                         <div class="col-md-12">
