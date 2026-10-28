@@ -3195,25 +3195,19 @@ def eliminar_planificacion(id):
     return redirect(url_for('ver_planificaciones_diarias'))
 
 
-from flask import render_template, session, redirect, url_for
-# (Asegúrate de tener importado tu cliente de Supabase)
-
 @app.route('/planificacion')
 def planificacion():
-    # Verificar si el usuario ha iniciado sesión
     if 'user_id' not in session:
         return redirect(url_for('login'))
     
     user_id = session['user_id']
     
-    # Consultar los datos del usuario en la tabla 'usuarios' de Supabase
+    # Consultamos el usuario en Supabase
     response = supabase.table('usuarios').select('*').eq('id', user_id).execute()
     
-    if response.data:
-        usuario = response.data[0]
-    else:
-        usuario = {} # O manejar en caso de que no exista
-        
+    usuario = response.data[0] if response.data else {}
+    
+    # IMPORTANTE: Asegúrate de pasar usuario=usuario en el render_template
     return render_template('planificacion.html', usuario=usuario)
 
 
