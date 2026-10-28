@@ -2046,7 +2046,6 @@ def descargar_reporte_ausencias():
 
 @app.route('/descargar_reporte_rango', methods=['POST'])
 def descargar_reporte_rango():
-    # Capturar los datos específicos del nuevo formulario de rangos
     fecha_desde = request.form.get('fecha_desde')
     fecha_hasta = request.form.get('fecha_hasta')
     curso_filtro = request.form.get('curso_filtro')
@@ -2055,39 +2054,108 @@ def descargar_reporte_rango():
 
     conn = get_db_connection()
     try:
-        # Aquí puedes hacer la consulta acumulada de asistencia usando BETWEEN
-        # para el curso seleccionado entre fecha_desde y fecha_hasta
-        
-        # Ejemplo de consulta filtrando por rango de fechas y curso:
-        asistencias_rango = conn.execute(
+        # 1. Consultar estudiantes matriculados de ESE CURSO específico
+        curso_busqueda = curso_filtro.replace('–', '-').strip()
+        mat_db = conn.execute(
             """
-            SELECT a.*, e.nombres, e.apellidos, e.sexo, e.grado 
+            SELECT sexo, COUNT(*) 
+            FROM estudiantes 
+            WHERE REPLACE(grado, '–', '-') = %s OR grado = %s 
+            GROUP BY sexo
+            """, 
+            (curso_busqueda, curso_filtro)
+        ).fetchall()
+        
+        m_ninos = 0
+        m_ninas = 0
+        for row in mat_db:
+            sexo_val = str(row['sexo'] if hasattr(row, 'keys') else row[0]).strip().lower()
+            count_val = row['count'] if hasattr(row, 'keys') else row[1]
+            if sexo_val in ['masculino', 'm', 'niño', 'nino']:
+                m_ninos = count_val
+            elif sexo_val in ['femenino', 'f', 'niña', 'nina']:
+                m_ninas = count_val
+        m_total = m_ninos + m_ninas
+
+        # 2. Consultar asistencia acumulada en el RANGO de fechas para este curso
+        asis_db = conn.execute(
+            """
+            SELECT e.sexo, COUNT(a.id_estudiante) 
             FROM asistencia a
             JOIN estudiantes e ON a.id_estudiante = e.id_estudiante
-            WHERE e.grado = %s AND a.fecha BETWEEN %s AND %s
+            WHERE a.fecha BETWEEN %s AND %s 
+              AND (REPLACE(e.grado, '–', '-') = %s OR e.grado = %s)
+              AND a.estado IN ('Presente', 'Tarde', 'Excusa')
+            GROUP BY e.sexo
             """,
-            (curso_filtro, fecha_desde, fecha_hasta)
+            (fecha_desde, fecha_hasta, curso_busqueda, curso_filtro)
         ).fetchall()
 
-        # Procesas los datos para pasarlos al template del PDF o a uno específico para rangos
-        
+        a_ninos = 0
+        a_ninas = 0
+        for row in asis_db:
+            sexo_val = str(row['sexo'] if hasattr(row, 'keys') else row[0]).strip().lower()
+            count_val = row['count'] if hasattr(row, 'keys') else row[1]
+            if sexo_val in ['masculino', 'm', 'niño', 'nino']:
+                a_ninos = count_val
+            elif sexo_val in ['femenino', 'f', 'niña', 'nina']:
+                a_ninas = count_val
+        a_total = a_ninos + a_ninas
+
+        # 3. Obtener los ausentes en el rango o fecha
+        ausentes_db = conn.execute(
+            """
+            SELECT DISTINCT e.nombres, e.apellidos, a.estado 
+            FROM estudiantes e
+            JOIN asistencia a ON e.id_estudiante = a.id_estudiante
+            WHERE a.fecha BETWEEN %s AND %s 
+              AND (REPLACE(e.grado, '–', '-') = %s OR e.grado = %s)
+              AND a.estado IN ('Ausente', 'Excusa')
+            ORDER BY e.nombres ASC
+            """,
+            (fecha_desde, fecha_hasta, curso_busqueda, curso_filtro)
+        ).fetchall()
+
+        nombres_ausentes = []
+        for aus in ausentes_db:
+            nombre = aus['nombres'] if hasattr(aus, 'keys') else aus[0]
+            apellido = aus['apellidos'] if hasattr(aus, 'keys') else aus[1]
+            nombres_ausentes.append(f"{nombre} {apellido}")
+
+        grados_filtrados = [{
+            'nombre': curso_filtro,
+            'mat_ninos': m_ninos,
+            'mat_ninas_f': m_ninas,
+            'mat_total': m_total,
+            'asis_ninos': a_ninos,
+            'asis_ninas': a_ninas,
+            'asis_total': a_total,
+            'ausentes': ", ".join(nombres_ausentes)
+        }]
+
     finally:
         conn.close()
 
-    # Renderizas el HTML para el PDF con el rango
+    # 4. Renderizar el HTML pasando únicamente este curso filtrado
     rendered_html = render_template('control_asistencia_pdf.html',
         logo_path=logo_path,
         anio_escolar="2026-2027",
         fecha_formateada=f"Desde el {fecha_desde} hasta el {fecha_hasta}",
-        curso_titulo=curso_filtro,
-        # ... demás variables que necesites pasarle a tu plantilla
+        grados_primaria=grados_filtrados,  # <--- Aquí mandamos solo el curso seleccionado
+        total_primaria_mat_ninos=m_ninos,
+        total_primaria_mat_ninas_f=m_ninas,
+        total_primaria_mat_total=m_total,
+        total_primaria_asis_ninos=a_ninos,
+        total_primaria_asis_ninas=a_ninas,
+        total_primaria_asis_total=a_total,
+        meta={}
     )
 
     pdf_bytes = HTML(string=rendered_html).write_pdf()
     
     response = make_response(pdf_bytes)
     response.headers['Content-Type'] = 'application/pdf'
-    response.headers['Content-Disposition'] = f'inline; filename=Reporte_Rango_{curso_filtro}.pdf'
+    response.headers['Content-Disposition'] = f'inline; filename=Reporte_Asistencia_{curso_filtro}.pdf'
     return response
 
 @app.route('/generar_pdf/<path:id_estudiante>')
