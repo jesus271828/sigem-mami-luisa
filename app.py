@@ -2714,26 +2714,22 @@ def menu_planificacion():
     return render_template('menu_planificacion.html')
 
 
-from flask import render_template, session, redirect, url_for, request, flash
-
 @app.route('/planificacion')
 def planificacion():
-    # Si guardas el ID o el nombre de usuario en la sesión:
-    if 'user_id' not in session:
+    # Esto te mostrará en la terminal de VS Code qué hay guardado en la sesión
+    print("CONTENIDO DE LA SESION:", dict(session))
+    
+    # Si usas 'user_id' o cualquier otra clave con la que guardes el login:
+    user_id = session.get('user_id') or session.get('id')
+    
+    if not user_id:
+        print("No se encontró user_id en la sesión, redirigiendo a login...")
         return redirect(url_for('login'))
     
-    user_id = session['user_id']
-    
-    # Consultamos la tabla 'usuarios' en Supabase
+    # Consultar Supabase
     response = supabase.table('usuarios').select('*').eq('id', user_id).execute()
+    usuario = response.data[0] if response.data else {}
     
-    # Verificamos si trajo datos
-    if response.data:
-        usuario = response.data[0]
-    else:
-        usuario = {}
-        
-    # ¡Importante! Pasar usuario=usuario aquí
     return render_template('planificacion.html', usuario=usuario)
 
 # ==============================================================================
