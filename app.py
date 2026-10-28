@@ -3255,58 +3255,14 @@ def eliminar_planificacion(id):
     return redirect(url_for('ver_planificaciones_diarias'))
 
 
-@app.route('/planificacion_diaria', methods=['GET', 'POST'])
-def planificacion_diaria():
-    if 'id' not in session and 'user_id' not in session and 'nombre_completo' not in session:
-        flash('Por favor, inicie sesión para acceder a la planificación.', 'danger')
+@app.route('/planificacion', methods=['GET'])
+def planificacion():
+    if 'usuario' not in session:
         return redirect(url_for('login'))
-        
-    user_id = session.get('id') or session.get('user_id')
     
-    conexion = get_db_connection()
-    is_postgres = DATABASE_URL is not None
-    
-    docente_actual = None
-
-    try:
-        if is_postgres:
-            cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-            if user_id:
-                cur.execute("SELECT * FROM usuarios WHERE id = %s", (user_id,))
-            else:
-                cur.execute("SELECT * FROM usuarios WHERE nombre_completo = %s", (session.get('nombre_completo'),))
-            docente_actual = cur.fetchone()
-            cur.close()
-        else:
-            conexion.row_factory = sqlite3.Row
-            if user_id:
-                cursor = conexion.execute("SELECT * FROM usuarios WHERE id = ?", (user_id,))
-            else:
-                cursor = conexion.execute("SELECT * FROM usuarios WHERE nombre_completo = ?", (session.get('nombre_completo'),))
-            docente_actual = cursor.fetchone()
-            
-    except Exception as e:
-        print("--- ERROR AL CONSULTAR DOCENTE EN PLANIFICACIÓN:", e)
-        docente_actual = None
-    finally:
-        conexion.close()
-
-    nombre_docente = docente_actual['nombre_completo'] if docente_actual else session.get('nombre_completo', '')
-    
-    rol_bruto = docente_actual['rol'] if docente_actual else session.get('rol', 'maestro')
-    rol_actual = rol_bruto.strip().lower()
-
-    area_asignada = docente_actual['area_especializada'] if docente_actual else session.get('area_asignada', '')
-    curso_asignado = docente_actual['curso_asignado'] if docente_actual else session.get('curso_asignado', '')
-
-    return render_template(
-        'planificacion_diaria.html', 
-        docente=nombre_docente,
-        rol_usuario=rol_actual,
-        area_asignada=area_asignada,
-        grado_seccion=curso_asignado
-    )
-
+    # Asegúrate de enviar la variable 'usuario'
+    usuario_actual = session['usuario']
+    return render_template('planificacion.html', usuario=usuario_actual)
 
 @app.route('/registrar_usuario', methods=['GET', 'POST'])
 def registrar_usuario():
