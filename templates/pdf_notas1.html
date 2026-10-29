@@ -65,14 +65,15 @@
       text-transform: uppercase;
     }
 
+    /* Altura de filas para llenar toda la hoja verticalmente */
     .calif-table tbody td {
-      height: 25px; /* Altura exacta para llenar el espacio vertical de la hoja */
+      height: 27px;
       font-size: 9.5px;
     }
 
     .align-left {
       text-align: left !important;
-      padding-left: 5px !important;
+      padding-left: 6px !important;
       font-weight: normal;
     }
 
@@ -151,51 +152,46 @@
     <table class="grid-table calif-table">
       <thead>
         <tr>
-          <th rowspan="2" style="width: 20.5%; font-size: 13px;" class="bg-title">ÁREAS CURRICULARES</th>
+          <th rowspan="3" style="width: 21%; font-size: 13px;" class="bg-title">ÁREAS CURRICULARES</th>
           <th colspan="12" class="bg-title">COMPETENCIAS FUNDAMENTALES</th>
           <th colspan="3" class="bg-title">CALIFICACION FINAL</th>
-          <th rowspan="2" style="width: 4.2%;" class="cell-vertical bg-title">
+          <th rowspan="3" style="width: 4.2%;" class="cell-vertical bg-title">
             <span class="vertical-text">DEL ÁREA</span>
           </th>
-          <th rowspan="2" style="width: 5.2%;" class="cell-vertical bg-title">
+          <th rowspan="3" style="width: 5.2%;" class="cell-vertical bg-title">
             <span class="vertical-text">RECUPERACIÓN</span>
           </th>
         </tr>
         <tr>
           <!-- C1 -->
           <th colspan="4" style="width: 18.8%;">
-            <strong>C1</strong><br><span style="font-size: 7px;">Comunicativa</span>
+            <strong>C1</strong><br><span style="font-size: 7.5px;">Comunicativa</span>
           </th>
           <!-- C2 -->
           <th colspan="4" style="width: 21.6%;">
-            <strong>C2</strong><br><span style="font-size: 5.5px;">Pensamiento Lógico Creativo y Crítico; Resolución de Problemas; Científica y Tecnológica</span>
+            <strong>C2</strong><br><span style="font-size: 6px;">Pensamiento Lógico Creativo y Crítico; Resolución de Problemas; Científica y Tecnológica</span>
           </th>
           <!-- C3 -->
           <th colspan="4" style="width: 21.6%;">
-            <strong>C3</strong><br><span style="font-size: 5.5px;">Ética y Ciudadana; Desarrollo Personal y Espiritual; Ambiental y de la Salud</span>
+            <strong>C3</strong><br><span style="font-size: 6px;">Ética y Ciudadana; Desarrollo Personal y Espiritual; Ambiental y de la Salud</span>
           </th>
           <!-- POR COMPETENCIA -->
-          <th colspan="3" style="width: 8.1%;">
+          <th colspan="3" style="width: 8.5%;">
             <strong>POR</strong><br>COMPETENCIA
           </th>
         </tr>
-        <!-- Nota: La tercera fila de subtítulos de P1-P4 y C1-C3 está integrada en la estructura superior para mantener la simetría exacta de la imagen -->
+        <tr>
+          <!-- P1-P4 C1 -->
+          <th style="width: 4.7%;">P1</th><th style="width: 4.7%;">P2</th><th style="width: 4.7%;">P3</th><th style="width: 4.7%;">P4</th>
+          <!-- P1-P4 C2 -->
+          <th style="width: 5.4%;">P1</th><th style="width: 5.4%;">P2</th><th style="width: 5.4%;">P3</th><th style="width: 5.4%;">P4</th>
+          <!-- P1-P4 C3 -->
+          <th style="width: 5.4%;">P1</th><th style="width: 5.4%;">P2</th><th style="width: 5.4%;">P3</th><th style="width: 5.4%;">P4</th>
+          <!-- C1, C2, C3 Finales -->
+          <th style="width: 2.8%;">C1</th><th style="width: 2.8%;">C2</th><th style="width: 2.8%;">C3</th>
+        </tr>
       </thead>
       <tbody>
-        <!-- Sub-fila de columnas P1-P4 y C1-C3 que va integrada justo antes de las materias -->
-        <tr style="background-color: #f9f9f9; height: 16px;">
-          <td style="font-size: 8px; font-weight: bold; text-align: center;"></td>
-          <!-- C1 P1-P4 -->
-          <td style="font-size: 8px; font-weight: bold;">P1</td><td style="font-size: 8px; font-weight: bold;">P2</td><td style="font-size: 8px; font-weight: bold;">P3</td><td style="font-size: 8px; font-weight: bold;">P4</td>
-          <!-- C2 P1-P4 -->
-          <td style="font-size: 8px; font-weight: bold;">P1</td><td style="font-size: 8px; font-weight: bold;">P2</td><td style="font-size: 8px; font-weight: bold;">P3</td><td style="font-size: 8px; font-weight: bold;">P4</td>
-          <!-- C3 P1-P4 -->
-          <td style="font-size: 8px; font-weight: bold;">P1</td><td style="font-size: 8px; font-weight: bold;">P2</td><td style="font-size: 8px; font-weight: bold;">P3</td><td style="font-size: 8px; font-weight: bold;">P4</td>
-          <!-- Final C1, C2, C3 -->
-          <td style="font-size: 8px; font-weight: bold;">C1</td><td style="font-size: 8px; font-weight: bold;">C2</td><td style="font-size: 8px; font-weight: bold;">C3</td>
-          <td></td><td></td>
-        </tr>
-
         <!-- ASIGNATURAS -->
         <tr><td class="align-left">Lengua Española</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
         <tr><td class="align-left">Matemática</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
