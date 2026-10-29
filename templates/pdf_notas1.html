@@ -110,20 +110,23 @@
       font-weight: normal;
     }
 
-    /* TEXTO VERTICAL PARA DEL ÁREA Y RECUPERACIÓN */
+    /* TEXTO VERTICAL DE ABAJO HACIA ARRIBA */
     .cell-vertical {
       padding: 0 !important;
       vertical-align: middle !important;
       text-align: center !important;
+      height: 70px;
     }
 
     .vertical-text {
       font-size: 8px;
       font-weight: bold;
       text-align: center;
-      display: block;
-      -webkit-transform: rotate(-90deg);
-      transform: rotate(-90deg);
+      display: inline-block;
+      writing-mode: vertical-lr;
+      -webkit-writing-mode: vertical-lr;
+      transform: rotate(180deg);
+      -webkit-transform: rotate(180deg);
       white-space: nowrap;
     }
 
