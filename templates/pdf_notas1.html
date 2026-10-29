@@ -4,63 +4,38 @@
   <meta charset="UTF-8">
   <title>Informe de Aprendizaje - Centro Educativo Mami Luisa</title>
   <style>
-    /* Márgenes en 0 para cubrir absolutamente toda la hoja carta horizontal */
+    /* Configuración de página PDF horizontal carta con márgenes seguros */
     @page {
       size: letter landscape;
-      margin: 0mm;
+      margin: 8mm;
     }
 
-    * {
-      box-sizing: border-box;
-      font-family: Arial, Helvetica, sans-serif;
-    }
-
-    html, body {
-      width: 100%;
-      height: 100%;
+    body {
+      font-family: Helvetica, Arial, sans-serif;
       margin: 0;
       padding: 0;
       background-color: #ffffff;
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
+      color: #000000;
     }
 
     .documento {
-      width: 100vw;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      padding: 6mm 8mm; /* Relleno interno simétrico para los bordes del papel */
+      width: 100%;
     }
 
     /* ENCABEZADO */
     .header-table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 5px;
-    }
-
-    .header-table td {
-      vertical-align: middle;
-    }
-
-    .logo-cell {
-      width: 90px;
-      text-align: center;
+      margin-bottom: 6px;
     }
 
     .logo-img {
-      width: 80px;
+      width: 65px;
       height: auto;
     }
 
-    .title-cell {
-      padding-left: 10px;
-    }
-
     .school-name {
-      font-size: 24px;
+      font-size: 20px;
       font-weight: bold;
       color: #7b83ad;
       margin: 0;
@@ -68,22 +43,21 @@
 
     .slogan {
       font-style: italic;
-      font-size: 14px;
+      font-size: 11.5px;
       color: #e28d5c;
-      margin: 3px 0 0 0;
+      margin: 2px 0 0 0;
     }
 
     .info-meta {
-      font-size: 11px;
-      color: #333333;
+      font-size: 9px;
       text-align: right;
       line-height: 1.35;
     }
 
     .doc-title {
       font-weight: bold;
-      font-size: 12.5px;
-      margin-top: 3px;
+      font-size: 10.5px;
+      margin-top: 2px;
       text-transform: uppercase;
     }
 
@@ -91,13 +65,13 @@
     .student-table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 5px;
+      margin-bottom: 6px;
     }
 
     .student-table td {
       border: 1.5px solid #000000;
-      padding: 5px 8px;
-      font-size: 11px;
+      padding: 4px 6px;
+      font-size: 10px;
       font-weight: bold;
     }
 
@@ -106,7 +80,7 @@
       text-transform: uppercase;
     }
 
-    /* TABLA PRINCIPAL */
+    /* TABLA PRINCIPAL DE CALIFICACIONES */
     table.grid-table {
       width: 100%;
       border-collapse: collapse;
@@ -118,8 +92,8 @@
       border: 1.2px solid #000000;
       text-align: center;
       vertical-align: middle;
-      font-size: 10.5px;
-      padding: 2px;
+      font-size: 9px;
+      padding: 2px 1px;
     }
 
     .bg-title {
@@ -128,35 +102,19 @@
       background-color: #f2f2f2;
     }
 
-    .calif-table {
-      flex-grow: 1;
-      margin-bottom: 5px;
-    }
-
-    .calif-table th {
-      font-size: 9.5px;
-    }
-
     .calif-table tbody td {
-      height: 32px; /* Altura generosa para llenar uniformemente todo el espacio vertical */
-      font-size: 11px;
+      height: 22px; /* Altura controlada para ocupar toda la hoja verticalmente */
+      font-size: 10px;
     }
 
     .align-left {
       text-align: left !important;
-      padding-left: 8px !important;
+      padding-left: 6px !important;
       font-weight: normal;
     }
 
-    /* TEXTO VERTICAL */
-    .cell-vertical {
-      padding: 0 !important;
-      vertical-align: middle !important;
-      text-align: center !important;
-    }
-
     .vertical-text {
-      font-size: 9.5px;
+      font-size: 8px;
       font-weight: bold;
       text-align: center;
     }
@@ -165,6 +123,7 @@
     .bottom-section {
       width: 100%;
       border-collapse: collapse;
+      margin-top: 6px;
     }
 
     .bottom-section td {
@@ -181,61 +140,32 @@
     .escala-table td, .asistencia-table td, .leyenda-table td,
     .escala-table th, .asistencia-table th, .leyenda-table th {
       border: 1px solid #000000;
-      font-size: 9px;
-      padding: 4px 5px;
+      font-size: 8.5px;
+      padding: 3px 4px;
     }
 
     .asistencia-table tbody td {
-      height: 24px;
+      height: 20px;
     }
 
     .desc-text {
-      font-size: 8.5px;
+      font-size: 8px;
       text-align: justify;
-      line-height: 1.2;
-    }
-
-    /* OCULTAR BOTÓN AL IMPRIMIR */
-    @media print {
-      .no-print {
-        display: none !important;
-      }
-      .documento {
-        height: 100vh;
-        padding: 4mm 5mm;
-      }
-    }
-
-    .btn-download {
-      position: fixed;
-      bottom: 15px;
-      right: 15px;
-      background-color: #1a73e8;
-      color: white;
-      border: none;
-      padding: 10px 18px;
-      font-size: 13px;
-      font-weight: bold;
-      border-radius: 5px;
-      cursor: pointer;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-      z-index: 9999;
+      line-height: 1.15;
     }
   </style>
 </head>
 <body>
-
-  <button class="btn-download no-print" onclick="window.print()">Imprimir / Guardar como PDF</button>
 
   <div class="documento">
     
     <!-- ENCABEZADO INSTITUCIONAL -->
     <table class="header-table">
       <tr>
-        <td class="logo-cell">
-          <img src="logo.png" alt="Logo" class="logo-img" onerror="this.style.display='none'">
+        <td style="width: 75px; text-align: center;">
+          <img src="logo.png" alt="Logo" class="logo-img">
         </td>
-        <td class="title-cell">
+        <td style="padding-left: 8px;">
           <h1 class="school-name">Centro Educativo Mami Luisa S.R.L</h1>
           <p class="slogan">“Educando con amor para un mundo mejor”</p>
         </td>
@@ -266,38 +196,32 @@
     <table class="grid-table calif-table">
       <thead>
         <tr>
-          <th rowspan="3" style="width: 21%; font-size: 14px;" class="bg-title">ÁREAS CURRICULARES</th>
+          <th rowspan="2" style="width: 20%;" class="bg-title">ÁREAS CURRICULARES</th>
           <th colspan="12" class="bg-title">COMPETENCIAS FUNDAMENTALES</th>
-          <th colspan="4" class="bg-title">CALIFICACION FINAL</th>
-          <th rowspan="2" style="width: 4.5%;" class="cell-vertical bg-title">
-            <span class="vertical-text">DEL ÁREA</span>
-          </th>
-          <th rowspan="2" style="width: 5.5%;" class="cell-vertical bg-title">
-            <span class="vertical-text">RECUPERACIÓN</span>
-          </th>
+          <th colspan="3" class="bg-title">POR COMPETENCIA</th>
+          <th rowspan="2" style="width: 4.5%;" class="bg-title"><span class="vertical-text">DEL ÁREA</span></th>
+          <th rowspan="2" style="width: 5.5%;" class="bg-title"><span class="vertical-text">RECUPERACIÓN</span></th>
         </tr>
         <tr>
-          <th colspan="4" style="width: 18%;"><strong>C1</strong><br><span style="font-size:8px;">Comunicativa</span></th>
-          <th colspan="4" style="width: 21%;"><strong>C2</strong><br><span style="font-size:8px;">Pensamiento Lógico...</span></th>
-          <th colspan="4" style="width: 21%;"><strong>C3</strong><br><span style="font-size:8px;">Ética y Ciudadana...</span></th>
-          <th colspan="3" style="width: 9%;">POR COMPETENCIA</th>
-        </tr>
-        <tr>
-          <th style="width: 4.2%;">P1</th><th style="width: 4.2%;">P2</th><th style="width: 4.2%;">P3</th><th style="width: 4.2%;">P4</th>
-          <th style="width: 5.2%;">P1</th><th style="width: 5.2%;">P2</th><th style="width: 5.2%;">P3</th><th style="width: 5.2%;">P4</th>
-          <th style="width: 5.2%;">P1</th><th style="width: 5.2%;">P2</th><th style="width: 5.2%;">P3</th><th style="width: 5.2%;">P4</th>
-          <th style="width: 3%;">C1</th><th style="width: 3%;">C2</th><th style="width: 3%;">C3</th>
+          <!-- C1 (4) -->
+          <th style="width: 3.5%;">P1</th><th style="width: 3.5%;">P2</th><th style="width: 3.5%;">P3</th><th style="width: 3.5%;">P4</th>
+          <!-- C2 (4) -->
+          <th style="width: 3.5%;">P1</th><th style="width: 3.5%;">P2</th><th style="width: 3.5%;">P3</th><th style="width: 3.5%;">P4</th>
+          <!-- C3 (4) -->
+          <th style="width: 3.5%;">P1</th><th style="width: 3.5%;">P2</th><th style="width: 3.5%;">P3</th><th style="width: 3.5%;">P4</th>
+          <!-- Calificación Final por Competencia (3) -->
+          <th style="width: 3.5%;">C1</th><th style="width: 3.5%;">C2</th><th style="width: 3.5%;">C3</th>
         </tr>
       </thead>
       <tbody>
-        <tr><td class="align-left">Lengua Española</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-        <tr><td class="align-left">Matemática</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-        <tr><td class="align-left">Ciencias Sociales</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-        <tr><td class="align-left">Ciencias de la Naturaleza</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-        <tr><td class="align-left">Educación Física</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-        <tr><td class="align-left">Formación Integral, Humana y Religiosa</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-        <tr><td class="align-left">Educación Artística</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
-        <tr><td class="align-left">Inglés</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><td class="align-left">Lengua Española</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><td class="align-left">Matemática</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><td class="align-left">Ciencias Sociales</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><td class="align-left">Ciencias de la Naturaleza</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><td class="align-left">Educación Física</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><td class="align-left">Formación Integral, Humana y Religiosa</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><td class="align-left">Educación Artística</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+        <tr><td class="align-left">Inglés</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
       </tbody>
     </table>
 
@@ -305,11 +229,11 @@
     <table class="bottom-section">
       <tr>
         <!-- ESCALA NUMÉRICA -->
-        <td style="width: 43%;">
+        <td style="width: 42%;">
           <table class="escala-table">
             <thead>
               <tr class="bg-title">
-                <th style="width: 22%;">Escala numérica</th>
+                <th style="width: 25%;">Escala numérica</th>
                 <th>DESCRIPCIÓN</th>
               </tr>
             </thead>
@@ -335,7 +259,7 @@
         </td>
 
         <!-- RESUMEN DE ASISTENCIA -->
-        <td style="width: 39%;">
+        <td style="width: 40%;">
           <table class="asistencia-table">
             <thead>
               <tr class="bg-title">
