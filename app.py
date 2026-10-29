@@ -2755,9 +2755,9 @@ def mis_planificaciones():
         conn = psycopg2.connect(DATABASE_URL)
         cursor = PostgresCursorWrapper(conn)
 
-        # Si el usuario es de oficina o admin, ve todas las planificaciones
-        # Si es docente, ve únicamente las creadas por él
-        if rol_actual in ['admin', 'oficina']:
+        # Si el usuario es admin, oficina, administración o director, ve todas las planificaciones
+        # Si es docente o maestro de área, ve únicamente las creadas por él
+        if rol_actual in ['admin', 'oficina', 'administracion', 'director']:
             query = 'SELECT * FROM planificaciones ORDER BY id DESC'
             cursor.execute(query)
         else:
@@ -2770,7 +2770,6 @@ def mis_planificaciones():
         print("❌ Error obteniendo planificaciones:", e)
         planificaciones = []
 
-    # AQUÍ ESTÁ LA CLAVE: Usamos el nombre exacto de tu archivo HTML
     return render_template('mis_planificaciones.html', planificaciones=planificaciones)
 
 @app.route('/guardar_planificacion', methods=['POST'])
