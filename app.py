@@ -2938,11 +2938,11 @@ def ver_planificaciones_diarias():
     if 'usuario' not in session and 'nombre_completo' not in session and 'id' not in session:
         return redirect(url_for('login'))
 
-    # Capturar parámetros de filtro
+    # Capturar parámetros de filtro y limpiar saltos de línea (\r, \n) y espacios extra
     desde_fecha = request.args.get('desde_fecha', '').strip()
     hasta_fecha = request.args.get('hasta_fecha', '').strip()
-    area_filtro = request.args.get('area', '').strip()
-    grado_filtro = request.args.get('grado', '').strip()
+    area_filtro = request.args.get('area', '').replace('\r', '').replace('\n', '').strip()
+    grado_filtro = request.args.get('grado', '').replace('\r', '').replace('\n', '').strip()
 
     # Datos del usuario actual en sesión
     rol_actual = str(session.get('rol', '')).strip().lower()
@@ -2961,7 +2961,7 @@ def ver_planificaciones_diarias():
         conn = psycopg2.connect(DATABASE_URL)
         cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-        # 1. Contadores generales para la barra lateral (Se quedan intactos)
+        # 1. Contadores generales para la barra lateral
         cursor.execute("SELECT COUNT(*) FROM estudiantes")
         res_est = cursor.fetchone()
         total_estudiantes = res_est['count'] if res_est else 0
@@ -2977,11 +2977,11 @@ def ver_planificaciones_diarias():
         except:
             total_expedientes = 0
 
-        # 2. Listas únicas para los selectores
-        cursor.execute("SELECT DISTINCT TRIM(area) as area FROM planificaciones_diarias WHERE area IS NOT NULL AND area != ''")
+        # 2. Listas únicas para los selectores (limpiando saltos de línea desde la base de datos)
+        cursor.execute("SELECT DISTINCT TRIM(REGEXP_REPLACE(area, '[\r\n]+', '', 'g')) as area FROM planificaciones_diarias WHERE area IS NOT NULL AND area != ''")
         lista_areas = [row['area'] for row in cursor.fetchall() if row['area']]
 
-        cursor.execute("SELECT DISTINCT TRIM(grado_seccion) as grado_seccion FROM planificaciones_diarias WHERE grado_seccion IS NOT NULL AND grado_seccion != ''")
+        cursor.execute("SELECT DISTINCT TRIM(REGEXP_REPLACE(grado_seccion, '[\r\n]+', '', 'g')) as grado_seccion FROM planificaciones_diarias WHERE grado_seccion IS NOT NULL AND grado_seccion != ''")
         lista_grados = [row['grado_seccion'] for row in cursor.fetchall() if row['grado_seccion']]
 
         # 3. Consulta con filtros y restricción por rol
@@ -2990,7 +2990,7 @@ def ver_planificaciones_diarias():
 
         # Si NO es administrador, oficina o dirección, se limita estrictamente a su nombre de docente
         if rol_actual not in ['admin', 'administrador', 'oficina', 'director', 'dirección']:
-            query += " AND TRIM(docente) = %s"
+            query += " AND TRIM(REGEXP_REPLACE(docente, '[\r\n]+', '', 'g')) = %s"
             params.append(nombre_usuario)
 
         if desde_fecha:
@@ -3000,10 +3000,10 @@ def ver_planificaciones_diarias():
             query += " AND fecha <= %s"
             params.append(hasta_fecha)
         if area_filtro:
-            query += " AND TRIM(area) = %s"
+            query += " AND TRIM(REGEXP_REPLACE(area, '[\r\n]+', '', 'g')) = %s"
             params.append(area_filtro)
         if grado_filtro:
-            query += " AND TRIM(grado_seccion) = %s"
+            query += " AND TRIM(REGEXP_REPLACE(grado_seccion, '[\r\n]+', '', 'g')) = %s"
             params.append(grado_filtro)
 
         query += " ORDER BY fecha DESC"
