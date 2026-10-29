@@ -2780,8 +2780,8 @@ def guardar_planificacion():
 
     docente = session.get('nombre_completo')
     
-    # 1. Datos de Identificación y Configuración
-    grado = request.form.get('grado')
+    # 1. Datos de Identificación y Configuración (Capturamos el grado del select o del input)
+    grado = request.form.get('grado') or session.get('curso_asignado', '')
     modalidad = request.form.get('modalidad')
     areas_art = request.form.get('areas_art')
     ejes = request.form.get('ejes')
@@ -2837,7 +2837,6 @@ def guardar_planificacion():
         conn = psycopg2.connect(DATABASE_URL)
         cursor = PostgresCursorWrapper(conn)
         
-        # AQUÍ CAMBIAMOS 'área' por 'area' SIN TILDE para que coincida con Supabase
         query = '''
             INSERT INTO planificaciones 
             (
@@ -2850,15 +2849,16 @@ def guardar_planificacion():
                 areas, estrategias, tecnicas, grado_seccion
             )
             VALUES (
-                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 
-                ?, ?, ?, ?,
-                ?, ?, ?, ?, ?, ?,
-                ?, ?, ?, ?, ?, ?, ?,
-                ?, ?, ?, ?, ?,
-                ?, ?, ?, ?, ?,
-                ?, ?, ?, ?
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 
+                %s, %s, %s, %s,
+                %s, %s, %s, %s, %s, %s,
+                %s, %s, %s, %s, %s, %s, %s,
+                %s, %s, %s, %s, %s,
+                %s, %s, %s, %s, %s,
+                %s, %s, %s, %s
             )
         '''
+        # Nota: Si usas PostgresCursorWrapper con ? o %s, asegúrate de mantener el marcador que ya usabas en tu código original (ej. '?' o '%s').
         cursor.execute(query, (
             docente, mes, area, grado, modalidad, areas_art, ejes, duracion, f_inicio, f_cierre,
             valor_mes, efemerides, situacion, situacion,
