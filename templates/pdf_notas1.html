@@ -4,9 +4,10 @@
   <meta charset="UTF-8">
   <title>Informe de Aprendizaje - Centro Educativo Mami Luisa</title>
   <style>
+    /* Márgenes en cero absoluto para abarcar toda la hoja carta horizontal */
     @page {
       size: letter landscape;
-      margin: 5mm;
+      margin: 4mm;
     }
 
     * {
@@ -14,31 +15,26 @@
       font-family: Arial, Helvetica, sans-serif;
     }
 
-    html, body {
-      width: 100%;
-      height: 100%;
+    body {
       margin: 0;
       padding: 0;
       background-color: #ffffff;
+      color: #000000;
     }
 
     .documento {
       width: 100%;
     }
 
-    /* ENCABEZADO */
+    /* ENCABEZADO INSTITUCIONAL */
     .header-table {
       width: 100%;
       border-collapse: collapse;
       margin-bottom: 4px;
     }
 
-    .header-table td {
-      vertical-align: middle;
-    }
-
     .school-name {
-      font-size: 20px;
+      font-size: 21px;
       font-weight: bold;
       color: #7b83ad;
       margin: 0;
@@ -46,21 +42,21 @@
 
     .slogan {
       font-style: italic;
-      font-size: 12px;
+      font-size: 12.5px;
       color: #e28d5c;
-      margin: 1px 0 0 0;
+      margin: 2px 0 0 0;
     }
 
     .info-meta {
       font-size: 9px;
       text-align: right;
-      line-height: 1.3;
+      line-height: 1.35;
     }
 
     .doc-title {
       font-weight: bold;
-      font-size: 10px;
-      margin-top: 1px;
+      font-size: 10.5px;
+      margin-top: 2px;
       text-transform: uppercase;
     }
 
@@ -73,8 +69,8 @@
 
     .student-table td {
       border: 1.5px solid #000000;
-      padding: 3px 5px;
-      font-size: 9.5px;
+      padding: 4px 6px;
+      font-size: 10px;
       font-weight: bold;
     }
 
@@ -83,7 +79,7 @@
       text-transform: uppercase;
     }
 
-    /* TABLA PRINCIPAL DE ASIGNATURAS Y EVALUACIONES */
+    /* TABLA PRINCIPAL DE ASIGNATURAS */
     table.grid-table {
       width: 100%;
       border-collapse: collapse;
@@ -104,9 +100,10 @@
       text-transform: uppercase;
     }
 
+    /* Altura extendida para que llene todo el espacio vertical de la hoja */
     .calif-table tbody td {
-      height: 24px; /* Expande la tabla verticalmente */
-      font-size: 10px;
+      height: 27px;
+      font-size: 10.5px;
     }
 
     .align-left {
@@ -115,21 +112,22 @@
       font-weight: normal;
     }
 
-    /* TEXTO VERTICAL COMPATIBLE CON WEASYPRINT (DE ABAJO HACIA ARRIBA) */
+    /* ESTILO SEGURO PARA TEXTO VERTICAL (DEL ÁREA Y RECUPERACIÓN) */
     .cell-vertical {
-      height: 70px;
       padding: 0 !important;
-      position: relative;
+      vertical-align: middle !important;
+      text-align: center !important;
     }
 
-    .v-text {
-      display: inline-block;
+    .vertical-text {
+      font-size: 8px;
+      font-weight: bold;
+      text-align: center;
+      display: block;
+      /* Ajuste de rotación compatible con motores de PDF backend */
+      -webkit-transform: rotate(-90deg);
       transform: rotate(-90deg);
       white-space: nowrap;
-      font-size: 8.5px;
-      font-weight: bold;
-      width: 70px;
-      text-align: center;
     }
 
     /* SECCIÓN INFERIOR */
@@ -153,16 +151,16 @@
     .escala-table td, .asistencia-table td, .leyenda-table td,
     .escala-table th, .asistencia-table th, .leyenda-table th {
       border: 1px solid #000000;
-      font-size: 8px;
-      padding: 2px 3px;
+      font-size: 8.5px;
+      padding: 3px 4px;
     }
 
     .asistencia-table tbody td {
-      height: 20px;
+      height: 22px;
     }
 
     .desc-text {
-      font-size: 7.5px;
+      font-size: 8px;
       text-align: justify;
       line-height: 1.15;
     }
@@ -205,11 +203,11 @@
       </tr>
     </table>
 
-    <!-- TABLA PRINCIPAL CON 3 NIVELES DE CABECERA EXACALMENTE IGUAL A LA PLANTILLA -->
+    <!-- TABLA PRINCIPAL DE CALIFICACIONES -->
     <table class="grid-table calif-table">
       <thead>
         <tr>
-          <th rowspan="3" style="width: 22%; font-size: 12px;" class="bg-title">ÁREAS CURRICULARES</th>
+          <th rowspan="3" style="width: 21%; font-size: 12px;" class="bg-title">ÁREAS CURRICULARES</th>
           <th colspan="12" class="bg-title">COMPETENCIAS FUNDAMENTALES</th>
           <th colspan="5" class="bg-title">CALIFICACION FINAL</th>
         </tr>
@@ -220,20 +218,20 @@
           </th>
           <!-- C2 -->
           <th colspan="4" style="width: 22%;">
-            <strong>C2</strong><br><span style="font-size: 7px;">Pensamiento Lógico Creativo y Crítico; Resolución de Problemas; Científica y Tecnológica</span>
+            <strong>C2</strong><br><span style="font-size: 6.5px;">Pensamiento Lógico Creativo y Crítico; Resolución de Problemas; Científica y Tecnológica</span>
           </th>
           <!-- C3 -->
           <th colspan="4" style="width: 22%;">
-            <strong>C3</strong><br><span style="font-size: 7px;">Ética y Ciudadana; Desarrollo Personal y Espiritual; Ambiental y de la Salud</span>
+            <strong>C3</strong><br><span style="font-size: 6.5px;">Ética y Ciudadana; Desarrollo Personal y Espiritual; Ambiental y de la Salud</span>
           </th>
           <!-- POR COMPETENCIA -->
-          <th colspan="3" style="width: 10%;">POR COMPETENCIA</th>
-          <!-- DEL ÁREA Y RECUPERACIÓN VERTICALES -->
-          <th rowspan="2" style="width: 4%;" class="cell-vertical">
-            <div class="v-text">DEL ÁREA</div>
+          <th colspan="3" style="width: 9.5%;">POR COMPETENCIA</th>
+          <!-- DEL ÁREA Y RECUPERACIÓN -->
+          <th rowspan="2" style="width: 4.2%;" class="cell-vertical bg-title">
+            <span class="vertical-text">DEL ÁREA</span>
           </th>
-          <th rowspan="2" style="width: 4.5%;" class="cell-vertical">
-            <div class="v-text">RECUPERACIÓN</div>
+          <th rowspan="2" style="width: 4.8%;" class="cell-vertical bg-title">
+            <span class="vertical-text">RECUPERACIÓN</span>
           </th>
         </tr>
         <tr>
@@ -244,7 +242,7 @@
           <!-- P1-P4 C3 -->
           <th style="width: 5.5%;">P1</th><th style="width: 5.5%;">P2</th><th style="width: 5.5%;">P3</th><th style="width: 5.5%;">P4</th>
           <!-- C1, C2, C3 final -->
-          <th style="width: 3.3%;">C1</th><th style="width: 3.3%;">C2</th><th style="width: 3.3%;">C3</th>
+          <th style="width: 3.1%;">C1</th><th style="width: 3.1%;">C2</th><th style="width: 3.1%;">C3</th>
         </tr>
       </thead>
       <tbody>
@@ -266,7 +264,7 @@
         <td style="width: 42%;">
           <table class="escala-table">
             <thead>
-              <tr style="background-color: #f2f2f2;">
+              <tr class="bg-title">
                 <th style="width: 22%;">Escala numérica</th>
                 <th>DESCRIPCIÓN</th>
               </tr>
@@ -296,7 +294,7 @@
         <td style="width: 40%;">
           <table class="asistencia-table">
             <thead>
-              <tr style="background-color: #f2f2f2;">
+              <tr class="bg-title">
                 <th colspan="5">RESUMEN DE ASISTENCIA DEL ESTUDIANTE</th>
               </tr>
               <tr>
@@ -323,7 +321,7 @@
         <td style="width: 18%;">
           <table class="leyenda-table">
             <thead>
-              <tr style="background-color: #f2f2f2;">
+              <tr class="bg-title">
                 <th>LEYENDA</th>
               </tr>
             </thead>
