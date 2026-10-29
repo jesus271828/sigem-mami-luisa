@@ -2718,21 +2718,33 @@ def planificacion():
     if 'usuario' not in session and 'nombre_completo' not in session:
         return redirect(url_for('login'))
     
-    rol_actual = session.get('rol', '')
-    curso_asignado = session.get('curso_asignado', '')
+    nombre_usuario = session.get('nombre_completo')
     
-    # Si es maestro de área, guardamos su especialidad (ej. "Informática")
-    area_especializada = session.get('area_especializada', '')
+    # Consultamos directamente en Supabase para obtener todos los datos reales del usuario
+    try:
+        response = supabase.table('usuarios').select('*').eq('nombre_completo', nombre_usuario).execute()
+        user_data = response.data[0] if response.data else {}
+    except Exception as e:
+        print("Error consultando usuario:", e)
+        user_data = {}
+        
+    rol_actual = user_data.get('rol') or session.get('rol', '')
+    curso_asignado = user_data.get('curso_asignado', '') or session.get('curso_asignado', '')
+    
+    # Obtenemos el área especializada (manejando por si tiene tilde en la BD)
+    area_esp = user_data.get('área_especializada') or user_data.get('area_especializada') or session.get('area_especializada', '')
+    
+    # Si es maestro de área, limpiamos el curso asignado para que obligatoriamente aparezca el selector de grados
     if rol_actual == 'área_maestro':
-        if not area_especializada and curso_asignado in ['Informática', 'Educación Física', 'Música', 'Inglés', 'Lenguas Extranjeras']:
-            area_especializada = curso_asignado
+        if not area_esp and curso_asignado in ['Informática', 'Educación Física', 'Música', 'Inglés', 'Lenguas Extranjeras']:
+            area_esp = curso_asignado
         curso_asignado = ''
-    
+        
     usuario_info = {
-        'nombre_completo': session.get('nombre_completo', ''),
+        'nombre_completo': nombre_usuario,
         'curso_asignado': curso_asignado,
         'rol': rol_actual,
-        'area_especializada': area_especializada
+        'area_especializada': area_esp
     }
     
     return render_template(
