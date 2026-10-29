@@ -2877,6 +2877,10 @@ def guardar_planificacion():
 
     return redirect(url_for('mis_planificaciones'))
 
+from io import BytesIO
+from xhtml2pdf import pisa
+from flask import make_response, render_template
+
 @app.route('/descargar_pdf_planificacion/<int:id>')
 def descargar_pdf_planificacion(id):
     if 'usuario' not in session and 'nombre_completo' not in session:
@@ -2884,25 +2888,47 @@ def descargar_pdf_planificacion(id):
 
     try:
         conn = psycopg2.connect(DATABASE_URL)
-        cursor = PostgresCursorWrapper(conn)
+        # Usamos el cursor nativo de psycopg2 directamente para tener .description disponible
+        cursor = conn.cursor()
         
-        # Buscamos la planificación por su ID en la base de datos
-        query = 'SELECT * FROM planificaciones WHERE id = ?'
-        cursor.execute(query, (id,))
-        planificacion = cursor.fetchone()
-        cursor.close()
+        # Consulta limpia y directa sin referencias a módulos faltantes
+        cursor.execute("SELECT * FROM planificaciones WHERE id = %s", (id,))
         
-        if not planificacion:
-            flash('La planificación solicitada no existe.', 'danger')
+        row = cursor.fetchone()
+        
+        if not row:
+            cursor.close()
+            conn.close()
+            flash("Planificación no encontrada.", "danger")
             return redirect(url_for('mis_planificaciones'))
             
-        # Renderizamos tu plantilla de PDF existente (ajusta el nombre si tu archivo se llama diferente, ej: pdf_planificacion.html)
-        return render_template('pdf_planificacion.html', p=planificacion)
+        # Convertir los resultados a diccionario usando las columnas nativas
+        columns = [desc[0] for desc in cursor.description]
+        plan = dict(zip(columns, row))
         
+        cursor.close()
+        conn.close()
+
+        # Renderizar la plantilla HTML para el PDF
+        html = render_template('pdf_planificacion.html', plan=plan)
+        
+        # Generar el PDF en memoria usando xhtml2pdf
+        pdf = BytesIO()
+        pisa_status = pisa.CreatePDF(BytesIO(html.encode("utf-8")), dest=pdf)
+        
+        if pisa_status.err:
+            return "Error al generar el PDF", 500
+            
+        response = make_response(pdf.getvalue())
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = f'inline; filename=Planificacion_{id}.pdf'
+        return response
+
     except Exception as e:
-        print("❌ Error al cargar la planificación para PDF:", e)
-        flash('Error al generar la vista previa del PDF.', 'danger')
+        print("❌ Error al generar PDF:", e)
+        flash("Error al generar el documento PDF.", "danger")
         return redirect(url_for('mis_planificaciones'))
+
 
 
 # ==============================================================================
