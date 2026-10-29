@@ -2877,6 +2877,33 @@ def guardar_planificacion():
 
     return redirect(url_for('mis_planificaciones'))
 
+@app.route('/descargar_pdf_planificacion/<int:id>')
+def descargar_pdf_planificacion(id):
+    if 'usuario' not in session and 'nombre_completo' not in session:
+        return redirect(url_for('login'))
+
+    try:
+        conn = psycopg2.connect(DATABASE_URL)
+        cursor = PostgresCursorWrapper(conn)
+        
+        # Buscamos la planificación por su ID en la base de datos
+        query = 'SELECT * FROM planificaciones WHERE id = ?'
+        cursor.execute(query, (id,))
+        planificacion = cursor.fetchone()
+        cursor.close()
+        
+        if not planificacion:
+            flash('La planificación solicitada no existe.', 'danger')
+            return redirect(url_for('mis_planificaciones'))
+            
+        # Renderizamos tu plantilla de PDF existente (ajusta el nombre si tu archivo se llama diferente, ej: pdf_planificacion.html)
+        return render_template('pdf_planificacion.html', p=planificacion)
+        
+    except Exception as e:
+        print("❌ Error al cargar la planificación para PDF:", e)
+        flash('Error al generar la vista previa del PDF.', 'danger')
+        return redirect(url_for('mis_planificaciones'))
+
 
 # ==============================================================================
 # 1. RUTA PARA CARGAR Y VISUALIZAR LA PLANIFICACIÓN DIARIA
