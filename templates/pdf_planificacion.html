@@ -44,27 +44,11 @@
             color: #4b5563; 
         }
 
-        /* BLOQUES DE SECCIÓN */
-        .section-box {
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
-            padding: 10px;
-            margin-bottom: 12px;
-            background: #f8fafc;
-        }
-        
-        .section-title {
-            font-size: 12px;
-            font-weight: bold;
-            color: #1d4ed8;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-        }
-
-        /* TABLAS Y CAMPOS */
+        /* ESTILOS PARA EVITAR QUE EL TEXTO LARGO SE SALGA */
         table {
             width: 100%;
             border-collapse: collapse;
+            table-layout: fixed; /* Fuerza a respetar los límites de la tabla */
         }
         
         .table-bordered th, .table-bordered td {
@@ -72,6 +56,9 @@
             padding: 6px 8px;
             vertical-align: top;
             font-size: 10.5px;
+            word-wrap: break-word;     
+            overflow-wrap: break-word; 
+            word-break: break-word;
         }
 
         .table-light {
@@ -96,24 +83,49 @@
             border-radius: 4px;
             min-height: 15px;
             color: #0f172a;
+            word-wrap: break-word;     
+            overflow-wrap: break-word;
+            word-break: break-word;
+            white-space: pre-wrap;     
+        }
+
+        /* BLOQUES DE SECCIÓN */
+        .section-box {
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 12px;
+            background: #f8fafc;
+        }
+        
+        .section-title {
+            font-size: 12px;
+            font-weight: bold;
+            color: #1d4ed8;
+            margin-bottom: 8px;
+            text-transform: uppercase;
         }
     </style>
 </head>
 <body>
 
-    <!-- ENCABEZADO -->
+    <!-- ENCABEZADO CON LOGO -->
     <div class="header">
-        <div class="header-cell" style="width: 85%;">
+        <div class="header-cell" style="width: 15%; text-align: left; padding-right: 10px;">
+            <!-- Asegúrate de tener tu logo en static/images/logo.png o ajusta la ruta -->
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo Mami Luisa" style="max-width: 65px; height: auto;">
+        </div>
+        <div class="header-cell" style="width: 70%;">
             <div class="title-school">Centro Educativo Mami Luisa S.R.L</div>
             <div class="lema">"Educando con amor para un mundo mejor"</div>
-            <div class="info-line"><b>Dirección:</b> C/Castillo Márquez #53. La Romana. &nbsp;|&nbsp; <b>Tel:</b> 809-550-7385</div>
-            <div class="info-line"><b>Regional:</b> 05 San Pedro &nbsp;|&nbsp; <b>Distrito:</b> 05-03 La Romana &nbsp;|&nbsp; <b>Código:</b> 07121</div>
+            <div class="info-line"><b>Dirección:</b> C/Castillo Márquez #53. La Romana.  |  <b>Tel:</b> 809-550-7385</div>
+            <div class="info-line"><b>Regional:</b> 05 San Pedro  |  <b>Distrito:</b> 05-03 La Romana  |  <b>Código:</b> 07121</div>
             <div class="info-line" style="font-weight: bold; color: #1d4ed8; margin-top: 3px;">
                 UNIDAD DE APRENDIZAJE - NIVEL PRIMARIO | Tanda Matutina
             </div>
         </div>
-        <div class="header-cell" style="text-align: right; vertical-align: top;">
-            <span style="font-size: 9px; color: #d97706; font-style: italic;">"Educando con amor para un mundo mejor"</span>
+        <div class="header-cell" style="width: 15%; text-align: right; vertical-align: top;">
+            <span style="font-size: 9px; color: #d97706; font-style: italic;"></span>
         </div>
     </div>
 
