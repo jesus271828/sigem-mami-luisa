@@ -2718,18 +2718,21 @@ def planificacion():
     if 'usuario' not in session and 'nombre_completo' not in session:
         return redirect(url_for('login'))
     
-    # Obtenemos el rol y el curso real de la sesión
     rol_actual = session.get('rol', '')
-    curso_real = session.get('curso_asignado', '')
+    curso_asignado = session.get('curso_asignado', '')
     
-    # Si es profesor de área, el curso asignado no debe ser su materia ("Informática"), sino estar vacío para que el select lo elija
+    # Si es maestro de área, guardamos su especialidad (ej. "Informática")
+    area_especializada = session.get('area_especializada', '')
     if rol_actual == 'área_maestro':
-        curso_real = ''
-
+        if not area_especializada and curso_asignado in ['Informática', 'Educación Física', 'Música', 'Inglés', 'Lenguas Extranjeras']:
+            area_especializada = curso_asignado
+        curso_asignado = ''
+    
     usuario_info = {
         'nombre_completo': session.get('nombre_completo', ''),
-        'curso_asignado': curso_real,
-        'rol': rol_actual
+        'curso_asignado': curso_asignado,
+        'rol': rol_actual,
+        'area_especializada': area_especializada
     }
     
     return render_template(
