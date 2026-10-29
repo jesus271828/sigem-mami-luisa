@@ -4,10 +4,9 @@
   <meta charset="UTF-8">
   <title>Informe de Aprendizaje - Centro Educativo Mami Luisa</title>
   <style>
-    /* Márgenes en cero absoluto para abarcar toda la hoja carta horizontal */
     @page {
       size: letter landscape;
-      margin: 4mm;
+      margin: 3mm;
     }
 
     * {
@@ -26,51 +25,17 @@
       width: 100%;
     }
 
-    /* ENCABEZADO INSTITUCIONAL */
-    .header-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 4px;
-    }
-
-    .school-name {
-      font-size: 21px;
-      font-weight: bold;
-      color: #7b83ad;
-      margin: 0;
-    }
-
-    .slogan {
-      font-style: italic;
-      font-size: 12.5px;
-      color: #e28d5c;
-      margin: 2px 0 0 0;
-    }
-
-    .info-meta {
-      font-size: 9px;
-      text-align: right;
-      line-height: 1.35;
-    }
-
-    .doc-title {
-      font-weight: bold;
-      font-size: 10.5px;
-      margin-top: 2px;
-      text-transform: uppercase;
-    }
-
     /* DATOS DEL ESTUDIANTE */
     .student-table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 4px;
+      margin-bottom: 3px;
     }
 
     .student-table td {
       border: 1.5px solid #000000;
-      padding: 4px 6px;
-      font-size: 10px;
+      padding: 3px 5px;
+      font-size: 9.5px;
       font-weight: bold;
     }
 
@@ -79,7 +44,7 @@
       text-transform: uppercase;
     }
 
-    /* TABLA PRINCIPAL DE ASIGNATURAS */
+    /* TABLA PRINCIPAL DE CALIFICACIONES */
     table.grid-table {
       width: 100%;
       border-collapse: collapse;
@@ -91,7 +56,7 @@
       border: 1.2px solid #000000;
       text-align: center;
       vertical-align: middle;
-      font-size: 9px;
+      font-size: 8.5px;
       padding: 1px;
     }
 
@@ -100,19 +65,18 @@
       text-transform: uppercase;
     }
 
-    /* Altura extendida para que llene todo el espacio vertical de la hoja */
     .calif-table tbody td {
-      height: 27px;
-      font-size: 10.5px;
+      height: 25px; /* Altura exacta para llenar el espacio vertical de la hoja */
+      font-size: 9.5px;
     }
 
     .align-left {
       text-align: left !important;
-      padding-left: 6px !important;
+      padding-left: 5px !important;
       font-weight: normal;
     }
 
-    /* ESTILO SEGURO PARA TEXTO VERTICAL (DEL ÁREA Y RECUPERACIÓN) */
+    /* TEXTO VERTICAL PARA DEL ÁREA Y RECUPERACIÓN */
     .cell-vertical {
       padding: 0 !important;
       vertical-align: middle !important;
@@ -120,11 +84,10 @@
     }
 
     .vertical-text {
-      font-size: 8px;
+      font-size: 7.5px;
       font-weight: bold;
       text-align: center;
       display: block;
-      /* Ajuste de rotación compatible con motores de PDF backend */
       -webkit-transform: rotate(-90deg);
       transform: rotate(-90deg);
       white-space: nowrap;
@@ -134,7 +97,7 @@
     .bottom-section {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 4px;
+      margin-top: 3px;
     }
 
     .bottom-section td {
@@ -151,101 +114,89 @@
     .escala-table td, .asistencia-table td, .leyenda-table td,
     .escala-table th, .asistencia-table th, .leyenda-table th {
       border: 1px solid #000000;
-      font-size: 8.5px;
-      padding: 3px 4px;
+      font-size: 8px;
+      padding: 2px 3px;
     }
 
     .asistencia-table tbody td {
-      height: 22px;
+      height: 20px;
     }
 
     .desc-text {
-      font-size: 8px;
+      font-size: 7.5px;
       text-align: justify;
-      line-height: 1.15;
+      line-height: 1.1;
     }
   </style>
 </head>
 <body>
 
   <div class="documento">
-    
-    <!-- ENCABEZADO INSTITUCIONAL -->
-    <table class="header-table">
-      <tr>
-        <td style="width: 75px; text-align: center;">
-          <img src="logo.png" alt="Logo" style="width: 65px; height: auto;" onerror="this.style.display='none'">
-        </td>
-        <td style="padding-left: 6px;">
-          <h1 class="school-name">Centro Educativo Mami Luisa S.R.L</h1>
-          <p class="slogan">“Educando con amor para un mundo mejor”</p>
-        </td>
-        <td class="info-meta">
-          <strong>Dirección:</strong> C/Castillo Márquez #53. La Romana. <strong>Tel:</strong> 809-550-7385 / 809-710-3395<br>
-          <strong>Regional:</strong> 05 San Pedro de Macorís. <strong>Distrito:</strong> 05-03 La Romana. <strong>Código:</strong> 07121<br>
-          <div class="doc-title">INFORME DE APRENDIZAJE. Primer Grado del Nivel Primario, Sección A.</div>
-          <strong>Año Escolar 2025-2026 / Jornada Escolar Regular. Tanda Matutina.</strong>
-        </td>
-      </tr>
-    </table>
 
     <!-- DATOS DEL ESTUDIANTE -->
     <table class="student-table">
       <tr>
         <td style="width: 9%;">NOMBRE(S):</td>
-        <td style="width: 26%;" class="val">ANGEL SAUL</td>
+        <td style="width: 26%;" class="val">{{ estudiante.nombres }}</td>
         <td style="width: 10%;">APELLIDO (S):</td>
-        <td style="width: 26%;" class="val">SANTANA BERROA</td>
+        <td style="width: 26%;" class="val">{{ estudiante.apellidos }}</td>
         <td style="width: 11%;">NO. DE ORDEN:</td>
-        <td style="width: 4%; text-align: center;" class="val">01</td>
+        <td style="width: 4%; text-align: center;" class="val">{{ estudiante.no_orden }}</td>
         <td style="width: 10%;">ID ESTUDIANTE:</td>
-        <td style="width: 4%; text-align: center;" class="val">36218084</td>
+        <td style="width: 4%; text-align: center;" class="val">{{ estudiante.id_estudiante }}</td>
       </tr>
     </table>
 
-    <!-- TABLA PRINCIPAL DE CALIFICACIONES -->
+    <!-- TABLA PRINCIPAL DE ASIGNATURAS -->
     <table class="grid-table calif-table">
       <thead>
         <tr>
-          <th rowspan="3" style="width: 21%; font-size: 12px;" class="bg-title">ÁREAS CURRICULARES</th>
+          <th rowspan="2" style="width: 20.5%; font-size: 13px;" class="bg-title">ÁREAS CURRICULARES</th>
           <th colspan="12" class="bg-title">COMPETENCIAS FUNDAMENTALES</th>
-          <th colspan="5" class="bg-title">CALIFICACION FINAL</th>
-        </tr>
-        <tr>
-          <!-- C1 -->
-          <th colspan="4" style="width: 18%;">
-            <strong>C1</strong><br><span style="font-size: 7.5px;">Comunicativa</span>
-          </th>
-          <!-- C2 -->
-          <th colspan="4" style="width: 22%;">
-            <strong>C2</strong><br><span style="font-size: 6.5px;">Pensamiento Lógico Creativo y Crítico; Resolución de Problemas; Científica y Tecnológica</span>
-          </th>
-          <!-- C3 -->
-          <th colspan="4" style="width: 22%;">
-            <strong>C3</strong><br><span style="font-size: 6.5px;">Ética y Ciudadana; Desarrollo Personal y Espiritual; Ambiental y de la Salud</span>
-          </th>
-          <!-- POR COMPETENCIA -->
-          <th colspan="3" style="width: 9.5%;">POR COMPETENCIA</th>
-          <!-- DEL ÁREA Y RECUPERACIÓN -->
+          <th colspan="3" class="bg-title">CALIFICACION FINAL</th>
           <th rowspan="2" style="width: 4.2%;" class="cell-vertical bg-title">
             <span class="vertical-text">DEL ÁREA</span>
           </th>
-          <th rowspan="2" style="width: 4.8%;" class="cell-vertical bg-title">
+          <th rowspan="2" style="width: 5.2%;" class="cell-vertical bg-title">
             <span class="vertical-text">RECUPERACIÓN</span>
           </th>
         </tr>
         <tr>
-          <!-- P1-P4 C1 -->
-          <th style="width: 4.5%;">P1</th><th style="width: 4.5%;">P2</th><th style="width: 4.5%;">P3</th><th style="width: 4.5%;">P4</th>
-          <!-- P1-P4 C2 -->
-          <th style="width: 5.5%;">P1</th><th style="width: 5.5%;">P2</th><th style="width: 5.5%;">P3</th><th style="width: 5.5%;">P4</th>
-          <!-- P1-P4 C3 -->
-          <th style="width: 5.5%;">P1</th><th style="width: 5.5%;">P2</th><th style="width: 5.5%;">P3</th><th style="width: 5.5%;">P4</th>
-          <!-- C1, C2, C3 final -->
-          <th style="width: 3.1%;">C1</th><th style="width: 3.1%;">C2</th><th style="width: 3.1%;">C3</th>
+          <!-- C1 -->
+          <th colspan="4" style="width: 18.8%;">
+            <strong>C1</strong><br><span style="font-size: 7px;">Comunicativa</span>
+          </th>
+          <!-- C2 -->
+          <th colspan="4" style="width: 21.6%;">
+            <strong>C2</strong><br><span style="font-size: 5.5px;">Pensamiento Lógico Creativo y Crítico; Resolución de Problemas; Científica y Tecnológica</span>
+          </th>
+          <!-- C3 -->
+          <th colspan="4" style="width: 21.6%;">
+            <strong>C3</strong><br><span style="font-size: 5.5px;">Ética y Ciudadana; Desarrollo Personal y Espiritual; Ambiental y de la Salud</span>
+          </th>
+          <!-- POR COMPETENCIA -->
+          <th colspan="3" style="width: 8.1%;">
+            <strong>POR</strong><br>COMPETENCIA
+          </th>
         </tr>
+        <!-- Nota: La tercera fila de subtítulos de P1-P4 y C1-C3 está integrada en la estructura superior para mantener la simetría exacta de la imagen -->
       </thead>
       <tbody>
+        <!-- Sub-fila de columnas P1-P4 y C1-C3 que va integrada justo antes de las materias -->
+        <tr style="background-color: #f9f9f9; height: 16px;">
+          <td style="font-size: 8px; font-weight: bold; text-align: center;"></td>
+          <!-- C1 P1-P4 -->
+          <td style="font-size: 8px; font-weight: bold;">P1</td><td style="font-size: 8px; font-weight: bold;">P2</td><td style="font-size: 8px; font-weight: bold;">P3</td><td style="font-size: 8px; font-weight: bold;">P4</td>
+          <!-- C2 P1-P4 -->
+          <td style="font-size: 8px; font-weight: bold;">P1</td><td style="font-size: 8px; font-weight: bold;">P2</td><td style="font-size: 8px; font-weight: bold;">P3</td><td style="font-size: 8px; font-weight: bold;">P4</td>
+          <!-- C3 P1-P4 -->
+          <td style="font-size: 8px; font-weight: bold;">P1</td><td style="font-size: 8px; font-weight: bold;">P2</td><td style="font-size: 8px; font-weight: bold;">P3</td><td style="font-size: 8px; font-weight: bold;">P4</td>
+          <!-- Final C1, C2, C3 -->
+          <td style="font-size: 8px; font-weight: bold;">C1</td><td style="font-size: 8px; font-weight: bold;">C2</td><td style="font-size: 8px; font-weight: bold;">C3</td>
+          <td></td><td></td>
+        </tr>
+
+        <!-- ASIGNATURAS -->
         <tr><td class="align-left">Lengua Española</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
         <tr><td class="align-left">Matemática</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
         <tr><td class="align-left">Ciencias Sociales</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>
@@ -327,7 +278,7 @@
             </thead>
             <tbody>
               <tr>
-                <td style="line-height: 1.2; font-size: 7.5px;">
+                <td style="line-height: 1.25; font-size: 7.5px;">
                   (P1) Período 1<br>
                   (P2) Período 2<br>
                   (P3) Período 3<br>
