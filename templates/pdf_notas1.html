@@ -1,3 +1,10 @@
+El motivo por el cual el texto de "DEL ÁREA" y "RECUPERACIÓN" no gira de abajo hacia arriba en tu PDF es que los motores de renderizado en Python (como WeasyPrint) a veces ignoran las propiedades avanzadas de rotación CSS dentro de celdas combinadas de tablas si no tienen una altura fija forzada en píxeles.
+
+Para solucionarlo de forma definitiva y garantizar que rote correctamente, la mejor práctica en estos motores es colocar una **imagen vertical generada por texto** o usar un bloque con dimensiones fijas exactas (`height` y `width`) combinada con un contenedor interno.
+
+Aquí tienes el código ajustado con la clase de rotación reforzada y la estructura exacta que se ve en tu imagen modelo:
+
+```html
 <!DOCTYPE html>
 <html lang="es">
 <head>
