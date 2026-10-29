@@ -4,10 +4,10 @@
   <meta charset="UTF-8">
   <title>Informe de Aprendizaje - Centro Educativo Mami Luisa</title>
   <style>
-    /* Configuración de página Carta Horizontal ocupando el 100% */
+    /* Configuración de impresión Hoja Carta Horizontal (Landscape) */
     @page {
       size: letter landscape;
-      margin: 4mm;
+      margin: 3mm;
     }
 
     * {
@@ -27,7 +27,7 @@
 
     .documento {
       width: 100%;
-      height: 98vh; /* Hace que el contenido se expanda verticalmente */
+      height: 98vh; /* Ocupa todo el alto visible de la página */
       display: flex;
       flex-direction: column;
       justify-content: space-between;
@@ -38,7 +38,7 @@
     .header-table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 4px;
+      margin-bottom: 2px;
     }
 
     .header-table td {
@@ -60,7 +60,7 @@
     }
 
     .school-name {
-      font-size: 21px;
+      font-size: 22px;
       font-weight: bold;
       color: #7b83ad;
       margin: 0;
@@ -92,12 +92,12 @@
     .student-table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 4px;
+      margin-bottom: 3px;
     }
 
     .student-table td {
       border: 1.5px solid #000000;
-      padding: 4px 6px;
+      padding: 3px 5px;
       font-size: 10px;
       font-weight: bold;
     }
@@ -107,7 +107,7 @@
       text-transform: uppercase;
     }
 
-    /* TABLAS GENERALES */
+    /* TABLAS PRINCIPALES */
     table.grid-table {
       width: 100%;
       border-collapse: collapse;
@@ -120,7 +120,7 @@
       text-align: center;
       vertical-align: middle;
       font-size: 9.5px;
-      padding: 2px;
+      padding: 1px;
     }
 
     .bg-title {
@@ -128,10 +128,10 @@
       text-transform: uppercase;
     }
 
-    /* TABLA DE ASIGNATURAS CON MAYOR ALTURA */
+    /* TABLA DE ASIGNATURAS QUE EXPANDE EL ALTO */
     .calif-table {
-      flex-grow: 1; /* Ocupa el espacio vertical sobrante */
-      margin-bottom: 4px;
+      flex-grow: 1;
+      margin-bottom: 3px;
     }
 
     .calif-table th {
@@ -139,7 +139,7 @@
     }
 
     .calif-table tbody td {
-      height: 25px; /* Altura de las filas para llenar la hoja */
+      height: 30px; /* Se aumenta la altura de las celdas para llenar la hoja */
       font-size: 10px;
     }
 
@@ -149,7 +149,13 @@
       font-weight: normal;
     }
 
-    /* TEXTO VERTICAL DE ABAJO HACIA ARRIBA */
+    /* CELDAS VERTICALES DE ABAJO HACIA ARRIBA */
+    .cell-vertical {
+      padding: 0 !important;
+      vertical-align: middle !important;
+      text-align: center !important;
+    }
+
     .v-text-up {
       writing-mode: vertical-rl;
       transform: rotate(180deg);
@@ -157,7 +163,8 @@
       font-size: 8.5px;
       font-weight: bold;
       text-align: center;
-      padding: 2px 0;
+      margin: auto;
+      display: inline-block;
     }
 
     /* SECCIÓN INFERIOR */
@@ -186,7 +193,7 @@
     }
 
     .asistencia-table tbody td {
-      height: 22px;
+      height: 24px;
     }
 
     .desc-text {
@@ -195,7 +202,7 @@
       line-height: 1.15;
     }
 
-    /* OCULTAR BOTÓN AL IMPRIMIR */
+    /* OCULTAR BOTÓN EN IMPRESIÓN */
     @media print {
       .no-print {
         display: none !important;
@@ -262,11 +269,11 @@
       </tr>
     </table>
 
-    <!-- TABLA PRINCIPAL -->
+    <!-- TABLA PRINCIPAL DE ASIGNATURAS -->
     <table class="grid-table calif-table">
       <thead>
         <tr>
-          <th rowspan="3" style="width: 23%; font-size: 13px;" class="bg-title">ÁREAS CURRICULARES</th>
+          <th rowspan="3" style="width: 22%; font-size: 13px;" class="bg-title">ÁREAS CURRICULARES</th>
           <th colspan="12" class="bg-title">COMPETENCIAS FUNDAMENTALES</th>
           <th colspan="5" class="bg-title">CALIFICACION FINAL</th>
         </tr>
@@ -285,10 +292,10 @@
           </th>
           <!-- POR COMPETENCIA -->
           <th colspan="3" style="width: 12%;">POR COMPETENCIA</th>
-          <th rowspan="2" style="width: 4.5%;">
+          <th rowspan="2" style="width: 5%;" class="cell-vertical">
             <div class="v-text-up">DEL ÁREA</div>
           </th>
-          <th rowspan="2" style="width: 4.5%;">
+          <th rowspan="2" style="width: 5%;" class="cell-vertical">
             <div class="v-text-up">RECUPERACIÓN</div>
           </th>
         </tr>
