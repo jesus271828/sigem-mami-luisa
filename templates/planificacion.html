@@ -160,7 +160,7 @@
                         </div>
                         <div class="col-md-4">
                             <label>Grado:</label>
-                            {% if usuario['rol'] == 'área_maestro' or usuario.get('tipo_usuario') == 'área_especializada' %}
+                            {% if usuario.get('rol') == 'área_maestro' or usuario.get('curso_asignado') in ['Informática', 'Educación Física', 'Música', 'Inglés', 'Lenguas Extranjeras'] %}
                                 <!-- Si es profesor de área, permite elegir el curso/grado -->
                                 <select name="grado" class="form-select fw-bold text-primary" required>
                                     <option value="" disabled selected>Seleccione el grado...</option>
