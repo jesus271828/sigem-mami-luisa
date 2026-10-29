@@ -2718,14 +2718,18 @@ def planificacion():
     if 'usuario' not in session and 'nombre_completo' not in session:
         return redirect(url_for('login'))
     
-    # Obtenemos el rol actual de la sesión
+    # Obtenemos el rol y el curso real de la sesión
     rol_actual = session.get('rol', '')
+    curso_real = session.get('curso_asignado', '')
     
-    # Creamos el diccionario incluyendo explícitamente el 'rol'
+    # Si es profesor de área, el curso asignado no debe ser su materia ("Informática"), sino estar vacío para que el select lo elija
+    if rol_actual == 'área_maestro':
+        curso_real = ''
+
     usuario_info = {
         'nombre_completo': session.get('nombre_completo', ''),
-        'curso_asignado': session.get('curso_asignado', ''),
-        'rol': rol_actual  # <-- ¡ESTO ES LO QUE FALTABA PASAR A LA PLANTILLA!
+        'curso_asignado': curso_real,
+        'rol': rol_actual
     }
     
     return render_template(
