@@ -100,7 +100,7 @@
     }
 
     .calif-table tbody td {
-      height: 25px; /* Altura ideal para llenar uniformemente el espacio vertical */
+      height: 25px;
       font-size: 9.5px;
     }
 
@@ -110,24 +110,25 @@
       font-weight: normal;
     }
 
-    /* TEXTO VERTICAL DE ABAJO HACIA ARRIBA */
+    /* CONTENEDOR VERTICAL FORZADO PARA PDF */
     .cell-vertical {
       padding: 0 !important;
       vertical-align: middle !important;
       text-align: center !important;
-      height: 70px;
+      height: 75px;
     }
 
     .vertical-text {
       font-size: 8px;
       font-weight: bold;
       text-align: center;
-      display: inline-block;
+      display: block;
       writing-mode: vertical-lr;
       -webkit-writing-mode: vertical-lr;
       transform: rotate(180deg);
       -webkit-transform: rotate(180deg);
       white-space: nowrap;
+      margin: 0 auto;
     }
 
     /* SECCIÓN INFERIOR */
