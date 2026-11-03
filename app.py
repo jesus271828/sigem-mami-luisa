@@ -2977,28 +2977,45 @@ def ver_planificaciones_diarias():
         except:
             total_expedientes = 0
 
-        # 2. Listas únicas para los selectores (limpiando saltos de línea desde la base de datos)
-        cursor.execute("SELECT DISTINCT TRIM(REGEXP_REPLACE(area, '[\r\n]+', '', 'g')) as area FROM planificaciones_diarias WHERE area IS NOT NULL AND area != ''")
-        lista_areas = [row['area'] for row in cursor.fetchall() if row['area']]
-
-        cursor.execute("SELECT DISTINCT TRIM(REGEXP_REPLACE(grado_seccion, '[\r\n]+', '', 'g')) as grado_seccion FROM planificaciones_diarias WHERE grado_seccion IS NOT NULL AND grado_seccion != ''")
-        lista_grados = [row['grado_seccion'] for row in cursor.fetchall() if row['grado_seccion']]
-
-        # 3. Consulta con filtros y restricción por rol
-        query = "SELECT * FROM planificaciones_diarias WHERE 1=1"
-        params = []
+        # Construcción base de filtros comunes (para áreas, grados y planificaciones)
+        base_where = "WHERE 1=1"
+        base_params = []
 
         # Si NO es administrador, oficina o dirección, se limita estrictamente a su nombre de docente
         if rol_actual not in ['admin', 'administrador', 'oficina', 'director', 'dirección']:
-            query += " AND TRIM(REGEXP_REPLACE(docente, '[\r\n]+', '', 'g')) = %s"
-            params.append(nombre_usuario)
+            base_where += " AND TRIM(REGEXP_REPLACE(docente, '[\r\n]+', '', 'g')) = %s"
+            base_params.append(nombre_usuario)
 
         if desde_fecha:
-            query += " AND fecha >= %s"
-            params.append(desde_fecha)
+            base_where += " AND fecha >= %s"
+            base_params.append(desde_fecha)
         if hasta_fecha:
-            query += " AND fecha <= %s"
-            params.append(hasta_fecha)
+            base_where += " AND fecha <= %s"
+            base_params.append(hasta_fecha)
+
+        # 2. Listas dinámicas filtradas para los selectores (evita duplicados y respeta permisos/fechas)
+        # Lista de áreas únicas según el contexto actual
+        query_areas = f"SELECT DISTINCT TRIM(REGEXP_REPLACE(area, '[\r\n]+', '', 'g')) as area FROM planificaciones_diarias {base_where} AND area IS NOT NULL AND area != '' ORDER BY area"
+        cursor.execute(query_areas, base_params)
+        lista_areas = [row['area'] for row in cursor.fetchall() if row['area']]
+
+        # Lista de grados únicos dinámicos (si se filtró por área previamente, se incluye opcionalmente o toma el base_where)
+        query_grados = f"SELECT DISTINCT TRIM(REGEXP_REPLACE(grado_seccion, '[\r\n]+', '', 'g')) as grado_seccion FROM planificaciones_diarias {base_where}"
+        if area_filtro:
+            query_grados += " AND TRIM(REGEXP_REPLACE(area, '[\r\n]+', '', 'g')) = %s"
+        query_grados += " AND grado_seccion IS NOT NULL AND grado_seccion != '' ORDER BY grado_seccion"
+        
+        params_grados = list(base_params)
+        if area_filtro:
+            params_grados.append(area_filtro)
+            
+        cursor.execute(query_grados, params_grados)
+        lista_grados = [row['grado_seccion'] for row in cursor.fetchall() if row['grado_seccion']]
+
+        # 3. Consulta principal de planificaciones con todos los filtros aplicados
+        query = f"SELECT * FROM planificaciones_diarias {base_where}"
+        params = list(base_params)
+
         if area_filtro:
             query += " AND TRIM(REGEXP_REPLACE(area, '[\r\n]+', '', 'g')) = %s"
             params.append(area_filtro)
