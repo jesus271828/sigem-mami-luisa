@@ -154,6 +154,11 @@
                                         {% if maestro_a_editar and maestro_a_editar.area_especializada and 'Educación Artística' in maestro_a_editar.area_especializada %}checked{% endif %}>
                                     <label class="form-check-label" for="b3_art">Educación Artística</label>
                                 </div>
+                                 <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="materias" value="Formacion Humana" id="b3_hum"
+                                        {% if maestro_a_editar and maestro_a_editar.area_especializada and 'Formacion Humana' in maestro_a_editar.area_especializada %}checked{% endif %}>
+                                    <label class="form-check-label" for="b3_hum">Formacion Humana</label>
+                                </div>
                             </div>
 
                         </div>
