@@ -1,0 +1,85 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>ÁREA: MATEMÁTICA - C1: COMUNICATIVA</h2>
+        <a href="/rubricas" class="btn btn-secondary">Regresar</a>
+    </div>
+
+    <div class="card shadow p-3" style="border-radius: 15px;">
+        <form method="POST" action="/guardar_matriz_notas">
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle text-center" style="font-size: 0.9rem;">
+                    <thead class="table-dark">
+                        <tr>
+                            <th style="width: 45%;">Criterios / Indicadores</th>
+                            <th style="width: 8%;">VALOR</th>
+                            <th style="width: 6%;">Adrian</th>
+                            <th style="width: 6%;">Albert</th>
+                            <th style="width: 6%;">Amaiha</th>
+                            <th style="width: 6%;">Ammy</th>
+                            <!-- Puedes agregar más columnas de estudiantes según tu lista -->
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Indicador 1 -->
+                        <tr>
+                            <td class="text-start">Lee y escribe correctamente números naturales y números enteros.</td>
+                            <td class="fw-bold bg-light">10</td>
+                            <td><input type="number" name="adrian_ind1" value="10" min="0" max="10" class="form-control form-control-sm text-center nota-input" data-student="adrian" oninput="calcularTotales()"></td>
+                            <td><input type="number" name="albert_ind1" value="10" min="0" max="10" class="form-control form-control-sm text-center nota-input" data-student="albert" oninput="calcularTotales()"></td>
+                            <td><input type="number" name="amaiha_ind1" value="10" min="0" max="10" class="form-control form-control-sm text-center nota-input" data-student="amaiha" oninput="calcularTotales()"></td>
+                            <td><input type="number" name="ammy_ind1" value="10" min="0" max="10" class="form-control form-control-sm text-center nota-input" data-student="ammy" oninput="calcularTotales()"></td>
+                        </tr>
+                        <!-- Indicador 2 -->
+                        <tr>
+                            <td class="text-start">Interpreta los símbolos y signos matemáticos utilizados en operaciones.</td>
+                            <td class="fw-bold bg-light">10</td>
+                            <td><input type="number" name="adrian_ind2" value="10" min="0" max="10" class="form-control form-control-sm text-center nota-input" data-student="adrian" oninput="calcularTotales()"></td>
+                            <td><input type="number" name="albert_ind2" value="10" min="0" max="10" class="form-control form-control-sm text-center nota-input" data-student="albert" oninput="calcularTotales()"></td>
+                            <td><input type="number" name="amaiha_ind2" value="10" min="0" max="10" class="form-control form-control-sm text-center nota-input" data-student="amaiha" oninput="calcularTotales()"></td>
+                            <td><input type="number" name="ammy_ind2" value="08" min="0" max="10" class="form-control form-control-sm text-center nota-input" data-student="ammy" oninput="calcularTotales()"></td>
+                        </tr>
+                        <!-- Repetir la misma estructura hasta el indicador 10 -->
+
+                        <!-- FILA DE PUNTAJE TOTAL (Suma automática) -->
+                        <tr class="table-warning fw-bold">
+                            <td class="text-end">PUNTAJE TOTAL DE LA COMPETENCIA:</td>
+                            <td>100</td>
+                            <td id="total-adrian">92</td>
+                            <td id="total-albert">99</td>
+                            <td id="total-amaiha">99</td>
+                            <td id="total-ammy">99</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="text-end mt-3">
+                <button type="submit" class="btn btn-success px-4 font-weight-bold">Guardar Notas de la Competencia</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- SCRIPT DE JAVASCRIPT PARA SUMAR AUTOMÁTICAMENTE LOS TOTALES -->
+<script>
+function calcularTotales() {
+    // Objeto para almacenar la suma de cada estudiante
+    const estudiantes = ['adrian', 'albert', 'amaiha', 'ammy'];
+
+    estudiantes.forEach(student => {
+        let inputs = document.querySelectorAll(`.nota-input[data-student="${student}"]`);
+        let sumaTotal = 0;
+
+        inputs.forEach(input => {
+            let valor = parseFloat(input.value) || 0;
+            sumaTotal += valor;
+        });
+
+        // Actualiza el texto de la celda de total correspondiente
+        document.getElementById(`total-${student}`).innerText = sumaTotal;
+    });
+}
+</script>
+{% endblock %}
