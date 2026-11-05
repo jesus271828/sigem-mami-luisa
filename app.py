@@ -2705,7 +2705,11 @@ def generar_pdf_notas(id_estudiante):
         print("--- ERROR AL GENERAR PDF DE NOTAS CON WEASYPRINT:", e)
         return 'Hubo un error al generar el PDF de notas', 500
 
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import render_template
+
+@app.route('/rubricas')
+def rubricas():
+    return render_template('rubricas.html')
 
 # 1. Ruta para ABRIR la matriz con la tabla de notas
 @app.route('/rubricas_matriz')
