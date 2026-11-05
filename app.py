@@ -2705,7 +2705,7 @@ def generar_pdf_notas(id_estudiante):
         print("--- ERROR AL GENERAR PDF DE NOTAS CON WEASYPRINT:", e)
         return 'Hubo un error al generar el PDF de notas', 500
 
-<<<<<<< HEAD
+
 from flask import render_template
 
 @app.route('/rubricas')
@@ -2717,16 +2717,7 @@ def rubricas():
 def rubricas_matriz():
     return render_template('rubricas_matriz.html')
 
-# 2. Ruta para GUARDAR las notas enviadas por el formulario
-@app.route('/guardar_matriz_notas', methods=['POST'])
-def guardar_matriz_notas():
-    # Aquí procesas los datos que envía el formulario
-    flash('¡Notas guardadas correctamente!', 'success')
-    return redirect(url_for('rubricas_matriz'))
 
-
-=======
->>>>>>> 67514c8f1ee623152fb8c5b6c698cc2deef8299c
 # 1. RUTA PARA EL MENÚ DE OPCIONES DE PLANIFICACIÓN
 @app.route('/menu_planificacion')
 def menu_planificacion():
