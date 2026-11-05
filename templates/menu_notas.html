@@ -1,0 +1,70 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">Gestión de Notas y Evaluaciones</h2>
+    <hr>
+    
+    <!-- BLOQUE PARA MOSTRAR MENSAJES FLASH -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category if category != 'danger' else 'danger' }}" style="background: #f8d7da; color: #721c24; padding: 10px; margin-bottom: 15px; border: 1px solid #f5c6cb; border-radius: 4px; text-align: center; font-weight: bold;">
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <div class="row">
+        <!-- Tarjeta Primer Ciclo (1ro a 3ro) -->
+        <div class="col-md-4 mb-4">
+            <div class="card shadow h-100" style="border-radius: 15px; border-top: 5px solid #007bff;">
+                <div class="card-body text-center d-flex flex-column justify-content-between">
+                    <div>
+                        <h5 class="card-title">Primer Ciclo</h5>
+                        <p class="card-text">Gestionar notas de 1ro, 2do y 3ero.</p>
+                    </div>
+                    <a href="/notas1" class="btn btn-primary mt-3" style="width: 100%; border-radius: 10px;">
+                        Entrar a Primer Ciclo
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tarjeta Segundo Ciclo (4to a 6to) -->
+        <div class="col-md-4 mb-4">
+            <div class="card shadow h-100" style="border-radius: 15px; border-top: 5px solid #28a745;">
+                <div class="card-body text-center d-flex flex-column justify-content-between">
+                    <div>
+                        <h5 class="card-title">Segundo Ciclo</h5>
+                        <p class="card-text">Gestionar notas de 4to, 5to y 6to.</p>
+                    </div>
+                    <a href="/notas2" class="btn btn-success mt-3" style="width: 100%; border-radius: 10px;">
+                        Entrar a Segundo Ciclo
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- NUEVA TARJETA: Rúbricas -->
+        <div class="col-md-4 mb-4">
+            <div class="card shadow h-100" style="border-radius: 15px; border-top: 5px solid #ffc107;">
+                <div class="card-body text-center d-flex flex-column justify-content-between">
+                    <div>
+                        <h5 class="card-title">Rúbricas de Evaluación</h5>
+                        <p class="card-text">Crear y gestionar criterios y rúbricas para notas.</p>
+                    </div>
+                    <a href="/rubricas" class="btn btn-warning text-dark mt-3" style="width: 100%; border-radius: 10px; font-weight: bold;">
+                        Gestionar Rúbricas
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="/menu" class="btn btn-secondary">Regresar al Panel Principal</a>
+    </div>
+</div>
+{% endblock %}

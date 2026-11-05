@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buscar Estudiante - SIGEM Mami Luisa</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-light">
+    
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-search text-primary"></i> Buscar Estudiante</h2>
+            <a href="/menu_buscar" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Volver al Menú
+            </a>
+        </div>
+
+        <!-- Formulario de Búsqueda por GET -->
+        <div class="card shadow-sm mb-4 border-primary">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-filter"></i> Criterios de Búsqueda</h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" action="/buscar_estudiante" class="row g-3">
+                    <div class="col-md-6">
+                        <label for="criterio" class="form-label font-weight-bold">Nombre, Apellido o ID</label>
+                        <input type="text" class="form-control" id="criterio" name="criterio" value="{{ criterio }}" placeholder="Escribe para buscar...">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="grado_filtro" class="form-label">Filtrar por Grado</label>
+                        <select class="form-select" id="grado_filtro" name="grado_filtro">
+                            <option value="">Todos los grados</option>
+                            {% for grado in grados_disponibles %}
+                                <option value="{{ grado }}" {% if grado_filtro == grado %}selected{% endif %}>{{ grado }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-search"></i> Buscar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Resultados de la Tabla -->
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover align-middle">
+                        <thead class="table-primary text-dark">
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombres</th>
+                                <th>Apellidos</th>
+                                <th>Grado</th>
+                                <th class="text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if estudiantes %}
+                                {% for est in estudiantes %}
+                                <tr>
+                                    <td>{{ est.id_estudiante }}</td>
+                                    <td>{{ est.nombres }}</td>
+                                    <td>{{ est.apellidos }}</td>
+                                    <td>{{ est.grado }}</td>
+                                    <td class="text-center">
+                                        <a href="/generar_pdf/{{ est.id_estudiante }}" class="btn btn-danger btn-sm" target="_blank" title="Generar PDF">
+                                            <i class="fas fa-file-pdf"></i> PDF
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-4">
+                                        No se encontraron estudiantes registrados o que coincidan con la búsqueda.
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

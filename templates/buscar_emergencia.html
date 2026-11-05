@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Emergencias y Fotos | SIGEM Mami Luisa</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --primary-color: #1A237E; }
+        body { background-color: #f0f2f5; font-family: 'Segoe UI', sans-serif; }
+        .sidebar { background: var(--primary-color); color: white; min-height: 100vh; padding: 20px; }
+        .card-custom { border-radius: 15px; border: none; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .foto-autorizado { width: 100px; height: 100px; object-fit: cover; border-radius: 50%; border: 3px solid #dee2e6; }
+    </style>
+</head>
+<body>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 sidebar">
+                <h4 class="mb-4">SIGEM Mami Luisa</h4>
+                <p><i class="fas fa-user-circle"></i> {{ session.get('nombre_completo') }} ({{ session.get('rol') }})</p>
+                <hr>
+                <a href="/menu_buscar" class="btn btn-outline-light w-100 mb-2"><i class="fas fa-arrow-left"></i> Volver a Búsqueda</a>
+                <a href="{{ url_for('logout') }}" class="btn btn-danger w-100">Cerrar Sesión</a>
+            </div>
+
+            <!-- Contenido Principal -->
+            <div class="col-md-9 p-5">
+                <h2 class="mb-4"><i class="fas fa-exclamation-triangle text-danger me-2"></i>Panel de Emergencias y Autorizados</h2>
+
+                <!-- Formulario de Búsqueda -->
+                <div class="card card-custom p-4 mb-4">
+                    <form method="POST" action="/buscar_emergencia" class="row g-3">
+                        <div class="col-md-10">
+                            <input type="text" name="busqueda" class="form-control form-control-lg" placeholder="Ingrese ID, Nombre o Apellido del estudiante..." value="{{ busqueda or '' }}" required>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-danger btn-lg w-100"><i class="fas fa-search"></i> Buscar</button>
+                        </div>
+                    </form>
+                </div>
+
+                {% if estudiante %}
+                    <!-- Información del Estudiante y Emergencia -->
+                    <div class="card card-custom p-4 border-start border-danger border-5">
+                        <div class="row">
+                            <div class="col-md-3 text-center">
+                                {% set foto_est = estudiante.foto_estudiante_cedula %}
+                                
+                                {% if foto_est and foto_est != 'None' and foto_est != '' %}
+                                    {% if 'http' in foto_est %}
+                                        <img src="{{ foto_est }}" class="foto-autorizado mb-2" alt="Estudiante">
+                                    {% elif 'data:' in foto_est %}
+                                        <img src="{{ foto_est }}" class="foto-autorizado mb-2" alt="Estudiante">
+                                    {% elif '/9j/' in foto_est %}
+                                        <img src="data:image/jpeg;base64,{{ foto_est }}" class="foto-autorizado mb-2" alt="Estudiante">
+                                    {% elif 'iVBOR' in foto_est %}
+                                        <img src="data:image/jpeg;base64,{{ foto_est }}" class="foto-autorizado mb-2" alt="Estudiante">
+                                    {% else %}
+                                        <img src="{{ url_for('static', filename=foto_est) }}" class="foto-autorizado mb-2" alt="Estudiante"
+                                             onerror="this.onerror=null; this.src='{{ url_for('static', filename='uploads/' + foto_est) }}';">
+                                    {% endif %}
+                                {% else %}
+                                    <div class="foto-autorizado bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-2">
+                                        <i class="fas fa-user-graduate fa-2x"></i>
+                                    </div>
+                                {% endif %}
+                                
+                                <h5>{{ estudiante.nombres }} {{ estudiante.apellidos }}</h5>
+                                <span class="badge bg-primary">Grado: {{ estudiante.grado or 'N/A' }}</span>
+                            </div>
+                            
+                            <div class="col-md-9">
+                                <h4 class="text-danger border-bottom pb-2"><i class="fas fa-heartbeat me-2"></i>Información Médica y de Emergencia</h4>
+                                <div class="row mt-3">
+                                    <div class="col-md-6 mb-3">
+                                        <p class="mb-1 text-muted">¿Padece de Alergias o Condiciones Médicas?</p>
+                                        <h5 class="text-dark bg-light p-2 rounded border">
+                                            {{ estudiante.alergias_condiciones if estudiante.alergias_condiciones else 'No especificado / Ninguna registrada' }}
+                                        </h5>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <p class="mb-1 text-muted">Contacto de Emergencia Principal</p>
+                                        <h5 class="text-dark bg-light p-2 rounded border">
+                                            {{ estudiante.contacto_emergencia if estudiante.contacto_emergencia else 'Ver datos de padres/tutores abajo' }}
+                                        </h5>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sección: Medicación en el Centro Educativo -->
+                    <div class="card card-custom p-4 mb-4">
+                        <h4 class="text-primary border-bottom pb-2"><i class="fas fa-pills me-2"></i>Medicación en el Centro Educativo</h4>
+                        <p class="text-muted mt-2 mb-2">
+                            Medicamentos genéricos normalmente utilizados en el centro: Analgésico, Antiinflamatorio, Antipirético, Antihistamínico y Antiespasmódico.
+                        </p>
+                        <p class="mb-3">
+                            Tomando en cuenta la información anterior y ante la posibilidad de que no podamos contactarle vía telefónica, <strong>¿autoriza usted a que le sean suministrados los medicamentos enlistados anteriormente sin previo aviso?</strong>
+                        </p>
+                        <div class="p-3 bg-light rounded border d-inline-block">
+                            <span class="fw-bold fs-5">
+                                Respuesta registrada: 
+                                <span class="badge {% if estudiante.autoriza_medicamentos == 'SI' or estudiante.autoriza_medicamentos == True %}bg-success{% else %}bg-danger{% endif %}">
+                                    {{ estudiante.autoriza_medicamentos if estudiante.autoriza_medicamentos else 'NO / No especificado' }}
+                                </span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Sección de Fotos y Autorizados / Familiares -->
+                    <h3 class="mb-3 mt-4">Personas Autorizadas, Padres y Tutores</h3>
+                    <div class="row row-cols-1 row-cols-md-3 g-4">
+
+                        {% set p1 = 'Autorizado (' ~ (estudiante.aut_parentesco_1 or 'N/A') ~ ')' %}
+                        {% set p2 = 'Autorizado (' ~ (estudiante.aut_parentesco_2 or 'N/A') ~ ')' %}
+                        {% set p3 = 'Autorizado (' ~ (estudiante.aut_parentesco_3 or 'N/A') ~ ')' %}
+
+                        {% set familiares = [
+                            {'nombre': estudiante.padre_nombre, 'cedula': estudiante.padre_cedula, 'tel': estudiante.padre_tel_personal, 'foto_proc': estudiante.foto_padre_cedula, 'tipo': 'Padre', 'badge': 'bg-secondary'},
+                            {'nombre': estudiante.madre_nombre, 'cedula': estudiante.madre_cedula, 'tel': estudiante.madre_tel_personal, 'foto_proc': estudiante.foto_madre_cedula, 'tipo': 'Madre', 'badge': 'bg-secondary'},
+                            {'nombre': estudiante.tutor_nombre, 'cedula': estudiante.tutor_cedula, 'tel': estudiante.tutor_tel_personal, 'foto_proc': estudiante.foto_tutor_cedula, 'tipo': 'Tutor Legal', 'badge': 'bg-info'},
+                            {'nombre': estudiante.aut_nombre_1, 'cedula': estudiante.aut_cedula_1, 'tel': estudiante.aut_tel_1, 'foto_proc': estudiante.foto_aut_cedula_1, 'tipo': p1, 'badge': 'bg-warning text-dark'},
+                            {'nombre': estudiante.aut_nombre_2, 'cedula': estudiante.aut_cedula_2, 'tel': estudiante.aut_tel_2, 'foto_proc': estudiante.foto_aut_cedula_2, 'tipo': p2, 'badge': 'bg-warning text-dark'},
+                            {'nombre': estudiante.aut_nombre_3, 'cedula': estudiante.aut_cedula_3, 'tel': estudiante.aut_tel_3, 'foto_proc': estudiante.foto_aut_cedula_3, 'tipo': p3, 'badge': 'bg-warning text-dark'}
+                        ] %}
+
+                        {% for fam in familiares %}
+                            {% if fam.nombre and fam.nombre != 'None' %}
+                            <div class="col">
+                                <div class="card card-custom h-100 text-center p-3">
+                                    <div class="mx-auto mb-2">
+                                        {% set foto_f = fam.foto_proc %}
+                                        
+                                        {% if foto_f and foto_f != 'None' and foto_f != '' %}
+                                            {% if 'http' in foto_f %}
+                                                <img src="{{ foto_f }}" class="foto-autorizado mb-2" alt="{{ fam.tipo }}">
+                                            {% elif 'data:' in foto_f %}
+                                                <img src="{{ foto_f }}" class="foto-autorizado mb-2" alt="{{ fam.tipo }}">
+                                            {% elif '/9j/' in foto_f %}
+                                                <img src="data:image/jpeg;base64,{{ foto_f }}" class="foto-autorizado mb-2" alt="{{ fam.tipo }}">
+                                            {% elif 'iVBOR' in foto_f %}
+                                                <img src="data:image/jpeg;base64,{{ foto_f }}" class="foto-autorizado mb-2" alt="{{ fam.tipo }}">
+                                            {% else %}
+                                                <img src="{{ url_for('static', filename=foto_f) }}" class="foto-autorizado mb-2" alt="{{ fam.tipo }}"
+                                                     onerror="this.onerror=null; this.src='{{ url_for('static', filename='uploads/' + foto_f) }}';">
+                                            {% endif %}
+                                        {% else %}
+                                            <div class="foto-autorizado bg-light d-flex align-items-center justify-content-center mx-auto mb-2">
+                                                <i class="fas fa-user fa-2x text-muted"></i>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <h5>{{ fam.nombre }}</h5>
+                                    <span class="badge {{ fam.badge }} mb-2">{{ fam.tipo }}</span>
+                                    <p class="small text-muted mb-1">Cédula: {{ fam.cedula or 'N/A' }}</p>
+                                    <p class="small mb-0"><i class="fas fa-phone text-success"></i> Tel: {{ fam.tel or 'N/A' }}</p>
+                                </div>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+
+                    </div>
+
+                {% elif busqueda %}
+                    <div class="alert alert-warning text-center p-4">
+                        <i class="fas fa-search fa-2x mb-2"></i>
+                        <h5>No se encontró ningún estudiante con el término "{{ busqueda }}".</h5>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

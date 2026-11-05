@@ -1,0 +1,3917 @@
+import os
+from models import db, Estudiante, Usuario, Planificacion, Notas1, Notas2, Asistencia, RegistroPersonal
+import base64
+import sqlite3
+from flask import Flask, render_template, make_response, request, redirect, url_for, session, flash, send_file, Blueprint
+from xhtml2pdf import pisa
+from werkzeug.utils import secure_filename
+import psycopg2
+import json
+import time
+import psycopg2.extras
+from werkzeug.security import generate_password_hash, check_password_hash
+from google import genai
+from google.genai import types
+
+from PIL import Image
+import io
+import base64
+
+def guardar_archivo(input_name):
+    file = request.files.get(input_name)
+    if file and file.filename != '':
+        try:
+            imagen = Image.open(file)
+            if imagen.mode in ('RGBA', 'P'):
+                imagen = imagen.convert('RGB')
+            imagen.thumbnail((800, 800))
+            buffer = io.BytesIO()
+            imagen.save(buffer, format="JPEG", quality=75)
+            file_bytes = buffer.getvalue()
+            encoded = base64.b64encode(file_bytes).decode('utf-8')
+            return encoded
+        except Exception as e:
+            print(f"Error procesando la imagen {input_name}: {e}")
+            return None
+    return None
+
+
+app = Flask(__name__)
+app.secret_key = 'tu_clave_secreta_aqui'
+
+UPLOAD_FOLDER = 'uploads'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+# Configuración de SQLAlchemy utilizando la variable de entorno o tu URL de Supabase directamente
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL') or 'postgresql://postgres.cfwtrxtncgvqujimcvds:piI4T8inVAPT0n8L@aws-0-ca-central-1.pooler.supabase.com:6543/postgres'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Inicializar SQLAlchemy con la app
+db.init_app(app)
+
+DATABASE_URL = app.config['SQLALCHEMY_DATABASE_URI']
+
+class PostgresCursorWrapper:
+    def __init__(self, conn):
+        self.conn = conn
+        self.cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    def execute(self, query, params=None):
+        if params:
+            # Reemplazo seguro de '?' por '%s' para compatibilidad PostgreSQL
+            query = query.replace('?', '%s')
+            self.cur.execute(query, params)
+        else:
+            self.cur.execute(query)
+        return self
+
+    def fetchone(self):
+        return self.cur.fetchone()
+
+    def fetchall(self):
+        return self.cur.fetchall()
+
+    def commit(self):
+        return self.conn.commit()
+
+    def close(self, commit_changes=False):
+        if commit_changes:
+            self.conn.commit()
+        self.cur.close()
+        self.conn.close()
+
+def get_db_connection():
+    if DATABASE_URL:
+        try:
+            # Intentamos conectar con Supabase
+            conn = psycopg2.connect(DATABASE_URL, connect_timeout=5)
+            return PostgresCursorWrapper(conn)
+        except Exception as e:
+            print("Reintentando conexión a base de datos externa...", e)
+            time.sleep(1)
+            conn = psycopg2.connect(DATABASE_URL, connect_timeout=10)
+            return PostgresCursorWrapper(conn)
+    else:
+        conn = sqlite3.connect('sigem_ml.db')
+        conn.row_factory = sqlite3.Row
+        return conn
+    
+def init_db():
+    conn = get_db_connection()
+    if DATABASE_URL:
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS estudiantes (
+                id SERIAL PRIMARY KEY,
+                id_estudiante TEXT,
+                nombres TEXT,
+                apellidos TEXT,
+                grado TEXT,
+                foto_estudiante_cedula TEXT,
+                numero_orden INTEGER
+            )
+        ''')
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS inscripciones (
+                id SERIAL PRIMARY KEY,
+                anio_escolar TEXT, fecha_inscripcion TEXT, id_estudiante TEXT, nombres TEXT, apellidos TEXT,
+                grado TEXT, fecha_nacimiento TEXT, edad TEXT, sexo TEXT, nacionalidad TEXT,
+                lugar_nac TEXT, direccion TEXT, cant_hermanos TEXT, edades_hermanos TEXT,
+                lugar_ocupa TEXT, tipo_sangre TEXT, seguro_medico TEXT, foto_estudiante_cedula TEXT,
+                alergias TEXT, medicamentos TEXT, medico_pediatra TEXT, centro_medico TEXT,
+                emergencia_tel TEXT, emergencia_nombre TEXT, emergencia_parentesco TEXT,
+                padre_nombre TEXT, padre_sector TEXT, padre_direccion TEXT, padre_profesion TEXT,
+                padre_cedula TEXT, foto_padre_cedula TEXT, padre_nivel TEXT, padre_religion TEXT, 
+                padre_tel_personal TEXT, padre_tel_trabajo TEXT, padre_correo TEXT,
+                madre_nombre TEXT, madre_sector TEXT, madre_direccion TEXT, madre_profesion TEXT,
+                madre_cedula TEXT, foto_madre_cedula TEXT, madre_nivel TEXT, madre_religion TEXT, 
+                madre_tel_personal TEXT, madre_tel_trabajo TEXT, madre_correo TEXT,
+                tutor_nombre TEXT, tutor_sector TEXT, tutor_direccion TEXT, tutor_profesion TEXT,
+                tutor_cedula TEXT, foto_tutor_cedula TEXT, tutor_nivel TEXT, tutor_religion TEXT, 
+                tutor_tel_personal TEXT, tutor_tel_trabajo TEXT, tutor_correo TEXT,
+                vive_nombres TEXT, vive_parentesco TEXT, vive_cedula TEXT, foto_vive_cedula TEXT, 
+                vive_direccion TEXT, vive_sector TEXT, vive_profesion TEXT, vive_nivel TEXT, 
+                vive_religion TEXT, vive_tel_personal TEXT, vive_tel_trabajo TEXT, vive_correo TEXT,
+                econ_nombres TEXT, econ_parentesco TEXT, econ_cedula TEXT, foto_econ_cedula TEXT, 
+                econ_direccion TEXT, econ_sector TEXT, econ_profesion TEXT, econ_lugar_trabajo TEXT, 
+                econ_tel_personal TEXT, econ_tel_trabajo TEXT, econ_correo TEXT,
+                aut_nombre_1 TEXT, aut_cedula_1 TEXT, aut_parentesco_1 TEXT, aut_tel_1 TEXT, foto_aut_cedula_1 TEXT,
+                aut_nombre_2 TEXT, aut_cedula_2 TEXT, aut_parentesco_2 TEXT, aut_tel_2 TEXT, foto_aut_cedula_2 TEXT,
+                aut_nombre_3 TEXT, aut_cedula_3 TEXT, aut_parentesco_3 TEXT, aut_tel_3 TEXT, foto_aut_cedula_3 TEXT,
+                aut_nombre_4 TEXT, aut_cedula_4 TEXT, aut_parentesco_4 TEXT, aut_tel_4 TEXT, foto_aut_cedula_4 TEXT,
+                aut_nombre_5 TEXT, aut_cedula_5 TEXT, aut_parentesco_5 TEXT, aut_tel_5 TEXT, foto_aut_cedula_5 TEXT,
+                autoriza_medicamentos TEXT, autoriza_redes TEXT, firma_redes TEXT
+            )
+        ''')
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS autorizados (
+                id SERIAL PRIMARY KEY,
+                id_estudiante TEXT, nombres TEXT, apellidos TEXT, grado TEXT, foto_estudiante_cedula TEXT,
+                padre_nombre TEXT, padre_cedula TEXT, foto_padre_cedula TEXT, padre_tel_personal TEXT, padre_tel_trabajo TEXT,
+                madre_nombre TEXT, madre_cedula TEXT, foto_madre_cedula TEXT, madre_tel_personal TEXT, madre_tel_trabajo TEXT,
+                tutor_nombre TEXT, tutor_cedula TEXT, foto_tutor_cedula TEXT, tutor_tel_personal TEXT, tutor_tel_trabajo TEXT,
+                aut_nombre_1 TEXT, aut_cedula_1 TEXT, aut_parentesco_1 TEXT, aut_tel_1 TEXT, foto_aut_cedula_1 TEXT,
+                aut_nombre_2 TEXT, aut_cedula_2 TEXT, aut_parentesco_2 TEXT, aut_tel_2 TEXT, foto_aut_cedula_2 TEXT,
+                aut_nombre_3 TEXT, aut_cedula_3 TEXT, aut_parentesco_3 TEXT, aut_tel_3 TEXT, foto_aut_cedula_3 TEXT,
+                aut_nombre_4 TEXT, aut_cedula_4 TEXT, aut_parentesco_4 TEXT, aut_tel_4 TEXT, foto_aut_cedula_4 TEXT,
+                aut_nombre_5 TEXT, aut_cedula_5 TEXT, aut_parentesco_5 TEXT, aut_tel_5 TEXT, foto_aut_cedula_5 TEXT
+            )
+        ''')
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS usuarios (
+                id SERIAL PRIMARY KEY,
+                nombre_completo TEXT,
+                username TEXT,
+                password TEXT,
+                rol TEXT,
+                curso_asignado TEXT
+            )
+        ''')
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS expedientes_viejos (
+                id SERIAL PRIMARY KEY,
+                "Unnamed: 3" TEXT,
+                "Unnamed: 4" TEXT,
+                "Unnamed: 5" TEXT
+            )
+        ''')
+    else:
+        cursor = conn.cursor()
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS estudiantes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id_estudiante TEXT, nombres TEXT, apellidos TEXT, grado TEXT,
+                foto_estudiante_cedula TEXT, numero_orden INTEGER
+            )
+        ''')
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS inscripciones (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                anio_escolar TEXT, fecha_inscripcion TEXT, id_estudiante TEXT, nombres TEXT, apellidos TEXT,
+                grado TEXT, fecha_nacimiento TEXT, edad TEXT, sexo TEXT, nacionalidad TEXT,
+                lugar_nac TEXT, direccion TEXT, cant_hermanos TEXT, edades_hermanos TEXT,
+                lugar_ocupa TEXT, tipo_sangre TEXT, seguro_medico TEXT, foto_estudiante_cedula TEXT,
+                alergias TEXT, medicamentos TEXT, medico_pediatra TEXT, centro_medico TEXT,
+                emergencia_tel TEXT, emergencia_nombre TEXT, emergencia_parentesco TEXT,
+                padre_nombre TEXT, padre_sector TEXT, padre_direccion TEXT, padre_profesion TEXT,
+                padre_cedula TEXT, foto_padre_cedula TEXT, padre_nivel TEXT, padre_religion TEXT, 
+                padre_tel_personal TEXT, padre_tel_trabajo TEXT, padre_correo TEXT,
+                madre_nombre TEXT, madre_sector TEXT, madre_direccion TEXT, madre_profesion TEXT,
+                madre_cedula TEXT, foto_madre_cedula TEXT, madre_nivel TEXT, madre_religion TEXT, 
+                madre_tel_personal TEXT, madre_tel_trabajo TEXT, madre_correo TEXT,
+                tutor_nombre TEXT, tutor_sector TEXT, tutor_direccion TEXT, tutor_profesion TEXT,
+                tutor_cedula TEXT, foto_tutor_cedula TEXT, tutor_nivel TEXT, tutor_religion TEXT, 
+                tutor_tel_personal TEXT, tutor_tel_trabajo TEXT, tutor_correo TEXT,
+                vive_nombres TEXT, vive_parentesco TEXT, vive_cedula TEXT, foto_vive_cedula TEXT, 
+                vive_direccion TEXT, vive_sector TEXT, vive_profesion TEXT, vive_nivel TEXT, 
+                vive_religion TEXT, vive_tel_personal TEXT, vive_tel_trabajo TEXT, vive_correo TEXT,
+                econ_nombres TEXT, econ_parentesco TEXT, econ_cedula TEXT, foto_econ_cedula TEXT, 
+                econ_direccion TEXT, econ_sector TEXT, econ_profesion TEXT, econ_lugar_trabajo TEXT, 
+                econ_tel_personal TEXT, econ_tel_trabajo TEXT, econ_correo TEXT,
+                aut_nombre_1 TEXT, aut_cedula_1 TEXT, aut_parentesco_1 TEXT, aut_tel_1 TEXT, foto_aut_cedula_1 TEXT,
+                aut_nombre_2 TEXT, aut_cedula_2 TEXT, aut_parentesco_2 TEXT, aut_tel_2 TEXT, foto_aut_cedula_2 TEXT,
+                aut_nombre_3 TEXT, aut_cedula_3 TEXT, aut_parentesco_3 TEXT, aut_tel_3 TEXT, foto_aut_cedula_3 TEXT,
+                aut_nombre_4 TEXT, aut_cedula_4 TEXT, aut_parentesco_4 TEXT, aut_tel_4 TEXT, foto_aut_cedula_4 TEXT,
+                aut_nombre_5 TEXT, aut_cedula_5 TEXT, aut_parentesco_5 TEXT, aut_tel_5 TEXT, foto_aut_cedula_5 TEXT,
+                autoriza_medicamentos TEXT, autoriza_redes TEXT, firma_redes TEXT
+            )
+        ''')
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS autorizados (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                id_estudiante TEXT, nombres TEXT, apellidos TEXT, grado TEXT, foto_estudiante_cedula TEXT,
+                padre_nombre TEXT, padre_cedula TEXT, foto_padre_cedula TEXT, padre_tel_personal TEXT, padre_tel_trabajo TEXT,
+                madre_nombre TEXT, madre_cedula TEXT, foto_madre_cedula TEXT, madre_tel_personal TEXT, madre_tel_trabajo TEXT,
+                tutor_nombre TEXT, tutor_cedula TEXT, foto_tutor_cedula TEXT, tutor_tel_personal TEXT, tutor_tel_trabajo TEXT,
+                aut_nombre_1 TEXT, aut_cedula_1 TEXT, aut_parentesco_1 TEXT, aut_tel_1 TEXT, foto_aut_cedula_1 TEXT,
+                aut_nombre_2 TEXT, aut_cedula_2 TEXT, aut_parentesco_2 TEXT, aut_tel_2 TEXT, foto_aut_cedula_2 TEXT,
+                aut_nombre_3 TEXT, aut_cedula_3 TEXT, aut_parentesco_3 TEXT, aut_tel_3 TEXT, foto_aut_cedula_3 TEXT,
+                aut_nombre_4 TEXT, aut_cedula_4 TEXT, aut_parentesco_4 TEXT, aut_tel_4 TEXT, foto_aut_cedula_4 TEXT,
+                aut_nombre_5 TEXT, aut_cedula_5 TEXT, aut_parentesco_5 TEXT, aut_tel_5 TEXT, foto_aut_cedula_5 TEXT
+            )
+        ''')
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS usuarios (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nombre_completo TEXT, username TEXT, password TEXT, rol TEXT, curso_asignado TEXT
+            )
+        ''')
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS expedientes_viejos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                "Unnamed: 3" TEXT, "Unnamed: 4" TEXT, "Unnamed: 5" TEXT
+            )
+        ''')
+    conn.commit()
+    conn.close()
+
+class CalificacionDetalle(db.Model):
+    __tablename__ = 'calificaciones_detalle'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    id_estudiante = db.Column(db.String, nullable=False)
+    tipo_informe = db.Column(db.String, nullable=False)
+    campo_nombre = db.Column(db.String, nullable=False)
+    valor = db.Column(db.Text)
+
+# Cambia esto:
+# init_db()
+
+# Por esto:
+try:
+    init_db()
+except Exception as e:
+    print("Base de datos conectándose de forma diferida:", e)
+
+# --- RUTA PRINCIPAL (INDEX Y MENU) ---
+@app.route('/')
+@app.route('/menu')
+def index():
+    usuario_actual = session.get('usuario')
+    if not usuario_actual:
+        flash('Por favor inicie sesión.', 'danger')
+        return redirect(url_for('login'))
+        
+    is_postgres = DATABASE_URL is not None
+    total_estudiantes = 0
+    total_expedientes = 0
+    total_usuarios = 0
+
+    conexion = get_db_connection()
+    try:
+        if is_postgres:
+            cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute("SELECT COUNT(*) as total FROM estudiantes")
+            total_estudiantes = cur.fetchone()['total']
+            
+            cur.execute("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'expedientes_viejos')")
+            if cur.fetchone()['exists']:
+                cur.execute("SELECT COUNT(*) as total FROM expedientes_viejos")
+                total_expedientes = cur.fetchone()['total']
+            else:
+                cur.execute("SELECT COUNT(*) as total FROM inscripciones")
+                total_expedientes = cur.fetchone()['total']
+            
+            cur.execute("SELECT COUNT(*) as total FROM usuarios")
+            total_usuarios = cur.fetchone()['total']
+            cur.close()
+        else:
+            conexion.execute("SELECT COUNT(*) FROM estudiantes")
+            total_estudiantes = conexion.fetchone()[0]
+            
+            cursor_chk = conexion.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='expedientes_viejos'").fetchone()
+            if cursor_chk:
+                conexion.execute("SELECT COUNT(*) FROM expedientes_viejos")
+                total_expedientes = conexion.fetchone()[0]
+            else:
+                conexion.execute("SELECT COUNT(*) FROM inscripciones")
+                total_expedientes = conexion.fetchone()[0]
+                
+            conexion.execute("SELECT COUNT(*) FROM usuarios")
+            total_usuarios = conexion.fetchone()[0]
+    except Exception as e:
+        print(f"--- ERROR AL CONTAR EN EL MENÚ PRINCIPAL: {e}")
+    finally:
+        conexion.close()
+    
+    return render_template('menu.html', 
+                           total_estudiantes=total_estudiantes, 
+                           total_expedientes=total_expedientes, 
+                           total_usuarios=total_usuarios, 
+                           usuario_actual=usuario_actual)
+
+
+# --- AUTENTICACIÓN ---
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        usuario_ingresado = request.form.get('usuario') or request.form.get('username')
+        password = request.form.get('password') or request.form.get('contrasena')
+        
+        user = None
+        try:
+            conn = get_db_connection()
+            is_postgres = DATABASE_URL is not None
+            
+            if is_postgres:
+                cur = conn.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+                # Seleccionamos también area_especializada para cubrir a los maestros de área
+                cur.execute('SELECT username, rol, nombre_completo, curso_asignado, area_especializada FROM usuarios WHERE username = %s AND password = %s', (usuario_ingresado, password))
+                row = cur.fetchone()
+                cur.close()
+                if row:
+                    user = dict(row)
+            else:
+                conn.row_factory = sqlite3.Row
+                cur = conn.cursor()
+                cur.execute('SELECT username, rol, nombre_completo, curso_asignado, area_especializada FROM usuarios WHERE username = ? AND password = ?', (usuario_ingresado, password))
+                row = cur.fetchone()
+                cur.close()
+                if row:
+                    user = {
+                        'username': row['username'],
+                        'rol': row['rol'],
+                        'nombre_completo': row['nombre_completo'],
+                        'curso_asignado': row['curso_asignado'] if row['curso_asignado'] else ''
+                    }
+            conn.close()
+        except Exception as e:
+            print("Error detallado en login:", e)
+            user = None
+        
+        if user:
+            session['usuario'] = user.get('username', '')
+            session['rol'] = user.get('rol', '')
+            session['nombre_completo'] = user.get('nombre_completo', '')
+            
+            # Asignamos de forma inteligente: si es maestro de área usa area_especializada, si no, curso_asignado
+            asignacion_real = user.get('curso_asignado') or user.get('area_especializada') or ''
+            session['curso_asignado'] = asignacion_real
+            
+            return redirect('/menu')
+        else:
+            flash("Usuario o contraseña incorrectos", "danger")
+            return redirect(url_for('login'))
+            
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
+
+@app.route('/buscar_estudiante/<id_estudiante>', methods=['GET'])
+def api_buscar_estudiante(id_estudiante):
+    if 'usuario' not in session:
+        return jsonify({'encontrado': False})
+    
+    conexion = get_db_connection()
+    # Si usas psycopg2 (PostgreSQL en Render), ajustamos para que devuelva diccionarios
+    cursor = conexion.cursor(cursor_factory=psycopg2.extras.RealDictCursor) if hasattr(conexion, 'cursor') else conexion
+    
+    try:
+        cursor.execute("SELECT * FROM inscripciones WHERE id_estudiante = %s", (id_estudiante,))
+        estudiante = cursor.fetchone()
+        
+        if estudiante:
+            # Convertimos a dict estándar por seguridad
+            datos_dict = dict(estudiante)
+            return jsonify({'encontrado': True, 'datos': datos_dict})
+        else:
+            return jsonify({'encontrado': False})
+    except Exception as e:
+        print("Error:", str(e))
+        return jsonify({'encontrado': False, 'error': str(e)})
+    finally:
+        if conexion:
+            conexion.close()
+
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+import base64
+
+# Nota: Asegúrate de mantener tu inicialización de 'app' y tu función get_db_connection() tal como las tienes configuradas.
+
+@app.route('/inscripcion', methods=['GET', 'POST'])
+def inscripcion():
+    if 'usuario' not in session or session.get('rol') != 'admin':
+        flash('Acceso denegado. No tienes permisos para realizar nuevas inscripciones.', 'danger')
+        return redirect(url_for('menu')) 
+
+    if request.method == 'POST':
+        from PIL import Image
+        import io
+
+        def guardar_archivo(input_name):
+            file = request.files.get(input_name)
+            if file and file.filename != '':
+                try:
+                    # Abrir la imagen subida con Pillow
+                    img = Image.open(file)
+                    
+                    # Convertir a RGB si viene con transparencia o formato particular
+                    if img.mode in ("RGBA", "P"):
+                        img = img.convert("RGB")
+                        
+                    # Redimensionar la imagen para que no supere los 800px manteniendo proporción
+                    img.thumbnail((800, 800))
+                    
+                    # Guardar comprimida en memoria como JPEG con calidad del 65%
+                    buffer = io.BytesIO()
+                    img.save(buffer, format="JPEG", quality=65, optimize=True)
+                    buffer.seek(0)
+                    
+                    # Codificar en base64 los bytes ya comprimidos y ligeros
+                    encoded = base64.b64encode(buffer.read()).decode('utf-8')
+                    return encoded
+                except Exception as img_err:
+                    print(f"--- Error al comprimir imagen {input_name}: {img_err}")
+                    # Fallback por si acaso el archivo no es una imagen procesable
+                    file.seek(0)
+                    return base64.b64encode(file.read()).decode('utf-8')
+            return None
+
+        # Captura de datos generales del formulario
+        anio_escolar = request.form.get('anio_escolar')
+        fecha_inscripcion = request.form.get('fecha_inscripcion')
+        id_estudiante = request.form.get('id_estudiante')
+        nombres = request.form.get('nombres')
+        apellidos = request.form.get('apellidos')
+        grado = request.form.get('grado')
+        fecha_nacimiento = request.form.get('fecha_nacimiento')
+        edad = request.form.get('edad')
+        sexo = request.form.get('sexo')
+        nacionalidad = request.form.get('nacionalidad')
+        lugar_nac = request.form.get('lugar_nac')
+        direccion = request.form.get('direccion')
+        cant_hermanos = request.form.get('cant_hermanos')
+        edades_hermanos = request.form.get('edades_hermanos')
+        lugar_ocupa = request.form.get('lugar_ocupa')
+        tipo_sangre = request.form.get('tipo_sangre')
+        seguro_medico = request.form.get('seguro_medico')
+        foto_estudiante_cedula = guardar_archivo('foto_estudiante_cedula')
+        alergias = request.form.get('alergias')
+        medicamentos = request.form.get('medicamentos')
+        medico_pediatra = request.form.get('medico_pediatra')
+        centro_medico = request.form.get('centro_medico')
+        emergencia_tel = request.form.get('emergencia_tel')
+        emergencia_nombre = request.form.get('emergencia_nombre')
+        emergencia_parentesco = request.form.get('emergencia_parentesco')
+
+        # Datos de Padre, Madre y Tutor
+        padre_nombre = request.form.get('padre_nombre')
+        padre_sector = request.form.get('padre_sector')
+        padre_direccion = request.form.get('padre_direccion')
+        padre_profesion = request.form.get('padre_profesion')
+        padre_cedula = request.form.get('padre_cedula')
+        foto_padre_cedula = guardar_archivo('foto_padre_cedula')
+        padre_nivel = request.form.get('padre_nivel')
+        padre_religion = request.form.get('padre_religion')
+        padre_tel_personal = request.form.get('padre_tel_personal')
+        padre_tel_trabajo = request.form.get('padre_tel_trabajo')
+        padre_correo = request.form.get('padre_correo')
+
+        madre_nombre = request.form.get('madre_nombre')
+        madre_sector = request.form.get('madre_sector')
+        madre_direccion = request.form.get('madre_direccion')
+        madre_profesion = request.form.get('madre_profesion')
+        madre_cedula = request.form.get('madre_cedula')
+        foto_madre_cedula = guardar_archivo('foto_madre_cedula')
+        madre_nivel = request.form.get('madre_nivel')
+        madre_religion = request.form.get('madre_religion')
+        madre_tel_personal = request.form.get('madre_tel_personal')
+        madre_tel_trabajo = request.form.get('madre_tel_trabajo')
+        madre_correo = request.form.get('madre_correo')
+
+        tutor_nombre = request.form.get('tutor_nombre')
+        tutor_sector = request.form.get('tutor_sector')
+        tutor_direccion = request.form.get('tutor_direccion')
+        tutor_profesion = request.form.get('tutor_profesion')
+        tutor_cedula = request.form.get('tutor_cedula')
+        foto_tutor_cedula = guardar_archivo('foto_tutor_cedula')
+        tutor_nivel = request.form.get('tutor_nivel')
+        tutor_religion = request.form.get('tutor_religion')
+        tutor_tel_personal = request.form.get('tutor_tel_personal')
+        tutor_tel_trabajo = request.form.get('tutor_tel_trabajo')
+        tutor_correo = request.form.get('tutor_correo')
+
+        # Con quién vive y Responsable Económico
+        vive_nombres = request.form.get('vive_nombres')
+        vive_parentesco = request.form.get('vive_parentesco')
+        vive_cedula = request.form.get('vive_cedula')
+        foto_vive_cedula = guardar_archivo('foto_vive_cedula')
+        vive_direccion = request.form.get('vive_direccion')
+        vive_sector = request.form.get('vive_sector')
+        vive_profesion = request.form.get('vive_profesion')
+        vive_nivel = request.form.get('vive_nivel')
+        vive_religion = request.form.get('vive_religion')
+        vive_tel_personal = request.form.get('vive_tel_personal')
+        vive_tel_trabajo = request.form.get('vive_tel_trabajo')
+        vive_correo = request.form.get('vive_correo')
+
+        econ_nombres = request.form.get('econ_nombres')
+        econ_parentesco = request.form.get('econ_parentesco')
+        econ_cedula = request.form.get('econ_cedula')
+        foto_econ_cedula = guardar_archivo('foto_econ_cedula')
+        econ_direccion = request.form.get('econ_direccion')
+        econ_sector = request.form.get('econ_sector')
+        econ_profesion = request.form.get('econ_profesion')
+        econ_lugar_trabajo = request.form.get('econ_lugar_trabajo')
+        econ_tel_personal = request.form.get('econ_tel_personal')
+        econ_tel_trabajo = request.form.get('econ_tel_trabajo')
+        econ_correo = request.form.get('econ_correo')
+
+        aut_data = {}
+        for i in range(1, 6):
+            aut_data[f'aut_nombre_{i}'] = request.form.get(f'aut_nombre_{i}')
+            aut_data[f'aut_cedula_{i}'] = request.form.get(f'aut_cedula_{i}')
+            aut_data[f'aut_parentesco_{i}'] = request.form.get(f'aut_parentesco_{i}')
+            aut_data[f'aut_tel_{i}'] = request.form.get(f'aut_tel_{i}')
+            aut_data[f'foto_aut_cedula_{i}'] = guardar_archivo(f'foto_aut_cedula_{i}')
+
+        autoriza_medicamentos = request.form.get('autoriza_medicamentos', 'NO')
+        autoriza_redes = request.form.get('autoriza_redes', 'NO')
+        firma_redes = request.form.get('firma_redes')
+
+        conexion = None
+        try:
+            conexion = get_db_connection()
+            cursor_check = conexion if hasattr(conexion, 'execute') else conexion.cursor()
+            cursor_check.execute("SELECT COUNT(*) FROM inscripciones WHERE id_estudiante = %s", (id_estudiante,))
+            resultado_existe = cursor_check.fetchone()
+            
+            existe_en_db = False
+            if resultado_existe:
+                if isinstance(resultado_existe, dict) or hasattr(resultado_existe, 'keys'):
+                    existe_en_db = list(resultado_existe.values())[0] > 0
+                else:
+                    existe_en_db = resultado_existe[0] > 0
+
+            if existe_en_db:
+                # --- ACTUALIZAR REGISTRO EXISTENTE ---
+                conexion.execute('''
+                    UPDATE estudiantes 
+                    SET nombres = ?, apellidos = ?, grado = ?, sexo = ?, foto_estudiante_cedula = ?
+                    WHERE id_estudiante = ?
+                ''', (nombres, apellidos, grado, sexo, foto_estudiante_cedula, id_estudiante))
+                
+                conexion.execute('''
+                    UPDATE autorizados 
+                    SET nombres = ?, apellidos = ?, grado = ?, foto_estudiante_cedula = ?,
+                        padre_nombre = ?, padre_cedula = ?, foto_padre_cedula = ?, padre_tel_personal = ?, padre_tel_trabajo = ?,
+                        madre_nombre = ?, madre_cedula = ?, foto_madre_cedula = ?, madre_tel_personal = ?, madre_tel_trabajo = ?,
+                        tutor_nombre = ?, tutor_cedula = ?, foto_tutor_cedula = ?, tutor_tel_personal = ?, tutor_tel_trabajo = ?,
+                        aut_nombre_1 = ?, aut_cedula_1 = ?, aut_parentesco_1 = ?, aut_tel_1 = ?, foto_aut_cedula_1 = ?,
+                        aut_nombre_2 = ?, aut_cedula_2 = ?, aut_parentesco_2 = ?, aut_tel_2 = ?, foto_aut_cedula_2 = ?,
+                        aut_nombre_3 = ?, aut_cedula_3 = ?, aut_parentesco_3 = ?, aut_tel_3 = ?, foto_aut_cedula_3 = ?,
+                        aut_nombre_4 = ?, aut_cedula_4 = ?, aut_parentesco_4 = ?, aut_tel_4 = ?, foto_aut_cedula_4 = ?,
+                        aut_nombre_5 = ?, aut_cedula_5 = ?, aut_parentesco_5 = ?, aut_tel_5 = ?, foto_aut_cedula_5 = ?
+                    WHERE id_estudiante = ?
+                ''', (
+                    nombres, apellidos, grado, foto_estudiante_cedula,
+                    padre_nombre, padre_cedula, foto_padre_cedula, padre_tel_personal, padre_tel_trabajo,
+                    madre_nombre, madre_cedula, foto_madre_cedula, madre_tel_personal, madre_tel_trabajo,
+                    tutor_nombre, tutor_cedula, foto_tutor_cedula, tutor_tel_personal, tutor_tel_trabajo,
+                    aut_data['aut_nombre_1'], aut_data['aut_cedula_1'], aut_data['aut_parentesco_1'], aut_data['aut_tel_1'], aut_data['foto_aut_cedula_1'],
+                    aut_data['aut_nombre_2'], aut_data['aut_cedula_2'], aut_data['aut_parentesco_2'], aut_data['aut_tel_2'], aut_data['foto_aut_cedula_2'],
+                    aut_data['aut_nombre_3'], aut_data['aut_cedula_3'], aut_data['aut_parentesco_3'], aut_data['aut_tel_3'], aut_data['foto_aut_cedula_3'],
+                    aut_data['aut_nombre_4'], aut_data['aut_cedula_4'], aut_data['aut_parentesco_4'], aut_data['aut_tel_4'], aut_data['foto_aut_cedula_4'],
+                    aut_data['aut_nombre_5'], aut_data['aut_cedula_5'], aut_data['aut_parentesco_5'], aut_data['aut_tel_5'], aut_data['foto_aut_cedula_5'],
+                    id_estudiante
+                ))
+
+                conexion.execute('''
+                    UPDATE inscripciones 
+                    SET anio_escolar = ?, fecha_inscripcion = ?, nombres = ?, apellidos = ?, grado = ?, 
+                        fecha_nacimiento = ?, edad = ?, sexo = ?, nacionalidad = ?, lugar_nac = ?, direccion = ?, cant_hermanos = ?, 
+                        edades_hermanos = ?, lugar_ocupa = ?, tipo_sangre = ?, seguro_medico = ?, foto_estudiante_cedula = ?, 
+                        alergias = ?, medicamentos = ?, medico_pediatra = ?, centro_medico = ?, emergencia_tel = ?, 
+                        emergencia_nombre = ?, emergencia_parentesco = ?,
+                        padre_nombre = ?, padre_sector = ?, padre_direccion = ?, padre_profesion = ?, padre_cedula = ?, 
+                        foto_padre_cedula = ?, padre_nivel = ?, padre_religion = ?, padre_tel_personal = ?, padre_tel_trabajo = ?, padre_correo = ?,
+                        madre_nombre = ?, madre_sector = ?, madre_direccion = ?, madre_profesion = ?, madre_cedula = ?, 
+                        foto_madre_cedula = ?, madre_nivel = ?, madre_religion = ?, madre_tel_personal = ?, madre_tel_trabajo = ?, madre_correo = ?,
+                        tutor_nombre = ?, tutor_sector = ?, tutor_direccion = ?, tutor_profesion = ?, tutor_cedula = ?, 
+                        foto_tutor_cedula = ?, tutor_nivel = ?, tutor_religion = ?, tutor_tel_personal = ?, tutor_tel_trabajo = ?, tutor_correo = ?,
+                        vive_nombres = ?, vive_parentesco = ?, vive_cedula = ?, foto_vive_cedula = ?, vive_direccion = ?, 
+                        vive_sector = ?, vive_profesion = ?, vive_nivel = ?, vive_religion = ?, vive_tel_personal = ?, vive_tel_trabajo = ?, vive_correo = ?,
+                        econ_nombres = ?, econ_parentesco = ?, econ_cedula = ?, foto_econ_cedula = ?, econ_direccion = ?, 
+                        econ_sector = ?, econ_profesion = ?, econ_lugar_trabajo = ?, econ_tel_personal = ?, econ_tel_trabajo = ?, econ_correo = ?,
+                        aut_nombre_1 = ?, aut_cedula_1 = ?, aut_parentesco_1 = ?, aut_tel_1 = ?, foto_aut_cedula_1 = ?,
+                        aut_nombre_2 = ?, aut_cedula_2 = ?, aut_parentesco_2 = ?, aut_tel_2 = ?, foto_aut_cedula_2 = ?,
+                        aut_nombre_3 = ?, aut_cedula_3 = ?, aut_parentesco_3 = ?, aut_tel_3 = ?, foto_aut_cedula_3 = ?,
+                        aut_nombre_4 = ?, aut_cedula_4 = ?, aut_parentesco_4 = ?, aut_tel_4 = ?, foto_aut_cedula_4 = ?,
+                        aut_nombre_5 = ?, aut_cedula_5 = ?, aut_parentesco_5 = ?, aut_tel_5 = ?, foto_aut_cedula_5 = ?,
+                        autoriza_medicamentos = ?, autoriza_redes = ?, firma_redes = ?
+                    WHERE id_estudiante = ?
+                ''', (
+                    anio_escolar, fecha_inscripcion, nombres, apellidos, grado, 
+                    fecha_nacimiento, edad, sexo, nacionalidad, lugar_nac, direccion, cant_hermanos, 
+                    edades_hermanos, lugar_ocupa, tipo_sangre, seguro_medico, foto_estudiante_cedula, 
+                    alergias, medicamentos, medico_pediatra, centro_medico, emergencia_tel, 
+                    emergencia_nombre, emergencia_parentesco,
+                    padre_nombre, padre_sector, padre_direccion, padre_profesion, padre_cedula, 
+                    foto_padre_cedula, padre_nivel, padre_religion, padre_tel_personal, padre_tel_trabajo, padre_correo,
+                    madre_nombre, madre_sector, madre_direccion, madre_profesion, madre_cedula, 
+                    foto_madre_cedula, madre_nivel, madre_religion, madre_tel_personal, madre_tel_trabajo, madre_correo,
+                    tutor_nombre, tutor_sector, tutor_direccion, tutor_profesion, tutor_cedula, 
+                    foto_tutor_cedula, tutor_nivel, tutor_religion, tutor_tel_personal, tutor_tel_trabajo, tutor_correo,
+                    vive_nombres, vive_parentesco, vive_cedula, foto_vive_cedula, vive_direccion, 
+                    vive_sector, vive_profesion, vive_nivel, vive_religion, vive_tel_personal, vive_tel_trabajo, vive_correo,
+                    econ_nombres, econ_parentesco, econ_cedula, foto_econ_cedula, econ_direccion, 
+                    econ_sector, econ_profesion, econ_lugar_trabajo, econ_tel_personal, econ_tel_trabajo, econ_correo,
+                    aut_data['aut_nombre_1'], aut_data['aut_cedula_1'], aut_data['aut_parentesco_1'], aut_data['aut_tel_1'], aut_data['foto_aut_cedula_1'],
+                    aut_data['aut_nombre_2'], aut_data['aut_cedula_2'], aut_data['aut_parentesco_2'], aut_data['aut_tel_2'], aut_data['foto_aut_cedula_2'],
+                    aut_data['aut_nombre_3'], aut_data['aut_cedula_3'], aut_data['aut_parentesco_3'], aut_data['aut_tel_3'], aut_data['foto_aut_cedula_3'],
+                    aut_data['aut_nombre_4'], aut_data['aut_cedula_4'], aut_data['aut_parentesco_4'], aut_data['aut_tel_4'], aut_data['foto_aut_cedula_4'],
+                    aut_data['aut_nombre_5'], aut_data['aut_cedula_5'], aut_data['aut_parentesco_5'], aut_data['aut_tel_5'], aut_data['foto_aut_cedula_5'],
+                    autoriza_medicamentos, autoriza_redes, firma_redes,
+                    id_estudiante
+                ))
+                flash('¡Los datos del estudiante existente fueron actualizados correctamente!', 'success')
+            else:
+                # --- INSERTAR NUEVO REGISTRO ---
+                conexion.execute('''
+                    INSERT INTO estudiantes (nombres, apellidos, id_estudiante, grado, sexo, foto_estudiante_cedula)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                ''', (nombres, apellidos, id_estudiante, grado, sexo, foto_estudiante_cedula))
+                
+                conexion.execute('''
+                    INSERT INTO autorizados (
+                        id_estudiante, nombres, apellidos, grado, foto_estudiante_cedula,
+                        padre_nombre, padre_cedula, foto_padre_cedula, padre_tel_personal, padre_tel_trabajo,
+                        madre_nombre, madre_cedula, foto_madre_cedula, madre_tel_personal, madre_tel_trabajo,
+                        tutor_nombre, tutor_cedula, foto_tutor_cedula, tutor_tel_personal, tutor_tel_trabajo,
+                        aut_nombre_1, aut_cedula_1, aut_parentesco_1, aut_tel_1, foto_aut_cedula_1,
+                        aut_nombre_2, aut_cedula_2, aut_parentesco_2, aut_tel_2, foto_aut_cedula_2,
+                        aut_nombre_3, aut_cedula_3, aut_parentesco_3, aut_tel_3, foto_aut_cedula_3,
+                        aut_nombre_4, aut_cedula_4, aut_parentesco_4, aut_tel_4, foto_aut_cedula_4,
+                        aut_nombre_5, aut_cedula_5, aut_parentesco_5, aut_tel_5, foto_aut_cedula_5
+                    ) VALUES (
+                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+                    )
+                ''', (
+                    id_estudiante, nombres, apellidos, grado, foto_estudiante_cedula,
+                    padre_nombre, padre_cedula, foto_padre_cedula, padre_tel_personal, padre_tel_trabajo,
+                    madre_nombre, madre_cedula, foto_madre_cedula, madre_tel_personal, madre_tel_trabajo,
+                    tutor_nombre, tutor_cedula, foto_tutor_cedula, tutor_tel_personal, tutor_tel_trabajo,
+                    aut_data['aut_nombre_1'], aut_data['aut_cedula_1'], aut_data['aut_parentesco_1'], aut_data['aut_tel_1'], aut_data['foto_aut_cedula_1'],
+                    aut_data['aut_nombre_2'], aut_data['aut_cedula_2'], aut_data['aut_parentesco_2'], aut_data['aut_tel_2'], aut_data['foto_aut_cedula_2'],
+                    aut_data['aut_nombre_3'], aut_data['aut_cedula_3'], aut_data['aut_parentesco_3'], aut_data['aut_tel_3'], aut_data['foto_aut_cedula_3'],
+                    aut_data['aut_nombre_4'], aut_data['aut_cedula_4'], aut_data['aut_parentesco_4'], aut_data['aut_tel_4'], aut_data['foto_aut_cedula_4'],
+                    aut_data['aut_nombre_5'], aut_data['aut_cedula_5'], aut_data['aut_parentesco_5'], aut_data['aut_tel_5'], aut_data['foto_aut_cedula_5']
+                ))
+
+                conexion.execute('''
+                    INSERT INTO inscripciones (
+                        anio_escolar, fecha_inscripcion, id_estudiante, nombres, apellidos, grado, 
+                        fecha_nacimiento, edad, sexo, nacionalidad, lugar_nac, direccion, cant_hermanos, 
+                        edades_hermanos, lugar_ocupa, tipo_sangre, seguro_medico, foto_estudiante_cedula, 
+                        alergias, medicamentos, medico_pediatra, centro_medico, emergencia_tel, 
+                        emergencia_nombre, emergencia_parentesco,
+                        padre_nombre, padre_sector, padre_direccion, padre_profesion, padre_cedula, 
+                        foto_padre_cedula, padre_nivel, padre_religion, padre_tel_personal, padre_tel_trabajo, padre_correo,
+                        madre_nombre, madre_sector, madre_direccion, madre_profesion, madre_cedula, 
+                        foto_madre_cedula, madre_nivel, madre_religion, madre_tel_personal, madre_tel_trabajo, madre_correo,
+                        tutor_nombre, tutor_sector, tutor_direccion, tutor_profesion, tutor_cedula, 
+                        foto_tutor_cedula, tutor_nivel, tutor_religion, tutor_tel_personal, tutor_tel_trabajo, tutor_correo,
+                        vive_nombres, vive_parentesco, vive_cedula, foto_vive_cedula, vive_direccion, 
+                        vive_sector, vive_profesion, vive_nivel, vive_religion, vive_tel_personal, vive_tel_trabajo, vive_correo,
+                        econ_nombres, econ_parentesco, econ_cedula, foto_econ_cedula, econ_direccion, 
+                        econ_sector, econ_profesion, econ_lugar_trabajo, econ_tel_personal, econ_tel_trabajo, econ_correo,
+                        aut_nombre_1, aut_cedula_1, aut_parentesco_1, aut_tel_1, foto_aut_cedula_1,
+                        aut_nombre_2, aut_cedula_2, aut_parentesco_2, aut_tel_2, foto_aut_cedula_2,
+                        aut_nombre_3, aut_cedula_3, aut_parentesco_3, aut_tel_3, foto_aut_cedula_3,
+                        aut_nombre_4, aut_cedula_4, aut_parentesco_4, aut_tel_4, foto_aut_cedula_4,
+                        aut_nombre_5, aut_cedula_5, aut_parentesco_5, aut_tel_5, foto_aut_cedula_5,
+                        autoriza_medicamentos, autoriza_redes, firma_redes
+                    ) VALUES (
+                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                        ?, ?, ?
+                    )
+                ''', (
+                    anio_escolar, fecha_inscripcion, id_estudiante, nombres, apellidos, grado, 
+                    fecha_nacimiento, edad, sexo, nacionalidad, lugar_nac, direccion, cant_hermanos, 
+                    edades_hermanos, lugar_ocupa, tipo_sangre, seguro_medico, foto_estudiante_cedula, 
+                    alergias, medicamentos, medico_pediatra, centro_medico, emergencia_tel, 
+                    emergencia_nombre, emergencia_parentesco,
+                    padre_nombre, padre_sector, padre_direccion, padre_profesion, padre_cedula, 
+                    foto_padre_cedula, padre_nivel, padre_religion, padre_tel_personal, padre_tel_trabajo, padre_correo,
+                    madre_nombre, madre_sector, madre_direccion, madre_profesion, madre_cedula, 
+                    foto_madre_cedula, madre_nivel, madre_religion, madre_tel_personal, madre_tel_trabajo, madre_correo,
+                    tutor_nombre, tutor_sector, tutor_direccion, tutor_profesion, tutor_cedula, 
+                    foto_tutor_cedula, tutor_nivel, tutor_religion, tutor_tel_personal, tutor_tel_trabajo, tutor_correo,
+                    vive_nombres, vive_parentesco, vive_cedula, foto_vive_cedula, vive_direccion, 
+                    vive_sector, vive_profesion, vive_nivel, vive_religion, vive_tel_personal, vive_tel_trabajo, vive_correo,
+                    econ_nombres, econ_parentesco, econ_cedula, foto_econ_cedula, econ_direccion, 
+                    econ_sector, econ_profesion, econ_lugar_trabajo, econ_tel_personal, econ_tel_trabajo, econ_correo,
+                    aut_data['aut_nombre_1'], aut_data['aut_cedula_1'], aut_data['aut_parentesco_1'], aut_data['aut_tel_1'], aut_data['foto_aut_cedula_1'],
+                    aut_data['aut_nombre_2'], aut_data['aut_cedula_2'], aut_data['aut_parentesco_2'], aut_data['aut_tel_2'], aut_data['foto_aut_cedula_2'],
+                    aut_data['aut_nombre_3'], aut_data['aut_cedula_3'], aut_data['aut_parentesco_3'], aut_data['aut_tel_3'], aut_data['foto_aut_cedula_3'],
+                    aut_data['aut_nombre_4'], aut_data['aut_cedula_4'], aut_data['aut_parentesco_4'], aut_data['aut_tel_4'], aut_data['foto_aut_cedula_4'],
+                    aut_data['aut_nombre_5'], aut_data['aut_cedula_5'], aut_data['aut_parentesco_5'], aut_data['aut_tel_5'], aut_data['foto_aut_cedula_5'],
+                    autoriza_medicamentos, autoriza_redes, firma_redes
+                ))
+                flash('¡Estudiante inscrito y guardado correctamente en todas las tablas!', 'success')
+            
+            conexion.execute("SELECT id FROM estudiantes ORDER BY nombres ASC, apellidos ASC")
+            registros_estudiantes = conexion.fetchall()
+            for indice, reg in enumerate(registros_estudiantes, start=1):
+                reg_id = reg['id'] if isinstance(reg, dict) or hasattr(reg, 'keys') else reg[0]
+                conexion.execute("UPDATE estudiantes SET numero_orden = ? WHERE id = ?", (indice, reg_id))
+
+            conexion.commit()
+        except Exception as e:
+            if conexion:
+                conexion.rollback()
+            print(f"--- ERROR CRÍTICO EN INSCRIPCIÓN: {e}")
+            flash('Hubo un error al guardar los datos.', 'danger')
+        finally:
+            if conexion:
+                conexion.close()
+
+        return redirect(url_for('inscripcion'))
+
+    # Método GET
+    conexion = get_db_connection()
+    cursor = conexion if hasattr(conexion, 'execute') else conexion.cursor()
+    
+    def obtener_conteo(query):
+        try:
+            cursor.execute(query)
+            res = cursor.fetchone()
+            if not res:
+                return 0
+            if isinstance(res, dict) or hasattr(res, 'keys'):
+                return list(res.values())[0]
+            return res[0]
+        except Exception:
+            return 0
+
+    total_estudiantes = obtener_conteo("SELECT COUNT(*) FROM estudiantes")
+    total_expedientes = obtener_conteo("SELECT COUNT(*) FROM expedientes_viejos")
+    total_usuarios = obtener_conteo("SELECT COUNT(*) FROM usuarios")
+
+    if conexion:
+        conexion.close()
+
+    return render_template('inscripcion.html', 
+                           total_estudiantes=total_estudiantes, 
+                           total_expedientes=total_expedientes, 
+                           total_usuarios=total_usuarios)
+
+@app.route('/inscripcion-publica', methods=['GET', 'POST'])
+def inscripcion_publica():
+
+
+        # Captura de datos generales del formulario
+        anio_escolar = request.form.get('anio_escolar')
+        fecha_inscripcion = request.form.get('fecha_inscripcion')
+        id_estudiante = request.form.get('id_estudiante')
+        nombres = request.form.get('nombres')
+        apellidos = request.form.get('apellidos')
+        grado = request.form.get('grado')
+        fecha_nacimiento = request.form.get('fecha_nacimiento')
+        edad = request.form.get('edad')
+        sexo = request.form.get('sexo')
+        nacionalidad = request.form.get('nacionalidad')
+        lugar_nac = request.form.get('lugar_nac')
+        direccion = request.form.get('direccion')
+        cant_hermanos = request.form.get('cant_hermanos')
+        edades_hermanos = request.form.get('edades_hermanos')
+        lugar_ocupa = request.form.get('lugar_ocupa')
+        tipo_sangre = request.form.get('tipo_sangre')
+        seguro_medico = request.form.get('seguro_medico')
+        foto_estudiante_cedula = guardar_archivo('foto_estudiante_cedula')
+        alergias = request.form.get('alergias')
+        medicamentos = request.form.get('medicamentos')
+        medico_pediatra = request.form.get('medico_pediatra')
+        centro_medico = request.form.get('centro_medico')
+        emergencia_tel = request.form.get('emergencia_tel')
+        emergencia_nombre = request.form.get('emergencia_nombre')
+        emergencia_parentesco = request.form.get('emergencia_parentesco')
+
+        # Datos de Padre, Madre y Tutor
+        padre_nombre = request.form.get('padre_nombre')
+        padre_sector = request.form.get('padre_sector')
+        padre_direccion = request.form.get('padre_direccion')
+        padre_profesion = request.form.get('padre_profesion')
+        padre_cedula = request.form.get('padre_cedula')
+        foto_padre_cedula = guardar_archivo('foto_padre_cedula')
+        padre_nivel = request.form.get('padre_nivel')
+        padre_religion = request.form.get('padre_religion')
+        padre_tel_personal = request.form.get('padre_tel_personal')
+        padre_tel_trabajo = request.form.get('padre_tel_trabajo')
+        padre_correo = request.form.get('padre_correo')
+
+        madre_nombre = request.form.get('madre_nombre')
+        madre_sector = request.form.get('madre_sector')
+        madre_direccion = request.form.get('madre_direccion')
+        madre_profesion = request.form.get('madre_profesion')
+        madre_cedula = request.form.get('madre_cedula')
+        foto_madre_cedula = guardar_archivo('foto_madre_cedula')
+        madre_nivel = request.form.get('madre_nivel')
+        madre_religion = request.form.get('madre_religion')
+        madre_tel_personal = request.form.get('madre_tel_personal')
+        madre_tel_trabajo = request.form.get('madre_tel_trabajo')
+        madre_correo = request.form.get('madre_correo')
+
+        tutor_nombre = request.form.get('tutor_nombre')
+        tutor_sector = request.form.get('tutor_sector')
+        tutor_direccion = request.form.get('tutor_direccion')
+        tutor_profesion = request.form.get('tutor_profesion')
+        tutor_cedula = request.form.get('tutor_cedula')
+        foto_tutor_cedula = guardar_archivo('foto_tutor_cedula')
+        tutor_nivel = request.form.get('tutor_nivel')
+        tutor_religion = request.form.get('tutor_religion')
+        tutor_tel_personal = request.form.get('tutor_tel_personal')
+        tutor_tel_trabajo = request.form.get('tutor_tel_trabajo')
+        tutor_correo = request.form.get('tutor_correo')
+
+        # Con quién vive y Responsable Económico
+        vive_nombres = request.form.get('vive_nombres')
+        vive_parentesco = request.form.get('vive_parentesco')
+        vive_cedula = request.form.get('vive_cedula')
+        foto_vive_cedula = guardar_archivo('foto_vive_cedula')
+        vive_direccion = request.form.get('vive_direccion')
+        vive_sector = request.form.get('vive_sector')
+        vive_profesion = request.form.get('vive_profesion')
+        vive_nivel = request.form.get('vive_nivel')
+        vive_religion = request.form.get('vive_religion')
+        vive_tel_personal = request.form.get('vive_tel_personal')
+        vive_tel_trabajo = request.form.get('vive_tel_trabajo')
+        vive_correo = request.form.get('vive_correo')
+
+        econ_nombres = request.form.get('econ_nombres')
+        econ_parentesco = request.form.get('econ_parentesco')
+        econ_cedula = request.form.get('econ_cedula')
+        foto_econ_cedula = guardar_archivo('foto_econ_cedula')
+        econ_direccion = request.form.get('econ_direccion')
+        econ_sector = request.form.get('econ_sector')
+        econ_profesion = request.form.get('econ_profesion')
+        econ_lugar_trabajo = request.form.get('econ_lugar_trabajo')
+        econ_tel_personal = request.form.get('econ_tel_personal')
+        econ_tel_trabajo = request.form.get('econ_tel_trabajo')
+        econ_correo = request.form.get('econ_correo')
+
+        # Bucle dinámico para las 5 personas autorizadas
+        aut_data = {}
+        for i in range(1, 6):
+            aut_data[f'aut_nombre_{i}'] = request.form.get(f'aut_nombre_{i}')
+            aut_data[f'aut_cedula_{i}'] = request.form.get(f'aut_cedula_{i}')
+            aut_data[f'aut_parentesco_{i}'] = request.form.get(f'aut_parentesco_{i}')
+            aut_data[f'aut_tel_{i}'] = request.form.get(f'aut_tel_{i}')
+            aut_data[f'foto_aut_cedula_{i}'] = guardar_archivo(f'foto_aut_cedula_{i}')
+
+        autoriza_medicamentos = request.form.get('autoriza_medicamentos', 'NO')
+        autoriza_redes = request.form.get('autoriza_redes', 'NO')
+        firma_redes = request.form.get('firma_redes')
+
+        conexion = None
+        try:
+            conexion = get_db_connection()
+            
+            # 1. Insertar en tabla estudiantes
+            conexion.execute('''
+                INSERT INTO estudiantes (nombres, apellidos, id_estudiante, grado, foto_estudiante_cedula)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (nombres, apellidos, id_estudiante, grado, foto_estudiante_cedula))
+            
+            # 2. Recalcular número de orden global alfabéticamente
+            conexion.execute("SELECT id FROM estudiantes ORDER BY nombres ASC, apellidos ASC")
+            registros_estudiantes = conexion.fetchall()
+            for indice, reg in enumerate(registros_estudiantes, start=1):
+                reg_id = reg['id'] if isinstance(reg, dict) or hasattr(reg, 'keys') else reg[0]
+                conexion.execute("UPDATE estudiantes SET numero_orden = ? WHERE id = ?", (indice, reg_id))
+
+            # 3. Insertar en tabla autorizados
+            conexion.execute('''
+                INSERT INTO autorizados (
+                    id_estudiante, nombres, apellidos, grado, foto_estudiante_cedula,
+                    padre_nombre, padre_cedula, foto_padre_cedula, padre_tel_personal, padre_tel_trabajo,
+                    madre_nombre, madre_cedula, foto_madre_cedula, madre_tel_personal, madre_tel_trabajo,
+                    tutor_nombre, tutor_cedula, foto_tutor_cedula, tutor_tel_personal, tutor_tel_trabajo,
+                    aut_nombre_1, aut_cedula_1, aut_parentesco_1, aut_tel_1, foto_aut_cedula_1,
+                    aut_nombre_2, aut_cedula_2, aut_parentesco_2, aut_tel_2, foto_aut_cedula_2,
+                    aut_nombre_3, aut_cedula_3, aut_parentesco_3, aut_tel_3, foto_aut_cedula_3,
+                    aut_nombre_4, aut_cedula_4, aut_parentesco_4, aut_tel_4, foto_aut_cedula_4,
+                    aut_nombre_5, aut_cedula_5, aut_parentesco_5, aut_tel_5, foto_aut_cedula_5
+                ) VALUES (
+                    ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?
+                )
+            ''', (
+                id_estudiante, nombres, apellidos, grado, foto_estudiante_cedula,
+                padre_nombre, padre_cedula, foto_padre_cedula, padre_tel_personal, padre_tel_trabajo,
+                madre_nombre, madre_cedula, foto_madre_cedula, madre_tel_personal, madre_tel_trabajo,
+                tutor_nombre, tutor_cedula, foto_tutor_cedula, tutor_tel_personal, tutor_tel_trabajo,
+                aut_data['aut_nombre_1'], aut_data['aut_cedula_1'], aut_data['aut_parentesco_1'], aut_data['aut_tel_1'], aut_data['foto_aut_cedula_1'],
+                aut_data['aut_nombre_2'], aut_data['aut_cedula_2'], aut_data['aut_parentesco_2'], aut_data['aut_tel_2'], aut_data['foto_aut_cedula_2'],
+                aut_data['aut_nombre_3'], aut_data['aut_cedula_3'], aut_data['aut_parentesco_3'], aut_data['aut_tel_3'], aut_data['foto_aut_cedula_3'],
+                aut_data['aut_nombre_4'], aut_data['aut_cedula_4'], aut_data['aut_parentesco_4'], aut_data['aut_tel_4'], aut_data['foto_aut_cedula_4'],
+                aut_data['aut_nombre_5'], aut_data['aut_cedula_5'], aut_data['aut_parentesco_5'], aut_data['aut_tel_5'], aut_data['foto_aut_cedula_5']
+            ))
+
+            # 4. Insertar en tabla inscripciones generales
+            conexion.execute('''
+                INSERT INTO inscripciones (
+                    anio_escolar, fecha_inscripcion, id_estudiante, nombres, apellidos, grado, 
+                    fecha_nacimiento, edad, sexo, nacionalidad, lugar_nac, direccion, cant_hermanos, 
+                    edades_hermanos, lugar_ocupa, tipo_sangre, seguro_medico, foto_estudiante_cedula, 
+                    alergias, medicamentos, medico_pediatra, centro_medico, emergencia_tel, 
+                    emergencia_nombre, emergencia_parentesco,
+                    padre_nombre, padre_sector, padre_direccion, padre_profesion, padre_cedula, 
+                    foto_padre_cedula, padre_nivel, padre_religion, padre_tel_personal, padre_tel_trabajo, padre_correo,
+                    madre_nombre, madre_sector, madre_direccion, madre_profesion, madre_cedula, 
+                    foto_madre_cedula, madre_nivel, madre_religion, madre_tel_personal, madre_tel_trabajo, madre_correo,
+                    tutor_nombre, tutor_sector, tutor_direccion, tutor_profesion, tutor_cedula, 
+                    foto_tutor_cedula, tutor_nivel, tutor_religion, tutor_tel_personal, tutor_tel_trabajo, tutor_correo,
+                    vive_nombres, vive_parentesco, vive_cedula, foto_vive_cedula, vive_direccion, 
+                    vive_sector, vive_profesion, vive_nivel, vive_religion, vive_tel_personal, vive_tel_trabajo, vive_correo,
+                    econ_nombres, econ_parentesco, econ_cedula, foto_econ_cedula, econ_direccion, 
+                    econ_sector, econ_profesion, econ_lugar_trabajo, econ_tel_personal, econ_tel_trabajo, econ_correo,
+                    aut_nombre_1, aut_cedula_1, aut_parentesco_1, aut_tel_1, foto_aut_cedula_1,
+                    aut_nombre_2, aut_cedula_2, aut_parentesco_2, aut_tel_2, foto_aut_cedula_2,
+                    aut_nombre_3, aut_cedula_3, aut_parentesco_3, aut_tel_3, foto_aut_cedula_3,
+                    aut_nombre_4, aut_cedula_4, aut_parentesco_4, aut_tel_4, foto_aut_cedula_4,
+                    aut_nombre_5, aut_cedula_5, aut_parentesco_5, aut_tel_5, foto_aut_cedula_5,
+                    autoriza_medicamentos, autoriza_redes, firma_redes
+                ) VALUES (
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+                    ?, ?, ?
+                )
+            ''', (
+                anio_escolar, fecha_inscripcion, id_estudiante, nombres, apellidos, grado, 
+                fecha_nacimiento, edad, sexo, nacionalidad, lugar_nac, direccion, cant_hermanos, 
+                edades_hermanos, lugar_ocupa, tipo_sangre, seguro_medico, foto_estudiante_cedula, 
+                alergias, medicamentos, medico_pediatra, centro_medico, emergencia_tel, 
+                emergencia_nombre, emergencia_parentesco,
+                padre_nombre, padre_sector, padre_direccion, padre_profesion, padre_cedula, 
+                foto_padre_cedula, padre_nivel, padre_religion, padre_tel_personal, padre_tel_trabajo, padre_correo,
+                madre_nombre, madre_sector, madre_direccion, madre_profesion, madre_cedula, 
+                foto_madre_cedula, madre_nivel, madre_religion, madre_tel_personal, madre_tel_trabajo, madre_correo,
+                tutor_nombre, tutor_sector, tutor_direccion, tutor_profesion, tutor_cedula, 
+                foto_tutor_cedula, tutor_nivel, tutor_religion, tutor_tel_personal, tutor_tel_trabajo, tutor_correo,
+                vive_nombres, vive_parentesco, vive_cedula, foto_vive_cedula, vive_direccion, 
+                vive_sector, vive_profesion, vive_nivel, vive_religion, vive_tel_personal, vive_tel_trabajo, vive_correo,
+                econ_nombres, econ_parentesco, econ_cedula, foto_econ_cedula, econ_direccion, 
+                econ_sector, econ_profesion, econ_lugar_trabajo, econ_tel_personal, econ_tel_trabajo, econ_correo,
+                aut_data['aut_nombre_1'], aut_data['aut_cedula_1'], aut_data['aut_parentesco_1'], aut_data['aut_tel_1'], aut_data['foto_aut_cedula_1'],
+                aut_data['aut_nombre_2'], aut_data['aut_cedula_2'], aut_data['aut_parentesco_2'], aut_data['aut_tel_2'], aut_data['foto_aut_cedula_2'],
+                aut_data['aut_nombre_3'], aut_data['aut_cedula_3'], aut_data['aut_parentesco_3'], aut_data['aut_tel_3'], aut_data['foto_aut_cedula_3'],
+                aut_data['aut_nombre_4'], aut_data['aut_cedula_4'], aut_data['aut_parentesco_4'], aut_data['aut_tel_4'], aut_data['foto_aut_cedula_4'],
+                aut_data['aut_nombre_5'], aut_data['aut_cedula_5'], aut_data['aut_parentesco_5'], aut_data['aut_tel_5'], aut_data['foto_aut_cedula_5'],
+                autoriza_medicamentos, autoriza_redes, firma_redes
+            ))
+            
+            conexion.commit()
+            flash('¡Formulario enviado con éxito! Sus datos han sido registrados correctamente en el sistema.', 'success')
+        except Exception as e:
+            # YA NO LLAMAMOS A conexion.rollback() PORQUE NO EXISTE EN ESTA CONEXIÓN
+            print(f"--- ERROR CRÍTICO EN INSCRIPCIÓN PÚBLICA: {e}")
+            flash('Hubo un error al enviar el formulario. Por favor intente de nuevo.', 'danger')
+        finally:
+            if conexion:
+                conexion.close()
+
+        return redirect(url_for('inscripcion_publica'))
+
+# --- BÚSQUEDA Y OTROS MÓDULOS ---
+@app.route('/menu_buscar', methods=['GET'])
+def menu_buscar():
+    try:
+        if 'usuario' not in session:
+            return redirect(url_for('login'))
+            
+        rol_actual = str(session.get('rol', '')).lower().strip()
+        if rol_actual not in ['admin', 'oficina']:
+            flash('Acceso denegado.', 'danger')
+            return redirect('/menu')
+
+        conexion = get_db_connection()
+        is_postgres = DATABASE_URL is not None
+        total_estudiantes = 0
+        total_expedientes = 0
+        total_usuarios = 0
+
+        if is_postgres:
+            cur_c = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur_c.execute("SELECT COUNT(*) as total FROM inscripciones")
+            total_estudiantes = cur_c.fetchone()['total']
+            cur_c.execute("SELECT COUNT(*) as total FROM expedientes_viejos")
+            total_expedientes = cur_c.fetchone()['total']
+            cur_c.execute("SELECT COUNT(*) as total FROM usuarios")
+            total_usuarios = cur_c.fetchone()['total']
+            cur_c.close()
+        else:
+            conexion.execute("SELECT COUNT(*) FROM inscripciones")
+            total_estudiantes = conexion.fetchone()[0]
+            conexion.execute("SELECT COUNT(*) FROM expedientes_viejos")
+            total_expedientes = conexion.fetchone()[0]
+            conexion.execute("SELECT COUNT(*) FROM usuarios")
+            total_usuarios = conexion.fetchone()[0]
+
+        conexion.close()
+
+        return render_template('menu_buscar.html', 
+                               total_estudiantes=total_estudiantes, 
+                               total_expedientes=total_expedientes, 
+                               total_usuarios=total_usuarios)
+    except Exception as e:
+        print(f"Error en menu_buscar: {e}")
+        flash("Ocurrió un error interno en el servidor.", "danger")
+        return redirect('/menu')
+
+@app.route('/buscar_autorizado', methods=['GET', 'POST'])
+def buscar_autorizado():
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+        
+    conexion = get_db_connection()
+    autorizados = []
+    is_postgres = DATABASE_URL is not None
+    total_estudiantes = 0
+    total_expedientes = 0
+    total_usuarios = 0
+
+    try:
+        if is_postgres:
+            cur_c = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur_c.execute("SELECT COUNT(*) as total FROM inscripciones")
+            total_estudiantes = cur_c.fetchone()['total']
+            cur_c.execute("SELECT COUNT(*) as total FROM expedientes_viejos")
+            total_expedientes = cur_c.fetchone()['total']
+            cur_c.execute("SELECT COUNT(*) as total FROM usuarios")
+            total_usuarios = cur_c.fetchone()['total']
+            cur_c.close()
+        else:
+            conexion.execute("SELECT COUNT(*) FROM inscripciones")
+            total_estudiantes = conexion.fetchone()[0]
+            conexion.execute("SELECT COUNT(*) FROM expedientes_viejos")
+            total_expedientes = conexion.fetchone()[0]
+            conexion.execute("SELECT COUNT(*) FROM usuarios")
+            total_usuarios = conexion.fetchone()[0]
+
+        if request.method == 'POST':
+            criterio_raw = request.form.get('criterio', '').strip()
+            criterio = criterio_raw.lower()
+            criterio_limpio = criterio_raw.replace('-', '').lower()
+
+            if is_postgres:
+                cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+                cur.execute("SELECT * FROM inscripciones")
+                filas = cur.fetchall()
+                cur.close()
+            else:
+                conexion.execute("SELECT * FROM inscripciones")
+                filas = conexion.fetchall()
+
+            for fila in filas:
+                f_dict = dict(fila) if isinstance(fila, dict) else dict(zip([column[0] for column in conexion.description], fila))
+                
+                # Campos generales del estudiante
+                nombres_est = str(f_dict.get('nombres') or f_dict.get('estudiante_nombre') or '').lower()
+                apellidos_est = str(f_dict.get('apellidos') or f_dict.get('estudiante_apellido') or '').lower()
+                id_est = str(f_dict.get('id_estudiante') or f_dict.get('id') or '').lower()
+                
+                # Cédulas de padres o tutores adicionales en la inscripción (si aplican)
+                tutor_ced = str(f_dict.get('tutor_cedula') or '').replace('-', '').lower()
+                padre_ced = str(f_dict.get('foto_padre_cedula') or '').replace('-', '').lower()
+                madre_ced = str(f_dict.get('foto_madre_cedula') or '').replace('-', '').lower()
+                est_ced = str(f_dict.get('foto_estudiante_cedula') or '').replace('-', '').lower()
+
+                # Revisar los 5 autorizados
+                for i in range(1, 6):
+                    nombre_aut = f_dict.get(f'aut_nombre_{i}')
+                    cedula_aut_raw = f_dict.get(f'aut_cedula_{i}')
+                    
+                    if nombre_aut or cedula_aut_raw:
+                        nombre_aut_str = str(nombre_aut or '').lower()
+                        cedula_aut_str = str(cedula_aut_raw or '')
+                        cedula_aut_limpia = cedula_aut_str.replace('-', '').lower()
+
+                        # Validar coincidencia flexible (con o sin guiones, por nombre del niño, del autorizado o cédulas)
+                        coincide = (
+                            not criterio or
+                            criterio in nombre_aut_str or
+                            criterio_limpio in cedula_aut_limpia or
+                            criterio in nombres_est or
+                            criterio in apellidos_est or
+                            criterio in id_est or
+                            criterio_limpio in tutor_ced or
+                            criterio_limpio in padre_ced or
+                            criterio_limpio in madre_ced or
+                            criterio_limpio in est_ced
+                        )
+
+                        if coincide:
+                            # Obtener foto del autorizado
+                            f_aut = f_dict.get(f'foto_aut_cedula_{i}')
+                            if not f_aut and i == 1:
+                                f_aut = f_dict.get('foto_padre_cedula') or f_dict.get('foto_madre_cedula')
+
+                            if f_aut and not (str(f_aut).startswith('/9j/') or str(f_aut).startswith('iVBOR') or str(f_aut).startswith('R0lGOD') or str(f_aut).startswith('UklGR')):
+                                f_aut = os.path.basename(str(f_aut).replace('\\', '/'))
+
+                            # Obtener foto del estudiante
+                            raw_est = (
+                                f_dict.get('foto_estudiante_cedula') or 
+                                f_dict.get('foto_estudiante') or 
+                                f_dict.get('foto') or 
+                                f_dict.get('foto_cedula_estudiante')
+                            )
+                            
+                            f_est = ""
+                            if raw_est and str(raw_est).lower() not in ['none', '']:
+                                if str(raw_est).startswith('/9j/') or str(raw_est).startswith('iVBOR') or str(raw_est).startswith('R0lGOD') or str(raw_est).startswith('UklGR'):
+                                    f_est = str(raw_est)
+                                else:
+                                    f_est = os.path.basename(str(raw_est).replace('\\', '/'))
+
+                            autorizados.append({
+                                'nombre_completo': nombre_aut or 'No registrado',
+                                'cedula': cedula_aut_raw or 'N/A',
+                                'parentesco': f_dict.get(f'aut_parentesco_{i}', 'No especificado'),
+                                'foto_autorizado': f_aut,
+                                'foto_estudiante': f_est,
+                                'nombres': f_dict.get('nombres') or f_dict.get('estudiante_nombre'),
+                                'apellidos': f_dict.get('apellidos') or f_dict.get('estudiante_apellido'),
+                                'grado': f_dict.get('grado') or f_dict.get('curso'),
+                                'id_estudiante': f_dict.get('id_estudiante') or f_dict.get('id')
+                            })
+
+    except Exception as e:
+        print("--- ERROR EN BUSCAR AUTORIZADO:", e)
+    finally:
+        conexion.close()
+
+    return render_template('buscar_autorizado.html', 
+                           autorizados=autorizados, 
+                           total_estudiantes=total_estudiantes, 
+                           total_expedientes=total_expedientes, 
+                           total_usuarios=total_usuarios)
+
+
+
+@app.route('/listado-estudiantes')
+def listado_estudiantes():
+    if 'usuario' not in session:
+        flash('Acceso denegado.', 'danger')
+        return redirect(url_for('login'))
+        
+    usuario_actual = str(session.get('usuario', '')).strip()
+    rol_actual = str(session.get('rol', '')).strip().lower()
+    curso_seleccionado = request.args.get('curso', '').strip()
+    
+    conn = get_db_connection()
+    try:
+        # Obtenemos la lista de cursos para el selector
+        cursos_disponibles = conn.execute('SELECT DISTINCT grado FROM estudiantes WHERE grado IS NOT NULL').fetchall()
+        
+        if rol_actual in ['oficina', 'admin']:
+            if curso_seleccionado:
+                rows = conn.execute('''
+                    SELECT * FROM estudiantes 
+                    WHERE grado = ? 
+                    ORDER BY nombres ASC, apellidos ASC
+                ''', (curso_seleccionado,)).fetchall()
+            else:
+                rows = conn.execute('''
+                    SELECT * FROM estudiantes 
+                    ORDER BY grado ASC, nombres ASC, apellidos ASC
+                ''').fetchall()
+                
+            estudiantes = []
+            contador = 1
+            grado_anterior = None
+            
+            for row in rows:
+                est = dict(row)
+                grado_actual = str(est.get('grado', '')).strip()
+                
+                if grado_actual != grado_anterior:
+                    contador = 1
+                    grado_anterior = grado_actual
+                
+                est['numero_orden'] = contador
+                estudiantes.append(est)
+                contador += 1
+        else:
+            usuario_db = conn.execute('''
+                SELECT curso_asignado FROM usuarios 
+                WHERE username = ?
+            ''', (usuario_actual,)).fetchone()
+            
+            curso_docente = usuario_db['curso_asignado'] if usuario_db and usuario_db['curso_asignado'] else session.get('grado')
+            
+            if curso_docente:
+                rows = conn.execute('''
+                    SELECT * FROM estudiantes 
+                    WHERE grado = ? 
+                    ORDER BY apellidos ASC, nombres ASC
+                ''', (curso_docente,)).fetchall()
+            else:
+                rows = conn.execute('''
+                    SELECT * FROM estudiantes 
+                    ORDER BY grado ASC, apellidos ASC, nombres ASC
+                ''').fetchall()
+                
+            estudiantes = []
+            contador = 1
+            for row in rows:
+                est = dict(row)
+                est['numero_orden'] = contador
+                estudiantes.append(est)
+                contador += 1
+                
+    except Exception as e:
+        print(f"Error en listado_estudiantes: {e}")
+        estudiantes = []
+        cursos_disponibles = []
+    finally:
+        conn.close()
+    
+    return render_template('listado_estudiantes.html', 
+                           estudiantes=estudiantes, 
+                           cursos_disponibles=cursos_disponibles, 
+                           curso_seleccionado=curso_seleccionado,
+                           rol_actual=rol_actual)
+
+
+@app.route('/buscar_estudiante', methods=['GET', 'POST'])
+def buscar_estudiante():
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+        
+    conexion = get_db_connection()
+    estudiantes = []
+    grados_disponibles = []
+    is_postgres = DATABASE_URL is not None
+
+    # Capturamos tanto si viene por GET (args) como por POST (form)
+    criterio = request.form.get('criterio', '') or request.args.get('criterio', '')
+    grado_filtro = request.form.get('grado_filtro', '') or request.args.get('grado_filtro', '')
+
+    try:
+        if is_postgres:
+            cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute("SELECT DISTINCT grado FROM inscripciones WHERE grado IS NOT NULL AND grado != '' ORDER BY grado ASC")
+            grados_res = cur.fetchall()
+            cur.close()
+        else:
+            conexion.execute("SELECT DISTINCT grado FROM inscripciones WHERE grado IS NOT NULL AND grado != '' ORDER BY grado ASC")
+            grados_res = conexion.fetchall()
+            
+        grados_disponibles = [g['grado'] if isinstance(g, dict) else g[0] for g in grados_res]
+
+        if is_postgres:
+            query = "SELECT id_estudiante, nombres, apellidos, grado FROM inscripciones WHERE 1=1"
+            params = []
+            if criterio:
+                query += " AND (id_estudiante ILIKE %s OR nombres ILIKE %s OR apellidos ILIKE %s)"
+                like_c = f"%{criterio}%"
+                params.extend([like_c, like_c, like_c])
+            if grado_filtro:
+                query += " AND grado = %s"
+                params.append(grado_filtro)
+            
+            # Ordenar por nombres de forma ascendente (A-Z)
+            query += " ORDER BY nombres ASC"
+            
+            cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute(query, params)
+            estudiantes = cur.fetchall()
+            cur.close()
+        else:
+            query = "SELECT id_estudiante, nombres, apellidos, grado FROM inscripciones WHERE 1=1"
+            params = []
+            if criterio:
+                query += " AND (id_estudiante LIKE ? OR nombres LIKE ? OR apellidos LIKE ?)"
+                like_c = f"%{criterio}%"
+                params.extend([like_c, like_c, like_c])
+            if grado_filtro:
+                query += " AND grado = ?"
+                params.append(grado_filtro)
+                
+            # Ordenar por nombres de forma ascendente (A-Z)
+            query += " ORDER BY nombres ASC"
+                
+            conexion.execute(query, params)
+            estudiantes = conexion.fetchall()
+
+    except Exception as e:
+        print("--- ERROR EN BUSCAR ESTUDIANTE:", e)
+    finally:
+        conexion.close()
+
+    return render_template(
+        'buscar_estudiante.html', 
+        estudiantes=estudiantes, 
+        grados_disponibles=grados_disponibles,
+        criterio=criterio,
+        grado_filtro=grado_filtro
+    )
+
+@app.route('/buscar_emergencia', methods=['GET', 'POST'])
+def buscar_emergencia():
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+        
+    conexion = get_db_connection()
+    estudiante = None
+    is_postgres = DATABASE_URL is not None
+    
+    total_estudiantes = 0
+    total_expedientes = 0
+    total_usuarios = 0
+
+    try:
+        # Contadores para la barra lateral
+        if is_postgres:
+            cur_c = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur_c.execute("SELECT COUNT(*) as total FROM inscripciones")
+            total_estudiantes = cur_c.fetchone()['total']
+            cur_c.execute("SELECT COUNT(*) as total FROM expedientes_viejos")
+            total_expedientes = cur_c.fetchone()['total']
+            cur_c.execute("SELECT COUNT(*) as total FROM usuarios")
+            total_usuarios = cur_c.fetchone()['total']
+            cur_c.close()
+        else:
+            conexion.row_factory = sqlite3.Row
+            cur_c = conexion.cursor()
+            cur_c.execute("SELECT COUNT(*) FROM inscripciones")
+            total_estudiantes = cur_c.fetchone()[0]
+            cur_c.execute("SELECT COUNT(*) FROM expedientes_viejos")
+            total_expedientes = cur_c.fetchone()[0]
+            cur_c.execute("SELECT COUNT(*) FROM usuarios")
+            total_usuarios = cur_c.fetchone()[0]
+
+        busqueda = request.form.get('busqueda', '').strip() if request.method == 'POST' else ''
+        
+        if busqueda:
+            criterio = busqueda.lower()
+            criterio_limpio = busqueda.replace('-', '').lower()
+
+            if is_postgres:
+                cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+                cur.execute("SELECT * FROM inscripciones")
+                filas = cur.fetchall()
+                cur.close()
+            else:
+                conexion.row_factory = sqlite3.Row
+                cur = conexion.cursor()
+                cur.execute("SELECT * FROM inscripciones")
+                filas = cur.fetchall()
+
+            for fila in filas:
+                f_dict = dict(fila)
+                
+                nombres_est = str(f_dict.get('nombres') or f_dict.get('estudiante_nombre') or '').lower()
+                apellidos_est = str(f_dict.get('apellidos') or f_dict.get('estudiante_apellido') or '').lower()
+                id_est = str(f_dict.get('id_estudiante') or f_dict.get('id') or '').lower()
+                
+                if criterio in nombres_est or criterio in apellidos_est or criterio in id_est or criterio_limpio in str(f_dict.get('id_estudiante') or '').lower():
+                    
+                    # Función para limpiar rutas o strings vacíos/basura de las fotos
+                    def limpiar_foto(raw_path):
+                        if not raw_path or str(raw_path).lower() in ['none', 'nan', '', 'null', 'undefined', 'n/a']:
+                            return ""
+                        val = str(raw_path).strip()
+                        if val.startswith(('http', 'data:', '/9j/', 'iVBOR', 'R0lGOD', 'UklGR')):
+                            return val
+                        return os.path.basename(val.replace('\\', '/'))
+
+                    # Procesamiento exacto con tus nombres de variables en la base de datos
+                    f_dict['foto_estudiante_cedula'] = limpiar_foto(f_dict.get('foto_estudiante_cedula'))
+                    f_dict['foto_padre_cedula'] = limpiar_foto(f_dict.get('foto_padre_cedula'))
+                    f_dict['foto_madre_cedula'] = limpiar_foto(f_dict.get('foto_madre_cedula'))
+                    f_dict['foto_tutor_cedula'] = limpiar_foto(f_dict.get('foto_tutor_cedula'))
+
+                    # Procesar autorizados del 1 al 5
+                    for i in range(1, 6):
+                        f_dict[f'foto_aut_cedula_{i}'] = limpiar_foto(f_dict.get(f'foto_aut_cedula_{i}'))
+
+                    # Limpiar campos de texto nulos o NaN
+                    for k, v in f_dict.items():
+                        if v is None or str(v).lower() in ['nan', 'none', 'null']:
+                            f_dict[k] = ''
+
+                    estudiante = f_dict
+                    break
+
+    except Exception as e:
+        print("--- ERROR EN BUSCAR EMERGENCIA:", e)
+    finally:
+        conexion.close()
+        
+    return render_template('buscar_emergencia.html', 
+                           estudiante=estudiante, 
+                           busqueda=busqueda or '',
+                           total_estudiantes=total_estudiantes,
+                           total_expedientes=total_expedientes,
+                           total_usuarios=total_usuarios)
+
+
+
+import os
+from pathlib import Path
+from datetime import datetime
+from flask import render_template, request, redirect, url_for, session, flash, make_response, current_app
+from xhtml2pdf import pisa
+import psycopg2.extras
+import sqlite3
+
+@app.route('/asistencia', methods=['GET', 'POST'])
+def asistencia():
+    if 'usuario' not in session and 'user' not in session:
+        return redirect(url_for('login'))
+        
+    rol_actual = str(session.get('rol', '')).strip().lower()
+    if rol_actual not in ['oficina', 'admin', 'administración', 'administracion']:
+        flash('Acceso denegado.', 'danger')
+        return redirect(url_for('menu'))
+
+    fecha_actual = request.args.get('fecha', datetime.now().strftime('%Y-%m-%d'))
+    grado_seleccionado = request.args.get('grado', '')
+
+    # 1. Cursos para la TABLA SUPERIOR (Primaria Secciones A)
+    cursos_resumen = ['1ro A', '2do A', '3ro A', '4to A', '5to A', '6to A']
+
+    # 2. Cursos para la TABLA INFERIOR (Nivel Inicial ML – L2)
+    cursos_inicial = [
+        'Párvulos', 'Prekínder – A', 'Prekínder – B', 
+        'Kínder – A',  'Preprimario – A', 'Preprimario – B'
+    ]
+
+    conn = get_db_connection()
+    try:
+        # Lista limpia de grados para el selector principal
+        grados_db = conn.execute("SELECT DISTINCT grado FROM estudiantes WHERE grado IS NOT NULL ORDER BY grado ASC").fetchall()
+        lista_grados = [g['grado'] if hasattr(g, 'keys') else g[0] for g in grados_db]
+
+        estudiantes = []
+        asistencia_dict = {}
+
+        if grado_seleccionado:
+            grado_busqueda = grado_seleccionado.replace('–', '-').strip()
+            
+            estudiantes_db = conn.execute(
+                """
+                SELECT id_estudiante, nombres, apellidos 
+                FROM estudiantes 
+                WHERE REPLACE(grado, '–', '-') = %s OR grado = %s 
+                ORDER BY nombres ASC
+                """, 
+                (grado_busqueda, grado_seleccionado)
+            ).fetchall()
+            
+            estudiantes = [
+                dict(e) if hasattr(e, 'keys') else {'id_estudiante': e[0], 'nombres': e[1], 'apellidos': e[2]} 
+                for e in estudiantes_db
+            ]
+
+            asis_db = conn.execute(
+                """
+                SELECT id_estudiante, estado 
+                FROM asistencia 
+                WHERE (REPLACE(grado, '–', '-') = %s OR grado = %s) AND fecha = %s
+                """,
+                (grado_busqueda, grado_seleccionado, fecha_actual)
+            ).fetchall()
+            
+            for a in asis_db:
+                id_est = str(a['id_estudiante'] if hasattr(a, 'keys') else a[0]).strip()
+                estado_val = a['estado'] if hasattr(a, 'keys') else a[1]
+                asistencia_dict[id_est] = estado_val
+
+        # --- CÁLCULO DETALLADO PARA LA TABLA SUPERIOR (Primaria Secciones A) ---
+        resumen_grados = []
+        tot_pri_mat_ninos = 0
+        tot_pri_mat_ninas = 0
+        tot_pri_mat_total = 0
+        tot_pri_asis_ninos = 0
+        tot_pri_asis_ninas = 0
+        tot_pri_asis_total = 0
+
+        for curso in cursos_resumen:
+            curso_busqueda = curso.replace('–', '-').strip()
+
+            mat_db = conn.execute(
+                """
+                SELECT sexo, COUNT(*) 
+                FROM estudiantes 
+                WHERE REPLACE(grado, '–', '-') = %s OR grado = %s 
+                GROUP BY sexo
+                """, 
+                (curso_busqueda, curso)
+            ).fetchall()
+            
+            m_ninos = 0
+            m_ninas = 0
+            for row in mat_db:
+                sexo_val = str(row['sexo'] if hasattr(row, 'keys') else row[0]).strip().lower()
+                count_val = row['count'] if hasattr(row, 'keys') else row[1]
+                if sexo_val in ['masculino', 'm', 'niño', 'nino']:
+                    m_ninos = count_val
+                elif sexo_val in ['femenino', 'f', 'niña', 'nina']:
+                    m_ninas = count_val
+            m_total = m_ninos + m_ninas
+
+            asis_db_curso = conn.execute(
+                """
+                SELECT e.sexo, COUNT(a.id_estudiante) 
+                FROM asistencia a
+                JOIN estudiantes e ON a.id_estudiante = e.id_estudiante
+                WHERE a.fecha = %s 
+                  AND (REPLACE(e.grado, '–', '-') = %s OR e.grado = %s)
+                  AND a.estado IN ('Presente', 'Tarde', 'Excusa')
+                GROUP BY e.sexo
+                """,
+                (fecha_actual, curso_busqueda, curso)
+            ).fetchall()
+
+            a_ninos = 0
+            a_ninas = 0
+            for row in asis_db_curso:
+                sexo_val = str(row['sexo'] if hasattr(row, 'keys') else row[0]).strip().lower()
+                count_val = row['count'] if hasattr(row, 'keys') else row[1]
+                if sexo_val in ['masculino', 'm', 'niño', 'nino']:
+                    a_ninos = count_val
+                elif sexo_val in ['femenino', 'f', 'niña', 'nina']:
+                    a_ninas = count_val
+            a_total = a_ninos + a_ninas
+
+            ausentes_db = conn.execute(
+                """
+                SELECT e.nombres, e.apellidos, a.estado 
+                FROM estudiantes e
+                JOIN asistencia a ON e.id_estudiante = a.id_estudiante
+                WHERE a.fecha = %s 
+                  AND (REPLACE(e.grado, '–', '-') = %s OR e.grado = %s)
+                  AND a.estado IN ('Ausente', 'Excusa')
+                ORDER BY e.nombres ASC
+                """,
+                (fecha_actual, curso_busqueda, curso)
+            ).fetchall()
+
+            nombres_ausentes = []
+            for aus in ausentes_db:
+                nombre = aus['nombres'] if hasattr(aus, 'keys') else aus[0]
+                apellido = aus['apellidos'] if hasattr(aus, 'keys') else aus[1]
+                estado_val = aus['estado'] if hasattr(aus, 'keys') else aus[2]
+                
+                if estado_val == 'Excusa':
+                    nombres_ausentes.append(f"{nombre} {apellido} (Excusa)")
+                else:
+                    nombres_ausentes.append(f"{nombre} {apellido}")
+
+            str_ausentes = ", ".join(nombres_ausentes)
+
+            resumen_grados.append({
+                'grado': curso,
+                'mat_ninos': m_ninos,
+                'mat_ninas': m_ninas,
+                'mat_total': m_total,
+                'asist_ninos': a_ninos,
+                'asist_ninas': a_ninas,
+                'asist_total': a_total,
+                'ausentes': str_ausentes
+            })
+
+            tot_pri_mat_ninos += m_ninos
+            tot_pri_mat_ninas += m_ninas
+            tot_pri_mat_total += m_total
+            tot_pri_asis_ninos += a_ninos
+            tot_pri_asis_ninas += a_ninas
+            tot_pri_asis_total += a_total
+
+        # --- CÁLCULO DETALLADO PARA LA TABLA INFERIOR (Nivel Inicial ML – L2) ---
+        resumen_inicial = []
+        tot_ini_mat_ninos = 0
+        tot_ini_mat_ninas = 0
+        tot_ini_mat_total = 0
+        tot_ini_asis_ninos = 0
+        tot_ini_asis_ninas = 0
+        tot_ini_asis_total = 0
+
+        for curso_ini in cursos_inicial:
+            curso_busqueda = curso_ini.replace('–', '-').replace('Kínder', 'Kinder').replace('Prekínder', 'Prekinder').strip()
+            curso_original = curso_ini.strip()
+
+            mat_ini_db = conn.execute(
+                """
+                SELECT sexo, COUNT(*) 
+                FROM estudiantes 
+                WHERE REPLACE(REPLACE(grado, '–', '-'), 'í', 'i') = %s 
+                   OR REPLACE(grado, '–', '-') = %s 
+                   OR grado = %s 
+                GROUP BY sexo
+                """, 
+                (curso_busqueda.replace('í', 'i'), curso_busqueda, curso_original)
+            ).fetchall()
+            
+            m_ninos_ini = 0
+            m_ninas_ini = 0
+            for row in mat_ini_db:
+                sexo_val = str(row['sexo'] if hasattr(row, 'keys') else row[0]).strip().lower()
+                count_val = row['count'] if hasattr(row, 'keys') else row[1]
+                if sexo_val in ['masculino', 'm', 'niño', 'nino']:
+                    m_ninos_ini = count_val
+                elif sexo_val in ['femenino', 'f', 'niña', 'nina']:
+                    m_ninas_ini = count_val
+            m_total_ini = m_ninos_ini + m_ninas_ini
+
+            asis_ini_db = conn.execute(
+                """
+                SELECT e.sexo, COUNT(a.id_estudiante) 
+                FROM asistencia a
+                JOIN estudiantes e ON a.id_estudiante = e.id_estudiante
+                WHERE a.fecha = %s 
+                  AND (REPLACE(REPLACE(e.grado, '–', '-'), 'í', 'i') = %s 
+                       OR REPLACE(e.grado, '–', '-') = %s 
+                       OR e.grado = %s)
+                  AND a.estado IN ('Presente', 'Tarde', 'Excusa')
+                GROUP BY e.sexo
+                """,
+                (fecha_actual, curso_busqueda.replace('í', 'i'), curso_busqueda, curso_original)
+            ).fetchall()
+
+            a_ninos_ini = 0
+            a_ninas_ini = 0
+            for row in asis_ini_db:
+                sexo_val = str(row['sexo'] if hasattr(row, 'keys') else row[0]).strip().lower()
+                count_val = row['count'] if hasattr(row, 'keys') else row[1]
+                if sexo_val in ['masculino', 'm', 'niño', 'nino']:
+                    a_ninos_ini = count_val
+                elif sexo_val in ['femenino', 'f', 'niña', 'nina']:
+                    a_ninas_ini = count_val
+            a_total_ini = a_ninos_ini + a_ninas_ini
+
+            ausentes_ini_db = conn.execute(
+                """
+                SELECT e.nombres, e.apellidos, a.estado 
+                FROM estudiantes e
+                JOIN asistencia a ON e.id_estudiante = a.id_estudiante
+                WHERE a.fecha = %s 
+                  AND (REPLACE(REPLACE(e.grado, '–', '-'), 'í', 'i') = %s 
+                       OR REPLACE(e.grado, '–', '-') = %s 
+                       OR e.grado = %s)
+                  AND a.estado IN ('Ausente', 'Excusa')
+                ORDER BY e.nombres ASC
+                """,
+                (fecha_actual, curso_busqueda.replace('í', 'i'), curso_busqueda, curso_original)
+            ).fetchall()
+
+            nombres_ausentes_ini = []
+            for aus in ausentes_ini_db:
+                nombre = aus['nombres'] if hasattr(aus, 'keys') else aus[0]
+                apellido = aus['apellidos'] if hasattr(aus, 'keys') else aus[1]
+                estado_val = aus['estado'] if hasattr(aus, 'keys') else aus[2]
+                
+                if estado_val == 'Excusa':
+                    nombres_ausentes_ini.append(f"{nombre} {apellido} (Excusa)")
+                else:
+                    nombres_ausentes_ini.append(f"{nombre} {apellido}")
+
+            str_ausentes_ini = ", ".join(nombres_ausentes_ini)
+
+            resumen_inicial.append({
+                'nombre': curso_ini,
+                'mat_ninos': m_ninos_ini,
+                'mat_ninas': m_ninas_ini,
+                'mat_total': m_total_ini,
+                'asist_ninos': a_ninos_ini,
+                'asist_ninas': a_ninas_ini,
+                'asist_total': a_total_ini,
+                'ausentes_nombres': str_ausentes_ini
+            })
+
+            tot_ini_mat_ninos += m_ninos_ini
+            tot_ini_mat_ninas += m_ninas_ini
+            tot_ini_mat_total += m_total_ini
+            tot_ini_asis_ninos += a_ninos_ini
+            tot_ini_asis_ninas += a_ninas_ini
+            tot_ini_asis_total += a_total_ini
+
+        meta_personal = conn.execute('SELECT * FROM asistencia_personal WHERE fecha = %s', (fecha_actual,)).fetchone()
+        meta = dict(meta_personal) if meta_personal else {}
+
+    finally:
+        conn.close()
+
+    # Totales para la Tabla de Resumen General Global
+    gral_mat_ninos_val = meta.get('gral_mat_ninos') if meta and meta.get('gral_mat_ninos') is not None else (tot_pri_mat_ninos + tot_ini_mat_ninos)
+    gral_mat_ninas_val = meta.get('gral_mat_ninas') if meta and meta.get('gral_mat_ninas') is not None else (tot_pri_mat_ninas + tot_ini_mat_ninas)
+    gral_asis_ninos_val = meta.get('gral_asis_ninos') if meta and meta.get('gral_asis_ninos') is not None else (tot_pri_asis_ninos + tot_ini_asis_ninos)
+    gral_asis_ninas_val = meta.get('gral_asis_ninas') if meta and meta.get('gral_asis_ninas') is not None else (tot_pri_asis_ninas + tot_ini_asis_ninas)
+
+    return render_template('asistencia.html',
+                           lista_grados=lista_grados,
+                           grado_seleccionado=grado_seleccionado,
+                           fecha_actual=fecha_actual,
+                           estudiantes=estudiantes,
+                           asistencia_dict=asistencia_dict,
+                           resumen_grados=resumen_grados,
+                           grados_inicial=resumen_inicial,
+                           # Totales de Nivel Primario
+                           tot_pri_mat_ninos=tot_pri_mat_ninos,
+                           tot_pri_mat_ninas=tot_pri_mat_ninas,
+                           tot_pri_mat_total=tot_pri_mat_total,
+                           tot_pri_asis_ninos=tot_pri_asis_ninos,
+                           tot_pri_asis_ninas=tot_pri_asis_ninas,
+                           tot_pri_asis_total=tot_pri_asis_total,
+                           # Totales de Nivel Inicial
+                           total_inicial_ninos=tot_ini_mat_ninos,
+                           total_inicial_ninas=tot_ini_mat_ninas,
+                           total_inicial_general=tot_ini_mat_total,
+                           total_inicial_asist_ninos=tot_ini_asis_ninos,
+                           total_inicial_asist_ninas=tot_ini_asis_ninas,
+                           total_inicial_asist_general=tot_ini_asis_total,
+                           # Resumen General Global
+                           gral_mat_ninos_val=gral_mat_ninos_val,
+                           gral_mat_ninas_val=gral_mat_ninas_val,
+                           gral_asis_ninos_val=gral_asis_ninos_val,
+                           gral_asis_ninas_val=gral_asis_ninas_val,
+                           meta=meta)
+
+
+@app.route('/guardar_asistencia', methods=['POST'])
+def guardar_asistencia():
+    if 'usuario' not in session and 'user' not in session:
+        return redirect(url_for('login'))
+        
+    grado = request.form.get('grado')
+    fecha = request.form.get('fecha')
+    
+    conn = get_db_connection()
+    try:
+        for key, value in request.form.items():
+            if key.startswith('estado_'):
+                id_estudiante = key.replace('estado_', '').strip()
+                estado = value
+                
+                if not id_estudiante:
+                    continue
+                
+                existing = conn.execute(
+                    "SELECT id FROM asistencia WHERE id_estudiante = %s AND fecha = %s",
+                    (id_estudiante, fecha)
+                ).fetchone()
+                
+                if existing:
+                    conn.execute(
+                        "UPDATE asistencia SET estado = %s, grado = %s WHERE id_estudiante = %s AND fecha = %s",
+                        (estado, grado, id_estudiante, fecha)
+                    )
+                else:
+                    conn.execute(
+                        "INSERT INTO asistencia (id_estudiante, grado, fecha, estado) VALUES (%s, %s, %s, %s)",
+                        (id_estudiante, grado, fecha, estado)
+                    )
+        
+        conn.commit()
+        flash(f'Asistencia de {grado} guardada correctamente.', 'success')
+    except Exception as e:
+        conn.rollback()
+        flash(f'Error al guardar la asistencia: {e}', 'danger')
+    finally:
+        conn.close()
+        
+    # Redirección LIMPIA sin el parámetro 'grado' para liberar la selección de curso
+    return redirect(url_for('asistencia', fecha=fecha))
+
+
+@app.route('/descargar_reporte_ausencias', methods=['POST', 'GET'])
+def descargar_reporte_ausencias():
+    fecha_str = request.form.get('fecha') or request.args.get('fecha') or datetime.now().strftime('%Y-%m-%d')
+    
+    logo_path = Path(current_app.root_path, 'static', 'img', 'logo2.png').as_uri()
+
+    fecha_obj = datetime.now()
+    try:
+        if '-' in fecha_str:
+            p = fecha_str.split('-')
+            if len(p) == 3:
+                fecha_obj = datetime(int(p[0]), int(p[1]), int(p[2]))
+        elif '/' in fecha_str:
+            p = fecha_str.split('/')
+            if len(p) == 3:
+                fecha_obj = datetime(int(p[2]), int(p[1]), int(p[0]))
+    except Exception:
+        pass
+
+    dias_semana = {
+        'Monday': 'Lunes', 'Tuesday': 'Martes', 'Wednesday': 'Miércoles',
+        'Thursday': 'Jueves', 'Friday': 'Viernes', 'Saturday': 'Sábado', 'Sunday': 'Domingo'
+    }
+    dia_semana_esp = dias_semana.get(fecha_obj.strftime('%A'), 'Miércoles')
+
+    conn = get_db_connection()
+    try:
+        meta_personal = conn.execute('SELECT * FROM asistencia_personal WHERE fecha = %s', (fecha_str,)).fetchone()
+        meta = dict(meta_personal) if meta_personal else {}
+
+        if request.method == 'POST':
+            try:
+                adm_np = request.form.get('adm_np', '')
+                adm_ni = request.form.get('adm_ni', '')
+                aux_np = request.form.get('aux_np', '')
+                aux_ni = request.form.get('aux_ni', '')
+                doc_np = request.form.get('doc_np', '')
+                doc_ni = request.form.get('doc_ni', '')
+
+                adm_p = int(request.form.get('adm_presente') or 0)
+                adm_a = request.form.get('adm_ausentes', '')
+                aux_p = int(request.form.get('aux_presente') or 0)
+                aux_a = request.form.get('aux_ausentes', '')
+                doc_p = int(request.form.get('doc_presente') or 0)
+                doc_a = request.form.get('doc_ausentes', '')
+                
+                gral_mat_ninos = int(request.form.get('gral_mat_ninos') or 0)
+                gral_mat_ninas = int(request.form.get('gral_mat_ninas') or 0)
+                gral_asis_ninos = int(request.form.get('gral_asis_ninos') or 0)
+                gral_asis_ninas = int(request.form.get('gral_asis_ninas') or 0)
+
+                if not meta_personal:
+                    conn.execute(
+                        '''INSERT INTO asistencia_personal (
+                            fecha, adm_np, adm_ni, aux_np, aux_ni, doc_np, doc_ni, 
+                            adm_presente, adm_ausentes, aux_presente, aux_ausentes, doc_presente, doc_ausentes,
+                            gral_mat_ninos, gral_mat_ninas, gral_asis_ninos, gral_asis_ninas
+                        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
+                        (fecha_str, adm_np, adm_ni, aux_np, aux_ni, doc_np, doc_ni, adm_p, adm_a, aux_p, aux_a, doc_p, doc_a,
+                         gral_mat_ninos, gral_mat_ninas, gral_asis_ninos, gral_asis_ninas)
+                    )
+                else:
+                    conn.execute(
+                        '''UPDATE asistencia_personal SET 
+                            adm_np=%s, adm_ni=%s, aux_np=%s, aux_ni=%s, doc_np=%s, doc_ni=%s, 
+                            adm_presente=%s, adm_ausentes=%s, aux_presente=%s, aux_ausentes=%s, doc_presente=%s, doc_ausentes=%s,
+                            gral_mat_ninos=%s, gral_mat_ninas=%s, gral_asis_ninos=%s, gral_asis_ninas=%s 
+                           WHERE fecha=%s''',
+                        (adm_np, adm_ni, aux_np, aux_ni, doc_np, doc_ni, adm_p, adm_a, aux_p, aux_a, doc_p, doc_a,
+                         gral_mat_ninos, gral_mat_ninas, gral_asis_ninos, gral_asis_ninas, fecha_str)
+                    )
+                conn.commit()
+                
+                if request.form.get('action') == 'guardar_solo':
+                    return "OK", 200
+            except Exception as e:
+                conn.rollback()
+                print(f"Error al guardar personal/resumen: {e}")
+
+        cursos_resumen = ['1ro A', '2do A', '3ro A', '4to A', '5to A', '6to A']
+        grados_primaria = []
+        
+        tot_mat_ninos = 0
+        tot_mat_ninas = 0
+        tot_mat_total = 0
+        tot_asis_ninos = 0
+        tot_asis_ninas = 0
+        tot_asis_total = 0
+
+        for curso in cursos_resumen:
+            curso_busqueda = curso.replace('–', '-').strip()
+
+            mat_db = conn.execute(
+                """
+                SELECT sexo, COUNT(*) 
+                FROM estudiantes 
+                WHERE REPLACE(grado, '–', '-') = %s OR grado = %s 
+                GROUP BY sexo
+                """, 
+                (curso_busqueda, curso)
+            ).fetchall()
+            
+            m_ninos = 0
+            m_ninas = 0
+            for row in mat_db:
+                sexo_val = str(row['sexo'] if hasattr(row, 'keys') else row[0]).strip().lower()
+                count_val = row['count'] if hasattr(row, 'keys') else row[1]
+                if sexo_val in ['masculino', 'm', 'niño', 'nino']:
+                    m_ninos = count_val
+                elif sexo_val in ['femenino', 'f', 'niña', 'nina']:
+                    m_ninas = count_val
+            m_total = m_ninos + m_ninas
+
+            asis_db_curso = conn.execute(
+                """
+                SELECT e.sexo, COUNT(a.id_estudiante) 
+                FROM asistencia a
+                JOIN estudiantes e ON a.id_estudiante = e.id_estudiante
+                WHERE a.fecha = %s 
+                  AND (REPLACE(e.grado, '–', '-') = %s OR e.grado = %s)
+                  AND a.estado IN ('Presente', 'Tarde', 'Excusa')
+                GROUP BY e.sexo
+                """,
+                (fecha_str, curso_busqueda, curso)
+            ).fetchall()
+
+            a_ninos = 0
+            a_ninas = 0
+            for row in asis_db_curso:
+                sexo_val = str(row['sexo'] if hasattr(row, 'keys') else row[0]).strip().lower()
+                count_val = row['count'] if hasattr(row, 'keys') else row[1]
+                if sexo_val in ['masculino', 'm', 'niño', 'nino']:
+                    a_ninos = count_val
+                elif sexo_val in ['femenino', 'f', 'niña', 'nina']:
+                    a_ninas = count_val
+            a_total = a_ninos + a_ninas
+
+            ausentes_db = conn.execute(
+                """
+                SELECT e.nombres, e.apellidos, a.estado 
+                FROM estudiantes e
+                JOIN asistencia a ON e.id_estudiante = a.id_estudiante
+                WHERE a.fecha = %s 
+                  AND (REPLACE(e.grado, '–', '-') = %s OR e.grado = %s)
+                  AND a.estado IN ('Ausente', 'Excusa')
+                ORDER BY e.nombres ASC
+                """,
+                (fecha_str, curso_busqueda, curso)
+            ).fetchall()
+
+            nombres_ausentes = []
+            for aus in ausentes_db:
+                nombre = aus['nombres'] if hasattr(aus, 'keys') else aus[0]
+                apellido = aus['apellidos'] if hasattr(aus, 'keys') else aus[1]
+                estado_val = aus['estado'] if hasattr(aus, 'keys') else aus[2]
+                
+                if estado_val == 'Excusa':
+                    nombres_ausentes.append(f"{nombre} {apellido} (Excusa)")
+                else:
+                    nombres_ausentes.append(f"{nombre} {apellido}")
+
+            str_ausentes = ", ".join(nombres_ausentes)
+
+            nombre_corto = curso.split()[0] + "."
+
+            grados_primaria.append({
+                'nombre': nombre_corto,
+                'mat_ninos': m_ninos,
+                'mat_ninas_f': m_ninas,
+                'mat_total': m_total,
+                'asis_ninos': a_ninos,
+                'asis_ninas': a_ninas,
+                'asis_total': a_total,
+                'ausentes': str_ausentes
+            })
+            
+            tot_mat_ninos += m_ninos
+            tot_mat_ninas += m_ninas
+            tot_mat_total += m_total
+            tot_asis_ninos += a_ninos
+            tot_asis_ninas += a_ninas
+            tot_asis_total += a_total
+
+        tot_mat_ninos_ini = meta.get('gral_mat_ninos', 0)
+        tot_mat_ninas_ini = meta.get('gral_mat_ninas', 0)
+        tot_asist_ninos_ini = meta.get('gral_asis_ninos', 0)
+        tot_asist_ninas_ini = meta.get('gral_asis_ninas', 0)
+
+        tot_mat_total_ini = tot_mat_ninos_ini + tot_mat_ninas_ini
+        tot_asist_total_ini = tot_asist_ninos_ini + tot_asist_ninas_ini
+
+    finally:
+        conn.close()
+
+    rendered_html = render_template('control_asistencia_pdf.html',
+        logo_path=logo_path,
+        anio_escolar="2026-2027",
+        fecha_formateada=fecha_str,
+        dia_semana=dia_semana_esp, 
+        grados_primaria=grados_primaria,
+        total_primaria_mat_ninos=tot_mat_ninos,
+        total_primaria_mat_ninas_f=tot_mat_ninas,
+        total_primaria_mat_total=tot_mat_total,
+        total_primaria_asis_ninos=tot_asis_ninos,
+        total_primaria_asis_ninas=tot_asis_ninas,
+        total_primaria_asis_total=tot_asis_total,
+        inicial_mat_ninos=tot_mat_ninos_ini,
+        inicial_mat_ninas_f=tot_mat_ninas_ini,
+        inicial_mat_total=tot_mat_total_ini,
+        inicial_asis_ninos=tot_asist_ninos_ini,
+        inicial_asis_ninas_f=tot_asist_ninas_ini,
+        inicial_asis_total=tot_asist_total_ini,
+        personal_adm_contratado=10,
+        personal_doc_contratado=9,
+        total_personal_presente=(meta.get('adm_presente') or 0) + (meta.get('aux_presente') or 0) + (meta.get('doc_presente') or 0),
+        meta=meta
+    )
+
+    pdf_bytes = HTML(string=rendered_html).write_pdf()
+    
+    response = make_response(pdf_bytes)
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = f'inline; filename=Control_Asistencia_{fecha_str}.pdf'
+    return response
+
+@app.route('/descargar_reporte_rango', methods=['POST'])
+def descargar_reporte_rango():
+    fecha_desde = request.form.get('fecha_desde')
+    fecha_hasta = request.form.get('fecha_hasta')
+    curso_filtro = request.form.get('curso_filtro')
+    
+    logo_path = Path(current_app.root_path, 'static', 'img', 'logo2.png').as_uri()
+    curso_busqueda = curso_filtro.replace('–', '-').strip()
+
+    conn = get_db_connection()
+    try:
+        # 1. Obtener la matrícula fija del curso (niños y niñas totales del curso)
+        mat_db = conn.execute(
+            """
+            SELECT sexo, COUNT(*) 
+            FROM estudiantes 
+            WHERE REPLACE(grado, '–', '-') = %s OR grado = %s 
+            GROUP BY sexo
+            """, 
+            (curso_busqueda, curso_filtro)
+        ).fetchall()
+        
+        m_ninos = 0
+        m_ninas = 0
+        for row in mat_db:
+            sexo_val = str(row['sexo'] if hasattr(row, 'keys') else row[0]).strip().lower()
+            count_val = row['count'] if hasattr(row, 'keys') else row[1]
+            if sexo_val in ['masculino', 'm', 'niño', 'nino']:
+                m_ninos = count_val
+            elif sexo_val in ['femenino', 'f', 'niña', 'nina']:
+                m_ninas = count_val
+        m_total = m_ninos + m_ninas
+
+        # 2. Obtener todas las fechas únicas que tienen asistencia registrada en ese rango para este curso
+        fechas_db = conn.execute(
+            """
+            SELECT DISTINCT a.fecha 
+            FROM asistencia a
+            JOIN estudiantes e ON a.id_estudiante = e.id_estudiante
+            WHERE a.fecha BETWEEN %s AND %s 
+              AND (REPLACE(e.grado, '–', '-') = %s OR e.grado = %s)
+            ORDER BY a.fecha ASC
+            """,
+            (fecha_desde, fecha_hasta, curso_busqueda, curso_filtro)
+        ).fetchall()
+
+        grados_filtrados = []
+        tot_asis_ninos_gral = 0
+        tot_asis_ninas_gral = 0
+
+        # 3. Recorrer día por día para armar una fila por cada fecha
+        for f_row in fechas_db:
+            f_str = f_row['fecha'] if hasattr(f_row, 'keys') else f_row[0]
+
+            # Asistencia de este día específico por sexo
+            asis_dia = conn.execute(
+                """
+                SELECT e.sexo, COUNT(a.id_estudiante) 
+                FROM asistencia a
+                JOIN estudiantes e ON a.id_estudiante = e.id_estudiante
+                WHERE a.fecha = %s 
+                  AND (REPLACE(e.grado, '–', '-') = %s OR e.grado = %s)
+                  AND a.estado IN ('Presente', 'Tarde', 'Excusa')
+                GROUP BY e.sexo
+                """,
+                (f_str, curso_busqueda, curso_filtro)
+            ).fetchall()
+
+            a_ninos = 0
+            a_ninas = 0
+            for row in asis_dia:
+                sexo_val = str(row['sexo'] if hasattr(row, 'keys') else row[0]).strip().lower()
+                count_val = row['count'] if hasattr(row, 'keys') else row[1]
+                if sexo_val in ['masculino', 'm', 'niño', 'nino']:
+                    a_ninos = count_val
+                elif sexo_val in ['femenino', 'f', 'niña', 'nina']:
+                    a_ninas = count_val
+            a_total = a_ninos + a_ninas
+
+            # Ausentes de este día específico
+            ausentes_dia = conn.execute(
+                """
+                SELECT e.nombres, e.apellidos, a.estado 
+                FROM estudiantes e
+                JOIN asistencia a ON e.id_estudiante = a.id_estudiante
+                WHERE a.fecha = %s 
+                  AND (REPLACE(e.grado, '–', '-') = %s OR e.grado = %s)
+                  AND a.estado IN ('Ausente', 'Excusa')
+                ORDER BY e.nombres ASC
+                """,
+                (f_str, curso_busqueda, curso_filtro)
+            ).fetchall()
+
+            nombres_ausentes = []
+            for aus in ausentes_dia:
+                nombre = aus['nombres'] if hasattr(aus, 'keys') else aus[0]
+                apellido = aus['apellidos'] if hasattr(aus, 'keys') else aus[1]
+                estado_val = aus['estado'] if hasattr(aus, 'keys') else aus[2]
+                if estado_val == 'Excusa':
+                    nombres_ausentes.append(f"{nombre} {apellido} (Excusa)")
+                else:
+                    nombres_ausentes.append(f"{nombre} {apellido}")
+
+            # Formatear la fecha para mostrar el día al lado (ej: "5to A (2026-09-09)")
+            grados_filtrados.append({
+                'nombre': f"{curso_filtro} — {f_str}",
+                'mat_ninos': m_ninos,
+                'mat_ninas_f': m_ninas,
+                'mat_total': m_total,
+                'asis_ninos': a_ninos,
+                'asis_ninas': a_ninas,
+                'asis_total': a_total,
+                'ausentes': ", ".join(nombres_ausentes)
+            })
+
+            tot_asis_ninos_gral += a_ninos
+            tot_asis_ninas_gral += a_ninas
+
+    finally:
+        conn.close()
+
+    rendered_html = render_template('control_asistencia_pdf.html',
+        logo_path=logo_path,
+        anio_escolar="2026-2027",
+        fecha_formateada=f"Desde el {fecha_desde} hasta el {fecha_hasta}",
+        grados_primaria=grados_filtrados,
+        total_primaria_mat_ninos=m_ninos,
+        total_primaria_mat_ninas_f=m_ninas,
+        total_primaria_mat_total=m_total,
+        total_primaria_asis_ninos=tot_asis_ninos_gral,
+        total_primaria_asis_ninas=tot_asis_ninas_gral,
+        total_primaria_asis_total=tot_asis_ninos_gral + tot_asis_ninas_gral,
+        meta={}
+    )
+
+    pdf_bytes = HTML(string=rendered_html).write_pdf()
+    
+    response = make_response(pdf_bytes)
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = f'inline; filename=Reporte_Asistencia_Dias_{curso_filtro}.pdf'
+    return response
+
+@app.route('/generar_pdf/<path:id_estudiante>')
+def generar_pdf(id_estudiante):
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+        
+    conexion = get_db_connection()
+    estudiante = None
+    autorizados = []
+
+    try:
+        conexion.execute("SELECT * FROM inscripciones")
+        filas = conexion.fetchall()
+        
+        for fila in filas:
+            valores = list(fila.values()) if isinstance(fila, dict) else list(fila)
+            if len(valores) >= 4 and str(valores[3]).strip() == str(id_estudiante).strip():
+                estudiante = dict(fila) if not isinstance(fila, dict) else fila
+                break
+
+        if estudiante:
+            valores_est = list(estudiante.values()) if isinstance(estudiante, dict) else list(estudiante)
+            id_real_estudiante = valores_est[3]
+            
+            conexion.execute("SELECT * FROM autorizados WHERE id_estudiante = ?", (str(id_real_estudiante),))
+            autorizados = conexion.fetchall()
+
+    except Exception as e:
+        print("--- ERROR CRÍTICO EN PDF:", e)
+        estudiante = None
+    finally:
+        conexion.close()
+    
+    if not estudiante:
+        return f"No se encontró ninguna inscripción para el ID: {id_estudiante}", 404
+
+    # Función auxiliar para limpiar valores NaN, None o cadenas vacías extrañas
+    def limpiar_nan(val):
+        if val is None:
+            return ""
+        val_str = str(val).strip()
+        if val_str.lower() in ['nan', 'none', 'nat']:
+            return ""
+        return val_str
+
+    # Convertimos a diccionario y limpiamos todos los campos del estudiante
+    if not isinstance(estudiante, dict):
+        estudiante = dict(estudiante)
+    
+    estudiante = {k: limpiar_nan(v) for k, v in estudiante.items()}
+
+    # 1. Procesar Logo en Base64 seguro para xhtml2pdf
+    logo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'img', 'logo2.png')
+    logo_src = ""
+    if os.path.exists(logo_path):
+        with open(logo_path, "rb") as image_file:
+            logo_base64 = base64.b64encode(image_file.read()).decode('utf-8')
+        logo_src = f"data:image/png;base64,{logo_base64}"
+        
+    # 2. Procesar la foto del estudiante desde la columna correcta: foto_estudiante_cedula
+    foto_valor = estudiante.get('foto_estudiante_cedula', '')
+    foto_base64_src = ""
+    
+    if foto_valor:
+        foto_str = str(foto_valor).strip()
+        
+        # Caso A: Viene directamente en formato Base64 (empezando con /9j/ o data:image)
+        if foto_str.startswith('/9j/') or foto_str.startswith('data:image'):
+            mime = 'image/jpeg' if foto_str.startswith('/9j/') else 'image/png'
+            foto_base64_src = foto_str if foto_str.startswith('data:') else f"data:{mime};base64,{foto_str}"
+        
+        # Caso B: Viene como ruta tipo 'uploads/nombre.jpg' o contiene extensión/pleca de archivo
+        elif '/' in foto_str or '.' in foto_str:
+            nombre_archivo = foto_str.replace('uploads/', '').replace('static/', '').replace('\\', '/').split('/')[-1]
+            disk_foto_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'uploads', nombre_archivo)
+            
+            if os.path.exists(disk_foto_path):
+                with open(disk_foto_path, "rb") as foto_file:
+                    foto_encoded = base64.b64encode(foto_file.read()).decode('utf-8')
+                    ext = nombre_archivo.split('.')[-1].lower()
+                    mime_type = 'image/png' if ext == 'png' else 'image/jpeg'
+                    foto_base64_src = f"data:{mime_type};base64,{foto_encoded}"
+    
+    # Inyectamos la foto procesada al diccionario del estudiante
+    estudiante['foto_base64'] = foto_base64_src
+    
+    # Renderizar la plantilla HTML para el PDF
+    html = render_template('pdf_ficha.html', estudiante=estudiante, autorizados=autorizados, logo_src=logo_src)
+    
+    response = make_response()
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = f'inline; filename=ficha_inscripcion_{id_estudiante}.pdf'
+    
+    pisa_status = pisa.CreatePDF(html, dest=response.stream)
+    
+    if pisa_status.err:
+        return 'Hubo un error al generar el PDF', 500
+        
+    return response
+
+
+@app.route('/menu_notas')
+def menu_notas():
+    return render_template('menu_notas.html')
+
+import json
+from io import BytesIO
+from xhtml2pdf import pisa
+from flask import render_template, request, redirect, url_for, session, flash, make_response
+
+# --- RUTA PRINCIPAL DE NOTAS 1 (GET Y POST) ---
+@app.route('/notas1', methods=['GET', 'POST'])
+def notas1():
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+
+    rol_usuario = str(session.get('rol', '')).strip().lower()
+    curso_maestro = str(session.get('curso_asignado', '')).strip().lower()
+
+    # Si es maestro de 4to a 6to (y no es admin/oficina), bloquear acceso a notas1
+    if rol_usuario not in ['admin', 'oficina']:
+        if any(g in curso_maestro for g in ['4to', '5to', '6to', 'cuarto', 'quinto', 'sexto']):
+            flash('⚠️ No tienes acceso a las calificaciones de 1ro a 3ro. Tu curso asignado es de 4to a 6to.', 'danger')
+            return redirect(url_for('menu_notas'))
+
+    nombre_docente_actual = session.get('nombre_completo') or session.get('usuario', 'Docente Titular')
+
+    # Criterio de ordenamiento estricto alfabético por nombre
+    criterio_sql = [Estudiante.nombres.asc()]
+
+    # Filtrar estudiantes según el rol (Oficina ve 1ro al 3ro, el maestro ve su curso ordenados alfabéticamente)
+    if rol_usuario == 'admin' or rol_usuario == 'oficina':
+        lista_estudiantes = Estudiante.query.filter(
+            db.or_(
+                Estudiante.grado.ilike('%1ro%'),
+                Estudiante.grado.ilike('%2do%'),
+                Estudiante.grado.ilike('%3ro%'),
+                Estudiante.grado.ilike('%primer%'),
+                Estudiante.grado.ilike('%segundo%'),
+                Estudiante.grado.ilike('%tercer%')
+            )
+        ).order_by(*criterio_sql).all()
+        
+        if not lista_estudiantes:
+            lista_estudiantes = Estudiante.query.order_by(*criterio_sql).all()
+            
+        grado_activo = "Nivel Primario (1ro a 3ro - Oficina)"
+    else:
+        lista_estudiantes = Estudiante.query.filter(
+            Estudiante.grado.ilike(f"%{curso_maestro}%")
+        ).order_by(*criterio_sql).all()
+        grado_activo = f"Grado: {curso_maestro}"
+
+    id_estudiante = request.args.get('id_estudiante') or request.form.get('id_estudiante')
+    estudiante = None
+    notas = {}
+    docente_guardado = nombre_docente_actual
+
+    # 1. PROCESAR GUARDADO (POST)
+    if request.method == 'POST' and id_estudiante:
+        form_data = dict(request.form)
+        if 'id_estudiante' in form_data:
+            form_data.pop('id_estudiante')
+
+        form_data['_docente_registro'] = nombre_docente_actual
+
+        registro_notas = Notas1.query.filter_by(id_estudiante=str(id_estudiante)).first()
+
+        if registro_notas:
+            registro_notas.datos_formulario = json.dumps(form_data)
+        else:
+            nuevo_registro = Notas1(
+                id_estudiante=str(id_estudiante),
+                datos_formulario=json.dumps(form_data)
+            )
+            db.session.add(nuevo_registro)
+
+        db.session.commit()
+        flash('¡Informe guardado con éxito!', 'success')
+        
+        return redirect(url_for('notas1', id_estudiante=id_estudiante))
+
+    # 2. CARGAR DATOS DEL ESTUDIANTE SELECCIONADO (GET)
+    if not id_estudiante and lista_estudiantes:
+        estudiante = lista_estudiantes[0] # Selecciona el primero alfabéticamente por defecto
+        id_estudiante = estudiante.id_estudiante
+    elif id_estudiante:
+        estudiante = Estudiante.query.filter_by(id_estudiante=str(id_estudiante)).first()
+
+    # Cargar notas guardadas si existen
+    if id_estudiante:
+        registro_notas = Notas1.query.filter_by(id_estudiante=str(id_estudiante)).first()
+        if registro_notas and registro_notas.datos_formulario:
+            try:
+                notas = json.loads(registro_notas.datos_formulario)
+                docente_guardado = notas.get('_docente_registro', nombre_docente_actual)
+            except:
+                notas = {}
+
+    return render_template('notas1.html', 
+                           lista_estudiantes=lista_estudiantes, 
+                           estudiante=estudiante, 
+                           notas=notas,
+                           grado_activo=grado_activo,
+                           docente_nombre=docente_guardado,
+                           rol_usuario=rol_usuario)
+
+@app.route('/notas/guardadas')
+def ver_notas_guardadas():
+    if 'usuario' not in session and 'user_id' not in session:
+        flash("Debes iniciar sesión para acceder.", "warning")
+        return redirect(url_for('login'))
+
+    try:
+        conn = get_db_connection()
+        is_postgres = DATABASE_URL is not None
+        
+        registros_notas = []
+        estudiantes_lista = []
+
+        if is_postgres:
+            cur = conn.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute('SELECT * FROM notas1')
+            registros_notas = cur.fetchall()
+            
+            cur.execute('SELECT * FROM estudiantes')
+            estudiantes_lista = cur.fetchall()
+            cur.close()
+        else:
+            conn.row_factory = sqlite3.Row
+            cur = conn.cursor()
+            cur.execute('SELECT * FROM notas1')
+            registros_notas = cur.fetchall()
+            
+            cur.execute('SELECT * FROM estudiantes')
+            estudiantes_lista = cur.fetchall()
+            cur.close()
+            
+        conn.close()
+
+        estudiantes_map = {str(est['id_estudiante'] if 'id_estudiante' in est else est.get('id')): est for est in estudiantes_lista}
+
+        informes_guardados = []
+        for reg in registros_notas:
+            reg_dict = dict(reg)
+            id_est = str(reg_dict.get('id_estudiante', ''))
+            est_info = estudiantes_map.get(id_est, {})
+            
+            nombre_comp = f"{est_info.get('nombres', '')} {est_info.get('apellidos', '')}".strip()
+            
+            informes_guardados.append({
+                'id': reg_dict.get('id'),
+                'id_estudiante': id_est,
+                'nombre_estudiante': nombre_comp if nombre_comp else f"Estudiante ID: {id_est}",
+                'grado': est_info.get('grado', '1ro a 3ro Primaria'),
+                'seccion': est_info.get('seccion', 'A'),
+                'fecha_actualizacion': str(reg_dict.get('created_at', ''))[:10] if reg_dict.get('created_at') else 'Guardado'
+            })
+
+        return render_template(
+            'ver_notas_guardadas.html',
+            informes=informes_guardados,
+            total_informes=len(informes_guardados)
+        )
+
+    except Exception as e:
+        flash(f"Error al cargar los informes guardados: {str(e)}", "danger")
+        return redirect(url_for('menu'))
+
+import os
+import io
+import json
+from flask import render_template, make_response, request, current_app
+from xhtml2pdf import pisa
+from models import db, Estudiante, Notas1
+
+@app.route('/pdf/notas1')
+def generar_pdf_notas1():
+    try:
+        estudiante_id = request.args.get('id_estudiante')
+        if not estudiante_id:
+            return "No se ha proporcionado el ID del estudiante", 400
+
+        # 1. Buscar al estudiante
+        estudiante_obj = Estudiante.query.filter_by(id_estudiante=str(estudiante_id)).first()
+        
+        if not estudiante_obj:
+            try:
+                estudiante_obj = Estudiante.query.filter_by(id=int(estudiante_id)).first()
+            except ValueError:
+                pass
+
+        if not estudiante_obj:
+            return "Estudiante no encontrado en la base de datos", 404
+
+        estudiante = {
+            'id': estudiante_obj.id_estudiante or estudiante_obj.id,
+            'nombre': estudiante_obj.nombres,
+            'apellido': estudiante_obj.apellidos,
+            'grado': estudiante_obj.grado
+        }
+
+        # 2. Consultar el registro de notas en la tabla 'notas1'
+        notas_registro = Notas1.query.filter_by(id_estudiante=str(estudiante_id)).first()
+        
+        notas_data = {}
+        if notas_registro and notas_registro.datos_formulario:
+            datos_brutos = notas_registro.datos_formulario
+            if isinstance(datos_brutos, str):
+                notas_data = json.loads(datos_brutos)
+            elif isinstance(datos_brutos, dict):
+                notas_data = datos_brutos
+
+        # 3. Definir la ruta física absoluta del logo para xhtml2pdf
+        logo_path = os.path.join(current_app.root_path, 'static', 'img', 'logo2.png')
+
+        # 4. Renderizar la plantilla HTML pasando el logo_path y los datos
+        html = render_template('pdf_notas1.html', estudiante=estudiante, notas=notas_data, logo_path=logo_path)
+
+        # 5. Generar el PDF utilizando xhtml2pdf en memoria
+        pdf_buffer = io.BytesIO()
+        pisa_status = pisa.CreatePDF(io.BytesIO(html.encode('utf-8')), dest=pdf_buffer)
+
+        if pisa_status.err:
+            return f"Error al generar el PDF: {pisa_status.err}", 500
+
+        pdf_buffer.seek(0)
+
+        # 6. Enviar el archivo PDF resultante al navegador
+        nombre_archivo = f"Informe_Aprendizaje_{estudiante['nombre']}.pdf"
+        response = make_response(pdf_buffer.read())
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = f"inline; filename={nombre_archivo}"
+
+        return response
+
+    except Exception as e:
+        print(f"Error en la ruta de notas1: {e}")
+        return f"Ocurrió un error: {e}", 500
+
+@app.route('/notas2', methods=['GET', 'POST'])
+def notas2():
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+
+    rol_usuario = str(session.get('rol', '')).strip().lower()
+    curso_maestro = str(session.get('curso_asignado', '')).strip().lower()
+
+    # 🛑 CAMBIO AQUÍ: Si el maestro es de 1ro a 3ro (y no es admin u oficina), se bloquea y se manda al menú con un mensaje
+    if rol_usuario not in ['admin', 'oficina']:
+        if any(g in curso_maestro for g in ['1ro', '2do', '3ro', 'primer', 'segundo', 'tercer']):
+            flash('⚠️ No tienes acceso a las calificaciones de 4to a 6to. Tu curso asignado es de 1ro a 3ro.', 'danger')
+            return redirect(url_for('menu_notas'))
+
+    nombre_docente_actual = session.get('nombre_completo') or session.get('usuario', 'Docente Titular')
+
+    # Recibir el tipo de orden ('nombre', 'orden' o 'grado')
+    tipo_orden = request.args.get('orden', 'nombre')
+
+    # Criterio de ordenamiento SQL dinámico
+    if tipo_orden == 'grado' and hasattr(Estudiante, 'grado'):
+        criterio_sql = [Estudiante.grado.asc(), Estudiante.nombres.asc()]
+    elif tipo_orden == 'orden' and hasattr(Estudiante, 'numero_orden'):
+        criterio_sql = [Estudiante.numero_orden.asc()]
+    else:
+        criterio_sql = [Estudiante.nombres.asc()]
+
+    # Filtrar estudiantes: Oficina ve 4to a 6to de forma flexible, el maestro ve su curso correspondiente
+    if rol_usuario == 'admin' or rol_usuario == 'oficina':
+        lista_estudiantes = Estudiante.query.filter(
+            db.or_(
+                Estudiante.grado.ilike('%4to%'),
+                Estudiante.grado.ilike('%5to%'),
+                Estudiante.grado.ilike('%6to%'),
+                Estudiante.grado.ilike('%cuarto%'),
+                Estudiante.grado.ilike('%quinto%'),
+                Estudiante.grado.ilike('%sexto%')
+            )
+        ).order_by(*criterio_sql).all()
+        
+        if not lista_estudiantes:
+            lista_estudiantes = Estudiante.query.order_by(*criterio_sql).all()
+            
+        grado_activo = "Nivel Primario (4to a 6to - Oficina)"
+    else:
+        lista_estudiantes = Estudiante.query.filter(
+            Estudiante.grado.ilike(f"%{curso_maestro}%")
+        ).order_by(*criterio_sql).all()
+        grado_activo = f"Grado: {curso_maestro}"
+
+    id_estudiante = request.args.get('id_estudiante') or request.form.get('id_estudiante')
+    estudiante = None
+    notas = {}
+    docente_guardado = nombre_docente_actual
+
+    # 1. PROCESAR GUARDADO (POST)
+    if request.method == 'POST' and id_estudiante:
+        form_data = dict(request.form)
+        if 'id_estudiante' in form_data:
+            form_data.pop('id_estudiante')
+
+        form_data['_docente_registro'] = nombre_docente_actual
+
+        registro_notas = Notas2.query.filter_by(estudiante_id=str(id_estudiante)).first()
+
+        if registro_notas:
+            registro_notas.datos_formulario = json.dumps(form_data)
+        else:
+            nuevo_registro = Notas2(
+                estudiante_id=str(id_estudiante),
+                datos_formulario=json.dumps(form_data)
+            )
+            db.session.add(nuevo_registro)
+
+        db.session.commit()
+        flash('¡Informe guardado con éxito!', 'success')
+        
+        return redirect(url_for('notas2', id_estudiante=id_estudiante, orden=tipo_orden))
+
+    # 2. CARGAR DATOS DEL ESTUDIANTE SELECCIONADO (GET)
+    if id_estudiante:
+        estudiante = Estudiante.query.get(id_estudiante)
+        registro_notas = Notas2.query.filter_by(estudiante_id=str(id_estudiante)).first()
+        if registro_notas and registro_notas.datos_formulario:
+            try:
+                notas = json.loads(registro_notas.datos_formulario)
+                docente_guardado = notas.get('_docente_registro', nombre_docente_actual)
+            except:
+                notas = {}
+
+    return render_template('notas2.html', 
+                           lista_estudiantes=lista_estudiantes, 
+                           estudiante=estudiante, 
+                           notas=notas,
+                           tipo_orden=tipo_orden,
+                           grado_activo=grado_activo,
+                           docente_nombre=docente_guardado)
+
+import os
+import base64
+from flask import session, redirect, url_for, render_template, make_response, request
+from weasyprint import HTML
+
+@app.route('/generar_pdf_notas/<path:id_estudiante>')
+def generar_pdf_notas(id_estudiante):
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+        
+    conexion = get_db_connection()
+    estudiante = None
+    lista_estudiantes = []
+    notas = {}
+
+    try:
+        # Obtener lista general de estudiantes (por si la plantilla la necesita para el selector o conteo)
+        cursor_est = conexion.execute("SELECT * FROM inscripciones")
+        filas = cursor_est.fetchall()
+        
+        for fila in filas:
+            est_dict = dict(fila) if not isinstance(fila, dict) else fila
+            lista_estudiantes.append(est_dict)
+            # Buscar el estudiante actual por su identificador único (ajusta el índice o campo según tu BD)
+            valores = list(fila.values()) if isinstance(fila, dict) else list(fila)
+            if len(valores) >= 4 and str(valores[3]).strip() == str(id_estudiante).strip():
+                estudiante = est_dict
+
+        if estudiante:
+            # Obtener el ID real o cédula para buscar sus calificaciones guardadas
+            valores_est = list(estudiante.values()) if isinstance(estudiante, dict) else list(estudiante)
+            id_real_estudiante = valores_est[3]
+            
+            # Suponiendo que tienes una tabla de notas o calificaciones en tu base de datos
+            cursor_notas = conexion.execute("SELECT * FROM notas WHERE id_estudiante = ?", (str(id_real_estudiante),))
+            resultado_notas = cursor_notas.fetchone()
+            
+            if resultado_notas:
+                notas = dict(resultado_notas) if not isinstance(resultado_notas, dict) else resultado_notas
+
+    except Exception as e:
+        print("--- ERROR CRÍTICO AL OBTENER DATOS DE NOTAS:", e)
+        estudiante = None
+    finally:
+        conexion.close()
+    
+    if not estudiante:
+        return f"No se encontró el estudiante con ID: {id_estudiante}", 404
+
+    # Procesar Logo en Base64 (mismo procedimiento que usabas)
+    logo_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'img', 'logo2.png')
+    logo_src = ""
+    if os.path.exists(logo_path):
+        with open(logo_path, "rb") as image_file:
+            logo_base64 = base64.b64encode(image_file.read()).decode('utf-8')
+        logo_src = f"data:image/png;base64,{logo_base64}"
+        
+    docente_nombre = session.get('nombre_usuario', 'Docente Titular')
+
+    # Renderizar el archivo HTML de notas que estructuramos para las 2 páginas
+    html_content = render_template(
+        'notas2.html', 
+        estudiante=estudiante, 
+        lista_estudiantes=lista_estudiantes, 
+        notas=notas, 
+        docente_nombre=docente_nombre,
+        logo_src=logo_src
+    )
+    
+    try:
+        # Generar el PDF horizontal (landscape) respetando los estilos de página definidos en el HTML
+        pdf_bytes = HTML(string=html_content, base_url=request.url_root).write_pdf()
+        
+        response = make_response(pdf_bytes)
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = f'inline; filename=informe_aprendizaje_{id_estudiante}.pdf'
+        return response
+        
+    except Exception as e:
+        print("--- ERROR AL GENERAR PDF DE NOTAS CON WEASYPRINT:", e)
+        return 'Hubo un error al generar el PDF de notas', 500
+
+# 1. RUTA PARA EL MENÚ DE OPCIONES DE PLANIFICACIÓN
+@app.route('/menu_planificacion')
+def menu_planificacion():
+    if 'usuario' not in session and 'nombre_completo' not in session:
+        return redirect(url_for('login'))
+    
+    return render_template('menu_planificacion.html')
+
+@app.route('/planificacion')
+def planificacion():
+    if 'usuario' not in session and 'nombre_completo' not in session:
+        return redirect(url_for('login'))
+    
+    nombre_usuario = session.get('nombre_completo', '')
+    rol_actual = session.get('rol', '')
+    curso_asignado = session.get('curso_asignado', '')
+    
+    # Obtenemos el área especializada desde la sesión (o si el curso asignado es una materia)
+    area_esp = session.get('area_especializada', '')
+    if not area_esp and curso_asignado in ['Informática', 'Educación Física', 'Música', 'Inglés', 'Lenguas Extranjeras']:
+        area_esp = curso_asignado
+    
+    # Si es profesor de área, limpiamos el curso asignado para que obligatoriamente aparezca el selector de grados
+    if rol_actual == 'área_maestro':
+        curso_asignado = ''
+        
+    usuario_info = {
+        'nombre_completo': nombre_usuario,
+        'curso_asignado': curso_asignado,
+        'rol': rol_actual,
+        'area_especializada': area_esp
+    }
+    
+    return render_template(
+        'planificacion.html', 
+        usuario=usuario_info
+    )
+
+@app.route('/mis_planificaciones')
+def mis_planificaciones():
+    if 'usuario' not in session and 'nombre_completo' not in session:
+        return redirect(url_for('login'))
+
+    usuario_actual = session.get('nombre_completo')
+    rol_actual = session.get('rol')
+
+    try:
+        conn = psycopg2.connect(DATABASE_URL)
+        cursor = PostgresCursorWrapper(conn)
+
+        # Si el usuario es admin, oficina, administración o director, ve todas las planificaciones
+        # Si es docente o maestro de área, ve únicamente las creadas por él
+        if rol_actual in ['admin', 'oficina', 'administracion', 'director']:
+            query = 'SELECT * FROM planificaciones ORDER BY id DESC'
+            cursor.execute(query)
+        else:
+            query = 'SELECT * FROM planificaciones WHERE docente = ? ORDER BY id DESC'
+            cursor.execute(query, (usuario_actual,))
+
+        planificaciones = cursor.fetchall()
+        cursor.close()
+    except Exception as e:
+        print("❌ Error obteniendo planificaciones:", e)
+        planificaciones = []
+
+    return render_template('mis_planificaciones.html', planificaciones=planificaciones)
+
+@app.route('/guardar_planificacion', methods=['POST'])
+def guardar_planificacion():
+    if 'usuario' not in session and 'nombre_completo' not in session:
+        return redirect(url_for('login'))
+
+    docente = session.get('nombre_completo')
+    
+    # 1. Datos de Identificación y Configuración (Capturamos el grado del select o del input)
+    grado = request.form.get('grado') or session.get('curso_asignado', '')
+    modalidad = request.form.get('modalidad')
+    areas_art = request.form.get('areas_art')
+    ejes = request.form.get('ejes')
+    duracion = request.form.get('duracion')
+    f_inicio = request.form.get('f_inicio') or None
+    f_cierre = request.form.get('f_cierre') or None
+    valor_mes = request.form.get('valor_mes')
+    efemerides = request.form.get('efemerides')
+    situacion = request.form.get('situacion')
+    
+    mes = request.form.get('mes') or valor_mes or "General"
+    
+    areas_list = request.form.getlist('areas')
+    areas = ", ".join(areas_list) if areas_list else ""
+    area = areas_list[0] if areas_list else (request.form.get('area') or "General")
+
+    estrategias_list = request.form.getlist('estrategias')
+    estrategias = ", ".join(estrategias_list) if estrategias_list else ""
+    
+    tecnicas_list = request.form.getlist('tecnicas')
+    tecnicas = ", ".join(tecnicas_list) if tecnicas_list else ""
+
+    # 2. Competencias
+    comp_comunicativa = request.form.get('comp_comunicativa') or ''
+    comp_pensamiento = request.form.get('comp_pensamiento') or ''
+    comp_etica = request.form.get('comp_etica') or ''
+    
+    competencias_fundamentales_texto = f"Comunicativa: {comp_comunicativa}\nPensamiento: {comp_pensamiento}\nÉtica: {comp_etica}".strip()
+    comp_unificadas = competencias_fundamentales_texto
+    
+    # 3. Contenidos
+    contenidos_conceptos = request.form.get('contenidos_conceptos') or ''
+    contenidos_procedimientos = request.form.get('contenidos_procedimientos') or ''
+    contenidos_actitudes = request.form.get('contenidos_actitudes') or ''
+    
+    contenidos_unificados = f"Conceptos: {contenidos_conceptos}\nProcedimientos: {contenidos_procedimientos}\nActitudes: {contenidos_actitudes}".strip()
+    
+    # 4. Indicadores, Actividades y Recursos
+    indicadores = request.form.get('indicadores')
+    actividades_ensenanza = request.form.get('actividades_ensenanza') or ''
+    actividades_aprendizaje = request.form.get('actividades_aprendizaje') or ''
+    actividades_evaluacion = request.form.get('actividades_evaluacion') or ''
+    medios_recursos = request.form.get('medios_recursos')
+    
+    actividades_unificadas = f"Enseñanza: {actividades_ensenanza}\nAprendizaje: {actividades_aprendizaje}\nEvaluación: {actividades_evaluacion}".strip()
+    
+    # 5. Evaluación
+    evaluacion_criterios = request.form.get('evaluacion_criterios') or ''
+    evaluacion_tecnicas = request.form.get('evaluacion_tecnicas') or ''
+    evaluacion_unificada = f"Criterios: {evaluacion_criterios}\nTécnicas: {evaluacion_tecnicas}".strip()
+
+    try:
+        conn = psycopg2.connect(DATABASE_URL)
+        cursor = PostgresCursorWrapper(conn)
+        
+        query = '''
+            INSERT INTO planificaciones 
+            (
+                docente, mes, area, grado, modalidad, areas_art, ejes, duracion, f_inicio, f_cierre, 
+                valor_mes, efemerides, situacion, situacion_aprendizaje,
+                competencias_fundamentales, comp_comunicativa, comp_pensamiento, comp_etica, competencias, competencias_especificas,
+                contenidos_conceptos, contenidos_procedimientos, contenidos_actitudes, contenidos, contenidos_conceptuales, contenidos_procedimentales, contenidos_actitudinales,
+                indicadores, actividades_ensenanza, actividades_aprendizaje, actividades_evaluacion, actividades,
+                medios_recursos, recursos, evaluacion_criterios, evaluacion_tecnicas, evaluacion,
+                areas, estrategias, tecnicas, grado_seccion
+            )
+            VALUES (
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 
+                %s, %s, %s, %s,
+                %s, %s, %s, %s, %s, %s,
+                %s, %s, %s, %s, %s, %s, %s,
+                %s, %s, %s, %s, %s,
+                %s, %s, %s, %s, %s,
+                %s, %s, %s, %s
+            )
+        '''
+        # Nota: Si usas PostgresCursorWrapper con ? o %s, asegúrate de mantener el marcador que ya usabas en tu código original (ej. '?' o '%s').
+        cursor.execute(query, (
+            docente, mes, area, grado, modalidad, areas_art, ejes, duracion, f_inicio, f_cierre,
+            valor_mes, efemerides, situacion, situacion,
+            competencias_fundamentales_texto, comp_comunicativa, comp_pensamiento, comp_etica, comp_unificadas, comp_unificadas,
+            contenidos_conceptos, contenidos_procedimientos, contenidos_actitudes, contenidos_unificados, contenidos_conceptos, contenidos_procedimientos, contenidos_actitudes,
+            indicadores, actividades_ensenanza, actividades_aprendizaje, actividades_evaluacion, actividades_unificadas,
+            medios_recursos, medios_recursos, evaluacion_criterios, evaluacion_tecnicas, evaluacion_unificada,
+            areas, estrategias, tecnicas, grado
+        ))
+        conn.commit()
+        cursor.close()
+        flash('¡Planificación guardada con éxito!', 'success')
+    except Exception as e:
+        print("❌ Error al guardar planificación:", e)
+        flash('Error al guardar el registro en la base de datos.', 'danger')
+
+    return redirect(url_for('mis_planificaciones'))
+
+from io import BytesIO
+from xhtml2pdf import pisa
+from flask import make_response, render_template
+
+@app.route('/descargar_pdf_planificacion/<int:id>')
+def descargar_pdf_planificacion(id):
+    if 'usuario' not in session and 'nombre_completo' not in session:
+        return redirect(url_for('login'))
+
+    try:
+        conn = psycopg2.connect(DATABASE_URL)
+        # Usamos el cursor nativo de psycopg2 directamente para tener .description disponible
+        cursor = conn.cursor()
+        
+        # Consulta limpia y directa sin referencias a módulos faltantes
+        cursor.execute("SELECT * FROM planificaciones WHERE id = %s", (id,))
+        
+        row = cursor.fetchone()
+        
+        if not row:
+            cursor.close()
+            conn.close()
+            flash("Planificación no encontrada.", "danger")
+            return redirect(url_for('mis_planificaciones'))
+            
+        # Convertir los resultados a diccionario usando las columnas nativas
+        columns = [desc[0] for desc in cursor.description]
+        plan = dict(zip(columns, row))
+        
+        cursor.close()
+        conn.close()
+
+        # Renderizar la plantilla HTML para el PDF
+        html = render_template('pdf_planificacion.html', plan=plan)
+        
+        # Generar el PDF en memoria usando xhtml2pdf
+        pdf = BytesIO()
+        pisa_status = pisa.CreatePDF(BytesIO(html.encode("utf-8")), dest=pdf)
+        
+        if pisa_status.err:
+            return "Error al generar el PDF", 500
+            
+        response = make_response(pdf.getvalue())
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = f'inline; filename=Planificacion_{id}.pdf'
+        return response
+
+    except Exception as e:
+        print("❌ Error al generar PDF:", e)
+        flash("Error al generar el documento PDF.", "danger")
+        return redirect(url_for('mis_planificaciones'))
+
+
+
+# ==============================================================================
+# 1. RUTA PARA CARGAR Y VISUALIZAR LA PLANIFICACIÓN DIARIA
+# ==============================================================================
+@app.route('/ver_planificaciones_diarias', methods=['GET'])
+def ver_planificaciones_diarias():
+    if 'usuario' not in session and 'nombre_completo' not in session and 'id' not in session:
+        return redirect(url_for('login'))
+
+    # Capturar parámetros de filtro y limpiar saltos de línea (\r, \n) y espacios extra
+    desde_fecha = request.args.get('desde_fecha', '').strip()
+    hasta_fecha = request.args.get('hasta_fecha', '').strip()
+    area_filtro = request.args.get('area', '').replace('\r', '').replace('\n', '').strip()
+    grado_filtro = request.args.get('grado', '').replace('\r', '').replace('\n', '').strip()
+
+    # Datos del usuario actual en sesión
+    rol_actual = str(session.get('rol', '')).strip().lower()
+    nombre_usuario = str(session.get('nombre_completo', '')).strip()
+
+    conn = None
+    planificaciones = []
+    lista_areas = []
+    lista_grados = []
+    total_registros = 0
+    total_estudiantes = 0
+    total_expedientes = 0
+    total_usuarios = 0
+
+    try:
+        conn = psycopg2.connect(DATABASE_URL)
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        # 1. Contadores generales para la barra lateral
+        cursor.execute("SELECT COUNT(*) FROM estudiantes")
+        res_est = cursor.fetchone()
+        total_estudiantes = res_est['count'] if res_est else 0
+
+        cursor.execute("SELECT COUNT(*) FROM usuarios")
+        res_usu = cursor.fetchone()
+        total_usuarios = res_usu['count'] if res_usu else 0
+
+        try:
+            cursor.execute("SELECT COUNT(*) FROM expedientes_viejos")
+            res_exp = cursor.fetchone()
+            total_expedientes = res_exp['count'] if res_exp else 0
+        except:
+            total_expedientes = 0
+
+        # Construcción base de filtros comunes (para áreas, grados y planificaciones)
+        base_where = "WHERE 1=1"
+        base_params = []
+
+        # Si NO es administrador, oficina o dirección, se limita estrictamente a su nombre de docente
+        if rol_actual not in ['admin', 'administrador', 'oficina', 'director', 'dirección']:
+            base_where += " AND TRIM(REGEXP_REPLACE(docente, '[\r\n]+', '', 'g')) = %s"
+            base_params.append(nombre_usuario)
+
+        if desde_fecha:
+            base_where += " AND fecha >= %s"
+            base_params.append(desde_fecha)
+        if hasta_fecha:
+            base_where += " AND fecha <= %s"
+            base_params.append(hasta_fecha)
+
+        # 2. Listas dinámicas filtradas para los selectores (evita duplicados y respeta permisos/fechas)
+        # Lista de áreas únicas según el contexto actual
+        query_areas = f"SELECT DISTINCT TRIM(REGEXP_REPLACE(area, '[\r\n]+', '', 'g')) as area FROM planificaciones_diarias {base_where} AND area IS NOT NULL AND area != '' ORDER BY area"
+        cursor.execute(query_areas, base_params)
+        lista_areas = [row['area'] for row in cursor.fetchall() if row['area']]
+
+        # Lista de grados únicos dinámicos (si se filtró por área previamente, se incluye opcionalmente o toma el base_where)
+        query_grados = f"SELECT DISTINCT TRIM(REGEXP_REPLACE(grado_seccion, '[\r\n]+', '', 'g')) as grado_seccion FROM planificaciones_diarias {base_where}"
+        if area_filtro:
+            query_grados += " AND TRIM(REGEXP_REPLACE(area, '[\r\n]+', '', 'g')) = %s"
+        query_grados += " AND grado_seccion IS NOT NULL AND grado_seccion != '' ORDER BY grado_seccion"
+        
+        params_grados = list(base_params)
+        if area_filtro:
+            params_grados.append(area_filtro)
+            
+        cursor.execute(query_grados, params_grados)
+        lista_grados = [row['grado_seccion'] for row in cursor.fetchall() if row['grado_seccion']]
+
+        # 3. Consulta principal de planificaciones con todos los filtros aplicados
+        query = f"SELECT * FROM planificaciones_diarias {base_where}"
+        params = list(base_params)
+
+        if area_filtro:
+            query += " AND TRIM(REGEXP_REPLACE(area, '[\r\n]+', '', 'g')) = %s"
+            params.append(area_filtro)
+        if grado_filtro:
+            query += " AND TRIM(REGEXP_REPLACE(grado_seccion, '[\r\n]+', '', 'g')) = %s"
+            params.append(grado_filtro)
+
+        query += " ORDER BY fecha DESC"
+
+        cursor.execute(query, params)
+        planificaciones = cursor.fetchall()
+        total_registros = len(planificaciones)
+
+        cursor.close()
+    except Exception as e:
+        print("❌ Error al obtener planificaciones:", e)
+    finally:
+        if conn:
+            conn.close()
+
+    return render_template(
+        'ver_planificaciones_diarias.html',
+        planificaciones=planificaciones,
+        lista_areas=lista_areas,
+        lista_grados=lista_grados,
+        desde_fecha=desde_fecha,
+        hasta_fecha=hasta_fecha,
+        area_seleccionada=area_filtro,
+        grado_seleccionado=grado_filtro,
+        total_registros=total_registros,
+        total_estudiantes=total_estudiantes,
+        total_expedientes=total_expedientes,
+        total_usuarios=total_usuarios
+    )
+# ==============================================================================
+# 2. RUTA PARA GUARDAR LA PLANIFICACIÓN DIARIA EN LA BASE DE DATOS
+# ==============================================================================
+@app.route('/guardar_planificacion_diaria', methods=['POST'])
+def guardar_planificacion_diaria():
+    if 'usuario' not in session and 'nombre_completo' not in session:
+        return redirect(url_for('login'))
+
+    # Captura de datos del formulario y sesión
+    docente = request.form.get('docente') or session.get('nombre_completo', '')
+    area = request.form.get('area') or session.get('area_especializada') or session.get('area', '')
+    grado_seccion = request.form.get('grado_seccion') or session.get('curso_asignado', '')
+    fecha = request.form.get('fecha')
+    
+    estrategias = request.form.get('estrategias') or ''
+    intencion_pedagogica = request.form.get('intencion_pedagogica') or ''
+    indicador_logro = request.form.get('indicador_logro') or ''
+    competencia_especifica = request.form.get('competencia_especifica') or ''
+    
+    # Momentos de la clase (en singular, igual que en Supabase)
+    actividad_inicio = request.form.get('actividad_inicio') or ''
+    recursos_inicio = request.form.get('recursos_inicio') or ''
+    
+    actividad_desarrollo = request.form.get('actividad_desarrollo') or ''
+    recursos_desarrollo = request.form.get('recursos_desarrollo') or ''
+    
+    actividad_cierre = request.form.get('actividad_cierre') or ''
+    recursos_cierre = request.form.get('recursos_cierre') or ''
+    
+    recuperacion_pedagogica = request.form.get('recuperacion_pedagogica') or ''
+
+    conn = None
+    try:
+        conn = psycopg2.connect(DATABASE_URL)
+        cursor = PostgresCursorWrapper(conn)
+        
+        # Consulta SQL con los nombres exactos de las columnas en Supabase
+        query = '''
+            INSERT INTO planificaciones_diarias 
+            (
+                docente, area, grado_seccion, fecha, estrategias, intencion_pedagogica, 
+                indicador_logro, competencia_especifica, actividad_inicio, recursos_inicio, 
+                actividad_desarrollo, recursos_desarrollo, actividad_cierre, recursos_cierre, 
+                recuperacion_pedagogica
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        '''
+        cursor.execute(query, (
+            docente, area, grado_seccion, fecha, estrategias, intencion_pedagogica,
+            indicador_logro, competencia_especifica, actividad_inicio, recursos_inicio,
+            actividad_desarrollo, recursos_desarrollo, actividad_cierre, recursos_cierre,
+            recuperacion_pedagogica
+        ))
+        conn.commit()
+        cursor.close()
+        flash('¡Planificación diaria guardada con éxito!', 'success')
+    except Exception as e:
+        print("❌ Error detallado en la base de datos:", e)
+        flash(f'Error al guardar el registro diario: {e}', 'danger')
+    finally:
+        if conn:
+            conn.close()
+
+    # CORREGIDO: Apunta al nombre real de la ruta en Flask
+    return redirect(url_for('planificacion_diaria'))
+
+@app.route('/ver_detalle_planificacion_diaria/<int:id>')
+def ver_detalle_planificacion_diaria(id):
+    if 'usuario' not in session and 'nombre_completo' not in session:
+        return redirect(url_for('login'))
+
+    try:
+        conn = psycopg2.connect(DATABASE_URL)
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        # Corregido: Usar id y el placeholder %s para PostgreSQL
+        query = 'SELECT * FROM planificaciones_diarias WHERE id = %s'
+        cursor.execute(query, (id,))
+        planificacion = cursor.fetchone()
+        cursor.close()
+        conn.close()
+
+        if not planificacion:
+            flash('Planificación no encontrada.', 'danger')
+            return redirect(url_for('ver_planificaciones_diarias'))
+
+        return render_template('planificacion_diaria.html', plan=planificacion, docente=planificacion.get('docente'), grado_seccion=planificacion.get('grado_seccion'))
+
+    except Exception as e:
+        print("❌ Error cargando detalle:", e)
+        flash('Error al cargar la planificación.', 'danger')
+        return redirect(url_for('ver_planificaciones_diarias'))
+
+from io import BytesIO
+from flask import render_template, request, send_file, redirect, url_for, flash, session, make_response
+from xhtml2pdf import pisa
+import psycopg2.extras
+import sqlite3
+import io
+
+# --- FUNCIÓN AUXILIAR DE LIMPIEZA ---
+def limpiar_str(val):
+    if val is None:
+        return ""
+    if isinstance(val, list):
+        return ", ".join(map(str, val))
+    return str(val)
+
+def convertir_a_dd_mm_yyyy(f_str):
+    if not f_str:
+        return ""
+    f_str = str(f_str).split(' ')[0].strip()
+    p = f_str.split('-')
+    if len(p) == 3 and len(p[0]) == 4:
+        return f"{p[2]}-{p[1]}-{p[0]}"
+    return f_str
+
+
+# --- RUTA PARA GENERAR EL PDF FILTRADO ---
+@app.route('/generar_pdf_filtrado', methods=['GET'])
+def generar_pdf_filtrado():
+    if 'usuario' not in session and 'nombre_completo' not in session:
+        return redirect(url_for('login'))
+
+    desde_fecha = request.args.get('desde_fecha', '').strip()
+    hasta_fecha = request.args.get('hasta_fecha', '').strip()
+    area_seleccionada = request.args.get('area', '').strip()
+    grado_seleccionado = request.args.get('grado', '').strip()
+
+    try:
+        conn = psycopg2.connect(DATABASE_URL)
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute('SELECT * FROM planificaciones_diarias ORDER BY id DESC')
+        rows = cur.fetchall()
+        cur.close()
+        conn.close()
+
+        planificaciones = []
+        for row in rows:
+            f_db = limpiar_str(row.get('fecha', '')).strip()
+            area_db = limpiar_str(row.get('area') or row.get('área', '')).strip()
+            grado_db = limpiar_str(row.get('grado_seccion') or row.get('grado', '')).strip()
+
+            cumple_desde = not desde_fecha or f_db >= desde_fecha
+            cumple_hasta = not hasta_fecha or f_db <= hasta_fecha
+            cumple_area = not area_seleccionada or area_db == area_seleccionada
+            cumple_grado = not grado_seleccionado or grado_db == grado_seleccionado
+
+            if cumple_desde and cumple_hasta and cumple_area and cumple_grado:
+                planificaciones.append({
+                    'docente': limpiar_str(row.get('docente', '')),
+                    'area': area_db or 'Informática',
+                    'grado_seccion': grado_db,
+                    'fecha': convertir_a_dd_mm_yyyy(f_db),
+                    'estrategias': limpiar_str(row.get('estrategias', '')),
+                    'intencion_pedagogica': limpiar_str(row.get('intencion_pedagogica') or row.get('intencion', '')),
+                    'indicador_logro': limpiar_str(row.get('indicador_logro', '')),
+                    'competencia_especifica': limpiar_str(row.get('competencia_especifica', '')),
+                    'actividad_inicio': limpiar_str(row.get('actividad_inicio') or row.get('actividades', '')),
+                    'actividad_desarrollo': limpiar_str(row.get('actividad_desarrollo', '')),
+                    'actividad_cierre': limpiar_str(row.get('actividad_cierre', '')),
+                    'recursos': limpiar_str(row.get('recursos') or row.get('recurso', '')),
+                    'recursos_inicio': limpiar_str(row.get('recursos_inicio', '')),
+                    'recursos_desarrollo': limpiar_str(row.get('recursos_desarrollo', '')),
+                    'recursos_cierre': limpiar_str(row.get('recursos_cierre', '')),
+                    'recuperacion_pedagogica': limpiar_str(row.get('recuperacion_pedagogica', ''))
+                })
+
+        if not planificaciones:
+            flash('No se encontraron planificaciones para los filtros seleccionados.', 'warning')
+            return redirect(url_for('ver_planificaciones_diarias'))
+
+        # Renderizamos la nueva plantilla dedicada para el reporte filtrado
+        rendered_html = render_template('pdf_planificaciones_filtradas.html', planificaciones=planificaciones)
+
+        pdf_buffer = BytesIO()
+        pisa_status = pisa.CreatePDF(rendered_html, dest=pdf_buffer)
+        
+        if pisa_status.err:
+            print("❌ Error de xhtml2pdf en PDF filtrado:", pisa_status.err)
+            flash('Error al generar la estructura del PDF.', 'danger')
+            return redirect(url_for('ver_planificaciones_diarias'))
+            
+        pdf_buffer.seek(0)
+        return send_file(
+            pdf_buffer, 
+            mimetype='application/pdf', 
+            as_attachment=False, 
+            download_name="Planificaciones_Filtradas.pdf"
+        )
+        
+    except Exception as e:
+        print("❌ Error en PDF filtrado:", str(e))
+        flash(f'Error al procesar el PDF: {str(e)}', 'danger')
+        return redirect(url_for('ver_planificaciones_diarias'))
+
+
+# --- RUTA PARA IMPRIMIR PDF INDIVIDUAL ---
+@app.route('/imprimir_planificacion_diaria_pdf/<int:id>')
+def imprimir_planificacion_diaria_pdf(id):
+    if 'usuario' not in session and 'nombre_completo' not in session:
+        return redirect(url_for('login'))
+
+    try:
+        conn = psycopg2.connect(DATABASE_URL)
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        query = 'SELECT * FROM planificaciones_diarias WHERE id = %s'
+        cursor.execute(query, (id,))
+        row = cursor.fetchone()
+        cursor.close()
+        conn.close()
+
+        if not row:
+            flash('Planificación no encontrada.', 'danger')
+            return redirect(url_for('ver_planificaciones_diarias'))
+
+        planificacion = {
+            'docente': limpiar_str(row.get('docente', '')),
+            'area': limpiar_str(row.get('area') or row.get('área', '')) or 'Informática',
+            'grado_seccion': limpiar_str(row.get('grado_seccion') or row.get('grado', '')),
+            'fecha': limpiar_str(row.get('fecha', '')),
+            'estrategias': limpiar_str(row.get('estrategias', '')),
+            'intencion_pedagogica': limpiar_str(row.get('intencion_pedagogica') or row.get('intencion', '')),
+            'indicador_logro': limpiar_str(row.get('indicador_logro', '')),
+            'competencia_especifica': limpiar_str(row.get('competencia_especifica', '')),
+            'actividad_inicio': limpiar_str(row.get('actividad_inicio') or row.get('actividades', '')),
+            'actividad_desarrollo': limpiar_str(row.get('actividad_desarrollo', '')),
+            'actividad_cierre': limpiar_str(row.get('actividad_cierre', '')),
+            'recursos': limpiar_str(row.get('recursos') or row.get('recurso', '')),
+            'recursos_inicio': limpiar_str(row.get('recursos_inicio', '')),
+            'recursos_desarrollo': limpiar_str(row.get('recursos_desarrollo', '')),
+            'recursos_cierre': limpiar_str(row.get('recursos_cierre', '')),
+            'recuperacion_pedagogica': limpiar_str(row.get('recuperacion_pedagogica', ''))
+        }
+
+        rendered_html = render_template('pdf_planificacion_diaria.html', plan=planificacion)
+
+        pdf_buffer = io.BytesIO()
+        pisa_status = pisa.CreatePDF(rendered_html, dest=pdf_buffer)
+
+        if pisa_status.err:
+            print(f"❌ Error de xhtml2pdf en planificación ID {id}:", pisa_status.err)
+            flash('Error al generar el documento PDF (Revisa la consola para más detalles).', 'danger')
+            return redirect(url_for('ver_planificaciones_diarias'))
+
+        pdf_buffer.seek(0)
+        response = make_response(pdf_buffer.read())
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = f'inline; filename=Planificacion_Diaria_{id}.pdf'
+        return response
+
+    except Exception as e:
+        print("❌ Error crítico al generar PDF de planificación diaria:", str(e))
+        flash(f'Error al procesar la solicitud: {str(e)}', 'danger')
+        return redirect(url_for('ver_planificaciones_diarias'))
+
+
+# --- RUTA PARA REPORTE SEMANAL EN PDF ---
+@app.route('/imprimir_planificaciones_semana_pdf', methods=['GET', 'POST'])
+def imprimir_planificaciones_semana_pdf():
+    if 'usuario' not in session and 'nombre_completo' not in session:
+        return redirect(url_for('login'))
+
+    fecha_inicio = request.args.get('fecha_inicio')
+    fecha_fin = request.args.get('fecha_fin')
+    usuario_actual = session.get('nombre_completo')
+    rol_actual = str(session.get('rol', '')).strip().lower()
+
+    if not fecha_inicio or not fecha_fin:
+        flash('Por favor seleccione ambas fechas.', 'warning')
+        return redirect(url_for('ver_planificaciones_diarias'))
+
+    if fecha_inicio > fecha_fin:
+        fecha_inicio, fecha_fin = fecha_fin, fecha_inicio
+
+    try:
+        conn = psycopg2.connect(DATABASE_URL)
+        cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        if rol_actual in ['admin', 'administrador', 'oficina', 'director', 'dirección']:
+            query = 'SELECT * FROM planificaciones_diarias WHERE fecha BETWEEN %s AND %s ORDER BY fecha ASC'
+            cursor.execute(query, (fecha_inicio, fecha_fin))
+        else:
+            query = 'SELECT * FROM planificaciones_diarias WHERE docente = %s AND fecha BETWEEN %s AND %s ORDER BY fecha ASC'
+            cursor.execute(query, (usuario_actual, fecha_inicio, fecha_fin))
+
+        rows = cursor.fetchall()
+        cursor.close()
+        conn.close()
+
+        planificaciones = []
+        for row in rows:
+            planificaciones.append({
+                'docente': limpiar_str(row.get('docente', '')),
+                'area': limpiar_str(row.get('area') or row.get('área', '')) or 'Informática',
+                'grado_seccion': limpiar_str(row.get('grado_seccion') or row.get('grado', '')),
+                'fecha': limpiar_str(row.get('fecha', '')),
+                'estrategias': limpiar_str(row.get('estrategias', '')),
+                'intencion_pedagogica': limpiar_str(row.get('intencion_pedagogica') or row.get('intencion', '')),
+                'indicador_logro': limpiar_str(row.get('indicador_logro', '')),
+                'competencia_especifica': limpiar_str(row.get('competencia_especifica', '')),
+                'actividad_inicio': limpiar_str(row.get('actividad_inicio') or row.get('actividades', '')),
+                'actividad_desarrollo': limpiar_str(row.get('actividad_desarrollo', '')),
+                'actividad_cierre': limpiar_str(row.get('actividad_cierre', '')),
+                'recursos': limpiar_str(row.get('recursos') or row.get('recurso', '')),
+                'recursos_inicio': limpiar_str(row.get('recursos_inicio', '')),
+                'recursos_desarrollo': limpiar_str(row.get('recursos_desarrollo', '')),
+                'recursos_cierre': limpiar_str(row.get('recursos_cierre', '')),
+                'recuperacion_pedagogica': limpiar_str(row.get('recuperacion_pedagogica', ''))
+            })
+
+        if not planificaciones:
+            flash(f'No hay planificaciones registradas entre {fecha_inicio} y {fecha_fin}.', 'warning')
+            return redirect(url_for('ver_planificaciones_diarias'))
+
+        rendered_html = render_template('pdf_reporte_semanal.html', planificaciones=planificaciones, inicio=fecha_inicio, fin=fecha_fin)
+
+        pdf_buffer = io.BytesIO()
+        pisa_status = pisa.CreatePDF(rendered_html, dest=pdf_buffer)
+
+        if pisa_status.err:
+            flash('Error al generar el PDF semanal.', 'danger')
+            return redirect(url_for('ver_planificaciones_diarias'))
+
+        pdf_buffer.seek(0)
+        response = make_response(pdf_buffer.read())
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = f'inline; filename=Reporte_Semanal_{fecha_inicio}_al_{fecha_fin}.pdf'
+        return response
+
+    except Exception as e:
+        print("❌ Error al generar reporte semanal:", e)
+        flash('Error al procesar el reporte.', 'danger')
+        return redirect(url_for('ver_planificaciones_diarias'))
+        
+@app.route('/eliminar_planificacion/<int:id>')
+def eliminar_planificacion(id):
+    if 'usuario' not in session and 'nombre_completo' not in session:
+        return redirect(url_for('login'))
+        
+    conexion = get_db_connection()
+    is_postgres = DATABASE_URL is not None
+
+    try:
+        if is_postgres:
+            cur = conexion.conn.cursor()
+            # Corregido: nombre de la tabla planificaciones_diarias
+            cur.execute("DELETE FROM planificaciones_diarias WHERE id = %s", (id,))
+            conexion.conn.commit()
+            cur.close()
+        else:
+            conexion.execute("DELETE FROM planificaciones_diarias WHERE id = ?", (id,))
+            conexion.commit()
+        flash('Planificación eliminada con éxito.', 'success')
+    except Exception as e:
+        print("--- ERROR AL ELIMINAR PLANIFICACIÓN:", e)
+        flash(f'Error al eliminar: {e}', 'danger')
+    finally:
+        conexion.close()
+
+    return redirect(url_for('ver_planificaciones_diarias'))
+
+
+@app.route('/planificacion_diaria', methods=['GET', 'POST'])
+def planificacion_diaria():
+    if 'id' not in session and 'user_id' not in session and 'nombre_completo' not in session:
+        flash('Por favor, inicie sesión para acceder a la planificación.', 'danger')
+        return redirect(url_for('login'))
+        
+    user_id = session.get('id') or session.get('user_id')
+    
+    conexion = get_db_connection()
+    is_postgres = DATABASE_URL is not None
+    
+    docente_actual = None
+
+    try:
+        if is_postgres:
+            cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            if user_id:
+                cur.execute("SELECT * FROM usuarios WHERE id = %s", (user_id,))
+            else:
+                cur.execute("SELECT * FROM usuarios WHERE nombre_completo = %s", (session.get('nombre_completo'),))
+            docente_actual = cur.fetchone()
+            cur.close()
+        else:
+            conexion.row_factory = sqlite3.Row
+            if user_id:
+                cursor = conexion.execute("SELECT * FROM usuarios WHERE id = ?", (user_id,))
+            else:
+                cursor = conexion.execute("SELECT * FROM usuarios WHERE nombre_completo = ?", (session.get('nombre_completo'),))
+            docente_actual = cursor.fetchone()
+            
+    except Exception as e:
+        print("--- ERROR AL CONSULTAR DOCENTE EN PLANIFICACIÓN:", e)
+        docente_actual = None
+    finally:
+        conexion.close()
+
+    nombre_docente = docente_actual['nombre_completo'] if docente_actual else session.get('nombre_completo', '')
+    
+    rol_bruto = docente_actual['rol'] if docente_actual else session.get('rol', 'maestro')
+    rol_actual = rol_bruto.strip().lower()
+
+    area_asignada = docente_actual['area_especializada'] if docente_actual else session.get('area_asignada', '')
+    curso_asignado = docente_actual['curso_asignado'] if docente_actual else session.get('curso_asignado', '')
+
+    return render_template(
+        'planificacion_diaria.html', 
+        docente=nombre_docente,
+        rol_usuario=rol_actual,
+        area_asignada=area_asignada,
+        grado_seccion=curso_asignado
+    )
+
+
+@app.route('/registrar_usuario', methods=['GET', 'POST'])
+def registrar_usuario():
+    if session.get('rol') not in ['oficina', 'admin']:
+        flash('Acceso denegado.', 'danger')
+        return redirect(url_for('menu'))
+        
+    conexion = get_db_connection()
+    is_postgres = DATABASE_URL is not None
+    edit_id = request.args.get('edit_id')
+    
+    maestro_a_editar = None
+    maestros = []
+
+    try:
+        # Obtener el usuario a editar si existe
+        if edit_id:
+            if is_postgres:
+                cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+                cur.execute("SELECT * FROM usuarios WHERE id = %s", (edit_id,))
+                maestro_a_editar = cur.fetchone()
+                cur.close()
+            else:
+                conexion.row_factory = sqlite3.Row
+                cursor = conexion.execute("SELECT * FROM usuarios WHERE id = ?", (edit_id,))
+                maestro_a_editar = cursor.fetchone()
+
+        if request.method == 'POST':
+            nombre_completo = request.form['nombre_completo']
+            username = request.form['nombre_usuario']
+            password = request.form['contrasena']
+            rol = request.form['rol']
+            
+            # Capturamos siempre las materias si el rol es 'maestro' o 'maestro_area'
+            if rol in ['maestro', 'maestro_area']:
+                lista_materias = request.form.getlist('materias')
+                area_especializada = ", ".join(lista_materias) if lista_materias else None
+            else:
+                area_especializada = None
+
+            # Guardamos el curso asignado si aplica
+            curso_asignado = request.form.get('curso_asignado') if rol == 'maestro' else None
+
+            id_usuario = request.form.get('id_usuario')
+
+            if id_usuario:
+                # Actualizar usuario existente
+                if is_postgres:
+                    cur = conexion.conn.cursor()
+                    cur.execute("""
+                        UPDATE usuarios 
+                        SET nombre_completo = %s, username = %s, password = %s, rol = %s, curso_asignado = %s, area_especializada = %s 
+                        WHERE id = %s
+                    """, (nombre_completo, username, password, rol, curso_asignado, area_especializada, id_usuario))
+                    conexion.conn.commit()
+                    cur.close()
+                else:
+                    conexion.execute("""
+                        UPDATE usuarios 
+                        SET nombre_completo = ?, username = ?, password = ?, rol = ?, curso_asignado = ?, area_especializada = ? 
+                        WHERE id = ?
+                    """, (nombre_completo, username, password, rol, curso_asignado, area_especializada, id_usuario))
+                    conexion.commit()
+                flash('Maestro actualizado con éxito.', 'success')
+            else:
+                # Insertar NUEVO usuario
+                if is_postgres:
+                    cur = conexion.conn.cursor()
+                    cur.execute("""
+                        INSERT INTO usuarios (nombre_completo, username, password, rol, curso_asignado, area_especializada) 
+                        VALUES (%s, %s, %s, %s, %s, %s)
+                    """, (nombre_completo, username, password, rol, curso_asignado, area_especializada))
+                    conexion.conn.commit()
+                    cur.close()
+                else:
+                    conexion.execute("""
+                        INSERT INTO usuarios (nombre_completo, username, password, rol, curso_asignado, area_especializada) 
+                        VALUES (?, ?, ?, ?, ?, ?)
+                    """, (nombre_completo, username, password, rol, curso_asignado, area_especializada))
+                    conexion.commit()
+                flash('Maestro registrado con éxito.', 'success')
+                
+            return redirect(url_for('registrar_usuario'))
+        
+        # Obtener lista de todos los maestros (contemplando las posibles variaciones de nombre de rol)
+        if is_postgres:
+            cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute("""
+                SELECT * FROM usuarios 
+                WHERE LOWER(rol) IN ('maestro', 'maestro_area', 'área_maestro', 'area_maestro') 
+                ORDER BY id DESC
+            """)
+            maestros = cur.fetchall()
+            cur.close()
+        else:
+            conexion.row_factory = sqlite3.Row
+            maestros = conexion.execute("""
+                SELECT * FROM usuarios 
+                WHERE LOWER(rol) IN ('maestro', 'maestro_area', 'área_maestro', 'area_maestro') 
+                ORDER BY id DESC
+            """).fetchall()
+
+    except Exception as e:
+        print("--- ERROR EN REGISTRAR USUARIO:", e)
+        flash(f'Error al procesar la solicitud: {e}', 'danger')
+    finally:
+        conexion.close()
+
+    return render_template('registrar_usuario.html', maestros=maestros, maestro_a_editar=maestro_a_editar)
+
+@app.route('/eliminar_usuario/<int:id>', methods=['POST', 'GET'])
+def eliminar_usuario(id):
+    if session.get('rol') not in ['oficina', 'admin']:
+        flash('Acceso denegado.', 'danger')
+        return redirect(url_for('menu'))
+        
+    conexion = get_db_connection()
+    is_postgres = DATABASE_URL is not None
+    
+    try:
+        if is_postgres:
+            cur = conexion.conn.cursor()
+            cur.execute("DELETE FROM usuarios WHERE id = %s", (id,))
+            conexion.conn.commit()
+            cur.close()
+        else:
+            conexion.execute("DELETE FROM usuarios WHERE id = ?", (id,))
+            conexion.commit()
+            
+        flash('Maestro eliminado exitosamente.', 'success')
+    except Exception as e:
+        print("--- ERROR AL ELIMINAR USUARIO:", e)
+        flash('Ocurrió un error al intentar eliminar el usuario.', 'danger')
+    finally:
+        conexion.close()
+        
+    return redirect(url_for('registrar_usuario'))
+
+@app.route('/menu_viejo')
+def menu_viejo():
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+    
+    rol_actual = session.get('rol', '').lower()
+    if 'maestro' in rol_actual or rol_actual == 'profesor':
+        flash('Acceso denegado. Los maestros no tienen permiso para entrar aquí.', 'danger')
+        return redirect(url_for('menu'))
+
+    conexion = get_db_connection()
+    is_postgres = DATABASE_URL is not None
+    
+    total_estudiantes = 0
+    total_expedientes = 0
+    total_usuarios = 0
+
+    try:
+        if is_postgres:
+            cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute("SELECT COUNT(*) as total FROM estudiantes")
+            total_estudiantes = cur.fetchone()['total']
+            
+            cur.execute("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'expedientes_viejos')")
+            if cur.fetchone()['exists']:
+                cur.execute("SELECT COUNT(*) as total FROM expedientes_viejos")
+                total_expedientes = cur.fetchone()['total']
+            
+            cur.execute("SELECT COUNT(*) as total FROM usuarios")
+            total_usuarios = cur.fetchone()['total']
+            cur.close()
+        else:
+            conexion.execute("SELECT COUNT(*) FROM estudiantes")
+            total_estudiantes = conexion.fetchone()[0]
+            
+            cursor_chk = conexion.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='expedientes_viejos'").fetchone()
+            if cursor_chk:
+                conexion.execute("SELECT COUNT(*) FROM expedientes_viejos")
+                total_expedientes = conexion.fetchone()[0]
+                
+            conexion.execute("SELECT COUNT(*) FROM usuarios")
+            total_usuarios = conexion.fetchone()[0]
+    except Exception as e:
+        print(f"Error cargando contadores: {e}")
+    finally:
+        conexion.close()
+
+    return render_template('menu_viejo.html', 
+                           total_estudiantes=total_estudiantes,
+                           total_expedientes=total_expedientes,
+                           total_usuarios=total_usuarios)
+
+@app.route('/expediente-viejo', methods=['GET', 'POST'])
+def expediente_viejo():
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+    
+    resultados = []
+    conexion = get_db_connection()
+    is_postgres = DATABASE_URL is not None
+    
+    total_estudiantes = 0
+    total_expedientes = 0
+    total_usuarios = 0
+
+    try:
+        criterio = request.form.get('criterio', '').strip() if request.method == 'POST' else ''
+
+        if is_postgres:
+            cur = conexion.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            cur.execute("SELECT COUNT(*) as total FROM estudiantes")
+            total_estudiantes = cur.fetchone()['total']
+            cur.execute("SELECT COUNT(*) as total FROM usuarios")
+            total_usuarios = cur.fetchone()['total']
+            cur.execute("SELECT COUNT(*) as total FROM expedientes_viejos")
+            total_expedientes = cur.fetchone()['total']
+            
+            if criterio:
+                cur.execute("""
+                    SELECT * FROM expedientes_viejos 
+                    WHERE "Unnamed: 3" ILIKE %s OR "Unnamed: 4" ILIKE %s OR "Unnamed: 5" ILIKE %s
+                """, (f'%{criterio}%', f'%{criterio}%', f'%{criterio}%'))
+            else:
+                cur.execute("SELECT * FROM expedientes_viejos LIMIT 100")
+            resultados = cur.fetchall()
+            cur.close()
+        else:
+            conexion.execute("SELECT COUNT(*) FROM estudiantes")
+            total_estudiantes = conexion.fetchone()[0]
+            conexion.execute("SELECT COUNT(*) FROM usuarios")
+            total_usuarios = conexion.fetchone()[0]
+            conexion.execute("SELECT COUNT(*) FROM expedientes_viejos")
+            total_expedientes = conexion.fetchone()[0]
+            
+            if criterio:
+                conexion.execute("""
+                    SELECT * FROM expedientes_viejos 
+                    WHERE "Unnamed: 3" LIKE ? OR "Unnamed: 4" LIKE ? OR "Unnamed: 5" LIKE ?
+                """, (f'%{criterio}%', f'%{criterio}%', f'%{criterio}%'))
+            else:
+                conexion.execute("SELECT * FROM expedientes_viejos LIMIT 100")
+            resultados = conexion.fetchall()
+                
+    except Exception as e:
+        print("--- ERROR DETALLADO EN EXPEDIENTE VIEJO ---")
+        resultados = []
+    finally:
+        conexion.close()
+
+    return render_template('expediente_viejos.html', 
+                           expedientes=resultados,
+                           total_estudiantes=total_estudiantes,
+                           total_expedientes=total_expedientes,
+                           total_usuarios=total_usuarios)
+
+import re
+from flask import render_template, request, redirect, url_for, session, flash
+
+@app.route('/registrar_expediente_viejo', methods=['GET', 'POST'])
+def registrar_expediente_viejo():
+    if 'usuario' not in session or session.get('rol') != 'admin':
+        flash('Acceso denegado. Se requieren permisos de administrador.', 'danger')
+        return redirect(url_for('menu'))
+
+    conexion = get_db_connection()
+    is_postgres = DATABASE_URL is not None
+    ultimo_valor = None
+    total_estudiantes = 0
+    total_expedientes = 0
+    total_usuarios = 0
+
+    try:
+        if is_postgres:
+            cur = conexion.conn.cursor()
+            
+            # Intentamos obtener el último registro de la tabla expedientes_viejos
+            try:
+                cur.execute('SELECT "Unnamed: 5" FROM expedientes_viejos ORDER BY ctid DESC LIMIT 1')
+                resultado = cur.fetchone()
+                if resultado:
+                    ultimo_valor = resultado[0]
+            except Exception:
+                pass
+
+            # Totales seguros
+            try:
+                cur.execute('SELECT COUNT(*) FROM estudiantes')
+                total_estudiantes = cur.fetchone()[0]
+            except: pass
+
+            try:
+                cur.execute('SELECT COUNT(*) FROM expedientes_viejos')
+                total_expedientes = cur.fetchone()[0]
+            except: pass
+
+            try:
+                cur.execute('SELECT COUNT(*) FROM usuarios')
+                total_usuarios = cur.fetchone()[0]
+            except: pass
+            
+            cur.close()
+        else:
+            cursor = conexion.cursor()
+            cursor.execute('SELECT "Unnamed: 5" FROM expedientes_viejos ORDER BY rowid DESC LIMIT 1')
+            resultado = cursor.fetchone()
+            if resultado:
+                ultimo_valor = resultado[0]
+
+            cursor.execute('SELECT COUNT(*) FROM estudiantes')
+            total_estudiantes = cursor.fetchone()[0]
+
+            cursor.execute('SELECT COUNT(*) FROM expedientes_viejos')
+            total_expedientes = cursor.fetchone()[0]
+
+            cursor.execute('SELECT COUNT(*) FROM usuarios')
+            total_usuarios = cursor.fetchone()[0]
+            
+            cursor.close()
+    except Exception as e:
+        print(f"Error general: {e}")
+    finally:
+        conexion.close()
+
+    # Autoincremento basado en el último número real encontrado (ej. 500 -> 501)
+    siguiente_ficha = "F-501" # Por si acaso está totalmente vacío
+    if ultimo_valor:
+        numeros = re.findall(r'\d+', str(ultimo_valor))
+        if numeros:
+            siguiente_numero = int(numeros[-1]) + 1
+            siguiente_ficha = f"F-{siguiente_numero}"
+
+    return render_template(
+        'registrar_expediente_viejo.html', 
+        siguiente_ficha=siguiente_ficha,
+        total_estudiantes=total_estudiantes,
+        total_expedientes=total_expedientes,
+        total_usuarios=total_usuarios
+    )
+
+@app.route('/guardar_expediente_viejo', methods=['POST'])
+def guardar_expediente_viejo():
+    # Validar sesión y rol de administrador también al guardar
+    if 'usuario' not in session or session.get('rol') != 'admin':
+        flash('Acceso denegado.', 'danger')
+        return redirect(url_for('login'))
+        
+    ficha = request.form.get('ficha', '')
+    nombre = request.form.get('nombre', '')
+    ano_escolar = request.form.get('anio_escolar', '')
+    
+    conexion = get_db_connection()
+    is_postgres = DATABASE_URL is not None
+    
+    try:
+        if is_postgres:
+            cur = conexion.conn.cursor()
+            cur.execute('INSERT INTO expedientes_viejos ("Unnamed: 3", "Unnamed: 4", "Unnamed: 5") VALUES (%s, %s, %s)', 
+                        (nombre, ano_escolar, ficha))
+            conexion.conn.commit()
+            cur.close()
+        else:
+            conexion.execute('INSERT INTO expedientes_viejos ("Unnamed: 3", "Unnamed: 4", "Unnamed: 5") VALUES (?, ?, ?)', 
+                           (nombre, ano_escolar, ficha))
+            conexion.commit()
+            
+        flash('¡Expediente registrado correctamente!', 'success')
+    except Exception as e:
+        flash(f'Error al guardar el expediente: {e}', 'danger')
+    finally:
+        conexion.close()
+        
+    return redirect(url_for('registrar_expediente_viejo'))
+
+import os
+import json
+import base64
+import requests
+from flask import Flask, request, jsonify
+
+@app.route('/api/escanear-ficha', methods=['POST'])
+def escanear_ficha():
+    if 'ficha' not in request.files:
+        return jsonify({'success': False, 'error': 'No se encontró la imagen'}), 400
+    
+    file = request.files['ficha']
+    if file.filename == '':
+        return jsonify({'success': False, 'error': 'No se seleccionó ningún archivo'}), 400
+
+    try:
+        api_key = os.environ.get("GEMINI_API_KEY")
+        image_bytes = file.read()
+        image_b64 = base64.b64encode(image_bytes).decode('utf-8')
+        mime_type = file.content_type or "image/jpeg"
+
+        # Usamos la versión 'v1' de la API con el modelo estable
+        url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={api_key}"
+        
+        payload = {
+            "contents": [{
+                "parts": [
+                    {
+                        "text": """Analiza esta imagen de una ficha de inscripción escolar y extrae la información en formato JSON estricto. 
+                        Las llaves del JSON deben coincidir exactamente con los nombres de los inputs del formulario:
+                        {
+                            "anio_escolar": "", "fecha_inscripcion": "", "id_estudiante": "", "nombres": "", 
+                            "apellidos": "", "grado": "", "fecha_nacimiento": "", "edad": "", "sexo": "", 
+                            "nacionalidad": "", "lugar_nac": "", "direccion": "", "cant_hermanos": "", 
+                            "edades_hermanos": "", "lugar_ocupa": "", "tipo_sangre": "", "seguro_medico": "", 
+                            "alergias": "", "medicamentos": "", "medico_pediatra": "", "centro_medico": "", 
+                            "emergencia_tel": "", "emergencia_nombre": "", "emergencia_parentesco": ""
+                        }
+                        Si algún dato no está visible o legible, déjalo como un string vacío "". Devuelve únicamente el objeto JSON puro sin markdown."""
+                    },
+                    {
+                        "inline_data": {
+                            "mime_type": mime_type,
+                            "data": image_b64
+                        }
+                    }
+                ]
+            }]
+        }
+
+        headers = {'Content-Type': 'application/json'}
+        response = requests.post(url, headers=headers, data=json.dumps(payload))
+        
+        if response.status_code != 200:
+            return jsonify({'success': False, 'error': f"API Error: {response.text}"}), 500
+
+        res_json = response.json()
+        texto_respuesta = res_json['candidates'][0]['content']['parts'][0]['text'].strip()
+        
+        if texto_respuesta.startswith("```json"):
+            texto_respuesta = texto_respuesta[7:-3].strip()
+        elif texto_respuesta.startswith("```"):
+            texto_respuesta = texto_respuesta[3:-3].strip()
+            
+        datos_extraidos = json.loads(texto_respuesta)
+        return jsonify({'success': True, 'data': datos_extraidos})
+
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    
+@app.route('/menu')
+def menu():
+    return render_template('menu.html') # O la plantilla que corresponda a tu menú
+
+
+
+if __name__ == '__main__':
+    app.run(debug=True)
