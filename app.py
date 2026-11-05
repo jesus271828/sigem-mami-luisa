@@ -2705,6 +2705,7 @@ def generar_pdf_notas(id_estudiante):
         print("--- ERROR AL GENERAR PDF DE NOTAS CON WEASYPRINT:", e)
         return 'Hubo un error al generar el PDF de notas', 500
 
+<<<<<<< HEAD
 from flask import render_template
 
 @app.route('/rubricas')
@@ -2724,6 +2725,8 @@ def guardar_matriz_notas():
     return redirect(url_for('rubricas_matriz'))
 
 
+=======
+>>>>>>> 67514c8f1ee623152fb8c5b6c698cc2deef8299c
 # 1. RUTA PARA EL MENÚ DE OPCIONES DE PLANIFICACIÓN
 @app.route('/menu_planificacion')
 def menu_planificacion():
