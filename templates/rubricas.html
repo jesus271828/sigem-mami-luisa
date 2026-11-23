@@ -412,7 +412,7 @@
   </div>
 
   <script>
-    const ESTUDIANTES = JSON.parse('{{ (estudiantes or ["Adrian", "Albert", "Amaiha", "Ammy", "Brithany", "Dayrelin", "Gabriela", "Jeyden", "Keisha", "Marcos", "Nashly", "Rochell", "Sebastian"]) | tojson | safe }}');
+    const ESTUDIANTES = JSON.parse('{{ (estudiantes or []) | tojson | safe }}');
 
     const PLANTILLA_BASE = [
       {

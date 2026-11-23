@@ -2709,7 +2709,22 @@ def generar_pdf_notas(id_estudiante):
 def rubricas():
     if "usuario" not in session and "nombre_completo" not in session:
         return redirect(url_for("login"))
-    return render_template("rubricas.html")
+
+    curso_asignado = session.get("curso_asignado", "")
+    usuario_actual = session.get("usuario") or session.get("nombre_completo", "")
+
+    # Ejemplo: consulta los estudiantes del curso asignado al usuario en tu BD
+    # Ajusta el nombre de la tabla y columnas según tu esquema en Supabase/PostgreSQL:
+    # cur.execute("SELECT nombre FROM estudiantes WHERE curso = %s ORDER BY nombre", (curso_asignado,))
+    # estudiantes = [row[0] for row in cur.fetchall()]
+
+    estudiantes = []  # <-- Reemplaza esto con tu consulta real de la BD
+    return render_template(
+        "rubricas.html",
+        estudiantes=estudiantes,
+        curso_asignado=curso_asignado,
+        usuario_actual=usuario_actual,
+    )
 
 
 # 1. Ruta para ABRIR la matriz con la tabla de notas
