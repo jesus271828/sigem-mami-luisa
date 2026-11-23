@@ -2711,20 +2711,14 @@ def rubricas():
         return redirect(url_for("login"))
 
     curso_asignado = session.get("curso_asignado", "")
-    usuario_actual = session.get("usuario") or session.get("nombre_completo", "")
+    rol_actual = session.get("rol", "")
 
-    # Ejemplo: consulta los estudiantes del curso asignado al usuario en tu BD
-    # Ajusta el nombre de la tabla y columnas según tu esquema en Supabase/PostgreSQL:
+    # Ajusta tabla y columnas según tu BD en Supabase/PostgreSQL:
     # cur.execute("SELECT nombre FROM estudiantes WHERE curso = %s ORDER BY nombre", (curso_asignado,))
-    # estudiantes = [row[0] for row in cur.fetchall()]
+    # estudiantes = [r[0] for r in cur.fetchall()]
+    estudiantes = []
 
-    estudiantes = []  # <-- Reemplaza esto con tu consulta real de la BD
-    return render_template(
-        "rubricas.html",
-        estudiantes=estudiantes,
-        curso_asignado=curso_asignado,
-        usuario_actual=usuario_actual,
-    )
+    return render_template("rubricas.html", estudiantes=estudiantes)
 
 
 # 1. Ruta para ABRIR la matriz con la tabla de notas
