@@ -1,48 +1,452 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestión de Rúbricas - SIGEM Mami Luisa</title>
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gestión de Rúbricas - SIGEM Mami Luisa</title>
+  <style>
+    :root {
+      --bg-page: #f4f6fb;
+      --header-bg: #1e2229;
+      --card-bg: #ffffff;
+      --accent-purple: #c5bbf7;
+      --text-dark: #1d2238;
+      --border-color: #333748;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg-page);
+      color: var(--text-dark);
+    }
+
+    .topbar {
+      background: var(--header-bg);
+      color: #fff;
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .topbar a {
+      color: #fff;
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 24px auto;
+      padding: 0 16px 40px;
+    }
+
+    .toolbar {
+      background: var(--card-bg);
+      padding: 16px 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      margin-bottom: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      border: 1px solid #cbd5e1;
+      background: #f8fafc;
+      color: var(--text-dark);
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .tab-btn.active {
+      background: var(--text-dark);
+      color: #fff;
+      border-color: var(--text-dark);
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 13px;
+    }
+
+    .btn-primary {
+      background: #2563eb;
+      color: #fff;
+    }
+
+    .btn-secondary {
+      background: #e2e8f0;
+      color: #1e293b;
+    }
+
+    .rubrica-panel {
+      display: none;
+      background: var(--card-bg);
+      padding: 16px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      overflow-x: auto;
+    }
+
+    .rubrica-panel.active {
+      display: block;
+    }
+
+    table.matriz {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 980px;
+    }
+
+    table.matriz th,
+    table.matriz td {
+      border: 1px solid var(--border-color);
+      padding: 6px;
+      font-size: 12px;
+    }
+
+    .encabezado-area {
+      background: var(--accent-purple);
+      color: var(--text-dark);
+      text-align: left;
+      vertical-align: middle;
+      padding: 10px !important;
+      min-width: 280px;
+    }
+
+    .encabezado-area .titulo-area {
+      font-size: 16px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+
+    .encabezado-area .subtitulo-comp {
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.3;
+    }
+
+    .th-valor {
+      background: var(--accent-purple);
+      color: var(--text-dark);
+      width: 62px;
+      text-align: center;
+      vertical-align: bottom;
+      font-size: 13px !important;
+      font-weight: 800;
+    }
+
+    .th-alumno {
+      background: #fff;
+      color: var(--text-dark);
+      height: 115px;
+      width: 44px;
+      padding: 4px 2px !important;
+      vertical-align: bottom;
+      text-align: center;
+    }
+
+    .nombre-vertical {
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      white-space: nowrap;
+      font-weight: 800;
+      font-size: 13px;
+      margin: 0 auto;
+    }
+
+    .indicador-texto {
+      font-weight: 700;
+      line-height: 1.25;
+      color: #111827;
+    }
+
+    .celda-valor {
+      text-align: center;
+      font-weight: 800;
+      font-size: 15px !important;
+      color: var(--text-dark);
+    }
+
+    .celda-nota {
+      padding: 2px !important;
+      text-align: center;
+    }
+
+    .nota-input {
+      width: 100%;
+      height: 30px;
+      border: 1px solid transparent;
+      text-align: center;
+      font-weight: 800;
+      font-size: 13px;
+      color: var(--text-dark);
+      background: transparent;
+    }
+
+    .nota-input:focus {
+      outline: none;
+      border: 1px solid #2563eb;
+      background: #eff6ff;
+      border-radius: 3px;
+    }
+
+    .fila-total td {
+      font-weight: 800;
+      font-size: 14px !important;
+      background: #f8fafc;
+      color: var(--text-dark);
+    }
+
+    .etiqueta-total {
+      text-align: right;
+      padding-right: 12px !important;
+      letter-spacing: 0.3px;
+    }
+
+    .total-alumno {
+      text-align: center;
+    }
+
+    @media print {
+      .topbar, .toolbar .actions, .tabs {
+        display: none !important;
+      }
+      .rubrica-panel {
+        display: block !important;
+        box-shadow: none;
+        page-break-after: always;
+      }
+    }
+  </style>
 </head>
-<body class="bg-light">
+<body>
+  <div class="topbar">
+    <strong>SIGEM Mami Luisa</strong>
+    <a href="/">Inicio</a>
+  </div>
 
-    <!-- Barra de navegación básica -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="/">SIGEM Mami Luisa</a>
-            <div class="collapse navbar-collapse">
-                <ul class="navbar-nav ms-auto">
-                    <li class="navbar-nav">
-                        <a class="nav-link" href="/">Inicio</a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Contenido Principal -->
-    <div class="container my-5">
-        <div class="row">
-            <div class="col-12">
-                <div class="card shadow-sm">
-                    <div class="card-body">
-                        <h2 class="card-title mb-4">Módulo de Rúbricas</h2>
-                        <p class="text-muted">Aquí puedes gestionar y visualizar las rúbricas de evaluación.</p>
-                        <hr>
-                        <!-- Agrega aquí tu tabla, formulario o contenido de rúbricas -->
-                        <div class="alert alert-info" role="alert">
-                            Módulo de rúbricas cargado correctamente.
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+  <div class="container">
+    <div class="toolbar">
+      <div class="tabs">
+        <button type="button" class="tab-btn active" data-target="c1">C1 - Comunicativa</button>
+        <button type="button" class="tab-btn" data-target="c2">C2 - Pensamiento Lógico...</button>
+        <button type="button" class="tab-btn" data-target="c3">C3 - Ética y Ciudadana...</button>
+        <button type="button" class="tab-btn" data-target="todas">Ver las 3 juntas</button>
+      </div>
+      <div class="actions">
+        <button type="button" class="btn btn-secondary" onclick="limpiarNotas()">Limpiar notas</button>
+        <button type="button" class="btn btn-primary" onclick="window.print()">Imprimir / Guardar PDF</button>
+      </div>
     </div>
 
-    <!-- Bootstrap 5 JS Bundle -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <div id="contenedor-rubricas"></div>
+  </div>
+
+  <script>
+    const ESTUDIANTES = [
+      "Adrian", "Albert", "Amaiha", "Ammy", "Brithany", "Dayrelin",
+      "Gabriela", "Jeyden", "Keisha", "Marcos", "Nashly", "Rochell", "Sebastian"
+    ];
+
+    const COMPETENCIAS = [
+      {
+        id: "c1",
+        area: "ÁREA: MATEMÁTICA",
+        competencia: "C1 - COMUNICATIVA",
+        indicadores: [
+          { texto: "Lee y escribe correctamente números naturales y números enteros.", valor: 10 },
+          { texto: "Interpreta los símbolos y signos matemáticos utilizados en las operaciones con números naturales y enteros.", valor: 10 },
+          { texto: "Explica oralmente los procedimientos utilizados para resolver ejercicios matemáticos", valor: 10 },
+          { texto: "Representa números naturales y enteros mediante expresiones y símbolos matemáticos", valor: 10 },
+          { texto: "Describe los pasos utilizados para calcular múltiplos y divisores de un número natural.", valor: 10 },
+          { texto: "Explica los criterios de divisibilidad mediante ejemplos matemáticos.", valor: 10 },
+          { texto: "Comunica correctamente los procedimientos para calcular el mínimo común múltiplo (MCM) y el máximo común divisor (MCD).", valor: 10 },
+          { texto: "Expresa por escrito los procedimientos empleados en ejercicios de potenciación y radicación", valor: 10 },
+          { texto: "Interpreta enunciados de problemas matemáticos relacionados con números naturales y enteros", valor: 10 },
+          { texto: "Presenta de forma ordenada y comprensible sus resultados y razonamientos matemáticos", valor: 10 }
+        ]
+      },
+      {
+        id: "c2",
+        area: "ÁREA:MATEMÁTICA",
+        competencia: "C2 Pensamiento Lógico Creativo y Crítico; Resolución de Problemas; Científica y Tecnológica",
+        indicadores: [
+          { texto: "Compara y ordena números naturales y enteros utilizando correctamente los signos de comparación.", valor: 10 },
+          { texto: "Identifica múltiplos y divisores de números naturales.", valor: 10 },
+          { texto: "Aplica los criterios de divisibilidad para determinar si un número es divisible entre otro.", valor: 10 },
+          { texto: "Calcula correctamente el mínimo común múltiplo (MCM) y el máximo común divisor (MCD).", valor: 10 },
+          { texto: "Resuelve ejercicios de potenciación con números naturales.", valor: 10 },
+          { texto: "Calcula cuadrados y cubos de números naturales y determina raíces cuadradas y cúbicas sencillas.", valor: 10 },
+          { texto: "Realiza operaciones de adición y sustracción con números enteros, aplicando las reglas de los signos.", valor: 10 },
+          { texto: "Identifica, continúa y crea patrones numéricos relacionados con números triangulares y cuadrados.", valor: 10 },
+          { texto: "Resuelve problemas de la vida cotidiana mediante operaciones con números naturales y enteros.", valor: 10 },
+          { texto: "Selecciona estrategias adecuadas para resolver problemas matemáticos y verifica la validez de sus resultados.", valor: 10 }
+        ]
+      },
+      {
+        id: "c3",
+        area: "ÁREA: MATEMÁTICA",
+        competencia: "C3 - Ética y Ciudadana; Desarrollo Personal y Espiritual; Ambiental y de la Salud",
+        indicadores: [
+          { texto: "Reconoce la importancia de los números naturales y enteros en las actividades cotidianas de su comunidad.", valor: 10 },
+          { texto: "Utiliza números naturales para organizar y registrar cantidades en situaciones de la vida diaria.", valor: 10 },
+          { texto: "Interpreta números enteros positivos y negativos en situaciones cotidianas, como temperaturas y cambios de nivel.", valor: 10 },
+          { texto: "Resuelve situaciones relacionadas con el cuidado de la salud utilizando operaciones matemáticas sencillas.", valor: 10 },
+          { texto: "Aplica operaciones con números naturales para organizar recursos y materiales del entorno escolar.", valor: 10 },
+          { texto: "Utiliza números y operaciones para interpretar situaciones relacionadas con el cuidado del medioambiente.", valor: 10 },
+          { texto: "Participa responsablemente en las actividades individuales y grupales de Matemática.", valor: 10 },
+          { texto: "Respeta las opiniones y los procedimientos de sus compañeros durante la resolución de problemas matemáticos.", valor: 10 },
+          { texto: "Demuestra honestidad al realizar ejercicios, presentar resultados y corregir sus errores matemáticos.", valor: 10 },
+          { texto: "Muestra perseverancia, autonomía y disposición para mejorar sus aprendizajes matemáticos", valor: 10 }
+        ]
+      }
+    ];
+
+    function renderizarTablas() {
+      const contenedor = document.getElementById("contenedor-rubricas");
+      contenedor.innerHTML = COMPETENCIAS.map((comp, idx) => {
+        const totalMaximo = comp.indicadores.reduce((acc, item) => acc + item.valor, 0);
+        const headersAlumnos = ESTUDIANTES.map(
+          (nombre) => `<th class="th-alumno"><div class="nombre-vertical">${nombre}</div></th>`
+        ).join("");
+
+        const filasIndicadores = comp.indicadores
+          .map((ind, filaIdx) => {
+            const celdasNotas = ESTUDIANTES.map(
+              (_, colIdx) => `
+                <td class="celda-nota">
+                  <input
+                    type="number"
+                    class="nota-input"
+                    min="0"
+                    max="${ind.valor}"
+                    step="any"
+                    data-comp="${idx}"
+                    data-col="${colIdx}"
+                    data-max="${ind.valor}"
+                    oninput="recalcularColumna(${idx}, ${colIdx}, this)"
+                  />
+                </td>`
+            ).join("");
+
+            return `
+              <tr>
+                <td class="indicador-texto">${ind.texto}</td>
+                <td class="celda-valor">${ind.valor}</td>
+                ${celdasNotas}
+              </tr>`;
+          })
+          .join("");
+
+        const celdasTotales = ESTUDIANTES.map(
+          (_, colIdx) => `<td class="total-alumno" id="total-${idx}-${colIdx}">0</td>`
+        ).join("");
+
+        return `
+          <section class="rubrica-panel ${idx === 0 ? "active" : ""}" id="panel-${comp.id}">
+            <table class="matriz">
+              <thead>
+                <tr>
+                  <th class="encabezado-area">
+                    <div class="titulo-area">${comp.area}</div>
+                    <div class="subtitulo-comp">${comp.competencia.replace(/\n/g, "<br>")}</div>
+                  </th>
+                  <th class="th-valor">VALOR</th>
+                  ${headersAlumnos}
+                </tr>
+              </thead>
+              <tbody>
+                ${filasIndicadores}
+                <tr class="fila-total">
+                  <td class="etiqueta-total">PUNTAJE TOTAL DE LA COMPETENCIA</td>
+                  <td class="celda-valor">${totalMaximo}</td>
+                  ${celdasTotales}
+                </tr>
+              </tbody>
+            </table>
+          </section>`;
+      }).join("");
+    }
+
+    function recalcularColumna(compIdx, colIdx, inputEl) {
+      const maxVal = parseFloat(inputEl.dataset.max);
+      let val = parseFloat(inputEl.value);
+
+      if (inputEl.value !== "") {
+        if (isNaN(val) || val < 0) {
+          inputEl.value = 0;
+        } else if (val > maxVal) {
+          inputEl.value = maxVal;
+        }
+      }
+
+      const inputs = document.querySelectorAll(
+        `.nota-input[data-comp="${compIdx}"][data-col="${colIdx}"]`
+      );
+      let suma = 0;
+      inputs.forEach((inp) => {
+        const n = parseFloat(inp.value);
+        if (!isNaN(n)) suma += n;
+      });
+
+      const totalCell = document.getElementById(`total-${compIdx}-${colIdx}`);
+      totalCell.textContent = Number.isInteger(suma) ? suma : suma.toFixed(1);
+    }
+
+    function limpiarNotas() {
+      document.querySelectorAll(".nota-input").forEach((inp) => {
+        inp.value = "";
+      });
+      document.querySelectorAll(".total-alumno").forEach((td) => {
+        td.textContent = "0";
+      });
+    }
+
+    document.querySelectorAll(".tab-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+
+        const target = btn.dataset.target;
+        document.querySelectorAll(".rubrica-panel").forEach((panel) => {
+          if (target === "todas") {
+            panel.classList.add("active");
+          } else {
+            panel.classList.toggle("active", panel.id === `panel-${target}`);
+          }
+        });
+      });
+    });
+
+    renderizarTablas();
+  </script>
 </body>
 </html>
