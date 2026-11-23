@@ -41,7 +41,7 @@
     }
 
     .container {
-      max-width: 1400px;
+      max-width: 1440px;
       margin: 24px auto;
       padding: 0 16px 40px;
     }
@@ -54,14 +54,39 @@
       margin-bottom: 20px;
       display: flex;
       flex-wrap: wrap;
-      gap: 12px;
+      gap: 14px;
       align-items: center;
       justify-content: space-between;
     }
 
+    .filtros {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .campo-grupo {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .campo-grupo select {
+      padding: 7px 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-dark);
+      background: #fff;
+    }
+
     .tabs {
       display: flex;
-      gap: 8px;
+      gap: 6px;
       flex-wrap: wrap;
     }
 
@@ -69,10 +94,11 @@
       border: 1px solid #cbd5e1;
       background: #f8fafc;
       color: var(--text-dark);
-      padding: 8px 14px;
+      padding: 7px 12px;
       border-radius: 6px;
       cursor: pointer;
       font-weight: bold;
+      font-size: 13px;
     }
 
     .tab-btn.active {
@@ -89,7 +115,7 @@
 
     .btn {
       border: none;
-      padding: 8px 14px;
+      padding: 8px 13px;
       border-radius: 6px;
       cursor: pointer;
       font-weight: bold;
@@ -98,6 +124,11 @@
 
     .btn-primary {
       background: #2563eb;
+      color: #fff;
+    }
+
+    .btn-success {
+      background: #16a34a;
       color: #fff;
     }
 
@@ -122,7 +153,7 @@
     table.matriz {
       width: 100%;
       border-collapse: collapse;
-      min-width: 980px;
+      min-width: 1020px;
     }
 
     table.matriz th,
@@ -138,25 +169,55 @@
       text-align: left;
       vertical-align: middle;
       padding: 10px !important;
-      min-width: 280px;
+      min-width: 310px;
     }
 
-    .encabezado-area .titulo-area {
+    .input-area {
+      width: 100%;
+      background: transparent;
+      border: 1px dashed transparent;
       font-size: 16px;
       font-weight: 800;
+      color: var(--text-dark);
+      padding: 2px 4px;
       margin-bottom: 4px;
+      text-transform: uppercase;
     }
 
-    .encabezado-area .subtitulo-comp {
+    .textarea-comp {
+      width: 100%;
+      background: transparent;
+      border: 1px dashed transparent;
       font-size: 13px;
       font-weight: 700;
+      color: var(--text-dark);
+      padding: 2px 4px;
+      resize: vertical;
       line-height: 1.3;
+    }
+
+    .input-area:hover,
+    .textarea-comp:hover,
+    .textarea-indicador:hover,
+    .input-valor:hover {
+      border-color: #6366f1;
+      background: rgba(255, 255, 255, 0.45);
+    }
+
+    .input-area:focus,
+    .textarea-comp:focus,
+    .textarea-indicador:focus,
+    .input-valor:focus {
+      outline: none;
+      border: 1px solid #2563eb;
+      background: #ffffff;
+      border-radius: 4px;
     }
 
     .th-valor {
       background: var(--accent-purple);
       color: var(--text-dark);
-      width: 62px;
+      width: 66px;
       text-align: center;
       vertical-align: bottom;
       font-size: 13px !important;
@@ -182,16 +243,59 @@
       margin: 0 auto;
     }
 
-    .indicador-texto {
+    .celda-indicador {
+      padding: 4px 6px !important;
+    }
+
+    .fila-indicador-flex {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .textarea-indicador {
+      width: 100%;
+      border: 1px dashed transparent;
+      background: transparent;
       font-weight: 700;
+      font-size: 12px;
       line-height: 1.25;
       color: #111827;
+      resize: vertical;
+      padding: 3px 4px;
+      min-height: 34px;
+    }
+
+    .btn-del-fila {
+      border: none;
+      background: transparent;
+      color: #dc2626;
+      font-weight: bold;
+      cursor: pointer;
+      padding: 2px 5px;
+      border-radius: 4px;
+      font-size: 13px;
+      opacity: 0.65;
+    }
+
+    .btn-del-fila:hover {
+      opacity: 1;
+      background: #fee2e2;
     }
 
     .celda-valor {
       text-align: center;
+      padding: 2px !important;
+    }
+
+    .input-valor {
+      width: 100%;
+      height: 32px;
+      border: 1px dashed transparent;
+      background: transparent;
+      text-align: center;
       font-weight: 800;
-      font-size: 15px !important;
+      font-size: 15px;
       color: var(--text-dark);
     }
 
@@ -231,18 +335,30 @@
       letter-spacing: 0.3px;
     }
 
-    .total-alumno {
+    .total-alumno,
+    .total-valor-max {
       text-align: center;
     }
 
+    .panel-footer {
+      margin-top: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
     @media print {
-      .topbar, .toolbar .actions, .tabs {
+      .topbar, .toolbar, .panel-footer, .btn-del-fila {
         display: none !important;
       }
       .rubrica-panel {
         display: block !important;
         box-shadow: none;
         page-break-after: always;
+      }
+      .input-area, .textarea-comp, .textarea-indicador, .input-valor {
+        border: none !important;
+        resize: none;
       }
     }
   </style>
@@ -255,15 +371,40 @@
 
   <div class="container">
     <div class="toolbar">
-      <div class="tabs">
-        <button type="button" class="tab-btn active" data-target="c1">C1 - Comunicativa</button>
-        <button type="button" class="tab-btn" data-target="c2">C2 - Pensamiento Lógico...</button>
-        <button type="button" class="tab-btn" data-target="c3">C3 - Ética y Ciudadana...</button>
-        <button type="button" class="tab-btn" data-target="todas">Ver las 3 juntas</button>
+      <div class="filtros">
+        <div class="campo-grupo">
+          <label for="select-materia">Materia / Área:</label>
+          <select id="select-materia" onchange="cambiarMateria()">
+            {% if materias %}
+              {% for m in materias %}
+                <option value="{{ m }}">{{ m }}</option>
+              {% endfor %}
+            {% else %}
+              <option value="MATEMÁTICA">MATEMÁTICA</option>
+              <option value="LENGUA ESPAÑOLA">LENGUA ESPAÑOLA</option>
+              <option value="CIENCIAS SOCIALES">CIENCIAS SOCIALES</option>
+              <option value="CIENCIAS DE LA NATURALEZA">CIENCIAS DE LA NATURALEZA</option>
+              <option value="INGLÉS">INGLÉS</option>
+              <option value="INFORMÁTICA">INFORMÁTICA</option>
+              <option value="EDUCACIÓN FÍSICA">EDUCACIÓN FÍSICA</option>
+              <option value="EDUCACIÓN ARTÍSTICA">EDUCACIÓN ARTÍSTICA</option>
+              <option value="FORMACIÓN INTEGRAL HUMANA Y RELIGIOSA">FORMACIÓN INTEGRAL HUMANA Y RELIGIOSA</option>
+            {% endif %}
+          </select>
+        </div>
+
+        <div class="tabs">
+          <button type="button" class="tab-btn active" data-target="c1">C1 - Comunicativa</button>
+          <button type="button" class="tab-btn" data-target="c2">C2 - Pensamiento Lógico...</button>
+          <button type="button" class="tab-btn" data-target="c3">C3 - Ética y Ciudadana...</button>
+          <button type="button" class="tab-btn" data-target="todas">Ver las 3 juntas</button>
+        </div>
       </div>
+
       <div class="actions">
+        <button type="button" class="btn btn-success" onclick="guardarLocal()">Guardar cambios</button>
         <button type="button" class="btn btn-secondary" onclick="limpiarNotas()">Limpiar notas</button>
-        <button type="button" class="btn btn-primary" onclick="window.print()">Imprimir / Guardar PDF</button>
+        <button type="button" class="btn btn-primary" onclick="window.print()">Imprimir / PDF</button>
       </div>
     </div>
 
@@ -271,15 +412,11 @@
   </div>
 
   <script>
-    const ESTUDIANTES = [
-      "Adrian", "Albert", "Amaiha", "Ammy", "Brithany", "Dayrelin",
-      "Gabriela", "Jeyden", "Keisha", "Marcos", "Nashly", "Rochell", "Sebastian"
-    ];
+    const ESTUDIANTES = JSON.parse('{{ (estudiantes or ["Adrian", "Albert", "Amaiha", "Ammy", "Brithany", "Dayrelin", "Gabriela", "Jeyden", "Keisha", "Marcos", "Nashly", "Rochell", "Sebastian"]) | tojson | safe }}');
 
-    const COMPETENCIAS = [
+    const PLANTILLA_BASE = [
       {
         id: "c1",
-        area: "ÁREA: MATEMÁTICA",
         competencia: "C1 - COMUNICATIVA",
         indicadores: [
           { texto: "Lee y escribe correctamente números naturales y números enteros.", valor: 10 },
@@ -296,8 +433,7 @@
       },
       {
         id: "c2",
-        area: "ÁREA:MATEMÁTICA",
-        competencia: "C2 Pensamiento Lógico Creativo y Crítico; Resolución de Problemas; Científica y Tecnológica",
+        competencia: "C2\nPensamiento Lógico Creativo y Crítico; Resolución de Problemas; Científica y Tecnológica",
         indicadores: [
           { texto: "Compara y ordena números naturales y enteros utilizando correctamente los signos de comparación.", valor: 10 },
           { texto: "Identifica múltiplos y divisores de números naturales.", valor: 10 },
@@ -313,7 +449,6 @@
       },
       {
         id: "c3",
-        area: "ÁREA: MATEMÁTICA",
         competencia: "C3 - Ética y Ciudadana; Desarrollo Personal y Espiritual; Ambiental y de la Salud",
         indicadores: [
           { texto: "Reconoce la importancia de los números naturales y enteros en las actividades cotidianas de su comunidad.", valor: 10 },
@@ -330,84 +465,185 @@
       }
     ];
 
-    function renderizarTablas() {
-      const contenedor = document.getElementById("contenedor-rubricas");
-      contenedor.innerHTML = COMPETENCIAS.map((comp, idx) => {
-        const totalMaximo = comp.indicadores.reduce((acc, item) => acc + item.valor, 0);
-        const headersAlumnos = ESTUDIANTES.map(
-          (nombre) => `<th class="th-alumno"><div class="nombre-vertical">${nombre}</div></th>`
-        ).join("");
-
-        const filasIndicadores = comp.indicadores
-          .map((ind, filaIdx) => {
-            const celdasNotas = ESTUDIANTES.map(
-              (_, colIdx) => `
-                <td class="celda-nota">
-                  <input
-                    type="number"
-                    class="nota-input"
-                    min="0"
-                    max="${ind.valor}"
-                    step="any"
-                    data-comp="${idx}"
-                    data-col="${colIdx}"
-                    data-max="${ind.valor}"
-                    oninput="recalcularColumna(${idx}, ${colIdx}, this)"
-                  />
-                </td>`
-            ).join("");
-
-            return `
-              <tr>
-                <td class="indicador-texto">${ind.texto}</td>
-                <td class="celda-valor">${ind.valor}</td>
-                ${celdasNotas}
-              </tr>`;
-          })
-          .join("");
-
-        const celdasTotales = ESTUDIANTES.map(
-          (_, colIdx) => `<td class="total-alumno" id="total-${idx}-${colIdx}">0</td>`
-        ).join("");
-
-        return `
-          <section class="rubrica-panel ${idx === 0 ? "active" : ""}" id="panel-${comp.id}">
-            <table class="matriz">
-              <thead>
-                <tr>
-                  <th class="encabezado-area">
-                    <div class="titulo-area">${comp.area}</div>
-                    <div class="subtitulo-comp">${comp.competencia.replace(/\n/g, "<br>")}</div>
-                  </th>
-                  <th class="th-valor">VALOR</th>
-                  ${headersAlumnos}
-                </tr>
-              </thead>
-              <tbody>
-                ${filasIndicadores}
-                <tr class="fila-total">
-                  <td class="etiqueta-total">PUNTAJE TOTAL DE LA COMPETENCIA</td>
-                  <td class="celda-valor">${totalMaximo}</td>
-                  ${celdasTotales}
-                </tr>
-              </tbody>
-            </table>
-          </section>`;
-      }).join("");
+    function obtenerMateriaActual() {
+      return document.getElementById("select-materia").value;
     }
 
-    function recalcularColumna(compIdx, colIdx, inputEl) {
-      const maxVal = parseFloat(inputEl.dataset.max);
+    function claveStorage(materia) {
+      return `sigem_rubrica_${materia}`;
+    }
+
+    function cargarDatosMateria(materia) {
+      const guardado = localStorage.getItem(claveStorage(materia));
+      if (guardado) {
+        return JSON.parse(guardado);
+      }
+      const esMatematica = materia.toUpperCase().includes("MATEM");
+      return PLANTILLA_BASE.map((comp) => ({
+        id: comp.id,
+        areaTexto: `ÁREA: ${materia.toUpperCase()}`,
+        competencia: comp.competencia,
+        indicadores: comp.indicadores.map((ind, idx) => ({
+          texto: esMatematica ? ind.texto : `Indicador ${idx + 1} de ${materia}...`,
+          valor: ind.valor,
+          notas: {}
+        }))
+      }));
+    }
+
+    let datosActuales = [];
+    let pestanaActiva = "c1";
+
+    function renderizarTablas() {
+      const contenedor = document.getElementById("contenedor-rubricas");
+      contenedor.innerHTML = datosActuales
+        .map((comp, compIdx) => {
+          const totalMaximo = comp.indicadores.reduce(
+            (acc, item) => acc + (parseFloat(item.valor) || 0),
+            0
+          );
+
+          const headersAlumnos = ESTUDIANTES.map(
+            (nombre) => `<th class="th-alumno"><div class="nombre-vertical">${nombre}</div></th>`
+          ).join("");
+
+          const filasIndicadores = comp.indicadores
+            .map((ind, filaIdx) => {
+              const celdasNotas = ESTUDIANTES.map((est, colIdx) => {
+                const notaGuardada = ind.notas && ind.notas[est] !== undefined ? ind.notas[est] : "";
+                return `
+                  <td class="celda-nota">
+                    <input
+                      type="number"
+                      class="nota-input"
+                      min="0"
+                      max="${ind.valor}"
+                      step="any"
+                      value="${notaGuardada}"
+                      data-comp="${compIdx}"
+                      data-fila="${filaIdx}"
+                      data-col="${colIdx}"
+                      data-est="${est}"
+                      oninput="actualizarNota(${compIdx}, ${filaIdx}, ${colIdx}, '${est}', this)"
+                    />
+                  </td>`;
+              }).join("");
+
+              return `
+                <tr>
+                  <td class="celda-indicador">
+                    <div class="fila-indicador-flex">
+                      <textarea
+                        class="textarea-indicador"
+                        rows="2"
+                        placeholder="Escribe el indicador de logro..."
+                        oninput="datosActuales[${compIdx}].indicadores[${filaIdx}].texto = this.value"
+                      >${ind.texto}</textarea>
+                      <button type="button" class="btn-del-fila" title="Eliminar indicador" onclick="eliminarIndicador(${compIdx}, ${filaIdx})">✕</button>
+                    </div>
+                  </td>
+                  <td class="celda-valor">
+                    <input
+                      type="number"
+                      class="input-valor"
+                      min="0"
+                      step="any"
+                      value="${ind.valor}"
+                      oninput="actualizarValorIndicador(${compIdx}, ${filaIdx}, this.value)"
+                    />
+                  </td>
+                  ${celdasNotas}
+                </tr>`;
+            })
+            .join("");
+
+          const celdasTotales = ESTUDIANTES.map(
+            (_, colIdx) => `<td class="total-alumno" id="total-${compIdx}-${colIdx}">0</td>`
+          ).join("");
+
+          const visible = pestanaActiva === "todas" || pestanaActiva === comp.id ? "active" : "";
+
+          return `
+            <section class="rubrica-panel ${visible}" id="panel-${comp.id}">
+              <table class="matriz">
+                <thead>
+                  <tr>
+                    <th class="encabezado-area">
+                      <input
+                        type="text"
+                        class="input-area"
+                        value="${comp.areaTexto}"
+                        oninput="datosActuales[${compIdx}].areaTexto = this.value"
+                      />
+                      <textarea
+                        class="textarea-comp"
+                        rows="2"
+                        oninput="datosActuales[${compIdx}].competencia = this.value"
+                      >${comp.competencia}</textarea>
+                    </th>
+                    <th class="th-valor">VALOR</th>
+                    ${headersAlumnos}
+                  </tr>
+                </thead>
+                <tbody>
+                  ${filasIndicadores}
+                  <tr class="fila-total">
+                    <td class="etiqueta-total">PUNTAJE TOTAL DE LA COMPETENCIA</td>
+                    <td class="total-valor-max" id="max-${compIdx}">${totalMaximo}</td>
+                    ${celdasTotales}
+                  </tr>
+                </tbody>
+              </table>
+              <div class="panel-footer">
+                <button type="button" class="btn btn-secondary" onclick="agregarIndicador(${compIdx})">+ Agregar indicador</button>
+                <small style="color:#64748b;">Haz clic directamente sobre el área, competencia, indicadores o valores para editarlos.</small>
+              </div>
+            </section>`;
+        })
+        .join("");
+
+      recalcularTodo();
+    }
+
+    function actualizarValorIndicador(compIdx, filaIdx, nuevoValor) {
+      const val = parseFloat(nuevoValor) || 0;
+      datosActuales[compIdx].indicadores[filaIdx].valor = val;
+
+      document
+        .querySelectorAll(`.nota-input[data-comp="${compIdx}"][data-fila="${filaIdx}"]`)
+        .forEach((inp) => {
+          inp.max = val;
+        });
+
+      const totalMax = datosActuales[compIdx].indicadores.reduce(
+        (acc, item) => acc + (parseFloat(item.valor) || 0),
+        0
+      );
+      document.getElementById(`max-${compIdx}`).textContent = totalMax;
+      recalcularTodo();
+    }
+
+    function actualizarNota(compIdx, filaIdx, colIdx, est, inputEl) {
+      const maxVal = parseFloat(datosActuales[compIdx].indicadores[filaIdx].valor) || 0;
       let val = parseFloat(inputEl.value);
 
       if (inputEl.value !== "") {
         if (isNaN(val) || val < 0) {
           inputEl.value = 0;
+          val = 0;
         } else if (val > maxVal) {
           inputEl.value = maxVal;
+          val = maxVal;
         }
+        datosActuales[compIdx].indicadores[filaIdx].notas[est] = val;
+      } else {
+        delete datosActuales[compIdx].indicadores[filaIdx].notas[est];
       }
 
+      recalcularColumna(compIdx, colIdx);
+    }
+
+    function recalcularColumna(compIdx, colIdx) {
       const inputs = document.querySelectorAll(
         `.nota-input[data-comp="${compIdx}"][data-col="${colIdx}"]`
       );
@@ -416,37 +652,66 @@
         const n = parseFloat(inp.value);
         if (!isNaN(n)) suma += n;
       });
-
       const totalCell = document.getElementById(`total-${compIdx}-${colIdx}`);
-      totalCell.textContent = Number.isInteger(suma) ? suma : suma.toFixed(1);
+      if (totalCell) {
+        totalCell.textContent = Number.isInteger(suma) ? suma : suma.toFixed(1);
+      }
+    }
+
+    function recalcularTodo() {
+      datosActuales.forEach((_, compIdx) => {
+        ESTUDIANTES.forEach((__, colIdx) => {
+          recalcularColumna(compIdx, colIdx);
+        });
+      });
+    }
+
+    function agregarIndicador(compIdx) {
+      datosActuales[compIdx].indicadores.push({
+        texto: "Nuevo indicador de logro...",
+        valor: 10,
+        notas: {}
+      });
+      renderizarTablas();
+    }
+
+    function eliminarIndicador(compIdx, filaIdx) {
+      if (datosActuales[compIdx].indicadores.length <= 1) return;
+      datosActuales[compIdx].indicadores.splice(filaIdx, 1);
+      renderizarTablas();
+    }
+
+    function guardarLocal() {
+      const materia = obtenerMateriaActual();
+      localStorage.setItem(claveStorage(materia), JSON.stringify(datosActuales));
+      alert(`Rúbrica de ${materia} guardada correctamente.`);
     }
 
     function limpiarNotas() {
-      document.querySelectorAll(".nota-input").forEach((inp) => {
-        inp.value = "";
+      datosActuales.forEach((comp) => {
+        comp.indicadores.forEach((ind) => {
+          ind.notas = {};
+        });
       });
-      document.querySelectorAll(".total-alumno").forEach((td) => {
-        td.textContent = "0";
-      });
+      renderizarTablas();
+    }
+
+    function cambiarMateria() {
+      const materia = obtenerMateriaActual();
+      datosActuales = cargarDatosMateria(materia);
+      renderizarTablas();
     }
 
     document.querySelectorAll(".tab-btn").forEach((btn) => {
       btn.addEventListener("click", () => {
         document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
         btn.classList.add("active");
-
-        const target = btn.dataset.target;
-        document.querySelectorAll(".rubrica-panel").forEach((panel) => {
-          if (target === "todas") {
-            panel.classList.add("active");
-          } else {
-            panel.classList.toggle("active", panel.id === `panel-${target}`);
-          }
-        });
+        pestanaActiva = btn.dataset.target;
+        renderizarTablas();
       });
     });
 
-    renderizarTablas();
+    cambiarMateria();
   </script>
 </body>
 </html>
