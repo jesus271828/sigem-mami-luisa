@@ -9,7 +9,8 @@
       --bg-page: #f4f6fb;
       --header-bg: #1e2229;
       --card-bg: #ffffff;
-      --accent-purple: #c5bbf7;
+      --accent-header: #c5bbf7;
+      --accent-border: #8b7ce8;
       --text-dark: #1d2238;
       --border-color: #333748;
     }
@@ -142,8 +143,10 @@
       background: var(--card-bg);
       padding: 16px;
       border-radius: 8px;
+      border-top: 4px solid var(--accent-border);
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
       overflow-x: auto;
+      margin-bottom: 18px;
     }
 
     .rubrica-panel.active {
@@ -164,12 +167,13 @@
     }
 
     .encabezado-area {
-      background: var(--accent-purple);
+      background: var(--accent-header);
       color: var(--text-dark);
       text-align: left;
       vertical-align: middle;
       padding: 10px !important;
       min-width: 310px;
+      transition: background-color 0.2s ease;
     }
 
     .input-area {
@@ -200,8 +204,8 @@
     .textarea-comp:hover,
     .textarea-indicador:hover,
     .input-valor:hover {
-      border-color: #6366f1;
-      background: rgba(255, 255, 255, 0.45);
+      border-color: rgba(29, 34, 56, 0.45);
+      background: rgba(255, 255, 255, 0.5);
     }
 
     .input-area:focus,
@@ -215,13 +219,14 @@
     }
 
     .th-valor {
-      background: var(--accent-purple);
+      background: var(--accent-header);
       color: var(--text-dark);
       width: 66px;
       text-align: center;
       vertical-align: bottom;
       font-size: 13px !important;
       font-weight: 800;
+      transition: background-color 0.2s ease;
     }
 
     .th-alumno {
@@ -412,65 +417,73 @@
   </div>
 
   <script>
-    const ESTUDIANTES = JSON.parse('{{ (estudiantes or []) | tojson | safe }}');
-
-    const PLANTILLA_BASE = [
-      {
-        id: "c1",
-        competencia: "C1 - COMUNICATIVA",
-        indicadores: [
-          { texto: "Lee y escribe correctamente números naturales y números enteros.", valor: 10 },
-          { texto: "Interpreta los símbolos y signos matemáticos utilizados en las operaciones con números naturales y enteros.", valor: 10 },
-          { texto: "Explica oralmente los procedimientos utilizados para resolver ejercicios matemáticos", valor: 10 },
-          { texto: "Representa números naturales y enteros mediante expresiones y símbolos matemáticos", valor: 10 },
-          { texto: "Describe los pasos utilizados para calcular múltiplos y divisores de un número natural.", valor: 10 },
-          { texto: "Explica los criterios de divisibilidad mediante ejemplos matemáticos.", valor: 10 },
-          { texto: "Comunica correctamente los procedimientos para calcular el mínimo común múltiplo (MCM) y el máximo común divisor (MCD).", valor: 10 },
-          { texto: "Expresa por escrito los procedimientos empleados en ejercicios de potenciación y radicación", valor: 10 },
-          { texto: "Interpreta enunciados de problemas matemáticos relacionados con números naturales y enteros", valor: 10 },
-          { texto: "Presenta de forma ordenada y comprensible sus resultados y razonamientos matemáticos", valor: 10 }
-        ]
-      },
-      {
-        id: "c2",
-        competencia: "C2\nPensamiento Lógico Creativo y Crítico; Resolución de Problemas; Científica y Tecnológica",
-        indicadores: [
-          { texto: "Compara y ordena números naturales y enteros utilizando correctamente los signos de comparación.", valor: 10 },
-          { texto: "Identifica múltiplos y divisores de números naturales.", valor: 10 },
-          { texto: "Aplica los criterios de divisibilidad para determinar si un número es divisible entre otro.", valor: 10 },
-          { texto: "Calcula correctamente el mínimo común múltiplo (MCM) y el máximo común divisor (MCD).", valor: 10 },
-          { texto: "Resuelve ejercicios de potenciación con números naturales.", valor: 10 },
-          { texto: "Calcula cuadrados y cubos de números naturales y determina raíces cuadradas y cúbicas sencillas.", valor: 10 },
-          { texto: "Realiza operaciones de adición y sustracción con números enteros, aplicando las reglas de los signos.", valor: 10 },
-          { texto: "Identifica, continúa y crea patrones numéricos relacionados con números triangulares y cuadrados.", valor: 10 },
-          { texto: "Resuelve problemas de la vida cotidiana mediante operaciones con números naturales y enteros.", valor: 10 },
-          { texto: "Selecciona estrategias adecuadas para resolver problemas matemáticos y verifica la validez de sus resultados.", valor: 10 }
-        ]
-      },
-      {
-        id: "c3",
-        competencia: "C3 - Ética y Ciudadana; Desarrollo Personal y Espiritual; Ambiental y de la Salud",
-        indicadores: [
-          { texto: "Reconoce la importancia de los números naturales y enteros en las actividades cotidianas de su comunidad.", valor: 10 },
-          { texto: "Utiliza números naturales para organizar y registrar cantidades en situaciones de la vida diaria.", valor: 10 },
-          { texto: "Interpreta números enteros positivos y negativos en situaciones cotidianas, como temperaturas y cambios de nivel.", valor: 10 },
-          { texto: "Resuelve situaciones relacionadas con el cuidado de la salud utilizando operaciones matemáticas sencillas.", valor: 10 },
-          { texto: "Aplica operaciones con números naturales para organizar recursos y materiales del entorno escolar.", valor: 10 },
-          { texto: "Utiliza números y operaciones para interpretar situaciones relacionadas con el cuidado del medioambiente.", valor: 10 },
-          { texto: "Participa responsablemente en las actividades individuales y grupales de Matemática.", valor: 10 },
-          { texto: "Respeta las opiniones y los procedimientos de sus compañeros durante la resolución de problemas matemáticos.", valor: 10 },
-          { texto: "Demuestra honestidad al realizar ejercicios, presentar resultados y corregir sus errores matemáticos.", valor: 10 },
-          { texto: "Muestra perseverancia, autonomía y disposición para mejorar sus aprendizajes matemáticos", valor: 10 }
-        ]
-      }
+    const ESTUDIANTES_RESPALDO = [
+      "Adrian", "Albert", "Amaiha", "Ammy", "Brithany", "Dayrelin",
+      "Gabriela", "Jeyden", "Keisha", "Marcos", "Nashly", "Rochell", "Sebastian"
     ];
+
+    const ESTUDIANTES_FLASK = JSON.parse('{{ (estudiantes or []) | tojson | safe }}');
+    const ESTUDIANTES = Array.isArray(ESTUDIANTES_FLASK) && ESTUDIANTES_FLASK.length > 0
+      ? ESTUDIANTES_FLASK
+      : ESTUDIANTES_RESPALDO;
+
+    const COLORES_MATERIAS = [
+      { header: "#c5bbf7", border: "#8b7ce8" }, // Lila suave
+      { header: "#bae6fd", border: "#0284c7" }, // Celeste
+      { header: "#bbf7d0", border: "#16a34a" }, // Verde menta
+      { header: "#fde68a", border: "#d97706" }, // Amarillo cálido
+      { header: "#fbcfe8", border: "#db2777" }, // Rosa pastel
+      { header: "#fed7aa", border: "#ea580c" }, // Durazno / naranja suave
+      { header: "#ddd6fe", border: "#7c3aed" }, // Violeta claro
+      { header: "#99f6e4", border: "#0d9488" }, // Turquesa suave
+      { header: "#fecaca", border: "#dc2626" }  // Coral suave
+    ];
+
+    function obtenerPaletaMateria(materia) {
+      const clave = (materia || "").toUpperCase();
+      if (clave.includes("MATEM")) return COLORES_MATERIAS[0];
+      if (clave.includes("LENGUA") || clave.includes("ESPAÑ")) return COLORES_MATERIAS[1];
+      if (clave.includes("SOCIAL")) return COLORES_MATERIAS[2];
+      if (clave.includes("NATURAL")) return COLORES_MATERIAS[3];
+      if (clave.includes("INGL")) return COLORES_MATERIAS[4];
+      if (clave.includes("INFORM")) return COLORES_MATERIAS[5];
+      if (clave.includes("FÍSICA") || clave.includes("FISICA")) return COLORES_MATERIAS[6];
+      if (clave.includes("ARTÍSTI") || clave.includes("ARTISTI")) return COLORES_MATERIAS[7];
+      if (clave.includes("FORMACIÓN") || clave.includes("FORMACION")) return COLORES_MATERIAS[8];
+
+      let hash = 0;
+      for (let i = 0; i < clave.length; i++) {
+        hash = clave.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      return COLORES_MATERIAS[Math.abs(hash) % COLORES_MATERIAS.length];
+    }
+
+    function aplicarColorMateria(materia) {
+      const paleta = obtenerPaletaMateria(materia);
+      document.documentElement.style.setProperty("--accent-header", paleta.header);
+      document.documentElement.style.setProperty("--accent-border", paleta.border);
+    }
+
+    const COMPETENCIAS_BASE = [
+      { id: "c1", competencia: "C1 - COMUNICATIVA" },
+      { id: "c2", competencia: "C2\nPensamiento Lógico Creativo y Crítico; Resolución de Problemas; Científica y Tecnológica" },
+      { id: "c3", competencia: "C3 - Ética y Ciudadana; Desarrollo Personal y Espiritual; Ambiental y de la Salud" }
+    ];
+
+    function crearIndicadoresVacios(cantidad = 10) {
+      return Array.from({ length: cantidad }, () => ({
+        texto: "",
+        valor: 10,
+        notas: {}
+      }));
+    }
 
     function obtenerMateriaActual() {
       return document.getElementById("select-materia").value;
     }
 
     function claveStorage(materia) {
-      return `sigem_rubrica_${materia}`;
+      return `sigem_rubrica_v2_${materia}`;
     }
 
     function cargarDatosMateria(materia) {
@@ -478,16 +491,11 @@
       if (guardado) {
         return JSON.parse(guardado);
       }
-      const esMatematica = materia.toUpperCase().includes("MATEM");
-      return PLANTILLA_BASE.map((comp) => ({
+      return COMPETENCIAS_BASE.map((comp) => ({
         id: comp.id,
         areaTexto: `ÁREA: ${materia.toUpperCase()}`,
         competencia: comp.competencia,
-        indicadores: comp.indicadores.map((ind, idx) => ({
-          texto: esMatematica ? ind.texto : `Indicador ${idx + 1} de ${materia}...`,
-          valor: ind.valor,
-          notas: {}
-        }))
+        indicadores: crearIndicadoresVacios(10)
       }));
     }
 
@@ -538,7 +546,7 @@
                         rows="2"
                         placeholder="Escribe el indicador de logro..."
                         oninput="datosActuales[${compIdx}].indicadores[${filaIdx}].texto = this.value"
-                      >${ind.texto}</textarea>
+                      >${ind.texto || ""}</textarea>
                       <button type="button" class="btn-del-fila" title="Eliminar indicador" onclick="eliminarIndicador(${compIdx}, ${filaIdx})">✕</button>
                     </div>
                   </td>
@@ -668,7 +676,7 @@
 
     function agregarIndicador(compIdx) {
       datosActuales[compIdx].indicadores.push({
-        texto: "Nuevo indicador de logro...",
+        texto: "",
         valor: 10,
         notas: {}
       });
@@ -698,6 +706,7 @@
 
     function cambiarMateria() {
       const materia = obtenerMateriaActual();
+      aplicarColorMateria(materia);
       datosActuales = cargarDatosMateria(materia);
       renderizarTablas();
     }
