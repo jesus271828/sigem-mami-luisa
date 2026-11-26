@@ -2710,23 +2710,91 @@ def rubricas():
     if "usuario" not in session and "nombre_completo" not in session:
         return redirect(url_for("login"))
 
-    curso_asignado = session.get("curso_asignado", "")
-    usuario_actual = session.get("usuario") or session.get("nombre_completo", "")
+    usuario_actual = str(session.get("usuario") or session.get("nombre_completo") or "").strip()
+    rol_actual = str(session.get("rol", "")).strip().lower()
+    curso_seleccionado = request.args.get("curso", "").strip()
 
-    # Ajusta tabla y columnas según tu base de datos PostgreSQL en Supabase:
-    # cur.execute(
-    #     "SELECT nombre FROM estudiantes WHERE curso = %s ORDER BY nombre ASC",
-    #     (curso_asignado,)
-    # )
-    # estudiantes = [fila[0] for fila in cur.fetchall()]
+    conn = get_db_connection()
+    estudiantes_nombres = []
+    cursos_disponibles = []
+    curso_activo = ""
 
-    estudiantes = []
+    try:
+        cursos_disponibles = conn.execute(
+            "SELECT DISTINCT grado FROM estudiantes WHERE grado IS NOT NULL ORDER BY grado ASC"
+        ).fetchall()
+
+        if rol_actual in ["oficina", "admin"]:
+            if curso_seleccionado:
+                curso_activo = curso_seleccionado
+                rows = conn.execute(
+                    """
+                    SELECT nombres, apellidos FROM estudiantes
+                    WHERE grado = ?
+                    ORDER BY nombres ASC, apellidos ASC
+                    """,
+                    (curso_seleccionado,),
+                ).fetchall()
+            else:
+                rows = conn.execute(
+                    """
+                    SELECT nombres, apellidos FROM estudiantes
+                    ORDER BY grado ASC, nombres ASC, apellidos ASC
+                    """
+                ).fetchall()
+        else:
+            usuario_db = conn.execute(
+                "SELECT curso_asignado FROM usuarios WHERE username = ?",
+                (usuario_actual,),
+            ).fetchone()
+
+            curso_docente = (
+                usuario_db["curso_asignado"]
+                if usuario_db and usuario_db["curso_asignado"]
+                else session.get("grado")
+            )
+            curso_activo = str(curso_docente or "").strip()
+
+            if curso_activo:
+                rows = conn.execute(
+                    """
+                    SELECT nombres, apellidos FROM estudiantes
+                    WHERE grado = ?
+                    ORDER BY apellidos ASC, nombres ASC
+                    """,
+                    (curso_activo,),
+                ).fetchall()
+            else:
+                rows = conn.execute(
+                    """
+                    SELECT nombres, apellidos FROM estudiantes
+                    ORDER BY grado ASC, apellidos ASC, nombres ASC
+                    """
+                ).fetchall()
+
+        for row in rows:
+            est = dict(row)
+            nombre_completo = str(est.get("nombres") or "").strip()
+            if not nombre_completo:
+                nombre_completo = str(est.get("apellidos") or "").strip()
+            primer_nombre = nombre_completo.split()[0] if nombre_completo else ""
+            if primer_nombre:
+                estudiantes_nombres.append(primer_nombre)
+
+    except Exception as e:
+        print(f"Error en rubricas: {e}")
+        estudiantes_nombres = []
+        cursos_disponibles = []
+    finally:
+        conn.close()
 
     return render_template(
         "rubricas.html",
-        estudiantes=estudiantes,
-        curso_asignado=curso_asignado,
-        usuario_actual=usuario_actual,
+        estudiantes=estudiantes_nombres,
+        cursos_disponibles=cursos_disponibles,
+        curso_seleccionado=curso_seleccionado,
+        curso_activo=curso_activo,
+        rol_actual=rol_actual,
     )
 
 
