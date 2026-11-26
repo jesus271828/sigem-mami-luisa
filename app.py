@@ -2730,6 +2730,28 @@ def _sesion_activa():
     return any(k in session and session.get(k) for k in ("usuario", "nombre_completo", "usuario_id"))
 
 
+def _normalizar_curso(valor):
+    if not valor:
+        return None
+    limpio = str(valor).strip()
+    if limpio.upper() in {"VACÍO", "VACIO", "NULL", "NONE", ""}:
+        return None
+    return limpio
+
+
+def _sesion_activa():
+    return any(
+        k in session and session.get(k)
+        for k in ("usuario", "nombre_completo", "usuario_id")
+    )
+
+
+def _extraer_valor_fila(fila, clave, indice=0):
+    if isinstance(fila, dict):
+        return fila.get(clave)
+    return fila[indice]
+
+
 @app.route("/rubricas", methods=["GET"])
 def vista_rubricas():
     if not _sesion_activa():
@@ -2741,49 +2763,68 @@ def vista_rubricas():
     competencia_sel = (request.args.get("competencia") or "C1").strip()
     curso_sel = _normalizar_curso(request.args.get("curso"))
 
+    cursos_disponibles = []
+    curso_activo = curso_sel or curso_usuario
+    estudiantes = []
+    indicadores = []
+
     conn = get_db_connection()
     try:
         with conn.cursor() as cur:
-            if rol in {"admin", "oficina", "area_maestro", "área_maestro"}:
-                cur.execute(
-                    """
-                    SELECT DISTINCT curso
-                    FROM estudiantes
-                    WHERE curso IS NOT NULL AND TRIM(curso) <> ''
-                    ORDER BY curso ASC
-                    """
-                )
-                cursos_disponibles = [r[0] for r in cur.fetchall()]
-                curso_activo = curso_sel or curso_usuario or (
-                    cursos_disponibles[0] if cursos_disponibles else None
-                )
-            else:
-                curso_activo = curso_usuario
-                cursos_disponibles = [curso_usuario] if curso_usuario else []
+            try:
+                if rol in {"admin", "oficina", "area_maestro", "área_maestro"}:
+                    cur.execute(
+                        """
+                        SELECT DISTINCT curso
+                        FROM estudiantes
+                        WHERE curso IS NOT NULL AND TRIM(curso) <> ''
+                        ORDER BY curso ASC
+                        """
+                    )
+                    filas_cursos = cur.fetchall()
+                    cursos_disponibles = [
+                        str(_extraer_valor_fila(r, "curso", 0)).strip()
+                        for r in filas_cursos
+                        if _normalizar_curso(_extraer_valor_fila(r, "curso", 0))
+                    ]
+                    curso_activo = (
+                        curso_sel
+                        or curso_usuario
+                        or (cursos_disponibles[0] if cursos_disponibles else None)
+                    )
+                else:
+                    curso_activo = curso_usuario
+                    cursos_disponibles = [curso_usuario] if curso_usuario else []
 
-            estudiantes = []
-            if curso_activo:
+                if curso_activo:
+                    cur.execute(
+                        """
+                        SELECT id, nombre_completo, curso
+                        FROM estudiantes
+                        WHERE TRIM(curso) = %s
+                        ORDER BY nombre_completo ASC
+                        """,
+                        (curso_activo,),
+                    )
+                    estudiantes = cur.fetchall()
+            except Exception as e_est:
+                print("Aviso al consultar estudiantes en /rubricas:", e_est)
+                conn.rollback()
+
+            try:
                 cur.execute(
                     """
-                    SELECT id, nombre_completo, curso
-                    FROM estudiantes
-                    WHERE TRIM(curso) = %s
-                    ORDER BY nombre_completo ASC
+                    SELECT id, indicador, valor
+                    FROM rubricas_indicadores
+                    WHERE materia = %s AND competencia = %s
+                    ORDER BY id ASC
                     """,
-                    (curso_activo,),
+                    (materia_sel, competencia_sel),
                 )
-                estudiantes = cur.fetchall()
-
-            cur.execute(
-                """
-                SELECT id, indicador, valor
-                FROM rubricas_indicadores
-                WHERE materia = %s AND competencia = %s
-                ORDER BY id ASC
-                """,
-                (materia_sel, competencia_sel),
-            )
-            indicadores = cur.fetchall()
+                indicadores = cur.fetchall()
+            except Exception as e_ind:
+                print("Aviso al consultar rubricas_indicadores en /rubricas:", e_ind)
+                conn.rollback()
     finally:
         conn.close()
 
@@ -2810,7 +2851,9 @@ def guardar_rubricas():
     data = request.get_json(silent=True) or {}
     materia = (data.get("materia") or "MATEMATICA").strip()
     competencia = (data.get("competencia") or "C1").strip()
-    curso = _normalizar_curso(data.get("curso")) or _normalizar_curso(session.get("curso_asignado"))
+    curso = _normalizar_curso(data.get("curso")) or _normalizar_curso(
+        session.get("curso_asignado")
+    )
     filas = data.get("filas") or []
 
     conn = get_db_connection()
@@ -2847,7 +2890,6 @@ def guardar_rubricas():
         return jsonify({"ok": False, "error": str(exc)}), 500
     finally:
         conn.close()
-
 
 # 1. RUTA PARA EL MENÚ DE OPCIONES DE PLANIFICACIÓN
 @app.route("/menu_planificacion")
