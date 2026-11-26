@@ -2735,6 +2735,58 @@ def _obtener_conexion_segura():
     raise RuntimeError("No se encontró una función de conexión a BD en app.py")
 
 
+def _variantes_curso(curso):
+    base = (curso or "").strip()
+    if not base:
+        return []
+    baja = base.lower()
+    variantes = {base, baja, base.capitalize(), base.upper()}
+    mapa = {
+        "primero": ["primero", "1ro", "1er", "1°", "1", "primero de primaria", "1ro primaria"],
+        "segundo": ["segundo", "2do", "2°", "2", "segundo de primaria", "2do primaria"],
+        "tercero": ["tercero", "3ro", "3er", "3°", "3", "tercero de primaria", "3ro primaria"],
+        "cuarto": ["cuarto", "4to", "4°", "4", "cuarto de primaria", "4to primaria"],
+        "quinto": ["quinto", "5to", "5°", "5", "quinto de primaria", "5to primaria"],
+        "sexto": ["sexto", "6to", "6°", "6", "sexto de primaria", "6to primaria"],
+    }
+    for clave, lista in mapa.items():
+        if baja == clave or baja in lista:
+            variantes.update(lista)
+            variantes.add(clave.capitalize())
+    return [v.strip() for v in variantes if v and v.strip()]
+
+
+def _consultar_estudiantes_por_curso(cur, curso_activo):
+    curso_limpio = _normalizar_curso(curso_activo)
+    if not curso_limpio:
+        return []
+
+    variantes = _variantes_curso(curso_limpio)
+    variantes_lower = [v.lower() for v in variantes]
+
+    # Intenta con los nombres de columna más comunes en la tabla de estudiantes
+    candidatos_col = ["curso", "grado", "curso_actual", "grado_actual", "nivel"]
+    for col in candidatos_col:
+        try:
+            cur.execute(
+                f"""
+                SELECT *
+                FROM estudiantes
+                WHERE LOWER(TRIM(COALESCE(CAST({col} AS TEXT), ''))) = ANY(%s)
+                   OR LOWER(TRIM(COALESCE(CAST({col} AS TEXT), ''))) LIKE %s
+                """,
+                (variantes_lower, f"%{curso_limpio.lower()}%"),
+            )
+            filas = cur.fetchall()
+            if filas:
+                return filas
+        except Exception:
+            cur.connection.rollback()
+            continue
+
+    return []
+
+
 @app.route("/rubricas", methods=["GET"])
 def vista_rubricas():
     if not _sesion_activa():
@@ -2757,20 +2809,28 @@ def vista_rubricas():
         with conn.cursor() as cur:
             try:
                 if rol in {"admin", "oficina", "area_maestro", "área_maestro"}:
-                    cur.execute(
-                        """
-                        SELECT DISTINCT curso
-                        FROM estudiantes
-                        WHERE curso IS NOT NULL AND TRIM(curso) <> ''
-                        ORDER BY curso ASC
-                        """
-                    )
-                    filas_cursos = cur.fetchall()
-                    cursos_disponibles = [
-                        str(_extraer_valor_fila(r, "curso", 0)).strip()
-                        for r in filas_cursos
-                        if _normalizar_curso(_extraer_valor_fila(r, "curso", 0))
-                    ]
+                    for col in ("curso", "grado", "curso_actual"):
+                        try:
+                            cur.execute(
+                                f"""
+                                SELECT DISTINCT TRIM(CAST({col} AS TEXT)) AS c
+                                FROM estudiantes
+                                WHERE {col} IS NOT NULL AND TRIM(CAST({col} AS TEXT)) <> ''
+                                ORDER BY c ASC
+                                """
+                            )
+                            filas_cursos = cur.fetchall()
+                            cursos_disponibles = [
+                                str(_extraer_valor_fila(r, "c", 0)).strip()
+                                for r in filas_cursos
+                                if _normalizar_curso(_extraer_valor_fila(r, "c", 0))
+                            ]
+                            if cursos_disponibles:
+                                break
+                        except Exception:
+                            conn.rollback()
+                            continue
+
                     curso_activo = (
                         curso_sel
                         or curso_usuario
@@ -2781,16 +2841,7 @@ def vista_rubricas():
                     cursos_disponibles = [curso_usuario] if curso_usuario else []
 
                 if curso_activo:
-                    cur.execute(
-                        """
-                        SELECT id, nombre_completo, curso
-                        FROM estudiantes
-                        WHERE TRIM(curso) = %s
-                        ORDER BY nombre_completo ASC
-                        """,
-                        (curso_activo,),
-                    )
-                    estudiantes = cur.fetchall()
+                    estudiantes = _consultar_estudiantes_por_curso(cur, curso_activo)
             except Exception as e_est:
                 print("Aviso al consultar estudiantes en /rubricas:", e_est)
                 conn.rollback()
@@ -2831,64 +2882,6 @@ def vista_rubricas():
         indicadores=indicadores,
         sin_estudiantes=sin_estudiantes,
     )
-
-
-@app.route("/rubricas/guardar", methods=["POST"])
-def guardar_rubricas():
-    if not _sesion_activa():
-        return jsonify({"ok": False, "error": "Sesión no iniciada"}), 401
-
-    data = request.get_json(silent=True) or {}
-    materia = (data.get("materia") or "MATEMATICA").strip()
-    competencia = (data.get("competencia") or "C1").strip()
-    curso = _normalizar_curso(data.get("curso")) or _normalizar_curso(
-        session.get("curso_asignado")
-    )
-    filas = data.get("filas") or []
-
-    conn = None
-    try:
-        conn = _obtener_conexion_segura()
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                DELETE FROM rubricas_indicadores
-                WHERE materia = %s AND competencia = %s
-                  AND (%s IS NULL OR curso = %s)
-                """,
-                (materia, competencia, curso, curso),
-            )
-
-            for fila in filas:
-                indicador = (fila.get("indicador") or "").strip()
-                try:
-                    valor = int(fila.get("valor", 0))
-                except (TypeError, ValueError):
-                    valor = 0
-
-                if indicador or valor > 0:
-                    cur.execute(
-                        """
-                        INSERT INTO rubricas_indicadores (curso, materia, competencia, indicador, valor)
-                        VALUES (%s, %s, %s, %s, %s)
-                        """,
-                        (curso, materia, competencia, indicador, valor),
-                    )
-        conn.commit()
-        return jsonify({"ok": True, "mensaje": "Rúbrica guardada correctamente."})
-    except Exception as exc:
-        if conn is not None:
-            try:
-                conn.rollback()
-            except Exception:
-                pass
-        return jsonify({"ok": False, "error": str(exc)}), 500
-    finally:
-        if conn is not None:
-            try:
-                conn.close()
-            except Exception:
-                pass
 
 # 1. RUTA PARA EL MENÚ DE OPCIONES DE PLANIFICACIÓN
 @app.route("/menu_planificacion")
