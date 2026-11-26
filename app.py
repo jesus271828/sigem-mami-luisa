@@ -2705,84 +2705,80 @@ def generar_pdf_notas(id_estudiante):
         print("--- ERROR AL GENERAR PDF DE NOTAS CON WEASYPRINT:", e)
         return 'Hubo un error al generar el PDF de notas', 500
 
-@app.route("/rubricas")
-def rubricas():
-    if "usuario" not in session and "nombre_completo" not in session:
+@rubricas_bp.route("/rubricas", methods=["GET"])
+def vista_rubricas():
+    if "usuario_id" not in session:
         return redirect(url_for("login"))
 
-    usuario_sesion = str(session.get("usuario") or "").strip()
-    nombre_sesion = str(session.get("nombre_completo") or "").strip()
-    rol_actual = str(session.get("rol", "")).strip().lower()
-    curso_seleccionado = request.args.get("curso", "").strip()
+    rol = (session.get("rol") or "").strip().lower()
+    curso_usuario = _normalizar_curso(session.get("curso_asignado"))
+    materia_sel = request.args.get("materia", "MATEMATICA").strip()
+    competencia_sel = request.args.get("competencia", "C1").strip()
+    curso_sel = _normalizar_curso(request.args.get("curso"))
 
+    # Obtener cursos disponibles según el rol
+    # Ajusta `get_db_connection()` al nombre de tu función de conexión en SIGEM Mami Luisa
     conn = get_db_connection()
-    estudiantes_usuario = []
-
     try:
-        if rol_actual in ["oficina", "admin"] and curso_seleccionado:
-            rows = conn.execute(
-                """
-                SELECT nombres, apellidos FROM estudiantes
-                WHERE LOWER(TRIM(grado)) = LOWER(TRIM(?))
-                ORDER BY nombres ASC, apellidos ASC
-                """,
-                (curso_seleccionado,),
-            ).fetchall()
-        elif rol_actual in ["oficina", "admin"]:
-            rows = conn.execute(
-                """
-                SELECT nombres, apellidos FROM estudiantes
-                ORDER BY grado ASC, nombres ASC, apellidos ASC
-                """
-            ).fetchall()
-        else:
-            usuario_db = conn.execute(
-                """
-                SELECT curso_asignado FROM usuarios
-                WHERE LOWER(TRIM(username)) = LOWER(TRIM(?))
-                   OR LOWER(TRIM(nombre_completo)) = LOWER(TRIM(?))
-                LIMIT 1
-                """,
-                (usuario_sesion, nombre_sesion),
-            ).fetchone()
-
-            curso_docente = None
-            if usuario_db:
-                u_dict = dict(usuario_db)
-                curso_docente = u_dict.get("curso_asignado")
-
-            if not curso_docente:
-                curso_docente = session.get("curso_asignado") or session.get("grado") or session.get("curso")
-
-            if curso_docente:
-                rows = conn.execute(
+        with conn.cursor() as cur:
+            if rol in {"admin", "oficina", "area_maestro", "área_maestro"}:
+                cur.execute(
                     """
-                    SELECT nombres, apellidos FROM estudiantes
-                    WHERE LOWER(TRIM(grado)) = LOWER(TRIM(?))
-                    ORDER BY apellidos ASC, nombres ASC
-                    """,
-                    (str(curso_docente).strip(),),
-                ).fetchall()
+                    SELECT DISTINCT curso
+                    FROM estudiantes
+                    WHERE curso IS NOT NULL AND TRIM(curso) <> ''
+                    ORDER BY curso ASC
+                    """
+                )
+                cursos_disponibles = [r[0] for r in cur.fetchall()]
+                curso_activo = curso_sel or curso_usuario or (
+                    cursos_disponibles[0] if cursos_disponibles else None
+                )
             else:
-                # Si el maestro en sesión no tiene curso_asignado en BD,
-                # revisa si hay columna maestro/docente en estudiantes o trae vacío
-                rows = []
+                # Rol 'maestro': usa su curso asignado
+                curso_activo = curso_usuario
+                cursos_disponibles = [curso_usuario] if curso_usuario else []
 
-        for row in rows:
-            est = dict(row)
-            nombre = str(est.get("nombres") or "").strip()
-            if not nombre:
-                nombre = str(est.get("apellidos") or "").strip()
-            if nombre:
-                estudiantes_usuario.append(nombre.split()[0])
+            estudiantes = []
+            if curso_activo:
+                cur.execute(
+                    """
+                    SELECT id, nombre_completo, curso
+                    FROM estudiantes
+                    WHERE TRIM(curso) = %s
+                    ORDER BY nombre_completo ASC
+                    """,
+                    (curso_activo,),
+                )
+                estudiantes = cur.fetchall()
 
-    except Exception as e:
-        print(f"Error en rubricas: {e}")
-        estudiantes_usuario = []
+            # Cargar indicadores guardados para materia + competencia (y curso si aplica)
+            cur.execute(
+                """
+                SELECT id, indicador, valor
+                FROM rubricas_indicadores
+                WHERE materia = %s AND competencia = %s
+                ORDER BY id ASC
+                """,
+                (materia_sel, competencia_sel),
+            )
+            indicadores = cur.fetchall()
     finally:
         conn.close()
 
-    return render_template("rubricas.html", estudiantes=estudiantes_usuario)
+    sin_estudiantes = len(estudiantes) == 0
+
+    return render_template(
+        "rubricas.html",
+        rol=rol,
+        cursos_disponibles=cursos_disponibles,
+        curso_activo=curso_activo or "",
+        materia_sel=materia_sel,
+        competencia_sel=competencia_sel,
+        estudiantes=estudiantes,
+        indicadores=indicadores,
+        sin_estudiantes=sin_estudiantes,
+    )
 
 # 1. Ruta para ABRIR la matriz con la tabla de notas
 @app.route("/rubricas_matriz")
