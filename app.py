@@ -2715,33 +2715,25 @@ def rubricas():
     curso_seleccionado = request.args.get("curso", "").strip()
 
     conn = get_db_connection()
-    estudiantes_nombres = []
-    cursos_disponibles = []
-    curso_activo = ""
+    estudiantes_usuario = []
 
     try:
-        cursos_disponibles = conn.execute(
-            "SELECT DISTINCT grado FROM estudiantes WHERE grado IS NOT NULL ORDER BY grado ASC"
-        ).fetchall()
-
-        if rol_actual in ["oficina", "admin"]:
-            if curso_seleccionado:
-                curso_activo = curso_seleccionado
-                rows = conn.execute(
-                    """
-                    SELECT nombres, apellidos FROM estudiantes
-                    WHERE grado = ?
-                    ORDER BY nombres ASC, apellidos ASC
-                    """,
-                    (curso_seleccionado,),
-                ).fetchall()
-            else:
-                rows = conn.execute(
-                    """
-                    SELECT nombres, apellidos FROM estudiantes
-                    ORDER BY grado ASC, nombres ASC, apellidos ASC
-                    """
-                ).fetchall()
+        if rol_actual in ["oficina", "admin"] and curso_seleccionado:
+            rows = conn.execute(
+                """
+                SELECT nombres, apellidos FROM estudiantes
+                WHERE grado = ?
+                ORDER BY nombres ASC, apellidos ASC
+                """,
+                (curso_seleccionado,),
+            ).fetchall()
+        elif rol_actual in ["oficina", "admin"]:
+            rows = conn.execute(
+                """
+                SELECT nombres, apellidos FROM estudiantes
+                ORDER BY grado ASC, nombres ASC, apellidos ASC
+                """
+            ).fetchall()
         else:
             usuario_db = conn.execute(
                 "SELECT curso_asignado FROM usuarios WHERE username = ?",
@@ -2753,49 +2745,34 @@ def rubricas():
                 if usuario_db and usuario_db["curso_asignado"]
                 else session.get("grado")
             )
-            curso_activo = str(curso_docente or "").strip()
 
-            if curso_activo:
+            if curso_docente:
                 rows = conn.execute(
                     """
                     SELECT nombres, apellidos FROM estudiantes
                     WHERE grado = ?
                     ORDER BY apellidos ASC, nombres ASC
                     """,
-                    (curso_activo,),
+                    (curso_docente,),
                 ).fetchall()
             else:
-                rows = conn.execute(
-                    """
-                    SELECT nombres, apellidos FROM estudiantes
-                    ORDER BY grado ASC, apellidos ASC, nombres ASC
-                    """
-                ).fetchall()
+                rows = []
 
         for row in rows:
             est = dict(row)
-            nombre_completo = str(est.get("nombres") or "").strip()
-            if not nombre_completo:
-                nombre_completo = str(est.get("apellidos") or "").strip()
-            primer_nombre = nombre_completo.split()[0] if nombre_completo else ""
-            if primer_nombre:
-                estudiantes_nombres.append(primer_nombre)
+            nombre = str(est.get("nombres") or "").strip()
+            if not nombre:
+                nombre = str(est.get("apellidos") or "").strip()
+            if nombre:
+                estudiantes_usuario.append(nombre.split()[0])
 
     except Exception as e:
         print(f"Error en rubricas: {e}")
-        estudiantes_nombres = []
-        cursos_disponibles = []
+        estudiantes_usuario = []
     finally:
         conn.close()
 
-    return render_template(
-        "rubricas.html",
-        estudiantes=estudiantes_nombres,
-        cursos_disponibles=cursos_disponibles,
-        curso_seleccionado=curso_seleccionado,
-        curso_activo=curso_activo,
-        rol_actual=rol_actual,
-    )
+    return render_template("rubricas.html", estudiantes=estudiantes_usuario)
 
 
 # 1. Ruta para ABRIR la matriz con la tabla de notas

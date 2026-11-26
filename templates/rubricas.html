@@ -145,18 +145,35 @@
       border-radius: 8px;
       border-top: 4px solid var(--accent-border);
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-      overflow-x: auto;
-      margin-bottom: 18px;
+      margin-bottom: 20px;
     }
 
     .rubrica-panel.active {
       display: block;
     }
 
+    .bloque-estudiantes {
+      overflow-x: auto;
+      margin-bottom: 18px;
+    }
+
+    .bloque-estudiantes:last-of-type {
+      margin-bottom: 0;
+    }
+
+    .titulo-bloque {
+      font-size: 12px;
+      font-weight: 800;
+      color: #475569;
+      margin: 0 0 6px 2px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
     table.matriz {
       width: 100%;
       border-collapse: collapse;
-      min-width: 1020px;
+      min-width: 920px;
     }
 
     table.matriz th,
@@ -233,7 +250,7 @@
       background: #fff;
       color: var(--text-dark);
       height: 115px;
-      width: 44px;
+      width: 46px;
       padding: 4px 2px !important;
       vertical-align: bottom;
       text-align: center;
@@ -345,8 +362,19 @@
       text-align: center;
     }
 
+    .aviso-vacio {
+      background: #fef3c7;
+      border: 1px solid #f59e0b;
+      color: #92400e;
+      padding: 12px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
     .panel-footer {
-      margin-top: 10px;
+      margin-top: 12px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -417,26 +445,31 @@
   </div>
 
   <script>
-    const ESTUDIANTES_RESPALDO = [
-      "Adrian", "Albert", "Amaiha", "Ammy", "Brithany", "Dayrelin",
-      "Gabriela", "Jeyden", "Keisha", "Marcos", "Nashly", "Rochell", "Sebastian"
-    ];
+    const ESTUDIANTES_RAW = JSON.parse('{{ (estudiantes or []) | tojson | safe }}');
+    const ESTUDIANTES = Array.isArray(ESTUDIANTES_RAW) ? ESTUDIANTES_RAW : [];
+    const BLOQUE_SIZE = 12;
 
-    const ESTUDIANTES_FLASK = JSON.parse('{{ (estudiantes or []) | tojson | safe }}');
-    const ESTUDIANTES = Array.isArray(ESTUDIANTES_FLASK) && ESTUDIANTES_FLASK.length > 0
-      ? ESTUDIANTES_FLASK
-      : ESTUDIANTES_RESPALDO;
+    function dividirEnBloques(lista, tamano) {
+      if (!lista.length) return [[]];
+      const bloques = [];
+      for (let i = 0; i < lista.length; i += tamano) {
+        bloques.push(lista.slice(i, i + tamano));
+      }
+      return bloques;
+    }
+
+    const BLOQUES_ESTUDIANTES = dividirEnBloques(ESTUDIANTES, BLOQUE_SIZE);
 
     const COLORES_MATERIAS = [
-      { header: "#c5bbf7", border: "#8b7ce8" }, // Lila suave
-      { header: "#bae6fd", border: "#0284c7" }, // Celeste
-      { header: "#bbf7d0", border: "#16a34a" }, // Verde menta
-      { header: "#fde68a", border: "#d97706" }, // Amarillo cálido
-      { header: "#fbcfe8", border: "#db2777" }, // Rosa pastel
-      { header: "#fed7aa", border: "#ea580c" }, // Durazno / naranja suave
-      { header: "#ddd6fe", border: "#7c3aed" }, // Violeta claro
-      { header: "#99f6e4", border: "#0d9488" }, // Turquesa suave
-      { header: "#fecaca", border: "#dc2626" }  // Coral suave
+      { header: "#c5bbf7", border: "#8b7ce8" },
+      { header: "#bae6fd", border: "#0284c7" },
+      { header: "#bbf7d0", border: "#16a34a" },
+      { header: "#fde68a", border: "#d97706" },
+      { header: "#fbcfe8", border: "#db2777" },
+      { header: "#fed7aa", border: "#ea580c" },
+      { header: "#ddd6fe", border: "#7c3aed" },
+      { header: "#99f6e4", border: "#0d9488" },
+      { header: "#fecaca", border: "#dc2626" }
     ];
 
     function obtenerPaletaMateria(materia) {
@@ -483,7 +516,7 @@
     }
 
     function claveStorage(materia) {
-      return `sigem_rubrica_v2_${materia}`;
+      return `sigem_rubrica_v3_${materia}`;
     }
 
     function cargarDatosMateria(materia) {
@@ -504,113 +537,172 @@
 
     function renderizarTablas() {
       const contenedor = document.getElementById("contenedor-rubricas");
-      contenedor.innerHTML = datosActuales
+      const avisoVacio = ESTUDIANTES.length === 0
+        ? `<div class="aviso-vacio">Este usuario no tiene estudiantes asignados en su curso o registro actual.</div>`
+        : "";
+
+      contenedor.innerHTML = avisoVacio + datosActuales
         .map((comp, compIdx) => {
           const totalMaximo = comp.indicadores.reduce(
             (acc, item) => acc + (parseFloat(item.valor) || 0),
             0
           );
 
-          const headersAlumnos = ESTUDIANTES.map(
-            (nombre) => `<th class="th-alumno"><div class="nombre-vertical">${nombre}</div></th>`
-          ).join("");
+          const tablasBloques = BLOQUES_ESTUDIANTES.map((grupoAlumnos, bloqueIdx) => {
+            const inicioIdx = bloqueIdx * BLOQUE_SIZE;
 
-          const filasIndicadores = comp.indicadores
-            .map((ind, filaIdx) => {
-              const celdasNotas = ESTUDIANTES.map((est, colIdx) => {
-                const notaGuardada = ind.notas && ind.notas[est] !== undefined ? ind.notas[est] : "";
+            const headersAlumnos = grupoAlumnos.map(
+              (nombre) => `<th class="th-alumno"><div class="nombre-vertical">${nombre}</div></th>`
+            ).join("");
+
+            const filasIndicadores = comp.indicadores
+              .map((ind, filaIdx) => {
+                const celdasNotas = grupoAlumnos.map((est, localColIdx) => {
+                  const globalColIdx = inicioIdx + localColIdx;
+                  const notaGuardada = ind.notas && ind.notas[est] !== undefined ? ind.notas[est] : "";
+                  return `
+                    <td class="celda-nota">
+                      <input
+                        type="number"
+                        class="nota-input"
+                        min="0"
+                        max="${ind.valor}"
+                        step="any"
+                        value="${notaGuardada}"
+                        data-comp="${compIdx}"
+                        data-fila="${filaIdx}"
+                        data-col="${globalColIdx}"
+                        data-est="${est}"
+                        oninput="actualizarNota(${compIdx}, ${filaIdx}, ${globalColIdx}, '${est}', this)"
+                      />
+                    </td>`;
+                }).join("");
+
+                const celdaEdicionIndicador = bloqueIdx === 0
+                  ? `
+                    <td class="celda-indicador">
+                      <div class="fila-indicador-flex">
+                        <textarea
+                          class="textarea-indicador"
+                          rows="2"
+                          placeholder="Escribe el indicador de logro..."
+                          oninput="sincronizarTextoIndicador(${compIdx}, ${filaIdx}, this.value)"
+                        >${ind.texto || ""}</textarea>
+                        <button type="button" class="btn-del-fila" title="Eliminar indicador" onclick="eliminarIndicador(${compIdx}, ${filaIdx})">✕</button>
+                      </div>
+                    </td>`
+                  : `
+                    <td class="celda-indicador">
+                      <div class="fila-indicador-flex">
+                        <textarea
+                          class="textarea-indicador"
+                          rows="2"
+                          placeholder="Escribe el indicador de logro..."
+                          oninput="sincronizarTextoIndicador(${compIdx}, ${filaIdx}, this.value)"
+                        >${ind.texto || ""}</textarea>
+                      </div>
+                    </td>`;
+
                 return `
-                  <td class="celda-nota">
-                    <input
-                      type="number"
-                      class="nota-input"
-                      min="0"
-                      max="${ind.valor}"
-                      step="any"
-                      value="${notaGuardada}"
-                      data-comp="${compIdx}"
-                      data-fila="${filaIdx}"
-                      data-col="${colIdx}"
-                      data-est="${est}"
-                      oninput="actualizarNota(${compIdx}, ${filaIdx}, ${colIdx}, '${est}', this)"
-                    />
-                  </td>`;
-              }).join("");
+                  <tr>
+                    ${celdaEdicionIndicador}
+                    <td class="celda-valor">
+                      <input
+                        type="number"
+                        class="input-valor"
+                        min="0"
+                        step="any"
+                        value="${ind.valor}"
+                        oninput="actualizarValorIndicador(${compIdx}, ${filaIdx}, this.value)"
+                      />
+                    </td>
+                    ${celdasNotas}
+                  </tr>`;
+              })
+              .join("");
 
-              return `
-                <tr>
-                  <td class="celda-indicador">
-                    <div class="fila-indicador-flex">
-                      <textarea
-                        class="textarea-indicador"
-                        rows="2"
-                        placeholder="Escribe el indicador de logro..."
-                        oninput="datosActuales[${compIdx}].indicadores[${filaIdx}].texto = this.value"
-                      >${ind.texto || ""}</textarea>
-                      <button type="button" class="btn-del-fila" title="Eliminar indicador" onclick="eliminarIndicador(${compIdx}, ${filaIdx})">✕</button>
-                    </div>
-                  </td>
-                  <td class="celda-valor">
-                    <input
-                      type="number"
-                      class="input-valor"
-                      min="0"
-                      step="any"
-                      value="${ind.valor}"
-                      oninput="actualizarValorIndicador(${compIdx}, ${filaIdx}, this.value)"
-                    />
-                  </td>
-                  ${celdasNotas}
-                </tr>`;
-            })
-            .join("");
+            const celdasTotales = grupoAlumnos.map((_, localColIdx) => {
+              const globalColIdx = inicioIdx + localColIdx;
+              return `<td class="total-alumno" id="total-${compIdx}-${globalColIdx}">0</td>`;
+            }).join("");
 
-          const celdasTotales = ESTUDIANTES.map(
-            (_, colIdx) => `<td class="total-alumno" id="total-${compIdx}-${colIdx}">0</td>`
-          ).join("");
+            const etiquetaBloque = BLOQUES_ESTUDIANTES.length > 1
+              ? `<p class="titulo-bloque">Grupo de estudiantes ${bloqueIdx + 1} (${inicioIdx + 1} al ${inicioIdx + grupoAlumnos.length})</p>`
+              : "";
+
+            return `
+              <div class="bloque-estudiantes">
+                ${etiquetaBloque}
+                <table class="matriz">
+                  <thead>
+                    <tr>
+                      <th class="encabezado-area">
+                        <input
+                          type="text"
+                          class="input-area"
+                          value="${comp.areaTexto}"
+                          oninput="sincronizarArea(${compIdx}, this.value)"
+                        />
+                        <textarea
+                          class="textarea-comp"
+                          rows="2"
+                          oninput="sincronizarCompetencia(${compIdx}, this.value)"
+                        >${comp.competencia}</textarea>
+                      </th>
+                      <th class="th-valor">VALOR</th>
+                      ${headersAlumnos}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${filasIndicadores}
+                    <tr class="fila-total">
+                      <td class="etiqueta-total">PUNTAJE TOTAL DE LA COMPETENCIA</td>
+                      <td class="total-valor-max" id="max-${compIdx}-${bloqueIdx}">${totalMaximo}</td>
+                      ${celdasTotales}
+                    </tr>
+                  </tbody>
+                </table>
+              </div>`;
+          }).join("");
 
           const visible = pestanaActiva === "todas" || pestanaActiva === comp.id ? "active" : "";
 
           return `
             <section class="rubrica-panel ${visible}" id="panel-${comp.id}">
-              <table class="matriz">
-                <thead>
-                  <tr>
-                    <th class="encabezado-area">
-                      <input
-                        type="text"
-                        class="input-area"
-                        value="${comp.areaTexto}"
-                        oninput="datosActuales[${compIdx}].areaTexto = this.value"
-                      />
-                      <textarea
-                        class="textarea-comp"
-                        rows="2"
-                        oninput="datosActuales[${compIdx}].competencia = this.value"
-                      >${comp.competencia}</textarea>
-                    </th>
-                    <th class="th-valor">VALOR</th>
-                    ${headersAlumnos}
-                  </tr>
-                </thead>
-                <tbody>
-                  ${filasIndicadores}
-                  <tr class="fila-total">
-                    <td class="etiqueta-total">PUNTAJE TOTAL DE LA COMPETENCIA</td>
-                    <td class="total-valor-max" id="max-${compIdx}">${totalMaximo}</td>
-                    ${celdasTotales}
-                  </tr>
-                </tbody>
-              </table>
+              ${tablasBloques}
               <div class="panel-footer">
                 <button type="button" class="btn btn-secondary" onclick="agregarIndicador(${compIdx})">+ Agregar indicador</button>
-                <small style="color:#64748b;">Haz clic directamente sobre el área, competencia, indicadores o valores para editarlos.</small>
+                <small style="color:#64748b;">Máximo 12 estudiantes por tabla; si hay más, se crea otro bloque abajo automáticamente.</small>
               </div>
             </section>`;
         })
         .join("");
 
       recalcularTodo();
+    }
+
+    function sincronizarArea(compIdx, valor) {
+      datosActuales[compIdx].areaTexto = valor;
+      document.querySelectorAll(`#panel-${datosActuales[compIdx].id} .input-area`).forEach((el) => {
+        if (el.value !== valor) el.value = valor;
+      });
+    }
+
+    function sincronizarCompetencia(compIdx, valor) {
+      datosActuales[compIdx].competencia = valor;
+      document.querySelectorAll(`#panel-${datosActuales[compIdx].id} .textarea-comp`).forEach((el) => {
+        if (el.value !== valor) el.value = valor;
+      });
+    }
+
+    function sincronizarTextoIndicador(compIdx, filaIdx, valor) {
+      datosActuales[compIdx].indicadores[filaIdx].texto = valor;
+      document.querySelectorAll(`#panel-${datosActuales[compIdx].id} .textarea-indicador`).forEach((el, idx) => {
+        // Sincroniza la misma fila en los bloques siguientes sin pisar mientras escribes en el mismo campo
+        if (idx % datosActuales[compIdx].indicadores.length === filaIdx && el !== document.activeElement) {
+          el.value = valor;
+        }
+      });
     }
 
     function actualizarValorIndicador(compIdx, filaIdx, nuevoValor) {
@@ -627,7 +719,12 @@
         (acc, item) => acc + (parseFloat(item.valor) || 0),
         0
       );
-      document.getElementById(`max-${compIdx}`).textContent = totalMax;
+
+      BLOQUES_ESTUDIANTES.forEach((_, bloqueIdx) => {
+        const maxEl = document.getElementById(`max-${compIdx}-${bloqueIdx}`);
+        if (maxEl) maxEl.textContent = totalMax;
+      });
+
       recalcularTodo();
     }
 
