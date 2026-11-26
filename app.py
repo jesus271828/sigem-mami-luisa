@@ -2714,31 +2714,6 @@ def _normalizar_curso(valor):
     return limpio
 
 
-def _sesion_valida():
-    return ("usuario" in session) or ("nombre_completo" in session) or ("usuario_id" in session)
-
-def _normalizar_curso(valor):
-    if not valor:
-        return None
-    limpio = str(valor).strip()
-    if limpio.upper() in {"VACÍO", "VACIO", "NULL", "NONE", ""}:
-        return None
-    return limpio
-
-
-def _sesion_activa():
-    return any(k in session and session.get(k) for k in ("usuario", "nombre_completo", "usuario_id"))
-
-
-def _normalizar_curso(valor):
-    if not valor:
-        return None
-    limpio = str(valor).strip()
-    if limpio.upper() in {"VACÍO", "VACIO", "NULL", "NONE", ""}:
-        return None
-    return limpio
-
-
 def _sesion_activa():
     return any(
         k in session and session.get(k)
@@ -2750,6 +2725,14 @@ def _extraer_valor_fila(fila, clave, indice=0):
     if isinstance(fila, dict):
         return fila.get(clave)
     return fila[indice]
+
+
+def _obtener_conexion_segura():
+    for nombre_fn in ("get_db_connection", "obtener_conexion", "get_db", "conectar_db"):
+        fn = globals().get(nombre_fn)
+        if callable(fn):
+            return fn()
+    raise RuntimeError("No se encontró una función de conexión a BD en app.py")
 
 
 @app.route("/rubricas", methods=["GET"])
@@ -2768,8 +2751,9 @@ def vista_rubricas():
     estudiantes = []
     indicadores = []
 
-    conn = get_db_connection()
+    conn = None
     try:
+        conn = _obtener_conexion_segura()
         with conn.cursor() as cur:
             try:
                 if rol in {"admin", "oficina", "area_maestro", "área_maestro"}:
@@ -2825,8 +2809,14 @@ def vista_rubricas():
             except Exception as e_ind:
                 print("Aviso al consultar rubricas_indicadores en /rubricas:", e_ind)
                 conn.rollback()
+    except Exception as e_conn:
+        print("Error en vista_rubricas:", e_conn)
     finally:
-        conn.close()
+        if conn is not None:
+            try:
+                conn.close()
+            except Exception:
+                pass
 
     sin_estudiantes = len(estudiantes) == 0
 
@@ -2856,8 +2846,9 @@ def guardar_rubricas():
     )
     filas = data.get("filas") or []
 
-    conn = get_db_connection()
+    conn = None
     try:
+        conn = _obtener_conexion_segura()
         with conn.cursor() as cur:
             cur.execute(
                 """
@@ -2886,10 +2877,18 @@ def guardar_rubricas():
         conn.commit()
         return jsonify({"ok": True, "mensaje": "Rúbrica guardada correctamente."})
     except Exception as exc:
-        conn.rollback()
+        if conn is not None:
+            try:
+                conn.rollback()
+            except Exception:
+                pass
         return jsonify({"ok": False, "error": str(exc)}), 500
     finally:
-        conn.close()
+        if conn is not None:
+            try:
+                conn.close()
+            except Exception:
+                pass
 
 # 1. RUTA PARA EL MENÚ DE OPCIONES DE PLANIFICACIÓN
 @app.route("/menu_planificacion")
