@@ -2711,14 +2711,23 @@ def rubricas():
         return redirect(url_for("login"))
 
     curso_asignado = session.get("curso_asignado", "")
-    rol_actual = session.get("rol", "")
+    usuario_actual = session.get("usuario") or session.get("nombre_completo", "")
 
-    # Ajusta tabla y columnas según tu BD en Supabase/PostgreSQL:
-    # cur.execute("SELECT nombre FROM estudiantes WHERE curso = %s ORDER BY nombre", (curso_asignado,))
-    # estudiantes = [r[0] for r in cur.fetchall()]
+    # Ajusta tabla y columnas según tu base de datos PostgreSQL en Supabase:
+    # cur.execute(
+    #     "SELECT nombre FROM estudiantes WHERE curso = %s ORDER BY nombre ASC",
+    #     (curso_asignado,)
+    # )
+    # estudiantes = [fila[0] for fila in cur.fetchall()]
+
     estudiantes = []
 
-    return render_template("rubricas.html", estudiantes=estudiantes)
+    return render_template(
+        "rubricas.html",
+        estudiantes=estudiantes,
+        curso_asignado=curso_asignado,
+        usuario_actual=usuario_actual,
+    )
 
 
 # 1. Ruta para ABRIR la matriz con la tabla de notas
