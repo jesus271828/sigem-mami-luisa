@@ -2710,7 +2710,8 @@ def rubricas():
     if "usuario" not in session and "nombre_completo" not in session:
         return redirect(url_for("login"))
 
-    usuario_actual = str(session.get("usuario") or session.get("nombre_completo") or "").strip()
+    usuario_sesion = str(session.get("usuario") or "").strip()
+    nombre_sesion = str(session.get("nombre_completo") or "").strip()
     rol_actual = str(session.get("rol", "")).strip().lower()
     curso_seleccionado = request.args.get("curso", "").strip()
 
@@ -2722,7 +2723,7 @@ def rubricas():
             rows = conn.execute(
                 """
                 SELECT nombres, apellidos FROM estudiantes
-                WHERE grado = ?
+                WHERE LOWER(TRIM(grado)) = LOWER(TRIM(?))
                 ORDER BY nombres ASC, apellidos ASC
                 """,
                 (curso_seleccionado,),
@@ -2736,26 +2737,35 @@ def rubricas():
             ).fetchall()
         else:
             usuario_db = conn.execute(
-                "SELECT curso_asignado FROM usuarios WHERE username = ?",
-                (usuario_actual,),
+                """
+                SELECT curso_asignado FROM usuarios
+                WHERE LOWER(TRIM(username)) = LOWER(TRIM(?))
+                   OR LOWER(TRIM(nombre_completo)) = LOWER(TRIM(?))
+                LIMIT 1
+                """,
+                (usuario_sesion, nombre_sesion),
             ).fetchone()
 
-            curso_docente = (
-                usuario_db["curso_asignado"]
-                if usuario_db and usuario_db["curso_asignado"]
-                else session.get("grado")
-            )
+            curso_docente = None
+            if usuario_db:
+                u_dict = dict(usuario_db)
+                curso_docente = u_dict.get("curso_asignado")
+
+            if not curso_docente:
+                curso_docente = session.get("curso_asignado") or session.get("grado") or session.get("curso")
 
             if curso_docente:
                 rows = conn.execute(
                     """
                     SELECT nombres, apellidos FROM estudiantes
-                    WHERE grado = ?
+                    WHERE LOWER(TRIM(grado)) = LOWER(TRIM(?))
                     ORDER BY apellidos ASC, nombres ASC
                     """,
-                    (curso_docente,),
+                    (str(curso_docente).strip(),),
                 ).fetchall()
             else:
+                # Si el maestro en sesión no tiene curso_asignado en BD,
+                # revisa si hay columna maestro/docente en estudiantes o trae vacío
                 rows = []
 
         for row in rows:
@@ -2773,7 +2783,6 @@ def rubricas():
         conn.close()
 
     return render_template("rubricas.html", estudiantes=estudiantes_usuario)
-
 
 # 1. Ruta para ABRIR la matriz con la tabla de notas
 @app.route("/rubricas_matriz")
