@@ -2704,78 +2704,67 @@ def generar_pdf_notas(id_estudiante):
     except Exception as e:
         print("--- ERROR AL GENERAR PDF DE NOTAS CON WEASYPRINT:", e)
         return 'Hubo un error al generar el PDF de notas', 500
-
-def _normalizar_curso(valor):
+########################################################################
+def _curso_limpio(valor):
     if not valor:
         return None
-    limpio = str(valor).strip()
-    if limpio.upper() in {"VACÍO", "VACIO", "NULL", "NONE", ""}:
+    texto = str(valor).strip()
+    if texto.upper() in {"VACÍO", "VACIO", "NULL", "NONE", ""}:
         return None
-    return limpio
+    return texto
 
 
-def _sesion_activa():
-    return any(
-        k in session and session.get(k)
-        for k in ("usuario", "nombre_completo", "usuario_id")
-    )
+def _obtener_curso_del_usuario(cur):
+    curso = _curso_limpio(session.get("curso_asignado"))
+    if curso:
+        return curso
+
+    usuario_sesion = session.get("usuario") or session.get("nombre_completo") or session.get("usuario_id")
+    if not usuario_sesion:
+        return None
+
+    try:
+        cur.execute(
+            """
+            SELECT curso_asignado
+            FROM usuarios
+            WHERE CAST(id AS TEXT) = %s
+               OR LOWER(TRIM(COALESCE(nombre_completo, ''))) = LOWER(TRIM(%s))
+               OR LOWER(TRIM(COALESCE(to_jsonb(usuarios)->>'nombre de usuario', to_jsonb(usuarios)->>'nombre_usuario', to_jsonb(usuarios)->>'usuario', ''))) = LOWER(TRIM(%s))
+            LIMIT 1
+            """,
+            (str(usuario_sesion), str(usuario_sesion), str(usuario_sesion)),
+        )
+        fila = cur.fetchone()
+        if fila:
+            valor = fila.get("curso_asignado") if isinstance(fila, dict) else fila[0]
+            curso_db = _curso_limpio(valor)
+            if curso_db:
+                session["curso_asignado"] = curso_db
+                return curso_db
+    except Exception as e:
+        print("Error buscando curso_asignado en usuarios:", e)
+        cur.connection.rollback()
+
+    return None
 
 
-def _extraer_valor_fila(fila, clave, indice=0):
-    if isinstance(fila, dict):
-        return fila.get(clave)
-    return fila[indice]
-
-
-def _obtener_conexion_segura():
-    for nombre_fn in ("get_db_connection", "obtener_conexion", "get_db", "conectar_db"):
-        fn = globals().get(nombre_fn)
-        if callable(fn):
-            return fn()
-    raise RuntimeError("No se encontró una función de conexión a BD en app.py")
-
-
-def _variantes_curso(curso):
-    base = (curso or "").strip()
-    if not base:
-        return []
-    baja = base.lower()
-    variantes = {base, baja, base.capitalize(), base.upper()}
-    mapa = {
-        "primero": ["primero", "1ro", "1er", "1°", "1", "primero de primaria", "1ro primaria"],
-        "segundo": ["segundo", "2do", "2°", "2", "segundo de primaria", "2do primaria"],
-        "tercero": ["tercero", "3ro", "3er", "3°", "3", "tercero de primaria", "3ro primaria"],
-        "cuarto": ["cuarto", "4to", "4°", "4", "cuarto de primaria", "4to primaria"],
-        "quinto": ["quinto", "5to", "5°", "5", "quinto de primaria", "5to primaria"],
-        "sexto": ["sexto", "6to", "6°", "6", "sexto de primaria", "6to primaria"],
-    }
-    for clave, lista in mapa.items():
-        if baja == clave or baja in lista:
-            variantes.update(lista)
-            variantes.add(clave.capitalize())
-    return [v.strip() for v in variantes if v and v.strip()]
-
-
-def _consultar_estudiantes_por_curso(cur, curso_activo):
-    curso_limpio = _normalizar_curso(curso_activo)
-    if not curso_limpio:
+def _buscar_estudiantes_de_curso(cur, curso):
+    curso_val = _curso_limpio(curso)
+    if not curso_val:
         return []
 
-    variantes = _variantes_curso(curso_limpio)
-    variantes_lower = [v.lower() for v in variantes]
-
-    # Intenta con los nombres de columna más comunes en la tabla de estudiantes
-    candidatos_col = ["curso", "grado", "curso_actual", "grado_actual", "nivel"]
-    for col in candidatos_col:
+    for col in ("curso", "grado", "curso_actual", "grado_actual", "nivel"):
         try:
             cur.execute(
                 f"""
                 SELECT *
                 FROM estudiantes
-                WHERE LOWER(TRIM(COALESCE(CAST({col} AS TEXT), ''))) = ANY(%s)
-                   OR LOWER(TRIM(COALESCE(CAST({col} AS TEXT), ''))) LIKE %s
+                WHERE LOWER(TRIM(COALESCE(CAST({col} AS TEXT), ''))) = LOWER(TRIM(%s))
+                   OR LOWER(TRIM(COALESCE(CAST({col} AS TEXT), ''))) LIKE LOWER(TRIM(%s))
+                ORDER BY 1 ASC
                 """,
-                (variantes_lower, f"%{curso_limpio.lower()}%"),
+                (curso_val, f"%{curso_val}%"),
             )
             filas = cur.fetchall()
             if filas:
@@ -2789,62 +2778,37 @@ def _consultar_estudiantes_por_curso(cur, curso_activo):
 
 @app.route("/rubricas", methods=["GET"])
 def vista_rubricas():
-    if not _sesion_activa():
+    if not any(k in session and session.get(k) for k in ("usuario", "nombre_completo", "usuario_id")):
         return redirect(url_for("login"))
 
     rol = (session.get("rol") or "").strip().lower()
-    curso_usuario = _normalizar_curso(session.get("curso_asignado"))
     materia_sel = (request.args.get("materia") or "MATEMATICA").strip()
     competencia_sel = (request.args.get("competencia") or "C1").strip()
-    curso_sel = _normalizar_curso(request.args.get("curso"))
 
-    cursos_disponibles = []
-    curso_activo = curso_sel or curso_usuario
     estudiantes = []
+    curso_usuario = _curso_limpio(session.get("curso_asignado"))
     indicadores = []
 
     conn = None
     try:
-        conn = _obtener_conexion_segura()
+        conn = get_db_connection()
         with conn.cursor() as cur:
-            try:
-                if rol in {"admin", "oficina", "area_maestro", "área_maestro"}:
-                    for col in ("curso", "grado", "curso_actual"):
-                        try:
-                            cur.execute(
-                                f"""
-                                SELECT DISTINCT TRIM(CAST({col} AS TEXT)) AS c
-                                FROM estudiantes
-                                WHERE {col} IS NOT NULL AND TRIM(CAST({col} AS TEXT)) <> ''
-                                ORDER BY c ASC
-                                """
-                            )
-                            filas_cursos = cur.fetchall()
-                            cursos_disponibles = [
-                                str(_extraer_valor_fila(r, "c", 0)).strip()
-                                for r in filas_cursos
-                                if _normalizar_curso(_extraer_valor_fila(r, "c", 0))
-                            ]
-                            if cursos_disponibles:
-                                break
-                        except Exception:
-                            conn.rollback()
-                            continue
+            curso_usuario = _obtener_curso_del_usuario(cur)
 
-                    curso_activo = (
-                        curso_sel
-                        or curso_usuario
-                        or (cursos_disponibles[0] if cursos_disponibles else None)
-                    )
+            if rol in {"admin", "oficina", "area_maestro", "área_maestro"} and not curso_usuario:
+                curso_param = _curso_limpio(request.args.get("curso"))
+                if curso_param:
+                    estudiantes = _buscar_estudiantes_de_curso(cur, curso_param)
+                    curso_usuario = curso_param
                 else:
-                    curso_activo = curso_usuario
-                    cursos_disponibles = [curso_usuario] if curso_usuario else []
-
-                if curso_activo:
-                    estudiantes = _consultar_estudiantes_por_curso(cur, curso_activo)
-            except Exception as e_est:
-                print("Aviso al consultar estudiantes en /rubricas:", e_est)
-                conn.rollback()
+                    try:
+                        cur.execute("SELECT * FROM estudiantes ORDER BY 1 ASC")
+                        estudiantes = cur.fetchall()
+                    except Exception as e_all:
+                        print("Error cargando estudiantes:", e_all)
+                        conn.rollback()
+            elif curso_usuario:
+                estudiantes = _buscar_estudiantes_de_curso(cur, curso_usuario)
 
             try:
                 cur.execute(
@@ -2858,7 +2822,7 @@ def vista_rubricas():
                 )
                 indicadores = cur.fetchall()
             except Exception as e_ind:
-                print("Aviso al consultar rubricas_indicadores en /rubricas:", e_ind)
+                print("Aviso al consultar rubricas_indicadores:", e_ind)
                 conn.rollback()
     except Exception as e_conn:
         print("Error en vista_rubricas:", e_conn)
@@ -2869,20 +2833,18 @@ def vista_rubricas():
             except Exception:
                 pass
 
-    sin_estudiantes = len(estudiantes) == 0
-
     return render_template(
         "rubricas.html",
         rol=rol,
-        cursos_disponibles=cursos_disponibles,
-        curso_activo=curso_activo or "",
+        curso_activo=curso_usuario or "",
+        cursos_disponibles=[curso_usuario] if curso_usuario else [],
         materia_sel=materia_sel,
         competencia_sel=competencia_sel,
         estudiantes=estudiantes,
         indicadores=indicadores,
-        sin_estudiantes=sin_estudiantes,
+        sin_estudiantes=len(estudiantes) == 0,
     )
-
+########################################################################
 # 1. RUTA PARA EL MENÚ DE OPCIONES DE PLANIFICACIÓN
 @app.route("/menu_planificacion")
 def menu_planificacion():
