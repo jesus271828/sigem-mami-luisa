@@ -2705,19 +2705,42 @@ def generar_pdf_notas(id_estudiante):
         print("--- ERROR AL GENERAR PDF DE NOTAS CON WEASYPRINT:", e)
         return 'Hubo un error al generar el PDF de notas', 500
 
-@rubricas_bp.route("/rubricas", methods=["GET"])
+def _normalizar_curso(valor):
+    if not valor:
+        return None
+    limpio = str(valor).strip()
+    if limpio.upper() in {"VACÍO", "VACIO", "NULL", "NONE", ""}:
+        return None
+    return limpio
+
+
+def _sesion_valida():
+    return ("usuario" in session) or ("nombre_completo" in session) or ("usuario_id" in session)
+
+def _normalizar_curso(valor):
+    if not valor:
+        return None
+    limpio = str(valor).strip()
+    if limpio.upper() in {"VACÍO", "VACIO", "NULL", "NONE", ""}:
+        return None
+    return limpio
+
+
+def _sesion_activa():
+    return any(k in session and session.get(k) for k in ("usuario", "nombre_completo", "usuario_id"))
+
+
+@app.route("/rubricas", methods=["GET"])
 def vista_rubricas():
-    if "usuario_id" not in session:
+    if not _sesion_activa():
         return redirect(url_for("login"))
 
     rol = (session.get("rol") or "").strip().lower()
     curso_usuario = _normalizar_curso(session.get("curso_asignado"))
-    materia_sel = request.args.get("materia", "MATEMATICA").strip()
-    competencia_sel = request.args.get("competencia", "C1").strip()
+    materia_sel = (request.args.get("materia") or "MATEMATICA").strip()
+    competencia_sel = (request.args.get("competencia") or "C1").strip()
     curso_sel = _normalizar_curso(request.args.get("curso"))
 
-    # Obtener cursos disponibles según el rol
-    # Ajusta `get_db_connection()` al nombre de tu función de conexión en SIGEM Mami Luisa
     conn = get_db_connection()
     try:
         with conn.cursor() as cur:
@@ -2735,7 +2758,6 @@ def vista_rubricas():
                     cursos_disponibles[0] if cursos_disponibles else None
                 )
             else:
-                # Rol 'maestro': usa su curso asignado
                 curso_activo = curso_usuario
                 cursos_disponibles = [curso_usuario] if curso_usuario else []
 
@@ -2752,7 +2774,6 @@ def vista_rubricas():
                 )
                 estudiantes = cur.fetchall()
 
-            # Cargar indicadores guardados para materia + competencia (y curso si aplica)
             cur.execute(
                 """
                 SELECT id, indicador, valor
@@ -2780,12 +2801,52 @@ def vista_rubricas():
         sin_estudiantes=sin_estudiantes,
     )
 
-# 1. Ruta para ABRIR la matriz con la tabla de notas
-@app.route("/rubricas_matriz")
-def rubricas_matriz():
-    if "usuario" not in session and "nombre_completo" not in session:
-        return redirect(url_for("login"))
-    return render_template("rubricas_matriz.html")
+
+@app.route("/rubricas/guardar", methods=["POST"])
+def guardar_rubricas():
+    if not _sesion_activa():
+        return jsonify({"ok": False, "error": "Sesión no iniciada"}), 401
+
+    data = request.get_json(silent=True) or {}
+    materia = (data.get("materia") or "MATEMATICA").strip()
+    competencia = (data.get("competencia") or "C1").strip()
+    curso = _normalizar_curso(data.get("curso")) or _normalizar_curso(session.get("curso_asignado"))
+    filas = data.get("filas") or []
+
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                DELETE FROM rubricas_indicadores
+                WHERE materia = %s AND competencia = %s
+                  AND (%s IS NULL OR curso = %s)
+                """,
+                (materia, competencia, curso, curso),
+            )
+
+            for fila in filas:
+                indicador = (fila.get("indicador") or "").strip()
+                try:
+                    valor = int(fila.get("valor", 0))
+                except (TypeError, ValueError):
+                    valor = 0
+
+                if indicador or valor > 0:
+                    cur.execute(
+                        """
+                        INSERT INTO rubricas_indicadores (curso, materia, competencia, indicador, valor)
+                        VALUES (%s, %s, %s, %s, %s)
+                        """,
+                        (curso, materia, competencia, indicador, valor),
+                    )
+        conn.commit()
+        return jsonify({"ok": True, "mensaje": "Rúbrica guardada correctamente."})
+    except Exception as exc:
+        conn.rollback()
+        return jsonify({"ok": False, "error": str(exc)}), 500
+    finally:
+        conn.close()
 
 
 # 1. RUTA PARA EL MENÚ DE OPCIONES DE PLANIFICACIÓN
