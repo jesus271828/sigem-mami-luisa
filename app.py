@@ -2775,6 +2775,87 @@ def _buscar_estudiantes_de_curso(cur, curso):
 
     return []
 
+#########################################################
+
+def _extraer_nombre_estudiante(fila):
+    """Normaliza una fila (dict, Row o tuple) a un nombre de estudiante limpio."""
+    if isinstance(fila, str):
+        return fila.strip()
+
+    if isinstance(fila, dict):
+        for clave in (
+            "nombre_completo",
+            "nombre",
+            "estudiante",
+            "alumno",
+            "fullname",
+            "full_name",
+        ):
+            val = fila.get(clave)
+            if isinstance(val, str) and val.strip():
+                # Si existen 'nombre' y 'apellido' por separado, combínalos si aplica
+                if clave == "nombre" and fila.get("apellido"):
+                    return f"{val.strip()} {str(fila.get('apellido')).strip()}".strip()
+                return val.strip()
+        for val in fila.values():
+            if isinstance(val, str) and val.strip():
+                return val.strip()
+        return ""
+
+    if isinstance(fila, (tuple, list)):
+        # Busca el primer elemento string no vacío (evitando IDs numéricos o estados cortos)
+        strings = [str(x).strip() for x in fila if isinstance(x, str) and x.strip()]
+        for s in strings:
+            if len(s) > 1 and s.lower() not in {"activo", "inactivo", "masculino", "femenino", "m", "f"}:
+                return s
+        return strings[0] if strings else ""
+
+    return str(fila).strip() if fila is not None else ""
+
+
+def _normalizar_lista_estudiantes(filas):
+    """Convierte filas de BD a una lista ordenada/limpia de nombres sin vacíos ni duplicados."""
+    resultado = []
+    vistos = set()
+    for fila in filas or []:
+        nombre = _extraer_nombre_estudiante(fila)
+        if nombre:
+            clave = nombre.lower()
+            if clave not in vistos:
+                vistos.add(clave)
+                resultado.append(nombre)
+    return resultado
+
+
+def _obtener_estudiantes_seguro(cur, conn, curso_usuario=None, curso_param=None):
+    """Intenta obtener estudiantes por curso y, si no hay coincidencia, recupera los disponibles."""
+    curso_objetivo = _curso_limpio(curso_param) or _curso_limpio(curso_usuario)
+
+    if curso_objetivo:
+        try:
+            estudiantes_curso = _buscar_estudiantes_de_curso(cur, curso_objetivo)
+            normalizados = _normalizar_lista_estudiantes(estudiantes_curso)
+            if normalizados:
+                return normalizados
+        except Exception as e_curso:
+            print("Aviso en _buscar_estudiantes_de_curso:", e_curso)
+            conn.rollback()
+
+    # Respaldo: cargar estudiantes registrados si el filtro por curso no devolvió resultados
+    for consulta in (
+        "SELECT * FROM estudiantes ORDER BY id ASC",
+        "SELECT * FROM estudiantes ORDER BY 1 ASC",
+    ):
+        try:
+            cur.execute(consulta)
+            filas = cur.fetchall()
+            return _normalizar_lista_estudiantes(filas)
+        except Exception as e_all:
+            print("Aviso cargando estudiantes de respaldo:", e_all)
+            conn.rollback()
+
+    return []
+
 
 @app.route("/rubricas", methods=["GET"])
 def vista_rubricas():
@@ -2782,33 +2863,35 @@ def vista_rubricas():
         return redirect(url_for("login"))
 
     rol = (session.get("rol") or "").strip().lower()
-    materia_sel = (request.args.get("materia") or "MATEMATICA").strip()
+    materia_sel = (request.args.get("materia") or "MATEMÁTICA").strip()
     competencia_sel = (request.args.get("competencia") or "C1").strip()
 
     estudiantes = []
     curso_usuario = _curso_limpio(session.get("curso_asignado"))
+    curso_param = _curso_limpio(request.args.get("curso"))
     indicadores = []
 
     conn = None
     try:
         conn = get_db_connection()
         with conn.cursor() as cur:
-            curso_usuario = _obtener_curso_del_usuario(cur)
+            try:
+                curso_bd = _curso_limpio(_obtener_curso_del_usuario(cur))
+                if curso_bd:
+                    curso_usuario = curso_bd
+            except Exception as e_cur_usr:
+                print("Aviso en _obtener_curso_del_usuario:", e_cur_usr)
+                conn.rollback()
 
-            if rol in {"admin", "oficina", "area_maestro", "área_maestro"} and not curso_usuario:
-                curso_param = _curso_limpio(request.args.get("curso"))
-                if curso_param:
-                    estudiantes = _buscar_estudiantes_de_curso(cur, curso_param)
-                    curso_usuario = curso_param
-                else:
-                    try:
-                        cur.execute("SELECT * FROM estudiantes ORDER BY 1 ASC")
-                        estudiantes = cur.fetchall()
-                    except Exception as e_all:
-                        print("Error cargando estudiantes:", e_all)
-                        conn.rollback()
-            elif curso_usuario:
-                estudiantes = _buscar_estudiantes_de_curso(cur, curso_usuario)
+            if curso_param:
+                curso_usuario = curso_param
+
+            estudiantes = _obtener_estudiantes_seguro(
+                cur=cur,
+                conn=conn,
+                curso_usuario=curso_usuario,
+                curso_param=curso_param,
+            )
 
             try:
                 cur.execute(
@@ -2844,6 +2927,7 @@ def vista_rubricas():
         indicadores=indicadores,
         sin_estudiantes=len(estudiantes) == 0,
     )
+
 ########################################################################
 # 1. RUTA PARA EL MENÚ DE OPCIONES DE PLANIFICACIÓN
 @app.route("/menu_planificacion")

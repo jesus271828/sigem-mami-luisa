@@ -397,8 +397,20 @@
   </style>
 </head>
 <body>
+  {% set materias_lista = materias if materias else [
+    "MATEMÁTICA",
+    "LENGUA ESPAÑOLA",
+    "CIENCIAS SOCIALES",
+    "CIENCIAS DE LA NATURALEZA",
+    "INGLÉS",
+    "INFORMÁTICA",
+    "EDUCACIÓN FÍSICA",
+    "EDUCACIÓN ARTÍSTICA",
+    "FORMACIÓN INTEGRAL HUMANA Y RELIGIOSA"
+  ] %}
+
   <div class="topbar">
-    <strong>SIGEM Mami Luisa</strong>
+    <strong>SIGEM Mami Luisa{% if curso_activo %} · {{ curso_activo }}{% endif %}</strong>
     <a href="/">Inicio</a>
   </div>
 
@@ -408,29 +420,17 @@
         <div class="campo-grupo">
           <label for="select-materia">Materia / Área:</label>
           <select id="select-materia" onchange="cambiarMateria()">
-            {% if materias %}
-              {% for m in materias %}
-                <option value="{{ m }}">{{ m }}</option>
-              {% endfor %}
-            {% else %}
-              <option value="MATEMÁTICA">MATEMÁTICA</option>
-              <option value="LENGUA ESPAÑOLA">LENGUA ESPAÑOLA</option>
-              <option value="CIENCIAS SOCIALES">CIENCIAS SOCIALES</option>
-              <option value="CIENCIAS DE LA NATURALEZA">CIENCIAS DE LA NATURALEZA</option>
-              <option value="INGLÉS">INGLÉS</option>
-              <option value="INFORMÁTICA">INFORMÁTICA</option>
-              <option value="EDUCACIÓN FÍSICA">EDUCACIÓN FÍSICA</option>
-              <option value="EDUCACIÓN ARTÍSTICA">EDUCACIÓN ARTÍSTICA</option>
-              <option value="FORMACIÓN INTEGRAL HUMANA Y RELIGIOSA">FORMACIÓN INTEGRAL HUMANA Y RELIGIOSA</option>
-            {% endif %}
+            {% for m in materias_lista %}
+              <option value="{{ m }}" {% if materia_sel and (m|upper == materia_sel|upper or (materia_sel|upper == "MATEMATICA" and m == "MATEMÁTICA")) %}selected{% endif %}>{{ m }}</option>
+            {% endfor %}
           </select>
         </div>
 
         <div class="tabs">
-          <button type="button" class="tab-btn active" data-target="c1">C1 - Comunicativa</button>
-          <button type="button" class="tab-btn" data-target="c2">C2 - Pensamiento Lógico...</button>
-          <button type="button" class="tab-btn" data-target="c3">C3 - Ética y Ciudadana...</button>
-          <button type="button" class="tab-btn" data-target="todas">Ver las 3 juntas</button>
+          <button type="button" class="tab-btn active" data-target="c1" title="C1 - Comunicativa">C1 - Comunicativa</button>
+          <button type="button" class="tab-btn" data-target="c2" title="C2 - Pensamiento Lógico Creativo y Crítico; Resolución de Problemas; Científica y Tecnológica">C2 - Pensamiento Lógico...</button>
+          <button type="button" class="tab-btn" data-target="c3" title="C3 - Ética y Ciudadana; Desarrollo Personal y Espiritual; Ambiental y de la Salud">C3 - Ética y Ciudadana...</button>
+          <button type="button" class="tab-btn" data-target="todas" title="Ver las 3 competencias juntas">Ver las 3 juntas</button>
         </div>
       </div>
 
@@ -444,9 +444,24 @@
     <div id="contenedor-rubricas"></div>
   </div>
 
+  <script type="application/json" id="estudiantes-data">
+    {{ (estudiantes or []) | tojson | safe }}
+  </script>
+
   <script>
-    const ESTUDIANTES_RAW = JSON.parse('{{ (estudiantes or []) | tojson | safe }}');
-    const ESTUDIANTES = Array.isArray(ESTUDIANTES_RAW) ? ESTUDIANTES_RAW : [];
+    const ESTUDIANTES_RAW = JSON.parse(
+      document.getElementById("estudiantes-data").textContent || "[]"
+    );
+    const ESTUDIANTES = Array.isArray(ESTUDIANTES_RAW)
+      ? ESTUDIANTES_RAW.map((item) => {
+          if (typeof item === "string") return item.trim();
+          if (item && typeof item === "object") {
+            return String(item.nombre_completo || item.nombre || item.estudiante || Object.values(item)[0] || "").trim();
+          }
+          return "";
+        }).filter(Boolean)
+      : [];
+
     const BLOQUE_SIZE = 12;
 
     function dividirEnBloques(lista, tamano) {
@@ -519,6 +534,15 @@
       return `sigem_rubrica_v3_${materia}`;
     }
 
+    function escaparAtributo(texto) {
+      return String(texto ?? "")
+        .replace(/&/g, "&")
+        .replace(/"/g, """)
+        .replace(/'/g, "'")
+        .replace(/</g, "<")
+        .replace(/>/g, ">");
+    }
+
     function cargarDatosMateria(materia) {
       const guardado = localStorage.getItem(claveStorage(materia));
       if (guardado) {
@@ -552,7 +576,7 @@
             const inicioIdx = bloqueIdx * BLOQUE_SIZE;
 
             const headersAlumnos = grupoAlumnos.map(
-              (nombre) => `<th class="th-alumno"><div class="nombre-vertical">${nombre}</div></th>`
+              (nombre) => `<th class="th-alumno" title="${escaparAtributo(nombre)}"><div class="nombre-vertical">${escaparAtributo(nombre)}</div></th>`
             ).join("");
 
             const filasIndicadores = comp.indicadores
@@ -568,12 +592,12 @@
                         min="0"
                         max="${ind.valor}"
                         step="any"
-                        value="${notaGuardada}"
+                        value="${escaparAtributo(notaGuardada)}"
                         data-comp="${compIdx}"
                         data-fila="${filaIdx}"
                         data-col="${globalColIdx}"
-                        data-est="${est}"
-                        oninput="actualizarNota(${compIdx}, ${filaIdx}, ${globalColIdx}, '${est}', this)"
+                        data-est="${escaparAtributo(est)}"
+                        oninput="actualizarNota(${compIdx}, ${filaIdx}, ${globalColIdx}, this)"
                       />
                     </td>`;
                 }).join("");
@@ -587,7 +611,7 @@
                           rows="2"
                           placeholder="Escribe el indicador de logro..."
                           oninput="sincronizarTextoIndicador(${compIdx}, ${filaIdx}, this.value)"
-                        >${ind.texto || ""}</textarea>
+                        >${escaparAtributo(ind.texto || "")}</textarea>
                         <button type="button" class="btn-del-fila" title="Eliminar indicador" onclick="eliminarIndicador(${compIdx}, ${filaIdx})">✕</button>
                       </div>
                     </td>`
@@ -599,7 +623,7 @@
                           rows="2"
                           placeholder="Escribe el indicador de logro..."
                           oninput="sincronizarTextoIndicador(${compIdx}, ${filaIdx}, this.value)"
-                        >${ind.texto || ""}</textarea>
+                        >${escaparAtributo(ind.texto || "")}</textarea>
                       </div>
                     </td>`;
 
@@ -640,14 +664,14 @@
                         <input
                           type="text"
                           class="input-area"
-                          value="${comp.areaTexto}"
+                          value="${escaparAtributo(comp.areaTexto)}"
                           oninput="sincronizarArea(${compIdx}, this.value)"
                         />
                         <textarea
                           class="textarea-comp"
                           rows="2"
                           oninput="sincronizarCompetencia(${compIdx}, this.value)"
-                        >${comp.competencia}</textarea>
+                        >${escaparAtributo(comp.competencia)}</textarea>
                       </th>
                       <th class="th-valor">VALOR</th>
                       ${headersAlumnos}
@@ -698,7 +722,6 @@
     function sincronizarTextoIndicador(compIdx, filaIdx, valor) {
       datosActuales[compIdx].indicadores[filaIdx].texto = valor;
       document.querySelectorAll(`#panel-${datosActuales[compIdx].id} .textarea-indicador`).forEach((el, idx) => {
-        // Sincroniza la misma fila en los bloques siguientes sin pisar mientras escribes en el mismo campo
         if (idx % datosActuales[compIdx].indicadores.length === filaIdx && el !== document.activeElement) {
           el.value = valor;
         }
@@ -728,7 +751,8 @@
       recalcularTodo();
     }
 
-    function actualizarNota(compIdx, filaIdx, colIdx, est, inputEl) {
+    function actualizarNota(compIdx, filaIdx, colIdx, inputEl) {
+      const est = inputEl.dataset.est || "";
       const maxVal = parseFloat(datosActuales[compIdx].indicadores[filaIdx].valor) || 0;
       let val = parseFloat(inputEl.value);
 
@@ -793,6 +817,7 @@
     }
 
     function limpiarNotas() {
+      if (!confirm("¿Seguro que deseas limpiar todas las notas de esta materia?")) return;
       datosActuales.forEach((comp) => {
         comp.indicadores.forEach((ind) => {
           ind.notas = {};
